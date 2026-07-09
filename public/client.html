@@ -169,7 +169,7 @@
         // ============ DASHBOARD ============
         async function loadDashboard() {
             const data = await api('/client/dashboard');
-            if (res.status === 'success') {
+            if (data.status === 'success') {
                 const s = data.data.stats;
                 document.getElementById('atlStats').innerHTML = `
                     <div class="stat-card bg-gradient-to-br from-blue-400 to-blue-500 text-white rounded-xl shadow-lg p-5 text-center"><p class="text-sm opacity-90">Total</p><p class="text-3xl font-bold">${s.total}</p></div>
@@ -254,7 +254,7 @@
                     contact_number: document.getElementById('contactNumber').value,
                     has_si: hasSI
                 });
-                if (res.status === 'success') {
+                if (data.status === 'success') {
                     const data = res; msg.innerHTML = `? Submitted!<br><span class="font-bold text-blue-900">Code: ${data.data.atl_code}</span>`;
                     msg.className = 'mt-3 text-sm text-green-600 text-center';
                     ['company','soNumber','volume','hauler','plateNo','driverName','contactNumber'].forEach(id => document.getElementById(id).value = '');
@@ -270,7 +270,7 @@
         // ============ HISTORY ============
         async function loadHistory() {
             const data = await api('/client/dashboard');
-            if (res.status === 'success') {
+            if (data.status === 'success') {
                 document.getElementById('atlHistory').innerHTML = data.data.recentATLs.map(a => `
                     <div class="bg-white rounded-lg shadow p-4">
                         <div class="flex justify-between items-start">
@@ -291,7 +291,7 @@
 
         async function viewATL(id) {
             const data = await api(`/client/atl/${id}`);
-            if (res.status === 'success') {
+            if (data.status === 'success') {
                 const a = data.data;
                 document.getElementById('atlDetail').innerHTML = `
                     <div class="text-center mb-4"><p class="text-2xl font-mono font-bold text-blue-900">${a.atl_code||'N/A'}</p></div>
@@ -330,7 +330,7 @@
             if (end) params.append('endDate', end);
             if (status) params.append('status', status);
             const data = await api('/client/dashboard?' + params.toString());
-            if (res.status === 'success') {
+            if (data.status === 'success') {
                 allClientATLs = data.data.recentATLs;
                 let filtered = allClientATLs;
                 if (status) filtered = filtered.filter(a => a.status === status);
@@ -372,4 +372,6 @@
     </script>
 </body>
 </html>
+
+
 
