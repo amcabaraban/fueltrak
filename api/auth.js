@@ -554,7 +554,7 @@ app.get('/api/client/verify-truck/:plateNo', authenticate, authorize('client'), 
 
 app.post('/api/client/submit-atl', authenticate, authorize('client'), async (req, res) => {
   try {
-    const { plate_no, scheduled_date, company, so_number, volume, hauler, driver_name, contact_number } = req.body;
+    const { plate_no, scheduled_date, company, so_number, volume, hauler, driver_name, contact_number, has_si } = req.body;
     const [trucks] = await pool.execute('SELECT * FROM trucks WHERE plate_no = ? AND is_active = 1', [plate_no.toUpperCase()]);
     if (!trucks.length) return res.status(404).json({ error: 'Truck not found' });
     const truck = trucks[0];
