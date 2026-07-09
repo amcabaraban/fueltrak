@@ -204,9 +204,9 @@
                     localStorage.setItem('fueltrak_user', JSON.stringify(data.user));
 
                     if (data.user.role === 'client') {
-                        window.location.href = '/client.html';
+                        window.location.href = '/client';
                     } else {
-                        window.location.href = '/dashboard.html';
+                        window.location.href = '/dashboard';
                     }
                 } else {
                     errorDiv.textContent = data.error || 'Login failed';
