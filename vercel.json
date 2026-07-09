@@ -8,7 +8,10 @@
     { "src": "/api/(.*)", "dest": "/api/auth.js" },
     { "src": "/mobile.css", "dest": "/public/mobile.css" },
     { "src": "/favicon.ico", "dest": "/public/favicon.ico" },
-    { "src": "/(.*\\.(css|js|png|jpg|svg|ico|woff2))", "dest": "/public/$1" },
-    { "src": "/(.*)", "dest": "/api/auth.js" }
+    { "src": "/dashboard", "dest": "/api/auth.js" },
+    { "src": "/client", "dest": "/api/auth.js" },
+    { "src": "/reports", "dest": "/api/auth.js" },
+    { "src": "/", "dest": "/api/auth.js" },
+    { "src": "/(.*)", "dest": "/public/\" }
   ]
 }
