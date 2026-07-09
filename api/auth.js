@@ -653,6 +653,11 @@ app.get('/api/reports/export', authenticate, authorize('dispatcher', 'management
   } catch (error) { res.status(500).json({ error: error.message }); }
 });
 
+app.get('/client.html', (req, res) => res.sendFile(require('path').join(__dirname, '..', 'public', 'client.html')));
+app.get('/dashboard.html', (req, res) => res.sendFile(require('path').join(__dirname, '..', 'public', 'dashboard.html')));
+app.get('/reports.html', (req, res) => res.sendFile(require('path').join(__dirname, '..', 'public', 'reports.html')));
+app.get('/atl.html', (req, res) => res.sendFile(require('path').join(__dirname, '..', 'public', 'atl.html')));
+
 module.exports = app;
 
 
