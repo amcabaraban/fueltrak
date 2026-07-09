@@ -1,0 +1,10 @@
+const express = require('express'); 
+const router = express.Router(); 
+const dispatchController = require('../controllers/dispatchController'); 
+const { authenticate, authorize } = require('../middleware/auth'); 
+router.use(authenticate); 
+router.get('/dashboard', dispatchController.dashboard); 
+router.get('/pending', authorize('dispatcher', 'management'), dispatchController.pendingVerifications); 
+router.post('/verify/:id', authorize('dispatcher', 'management'), dispatchController.verifyATL); 
+router.post('/dispatch/:id', authorize('dispatcher', 'management'), dispatchController.dispatch); 
+module.exports = router; 

@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FuelTrak - Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="/mobile.css">
+</head>
+<body class="bg-gradient-to-br from-blue-900 via-blue-800 to-blue-900 min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-md px-2 sm:px-0">
+        <!-- Logo -->
+        <div class="text-center mb-8">
+            <div class="inline-block bg-white/10 p-4 rounded-2xl mb-4">
+                <i class="fas fa-gas-pump text-3xl sm:text-4xl md:text-5xl text-yellow-400"></i>
+            </div>
+            <h1 class="text-2xl sm:text-3xl font-bold text-white">FuelTrak</h1>
+            <p class="text-blue-300 text-sm mt-1">Truck Logistics Dispatch System</p>
+        </div>
+
+        <!-- Login Card -->
+        <div id="loginCard" class="bg-white rounded-2xl shadow-2xl p-4 sm:p-6 md:p-8">
+            <!-- Role Switcher -->
+            <div class="flex bg-gray-100 rounded-lg p-1 mb-6">
+                <button onclick="switchRole('client')" id="clientTab" class="flex-1 py-2 rounded-md text-sm font-semibold transition-all duration-200 bg-blue-900 text-white">
+                    <i class="fas fa-user mr-1"></i>Client
+                </button>
+                <button onclick="switchRole('admin')" id="adminTab" class="flex-1 py-2 rounded-md text-sm font-semibold transition-all duration-200 text-gray-600">
+                    <i class="fas fa-user-shield mr-1"></i>Admin
+                </button>
+            </div>
+
+            <!-- Login Form -->
+            <form onsubmit="login(event)" class="space-y-4">
+                <input type="hidden" id="loginRole" value="client">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Email</label>
+                    <div class="relative">
+                        <i class="fas fa-envelope absolute left-3 top-3.5 text-gray-400"></i>
+                        <input type="email" id="email" class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Enter your email" required>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Password</label>
+                    <div class="relative">
+                        <i class="fas fa-lock absolute left-3 top-3.5 text-gray-400"></i>
+                        <input type="password" id="password" class="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Enter your password" required>
+                        <button type="button" onclick="togglePassword()" class="absolute right-3 top-3.5 text-gray-400 hover:text-gray-600">
+                            <i class="fas fa-eye" id="toggleIcon"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="flex justify-end">
+                    <button type="button" onclick="showForgotPassword()" class="text-sm text-blue-600 hover:underline">Forgot password?</button>
+                </div>
+                <button type="submit" class="w-full bg-blue-900 text-white py-3 rounded-lg hover:bg-blue-800 font-semibold transition duration-200">
+                    <i class="fas fa-sign-in-alt mr-2"></i>Login
+                </button>
+            </form>
+
+            <!-- Quick Login Buttons -->
+            <div class="mt-4 pt-4 border-t">
+                <p class="text-xs text-gray-500 text-center mb-2">Quick Login</p>
+                <div class="grid grid-cols-3 gap-1 sm:gap-2">
+                    <button onclick="quickLogin('admin@fueltrak.com')" class="text-[10px] sm:text-xs bg-blue-50 hover:bg-blue-100 text-blue-800 px-2 py-1.5 rounded transition">Admin</button>
+                    <button onclick="quickLogin('dispatcher@fueltrak.com')" class="text-xs bg-green-50 hover:bg-green-100 text-green-800 px-2 py-1.5 rounded transition">Dispatcher</button>
+                    <button onclick="quickLogin('client1@hauler.com')" class="text-xs bg-purple-50 hover:bg-purple-100 text-purple-800 px-2 py-1.5 rounded transition">Client</button>
+                </div>
+                <p class="text-xs text-gray-400 text-center mt-1">Password: Admin123!</p>
+            </div>
+
+            <div id="loginError" class="mt-3 text-red-500 text-sm text-center hidden"></div>
+        </div>
+
+        <!-- Forgot Password Card -->
+        <div id="forgotCard" class="hidden bg-white rounded-2xl shadow-2xl p-8">
+            <button onclick="showLoginCard()" class="text-gray-500 hover:text-gray-700 mb-4">
+                <i class="fas fa-arrow-left mr-1"></i>Back to login
+            </button>
+            <h2 class="text-xl font-bold mb-4">Reset Password</h2>
+            
+            <!-- Step 1: Enter Email -->
+            <div id="resetStep1">
+                <p class="text-sm text-gray-600 mb-4">Enter your email to receive an OTP.</p>
+                <form onsubmit="sendResetOTP(event)" class="space-y-3">
+                    <input type="email" id="resetEmail" class="w-full px-4 py-3 border rounded-lg" placeholder="Enter your email" required>
+                    <button type="submit" class="w-full bg-blue-900 text-white py-3 rounded-lg font-semibold">Send OTP</button>
+                </form>
+            </div>
+
+            <!-- Step 2: Enter OTP -->
+            <div id="resetStep2" class="hidden">
+                <p class="text-sm text-gray-600 mb-4">Enter the OTP sent to <span id="otpEmailDisplay" class="font-semibold"></span></p>
+                <form onsubmit="verifyResetOTP(event)" class="space-y-3">
+                    <input type="text" id="resetOTP" class="w-full px-4 py-3 border rounded-lg text-center text-2xl tracking-widest" placeholder="000000" maxlength="6" required>
+                    <button type="submit" class="w-full bg-blue-900 text-white py-3 rounded-lg font-semibold">Verify OTP</button>
+                </form>
+            </div>
+
+            <!-- Step 3: New Password -->
+            <div id="resetStep3" class="hidden">
+                <p class="text-sm text-gray-600 mb-4">Enter your new password.</p>
+                <form onsubmit="resetPassword(event)" class="space-y-3">
+                    <input type="hidden" id="resetToken">
+                    <input type="password" id="newPassword" class="w-full px-4 py-3 border rounded-lg" placeholder="New password (min 8 chars)" required minlength="8">
+                    <input type="password" id="confirmPassword" class="w-full px-4 py-3 border rounded-lg" placeholder="Confirm new password" required minlength="8">
+                    <button type="submit" class="w-full bg-green-600 text-white py-3 rounded-lg font-semibold">Reset Password</button>
+                </form>
+            </div>
+
+            <div id="resetMessage" class="mt-3 text-sm text-center hidden"></div>
+        </div>
+    </div>
+
+    <script>
+        const API = '/api';
+        let selectedRole = 'client';
+        let resetEmailGlobal = '';
+
+        // Role switcher
+        function switchRole(role) {
+            selectedRole = role;
+            document.getElementById('loginRole').value = role;
+            
+            if (role === 'client') {
+                document.getElementById('clientTab').className = 'flex-1 py-2 rounded-md text-sm font-semibold transition-all duration-200 bg-blue-900 text-white';
+                document.getElementById('adminTab').className = 'flex-1 py-2 rounded-md text-sm font-semibold transition-all duration-200 text-gray-600';
+            } else {
+                document.getElementById('adminTab').className = 'flex-1 py-2 rounded-md text-sm font-semibold transition-all duration-200 bg-blue-900 text-white';
+                document.getElementById('clientTab').className = 'flex-1 py-2 rounded-md text-sm font-semibold transition-all duration-200 text-gray-600';
+            }
+        }
+
+        // Toggle password visibility
+        function togglePassword() {
+            const pw = document.getElementById('password');
+            const icon = document.getElementById('toggleIcon');
+            if (pw.type === 'password') {
+                pw.type = 'text';
+                icon.className = 'fas fa-eye-slash';
+            } else {
+                pw.type = 'password';
+                icon.className = 'fas fa-eye';
+            }
+        }
+
+        // Quick login
+        function quickLogin(email) {
+            document.getElementById('email').value = email;
+            document.getElementById('password').value = 'Admin123!';
+            
+            // Auto-set role based on email
+            if (email.includes('admin') || email.includes('dispatcher')) {
+                switchRole('admin');
+            } else {
+                switchRole('client');
+            }
+        }
+
+        // Show/hide cards
+        function showForgotPassword() {
+            document.getElementById('loginCard').classList.add('hidden');
+            document.getElementById('forgotCard').classList.remove('hidden');
+            document.getElementById('resetStep1').classList.remove('hidden');
+            document.getElementById('resetStep2').classList.add('hidden');
+            document.getElementById('resetStep3').classList.add('hidden');
+        }
+
+        function showLoginCard() {
+            document.getElementById('loginCard').classList.remove('hidden');
+            document.getElementById('forgotCard').classList.add('hidden');
+        }
+
+        // Login
+        async function login(e) {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const errorDiv = document.getElementById('loginError');
+
+            try {
+                const res = await fetch(API + '/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                const data = await res.json();
+
+                if (data.status === 'success') {
+                    // Check if role matches selected role
+                    if (selectedRole === 'client' && data.user.role !== 'client') {
+                        errorDiv.textContent = 'This account is not a client account. Please switch to Admin login.';
+                        errorDiv.classList.remove('hidden');
+                        return;
+                    }
+                    if (selectedRole === 'admin' && data.user.role === 'client') {
+                        errorDiv.textContent = 'This account is a client account. Please switch to Client login.';
+                        errorDiv.classList.remove('hidden');
+                        return;
+                    }
+
+                    localStorage.setItem('fueltrak_token', data.token);
+                    localStorage.setItem('fueltrak_user', JSON.stringify(data.user));
+
+                    if (data.user.role === 'client') {
+                        window.location.href = '/client.html';
+                    } else {
+                        window.location.href = '/dashboard.html';
+                    }
+                } else {
+                    errorDiv.textContent = data.error || 'Login failed';
+                    errorDiv.classList.remove('hidden');
+                }
+            } catch (e) {
+                errorDiv.textContent = 'Connection error. Is the server running?';
+                errorDiv.classList.remove('hidden');
+            }
+        }
+
+        // Forgot password - Step 1: Send OTP
+        async function sendResetOTP(e) {
+            e.preventDefault();
+            resetEmailGlobal = document.getElementById('resetEmail').value;
+            const msgDiv = document.getElementById('resetMessage');
+
+            try {
+                const res = await fetch(API + '/auth/forgot-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: resetEmailGlobal })
+                });
+                const data = await res.json();
+
+                if (data.status === 'success') {
+                    document.getElementById('otpEmailDisplay').textContent = resetEmailGlobal;
+                    document.getElementById('resetStep1').classList.add('hidden');
+                    document.getElementById('resetStep2').classList.remove('hidden');
+                    msgDiv.textContent = 'OTP sent! Check console.';
+                    msgDiv.className = 'mt-3 text-sm text-green-600 text-center';
+                    msgDiv.classList.remove('hidden');
+                } else {
+                    msgDiv.textContent = data.error || 'Error';
+                    msgDiv.className = 'mt-3 text-sm text-red-600 text-center';
+                    msgDiv.classList.remove('hidden');
+                }
+            } catch (e) {
+                msgDiv.textContent = 'Connection error';
+                msgDiv.className = 'mt-3 text-sm text-red-600 text-center';
+                msgDiv.classList.remove('hidden');
+            }
+        }
+
+        // Forgot password - Step 2: Verify OTP
+        async function verifyResetOTP(e) {
+            e.preventDefault();
+            const otp = document.getElementById('resetOTP').value;
+            const msgDiv = document.getElementById('resetMessage');
+
+            try {
+                const res = await fetch(API + '/auth/verify-reset-otp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: resetEmailGlobal, otp })
+                });
+                const data = await res.json();
+
+                if (data.status === 'success') {
+                    document.getElementById('resetToken').value = data.resetToken;
+                    document.getElementById('resetStep2').classList.add('hidden');
+                    document.getElementById('resetStep3').classList.remove('hidden');
+                    msgDiv.textContent = 'OTP verified! Enter new password.';
+                    msgDiv.className = 'mt-3 text-sm text-green-600 text-center';
+                } else {
+                    msgDiv.textContent = data.error || 'Invalid OTP';
+                    msgDiv.className = 'mt-3 text-sm text-red-600 text-center';
+                }
+                msgDiv.classList.remove('hidden');
+            } catch (e) {
+                msgDiv.textContent = 'Connection error';
+                msgDiv.className = 'mt-3 text-sm text-red-600 text-center';
+                msgDiv.classList.remove('hidden');
+            }
+        }
+
+        // Forgot password - Step 3: Reset password
+        async function resetPassword(e) {
+            e.preventDefault();
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const resetToken = document.getElementById('resetToken').value;
+            const msgDiv = document.getElementById('resetMessage');
+
+            if (newPassword !== confirmPassword) {
+                msgDiv.textContent = 'Passwords do not match';
+                msgDiv.className = 'mt-3 text-sm text-red-600 text-center';
+                msgDiv.classList.remove('hidden');
+                return;
+            }
+
+            try {
+                const res = await fetch(API + '/auth/reset-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ resetToken, newPassword })
+                });
+                const data = await res.json();
+
+                if (data.status === 'success') {
+                    msgDiv.textContent = 'Password reset! Redirecting to login...';
+                    msgDiv.className = 'mt-3 text-sm text-green-600 text-center';
+                    msgDiv.classList.remove('hidden');
+                    setTimeout(() => {
+                        showLoginCard();
+                        document.getElementById('resetStep1').classList.remove('hidden');
+                        document.getElementById('resetStep3').classList.add('hidden');
+                    }, 2000);
+                } else {
+                    msgDiv.textContent = data.error || 'Error';
+                    msgDiv.className = 'mt-3 text-sm text-red-600 text-center';
+                    msgDiv.classList.remove('hidden');
+                }
+            } catch (e) {
+                msgDiv.textContent = 'Connection error';
+                msgDiv.className = 'mt-3 text-sm text-red-600 text-center';
+                msgDiv.classList.remove('hidden');
+            }
+        }
+    </script>
+</body>
+</html>

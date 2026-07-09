@@ -1,0 +1,53 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FuelTrak - Truck Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="/mobile.css">
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <nav class="bg-blue-900 text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <span class="font-bold text-xl">ðŸš› FuelTrak - Truck Management</span>
+            </div>
+            <div class="flex items-center space-x-3">
+                <a href="/dashboard" class="bg-blue-700 px-3 py-1 rounded text-sm">Dashboard</a>
+                <a href="/atl" class="bg-blue-700 px-3 py-1 rounded text-sm">ATL</a>
+                <button onclick="logout()" class="bg-red-500 px-4 py-2 rounded text-sm">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold mb-6">Truck Fleet</h1>
+        <div id="truckList" class="bg-white rounded-xl shadow-lg p-6"></div>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('fueltrak_token');
+        if (!token) window.location.href = '/';
+
+        async function loadTrucks() {
+            const res = await fetch('/api/trucks/all', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            const data = await res.json();
+            
+            if (data.status === 'success') {
+                let html = '<table class="w-full"><thead class="bg-gray-50"><tr><th class="py-3 px-4 text-left">Plate</th><th class="py-3 px-4 text-left">Make</th><th class="py-3 px-4 text-left">Driver</th><th class="py-3 px-4 text-left">Capacity</th></tr></thead><tbody>';
+                data.data.forEach(t => {
+                    html += `<tr class="border-b"><td class="py-2 px-4 font-semibold">${t.plate_no}</td><td class="py-2 px-4">${t.make}</td><td class="py-2 px-4">${t.driver_name||'-'}</td><td class="py-2 px-4">${t.total_capacity}L</td></tr>`;
+                });
+                html += '</tbody></table>';
+                document.getElementById('truckList').innerHTML = html;
+            }
+        }
+
+        function logout() { localStorage.clear(); window.location.href = '/'; }
+        loadTrucks();
+    </script>
+</body>
+</html>

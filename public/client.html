@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FuelTrak - Client Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        .stat-card { transition: all 0.3s ease; }
+        .stat-card:hover { transform: translateY(-3px); box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
+        .progress-bar { transition: width 0.5s ease; }
+        @media print {
+            body { background: white !important; }
+            nav, .no-print { display: none !important; }
+            #printArea { display: block !important; padding: 20px; }
+            #printArea table { inline-size: 100%; border-collapse: collapse; font-size: 11px; }
+            #printArea th, #printArea td { border: 1px solid #ddd; padding: 6px 8px; text-align: start; }
+            #printArea th { background: #f0f0f0 !important; }
+            @page { margin: 1cm; }
+        }
+        .print-only { display: none; }
+        @media print { .print-only { display: block; } }
+    </style>
+<link rel="stylesheet" href="/mobile.css">
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Navigation -->
+    <nav class="bg-gradient-to-r from-blue-900 to-blue-800 text-white shadow-xl sticky top-0 z-50 no-print">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="bg-white/20 p-2 rounded-lg"><i class="fas fa-gas-pump text-2xl text-yellow-400"></i></div>
+                <div><span class="font-bold text-sm md:text-lg md:text-xl">FuelTrak</span><p class="text-xs text-blue-300">Client Portal</p></div>
+            </div>
+            <div class="flex items-center space-x-3">
+                <span id="userInfo" class="text-sm bg-white/10 px-3 py-1 rounded-full"></span>
+                <button onclick="showView('dashboard')" class="bg-white/20 px-3 py-1 rounded text-sm hover:bg-white/30"><i class="fas fa-chart-pie mr-1"></i>Dashboard</button>
+                <button onclick="showView('submit')" class="bg-white/20 px-3 py-1 rounded text-sm hover:bg-white/30"><i class="fas fa-plus-circle mr-1"></i>New ATL</button>
+                <button onclick="showView('history')" class="bg-white/20 px-3 py-1 rounded text-sm hover:bg-white/30"><i class="fas fa-list mr-1"></i>My ATLs</button>
+                <button onclick="showView('reports')" class="bg-white/20 px-3 py-1 rounded text-sm hover:bg-white/30"><i class="fas fa-chart-bar mr-1"></i>Reports</button>
+                <button onclick="logout()" class="bg-red-500/80 hover:bg-red-500 px-4 py-2 rounded text-sm"><i class="fas fa-sign-out-alt mr-1"></i>Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        <!-- DASHBOARD VIEW -->
+        <div id="dashboardView">
+            <div class="bg-gradient-to-r from-blue-900 via-blue-700 to-blue-500 rounded-2xl shadow-2xl p-8 mb-8 text-white">
+                <p class="text-blue-200 text-sm" id="welcomeDate"></p>
+                <h1 class="text-3xl font-bold mt-1">My Dashboard</h1>
+                <p class="text-blue-100 mt-2">ATL summary and statistics</p>
+            </div>
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8" id="atlStats"></div>
+            <div id="recentATLCodes" class="mb-8"></div>
+        </div>
+
+        <!-- SUBMIT ATL VIEW -->
+        <div id="submitView" class="hidden">
+            <div class="bg-white rounded-2xl shadow-lg p-8 max-w-2xl px-2 md:px-0 mx-auto">
+                <h2 class="text-2xl font-bold mb-6"><i class="fas fa-plus-circle text-blue-600 mr-2"></i>Submit New ATL</h2>
+                <form onsubmit="submitATL(event)" class="space-y-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                        <div><label class="block text-xs font-semibold mb-1">Company *</label><input type="text" id="company" class="w-full px-3 py-2 border rounded-lg" required></div>
+                        <div><label class="block text-xs font-semibold mb-1">SO Number</label><input type="text" id="soNumber" class="w-full px-3 py-2 border rounded-lg" placeholder="Optional"></div>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                        <div><label class="block text-xs font-semibold mb-1">Scheduled Date *</label><input type="date" id="scheduledDate" class="w-full px-3 py-2 border rounded-lg" required></div>
+                        <div><label class="block text-xs font-semibold mb-1">Volume (Liters) *</label><input type="number" id="volume" class="w-full px-3 py-2 border rounded-lg" required min="1"><p class="text-xs text-gray-400 mt-1" id="capacityHint"></p></div>
+                    </div>
+                    <div><label class="block text-xs font-semibold mb-1">Sales Invoice</label><div class="flex space-x-4"><label class="flex items-center cursor-pointer"><input type="radio" name="siOption" value="yes" class="mr-1"> With SI</label><label class="flex items-center cursor-pointer"><input type="radio" name="siOption" value="no" checked class="mr-1"> No SI</label></div></div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div><label class="block text-xs font-semibold mb-1">Hauler *</label><input type="text" id="hauler" class="w-full px-3 py-2 border rounded-lg" required></div>
+                        <div><label class="block text-xs font-semibold mb-1">Plate Number *</label><input type="text" id="plateNo" class="w-full px-3 py-2 border rounded-lg uppercase" required onblur="verifyTruck()"><div id="truckStatus" class="mt-1 text-xs hidden"></div></div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div><label class="block text-xs font-semibold mb-1">Driver's Name *</label><input type="text" id="driverName" class="w-full px-3 py-2 border rounded-lg" required></div>
+                        <div><label class="block text-xs font-semibold mb-1">Contact Number *</label><input type="text" id="contactNumber" class="w-full px-3 py-2 border rounded-lg" required></div>
+                    </div>
+                    <button type="submit" id="submitBtn" class="w-full bg-blue-900 text-white py-3 rounded-lg font-semibold hover:bg-blue-800 disabled:opacity-50" disabled>Submit ATL</button>
+                </form>
+                <div id="atlMessage" class="mt-3 text-sm text-center hidden"></div>
+            </div>
+        </div>
+
+        <!-- HISTORY VIEW -->
+        <div id="historyView" class="hidden">
+            <h2 class="text-2xl font-bold mb-6"><i class="fas fa-history mr-2"></i>My ATL Records</h2>
+            <div id="atlHistory" class="space-y-3"></div>
+        </div>
+
+        <!-- REPORTS VIEW -->
+        <div id="reportsView" class="hidden">
+            <h2 class="text-2xl font-bold mb-6"><i class="fas fa-chart-bar mr-2"></i>My Reports</h2>
+            <div class="bg-white rounded-xl shadow-lg p-6 mb-6 no-print">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div><label class="text-xs font-semibold">Start Date</label><input type="date" id="startDate" class="w-full px-3 py-2 border rounded" onchange="loadClientReports()"></div>
+                    <div><label class="text-xs font-semibold">End Date</label><input type="date" id="endDate" class="w-full px-3 py-2 border rounded" onchange="loadClientReports()"></div>
+                    <div><label class="text-xs font-semibold">Status</label><select id="statusFilter" class="w-full px-3 py-2 border rounded" onchange="loadClientReports()"><option value="">All</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option><option value="dispatched">Ongoing</option><option value="pending">Pending</option><option value="approved">Approved</option></select></div>
+                    <div class="flex items-end space-x-2">
+                        <button onclick="clearClientFilters()" class="text-blue-600 text-sm">Clear</button>
+                        <button onclick="printClientReport()" class="bg-blue-600 text-white px-4 py-2 rounded text-sm"><i class="fas fa-print mr-1"></i>Print</button>
+                        <button onclick="exportClientCSV()" class="bg-green-600 text-white px-4 py-2 rounded text-sm"><i class="fas fa-download mr-1"></i>Export</button>
+                    </div>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6" id="reportSummaryCards"></div>
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                <table class="w-full text-sm">
+                    <thead class="bg-gray-50 border-b"><tr><th class="py-3 px-3 text-left">ATL Code</th><th class="py-3 px-3 text-left">SO #</th><th class="py-3 px-3 text-left">Plate</th><th class="py-3 px-3 text-left">Driver</th><th class="py-3 px-3 text-right">Volume</th><th class="py-3 px-3 text-center">SI</th><th class="py-3 px-3 text-center">Status</th><th class="py-3 px-3 text-left">Date</th></tr></thead>
+                    <tbody id="reportTableBody"><tr><td colspan="8" class="text-center py-8 text-gray-500">Loading...</td></tr></tbody>
+                </table></div>
+            </div>
+        </div>
+
+        <!-- Print Area -->
+        <div id="printArea" class="print-only">
+            <div style="text-align:center;margin-block-end:20px;"><h1 style="font-size:20px;font-weight:bold;">FuelTrak Logistics</h1><h2>Client ATL Report</h2><p id="printDate" style="font-size:12px;"></p></div>
+            <div id="printSummary" style="margin-block-end:20px;"></div>
+            <table><thead><tr><th>ATL Code</th><th>SO #</th><th>Plate</th><th>Driver</th><th>Volume</th><th>SI</th><th>Status</th><th>Date</th></tr></thead><tbody id="printTableBody"></tbody></table></div>
+        </div>
+
+        <!-- ATL Detail Modal -->
+        <div id="atlModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+            <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[80vh] overflow-y-auto p-6">
+                <div class="flex justify-between mb-4"><h3 class="text-lg font-bold">ATL Details</h3><button onclick="document.getElementById('atlModal').classList.add('hidden')" class="text-2xl">&times;</button></div>
+                <div id="atlDetail"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API = '/api';
+        const token = localStorage.getItem('fueltrak_token');
+        const user = JSON.parse(localStorage.getItem('fueltrak_user') || '{}');
+        if (!token || user.role !== 'client') window.location.href = '/';
+        document.getElementById('userInfo').textContent = `${user.email}`;
+        document.getElementById('welcomeDate').textContent = new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+        document.getElementById('scheduledDate').value = new Date().toISOString().split('T')[0];
+
+        let truckVerified = false, allClientATLs = [];
+
+        async function api(url, method = 'GET', body = null) {
+            const opts = { 
+                method: method, 
+                headers: { 
+                    'Authorization': 'Bearer ' + token, 
+                    'Content-Type': 'application/json' 
+                } 
+            };
+            if (body) {
+                opts.body = JSON.stringify(body);
+            }
+            
+            const response = await fetch(API + url, opts);
+            const data = await response.json();
+            return data;
+        }
+
+        function showView(view) {
+            ['dashboardView','submitView','historyView','reportsView'].forEach(v => document.getElementById(v).classList.add('hidden'));
+            document.getElementById(view + 'View').classList.remove('hidden');
+            if (view === 'dashboard') loadDashboard();
+            if (view === 'history') loadHistory();
+            if (view === 'reports') loadClientReports();
+        }
+
+        // ============ DASHBOARD ============
+        async function loadDashboard() {
+            const data = await api('/client/dashboard');
+            if (data.status === 'success') {
+                const s = data.data.stats;
+                document.getElementById('atlStats').innerHTML = `
+                    <div class="stat-card bg-gradient-to-br from-blue-400 to-blue-500 text-white rounded-xl shadow-lg p-5 text-center"><p class="text-sm opacity-90">Total</p><p class="text-3xl font-bold">${s.total}</p></div>
+                    <div class="stat-card bg-gradient-to-br from-green-400 to-green-500 text-white rounded-xl shadow-lg p-5 text-center"><p class="text-sm opacity-90">Dispatched</p><p class="text-3xl font-bold">${s.successful+s.dispatched||0}</p></div>
+                    <div class="stat-card bg-gradient-to-br from-yellow-400 to-yellow-500 text-white rounded-xl shadow-lg p-5 text-center"><p class="text-sm opacity-90">Pending</p><p class="text-3xl font-bold">${s.pending}</p></div>
+                    <div class="stat-card bg-gradient-to-br from-blue-400 to-blue-500 text-white rounded-xl shadow-lg p-5 text-center"><p class="text-sm opacity-90">Approved</p><p class="text-3xl font-bold">${s.approved}</p></div>
+                    <div class="stat-card bg-gradient-to-br from-red-400 to-red-500 text-white rounded-xl shadow-lg p-5 text-center"><p class="text-sm opacity-90">Failed/Cancelled</p><p class="text-3xl font-bold">${s.failed+s.cancelled||0}</p></div>
+                `;
+                const codes = data.data.recentATLs.slice(0, 5);
+                if (codes.length > 0) {
+                    document.getElementById('recentATLCodes').innerHTML = `<div class="bg-white rounded-xl shadow-lg p-6"><h3 class="font-semibold mb-3">📋 Recent ATL Codes</h3><div class="space-y-2">${codes.map(a => `<div class="flex justify-between items-center text-sm"><span class="font-mono font-bold text-blue-900">${a.atl_code||'N/A'}</span><span class="text-xs px-2 py-1 rounded ${a.status==='completed'?'bg-green-100 text-green-800':a.status==='dispatched'?'bg-orange-100 text-orange-800':'bg-gray-100'}">${a.status}</span></div>`).join('')}</div></div>`;
+                }
+            }
+        }
+
+        async function verifyTruck() {
+            const plate = document.getElementById('plateNo').value.toUpperCase();
+            const statusDiv = document.getElementById('truckStatus');
+            const submitBtn = document.getElementById('submitBtn');
+            const capacityHint = document.getElementById('capacityHint');
+            const volumeInput = document.getElementById('volume');
+            
+            if (!plate) { 
+                statusDiv.classList.add('hidden'); 
+                submitBtn.disabled = true; 
+                return; 
+            }
+            
+            try {
+                const data = await api('/client/verify-truck/' + encodeURIComponent(plate));
+                
+                if (data.status === 'success' && data.data) {
+                    const truck = data.data.truck;
+                    const canProceed = data.data.can_proceed;
+                    
+                    if (truck && truck.total_capacity) {
+                        capacityHint.textContent = 'Truck capacity: ' + Number(truck.total_capacity).toLocaleString() + ' L';
+                        volumeInput.max = truck.total_capacity;
+                    }
+                    
+                    truckVerified = canProceed;
+                    submitBtn.disabled = !canProceed;
+                    
+                    if (canProceed) {
+                        statusDiv.innerHTML = '<span class="text-green-600">✅ Truck verified</span>';
+                    } else {
+                        statusDiv.innerHTML = '<span class="text-red-600">❌ Documents expired</span>';
+                    }
+                    statusDiv.classList.remove('hidden');
+                    
+                    if (truck && truck.driver_name) document.getElementById('driverName').value = truck.driver_name;
+                    if (truck && truck.hauler_name) document.getElementById('hauler').value = truck.hauler_name;
+                } else {
+                    truckVerified = false;
+                    submitBtn.disabled = true;
+                    statusDiv.innerHTML = '<span class="text-red-600">❌ Truck not found</span>';
+                    statusDiv.classList.remove('hidden');
+                }
+            } catch (e) {
+                console.error('Verify truck error:', e);
+                truckVerified = false;
+                submitBtn.disabled = true;
+            }
+        }
+
+        // ============ SUBMIT ATL ============
+        async function submitATL(e) {
+            e.preventDefault();
+            const msg = document.getElementById('atlMessage');
+            const volume = parseFloat(document.getElementById('volume').value);
+            if (!truckVerified) { msg.textContent = 'Verify truck first'; msg.className = 'mt-3 text-sm text-red-600'; msg.classList.remove('hidden'); return; }
+            if (!volume || volume <= 0) { msg.textContent = 'Enter valid volume'; msg.className = 'mt-3 text-sm text-red-600'; msg.classList.remove('hidden'); return; }
+            const hasSI = document.querySelector('input[name="siOption"]:checked')?.value === 'yes';
+            try {
+                const res = await api('/client/submit-atl', 'POST', {
+                    company: document.getElementById('company').value,
+                    so_number: document.getElementById('soNumber').value,
+                    volume, scheduled_date: document.getElementById('scheduledDate').value,
+                    hauler: document.getElementById('hauler').value,
+                    plate_no: document.getElementById('plateNo').value.toUpperCase(),
+                    driver_name: document.getElementById('driverName').value,
+                    contact_number: document.getElementById('contactNumber').value,
+                    has_si: hasSI
+                });
+                if (data.status === 'success') {
+                    msg.innerHTML = `✅ Submitted!<br><span class="font-bold text-blue-900">Code: ${data.data.atl_code}</span>`;
+                    msg.className = 'mt-3 text-sm text-green-600 text-center';
+                    ['company','soNumber','volume','hauler','plateNo','driverName','contactNumber'].forEach(id => document.getElementById(id).value = '');
+                    document.querySelector('input[name="siOption"][value="no"]').checked = true;
+                    document.getElementById('submitBtn').disabled = true;
+                    truckVerified = false;
+                } else { msg.textContent = data.error; msg.className = 'mt-3 text-sm text-red-600'; }
+                msg.classList.remove('hidden');
+                setTimeout(() => msg.classList.add('hidden'), 5000);
+            } catch (e) { msg.textContent = 'Error'; msg.className = 'mt-3 text-sm text-red-600'; msg.classList.remove('hidden'); }
+        }
+
+        // ============ HISTORY ============
+        async function loadHistory() {
+            const data = await api('/client/dashboard');
+            if (data.status === 'success') {
+                document.getElementById('atlHistory').innerHTML = data.data.recentATLs.map(a => `
+                    <div class="bg-white rounded-lg shadow p-4">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <span class="font-mono font-bold text-blue-900 bg-blue-50 px-2 py-1 rounded text-xs">${a.atl_code||'N/A'}</span>
+                                <p class="font-bold text-lg mt-1">${a.plate_no}</p>
+                                <p class="text-sm">${a.company||''} | Vol: ${a.volume?Number(a.volume).toLocaleString()+'L':'N/A'} | ${a.driver_name}</p>
+                                <p class="text-xs">SI: ${a.has_si?'✅ With SI':'❌ No SI'} | ${a.so_number?'SO: '+a.so_number:''} | ${new Date(a.scheduled_date).toLocaleDateString()}</p>
+                            </div>
+                            <div class="text-right">
+                                <span class="px-3 py-1 rounded-full text-xs font-semibold ${a.status==='completed'?'bg-green-100 text-green-800':a.status==='dispatched'?'bg-orange-100 text-orange-800':a.status==='cancelled'?'bg-gray-200 text-gray-700':a.status==='approved'?'bg-blue-100 text-blue-800':'bg-yellow-100 text-yellow-800'}">${a.status.toUpperCase()}</span>
+                                <div class="mt-2"><button onclick="viewATL(${a.id})" class="text-blue-600 text-xs">View</button>${(a.status==='pending'||a.status==='approved')?` <button onclick="cancelATL(${a.id})" class="text-red-600 text-xs">Cancel</button>`:''}</div>
+                            </div>
+                        </div>
+                    </div>`).join('') || '<p class="text-center py-8 text-gray-500">No ATL records</p>';
+            }
+        }
+
+        async function viewATL(id) {
+            const data = await api(`/client/atl/${id}`);
+            if (data.status === 'success') {
+                const a = data.data;
+                document.getElementById('atlDetail').innerHTML = `
+                    <div class="text-center mb-4"><p class="text-2xl font-mono font-bold text-blue-900">${a.atl_code||'N/A'}</p></div>
+                    <div class="grid grid-cols-2 gap-3 text-sm">
+                        <div><p class="text-xs text-gray-500">Company</p><p class="font-semibold">${a.company||'N/A'}</p></div>
+                        <div><p class="text-xs text-gray-500">SO Number</p><p>${a.so_number||'N/A'}</p></div>
+                        <div><p class="text-xs text-gray-500">Status</p><span class="px-2 py-1 rounded text-xs font-semibold">${a.status}</span></div>
+                        <div><p class="text-xs text-gray-500">SI</p><p>${a.has_si?'✅ With SI':'❌ No SI'}</p></div>
+                        <div><p class="text-xs text-gray-500">Volume</p><p>${a.volume?Number(a.volume).toLocaleString()+'L':'N/A'}</p></div>
+                        <div><p class="text-xs text-gray-500">Plate No</p><p class="font-semibold">${a.plate_no}</p></div>
+                        <div><p class="text-xs text-gray-500">Driver</p><p>${a.driver_name||'N/A'}</p></div>
+                        <div><p class="text-xs text-gray-500">Hauler</p><p>${a.hauler||'N/A'}</p></div>
+                        <div><p class="text-xs text-gray-500">Scheduled</p><p>${a.scheduled_date}</p></div>
+                        <div><p class="text-xs text-gray-500">Remarks</p><p>${a.remarks||'None'}</p></div>
+                    </div>`;
+                document.getElementById('atlModal').classList.remove('hidden');
+            }
+        }
+
+        async function cancelATL(id) {
+            if (!confirm('Cancel this ATL?')) return;
+            const reason = prompt('Reason:');
+            if (!reason) return;
+            await api(`/client/cancel-atl/${id}`, 'POST', { reason });
+            loadHistory();
+            loadDashboard();
+        }
+
+        // ============ REPORTS ============
+        async function loadClientReports() {
+            const params = new URLSearchParams();
+            const start = document.getElementById('startDate').value;
+            const end = document.getElementById('endDate').value;
+            const status = document.getElementById('statusFilter').value;
+            if (start) params.append('startDate', start);
+            if (end) params.append('endDate', end);
+            if (status) params.append('status', status);
+            const data = await api('/client/dashboard?' + params.toString());
+            if (data.status === 'success') {
+                allClientATLs = data.data.recentATLs;
+                let filtered = allClientATLs;
+                if (status) filtered = filtered.filter(a => a.status === status);
+                if (start) filtered = filtered.filter(a => new Date(a.scheduled_date) >= new Date(start));
+                if (end) filtered = filtered.filter(a => new Date(a.scheduled_date) <= new Date(end));
+                const totalVol = filtered.reduce((s,a) => s + (Number(a.volume)||0), 0);
+                document.getElementById('reportSummaryCards').innerHTML = `
+                    <div class="bg-white rounded-xl shadow p-4 text-center"><p class="text-2xl font-bold">${filtered.length}</p><p class="text-xs">Records</p></div>
+                    <div class="bg-green-50 rounded-xl shadow p-4 text-center"><p class="text-2xl font-bold text-green-700">${filtered.filter(a=>a.status==='completed'||a.status==='dispatched').length}</p><p class="text-xs">Dispatched</p></div>
+                    <div class="bg-red-50 rounded-xl shadow p-4 text-center"><p class="text-2xl font-bold text-red-700">${filtered.filter(a=>a.status==='cancelled'||a.status==='rejected').length}</p><p class="text-xs">Failed</p></div>
+                    <div class="bg-yellow-50 rounded-xl shadow p-4 text-center"><p class="text-2xl font-bold text-yellow-700">${filtered.filter(a=>a.status==='pending').length}</p><p class="text-xs">Pending</p></div>
+                    <div class="bg-blue-50 rounded-xl shadow p-4 text-center"><p class="text-2xl font-bold text-blue-700">${totalVol.toLocaleString()}L</p><p class="text-xs">Total Volume</p></div>`;
+                document.getElementById('reportTableBody').innerHTML = filtered.map(a => `<tr class="border-b"><td class="py-2 px-3 font-mono text-xs font-bold text-blue-900">${a.atl_code||'-'}</td><td class="py-2 px-3 text-xs">${a.so_number||'-'}</td><td class="py-2 px-3">${a.plate_no}</td><td class="py-2 px-3">${a.driver_name||'-'}</td><td class="py-2 px-3 text-right">${a.volume?Number(a.volume).toLocaleString():'-'}</td><td class="py-2 px-3 text-center">${a.has_si?'✅':'❌'}</td><td class="py-2 px-3 text-center"><span class="px-2 py-1 rounded text-xs ${a.status==='completed'?'bg-green-100 text-green-800':a.status==='cancelled'?'bg-red-100 text-red-800':'bg-yellow-100 text-yellow-800'}">${a.status}</span></td><td class="py-2 px-3 text-xs">${new Date(a.scheduled_date).toLocaleDateString()}</td></tr>`).join('') || '<tr><td colspan="8" class="text-center py-8 text-gray-500">No records</td></tr>';
+            }
+        }
+
+        function clearClientFilters() { ['startDate','endDate','statusFilter'].forEach(id => document.getElementById(id).value = ''); loadClientReports(); }
+        function printClientReport() { document.getElementById('printDate').textContent = `Report Period: ${document.getElementById('startDate').value||'All'} - ${document.getElementById('endDate').value||'Today'}`; document.getElementById('printTableBody').innerHTML = document.getElementById('reportTableBody').innerHTML; window.print(); }
+        function exportClientCSV() {
+            let csv = 'ATL Code,SO#,Plate,Driver,Volume,SI,Status,Date\n';
+            document.querySelectorAll('#reportTableBody tr').forEach(row => { if(row.cells.length>1){ const cells=row.cells; csv+=`"${cells[0].textContent}","${cells[1].textContent}","${cells[2].textContent}","${cells[3].textContent}","${cells[4].textContent}","${cells[5].textContent}","${cells[6].textContent}","${cells[7].textContent}"\n`; }});
+            const blob=new Blob([csv],{type:'text/csv'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`client-report-${new Date().toISOString().split('T')[0]}.csv`; a.click();
+        }
+
+        document.getElementById('volume').addEventListener('input', function() {
+            const submitBtn = document.getElementById('submitBtn');
+            const volume = parseFloat(this.value);
+            const max = parseFloat(this.max);
+            
+            if (truckVerified && volume > 0 && volume <= max) {
+                submitBtn.disabled = false;
+            } else if (truckVerified && (volume <= 0 || volume > max)) {
+                submitBtn.disabled = true;
+            }
+        });
+
+        function logout() { localStorage.clear(); window.location.href = '/'; }
+        loadDashboard();
+    </script>
+<nav class="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg z-50 md:hidden"><div class="flex justify-around py-1"><button onclick="showView('new')" class="flex flex-col items-center text-blue-900 px-1 py-1"><i class="fas fa-plus-circle text-base"></i><span class="text-[8px]">New</span></button><button onclick="showView('history')" class="flex flex-col items-center text-gray-600 px-1 py-1"><i class="fas fa-history text-base"></i><span class="text-[8px]">History</span></button><button onclick="showView('reports')" class="flex flex-col items-center text-gray-600 px-1 py-1"><i class="fas fa-chart-bar text-base"></i><span class="text-[8px]">Reports</span></button><button onclick="logout()" class="flex flex-col items-center text-red-500 px-1 py-1"><i class="fas fa-sign-out-alt text-base"></i><span class="text-[8px]">Logout</span></button></div></nav><script>function toggleMenu(){document.getElementById("mobileMenu").classList.toggle("hidden")};document.getElementById("userInfoMob").textContent=document.getElementById("userInfo").textContent;</script></body>
+</html>

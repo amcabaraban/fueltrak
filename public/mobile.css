@@ -1,0 +1,87 @@
+/* ========== MOBILE RESPONSIVE STYLES ========== */
+
+/* Hide desktop elements on mobile (under 768px) */
+@media (max-width: 767px) {
+    .desktop-only { display: none !important; }
+    .desktop-inline { display: none !important; }
+    .desktop-flex { display: none !important; }
+}
+
+/* Show mobile elements only on small screens */
+@media (min-width: 768px) {
+    .mobile-only { display: none !important; }
+    .mobile-inline { display: none !important; }
+    .mobile-flex { display: none !important; }
+}
+
+/* Compact header for mobile */
+@media (max-width: 767px) {
+    .nav-brand { font-size: 0.75rem !important; }
+    .nav-icon { font-size: 1rem !important; padding: 0.25rem !important; }
+    .nav-btn { font-size: 0.65rem !important; padding: 0.25rem 0.5rem !important; }
+    .nav-user { font-size: 0.6rem !important; max-inline-size: 70px !important; padding: 0.15rem 0.4rem !important; }
+    .nav-container { padding: 0.4rem 0.5rem !important; }
+    
+    /* Body padding for fixed bottom nav */
+    body.has-bottom-nav { padding-block-end: 50px !important; }
+    
+    /* Full-width cards on mobile */
+    .card-mobile-full { inline-size: 100% !important; margin-inline-start: 0 !important; margin-inline-end: 0 !important; }
+    
+    /* Smaller headings */
+    .heading-mobile { font-size: 1rem !important; }
+    
+    /* Stack grid columns */
+    .grid-stack-mobile { grid-template-columns: 1fr !important; }
+    .grid-2col-mobile { grid-template-columns: repeat(2, 1fr) !important; }
+    
+    /* Table scrolling */
+    .table-responsive { overflow-x: auto !important; -webkit-overflow-scrolling: touch !important; }
+    .table-responsive table { min-inline-size: 500px !important; font-size: 0.7rem !important; }
+    
+    /* Form inputs full width */
+    .form-input-mobile { inline-size: 100% !important; font-size: 0.85rem !important; }
+    
+    /* Smaller stat cards */
+    .stat-card-mobile { padding: 0.75rem !important; }
+    .stat-value-mobile { font-size: 1.25rem !important; }
+    .stat-label-mobile { font-size: 0.65rem !important; }
+    
+    /* Modal full screen on mobile */
+    .modal-mobile { margin: 0.5rem !important; max-block-size: 90vh !important; overflow-y: auto !important; padding: 1rem !important; }
+    
+    /* Bottom navigation */
+    .bottom-nav { 
+        position: fixed; inset-block-end: 0; inset-inline-start: 0; inset-inline-end: 0; 
+        background: white; border-block-start: 1px solid #e5e7eb; 
+        z-index: 50; display: flex; justify-content: space-around; 
+        padding: 0.25rem 0;
+    }
+    .bottom-nav button { 
+        display: flex; flex-direction: column; align-items: center; 
+        padding: 0.25rem; font-size: 0.55rem; 
+    }
+    .bottom-nav i { font-size: 1rem; }
+}
+
+/* Tablet adjustments (768px - 1023px) */
+@media (min-width: 768px) and (max-width: 1023px) {
+    .tablet-only { display: block !important; }
+    .grid-3col-tablet { grid-template-columns: repeat(3, 1fr) !important; }
+    .tablet-text-sm { font-size: 0.8rem !important; }
+}
+
+/* Hamburger menu */
+.hamburger-menu { display: none; }
+@media (max-width: 767px) {
+    .hamburger-menu.show { display: block !important; }
+}
+
+/* General responsive helpers */
+.responsive-img { max-inline-size: 100%; block-size: auto; }
+.truncate-mobile { max-inline-size: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Touch-friendly buttons */
+@media (max-width: 767px) {
+    .touch-btn { min-block-size: 36px; min-inline-size: 36px; }
+}
