@@ -138,6 +138,7 @@
         document.getElementById('userInfo').textContent = `${user.email}`;
         document.getElementById('welcomeDate').textContent = new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
         document.getElementById('scheduledDate').value = new Date().toISOString().split('T')[0];
+        document.getElementById('atlMessage').classList.add('hidden');
 
         let truckVerified = false, allClientATLs = [];
 
@@ -372,6 +373,7 @@
     </script>
 </body>
 </html>
+
 
 
 
