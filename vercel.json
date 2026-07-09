@@ -12,6 +12,6 @@
     { "src": "/client", "dest": "/api/auth.js" },
     { "src": "/reports", "dest": "/api/auth.js" },
     { "src": "/", "dest": "/api/auth.js" },
-    { "src": "/(.*)", "dest": "/public/\" }
+    { "src": "/(.*)", "dest": "/public/" }
   ]
 }
