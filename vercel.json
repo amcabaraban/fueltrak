@@ -1,9 +1,14 @@
 {
   "version": 2,
   "builds": [
-    { "src": "api/auth.js", "use": "@vercel/node" }
+    { "src": "api/auth.js", "use": "@vercel/node" },
+    { "src": "public/**", "use": "@vercel/static" }
   ],
   "routes": [
+    { "src": "/api/(.*)", "dest": "/api/auth.js" },
+    { "src": "/mobile.css", "dest": "/public/mobile.css" },
+    { "src": "/favicon.ico", "dest": "/public/favicon.ico" },
+    { "src": "/(.*\\.(css|js|png|jpg|svg|ico|woff2))", "dest": "/public/$1" },
     { "src": "/(.*)", "dest": "/api/auth.js" }
   ]
 }
