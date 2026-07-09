@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -21,6 +21,7 @@
         }
         .print-only { display: none; }
         @media print { .print-only { display: block; } }
+        @media (max-inline-size:640px){.stat-card h3{font-size:.875rem}.stat-card p{font-size:.75rem}table{font-size:.75rem}table th,table td{padding:.5rem .25rem}}.table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;max-inline-size:100%}
     </style>
 <link rel="stylesheet" href="/mobile.css">
 </head>
@@ -369,5 +370,5 @@
         function logout() { localStorage.clear(); window.location.href = '/'; }
         loadDashboard();
     </script>
-<nav class="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg z-50 md:hidden"><div class="flex justify-around py-1"><button onclick="showView('new')" class="flex flex-col items-center text-blue-900 px-1 py-1"><i class="fas fa-plus-circle text-base"></i><span class="text-[8px]">New</span></button><button onclick="showView('history')" class="flex flex-col items-center text-gray-600 px-1 py-1"><i class="fas fa-history text-base"></i><span class="text-[8px]">History</span></button><button onclick="showView('reports')" class="flex flex-col items-center text-gray-600 px-1 py-1"><i class="fas fa-chart-bar text-base"></i><span class="text-[8px]">Reports</span></button><button onclick="logout()" class="flex flex-col items-center text-red-500 px-1 py-1"><i class="fas fa-sign-out-alt text-base"></i><span class="text-[8px]">Logout</span></button></div></nav><script>function toggleMenu(){document.getElementById("mobileMenu").classList.toggle("hidden")};document.getElementById("userInfoMob").textContent=document.getElementById("userInfo").textContent;</script></body>
+<script>;document.getElementById("userInfoMob").textContent=document.getElementById("userInfo").textContent;</script></body>
 </html>
