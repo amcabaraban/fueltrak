@@ -237,7 +237,7 @@
                 async function showTruckDocs(filter) {
             var data = await api('/trucks/all');
             if (data.status !== 'success') return;
-            var trucks = data.data;
+            var trucks = data.data || data;
             var result = [];
             trucks.forEach(function(t) {
                 var docs = t.documents || [];
