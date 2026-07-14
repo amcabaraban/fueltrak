@@ -296,9 +296,9 @@ app.post('/api/dispatch/start-loading/:id', authenticate, authorize('dispatcher'
 
 app.post('/api/dispatch/complete-loading/:id', authenticate, authorize('dispatcher', 'management'), async (req, res) => {
   try {
-    const { actual_volume, remarks, printed_wc } = req.body;
-    await pool.execute("UPDATE authority_to_load SET status = 'completed', completed_date = NOW(), completed_by = ?, actual_volume = ?, remarks = ?, printed_wc = ? WHERE id = ?",
-      [req.user.id, actual_volume || null, remarks || 'Loading completed', printed_wc || null, req.params.id]);
+    const { actual_volume, remarks, printed_wc, tps_series } = req.body;
+    await pool.execute("UPDATE authority_to_load SET status = 'completed', completed_date = NOW(), completed_by = ?, actual_volume = ?, remarks = ?, printed_wc = ?, tps_start = ? WHERE id = ?",
+      [req.user.id, actual_volume || null, remarks || 'Loading completed', printed_wc || null, tps_series || null, req.params.id]);
     const [updated] = await pool.execute('SELECT * FROM authority_to_load WHERE id = ?', [req.params.id]);
     res.json({ status: 'success', data: updated[0] });
   } catch (error) { res.status(400).json({ error: error.message }); }

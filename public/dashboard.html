@@ -173,7 +173,16 @@
 
         async function startLoading(id) { if (confirm('Start loading?')) { await api('/dispatch/start-loading/'+id, 'POST'); loadApproved(); loadDashboard(); } }
         async function cancelLoading(id) { var reason = prompt('Reason:'); if (!reason) return; await api('/dispatch/cancel-loading/'+id, 'POST', { reason: reason }); loadApproved(); loadDashboard(); }
-        async function completeLoading(id) { var vol = prompt('Actual volume (L):'); if (!vol) return; var wc = prompt('Printed WC (12 digits, blank if none):'); var wcClean = wc ? wc.replace(/\\D/g,'').substring(0,12) : null; await api('/dispatch/complete-loading/'+id, 'POST', { actual_volume: vol, printed_wc: wcClean }); loadApproved(); loadDashboard(); }
+        async function completeLoading(id) { 
+            var vol = prompt('Actual volume (L):'); 
+            if (!vol) return; 
+            var wc = prompt('Printed WC (12 digits, blank if none):'); 
+            var wcClean = wc ? wc.replace(/\\D/g,'').substring(0,12) : null; 
+            var tps = prompt('TPS Series (e.g., 001-050 or starting number):'); 
+            await api('/dispatch/complete-loading/'+id, 'POST', { actual_volume: vol, printed_wc: wcClean, tps_series: tps }); 
+            loadApproved(); 
+            loadDashboard(); 
+        }
 
         async function editLoading(id) {
             var ongoingData = await api('/dispatch/ongoing-loading');
