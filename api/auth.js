@@ -1,4 +1,7 @@
 const express = require('express');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+const compression = require('compression');
 const mysql = require('mysql2/promise');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
@@ -8,6 +11,15 @@ const app = express();
 const otpCache = new NodeCache({ stdTTL: 600 });
 
 app.use(express.json());
+app.use(helmet({ contentSecurityPolicy: false }));
+app.use(compression());
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: { error: "Too many requests" }
+});
+app.use("/api/", limiter);
 
 const pool = mysql.createPool({
   host: process.env.DB_HOST,
