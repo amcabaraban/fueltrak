@@ -185,7 +185,7 @@
                 { label:'Valid Docs',value:t.withValidDocs,sub:'All documents current',border:'border-green-500' },
                 { label:'Expired Docs',value:t.withExpiredDocs,sub:'Needs attention',border:'border-red-500' },
                 { label:'Fleet Capacity',value:(t.totalCapacity/1000).toFixed(1)+'k L',sub:'Total capacity',border:'border-purple-500' }
-            ].map(c => `<div class="stat-card bg-white rounded-xl shadow-lg p-5 cursor-pointer hover:shadow-xl transition border-l-4 ${c.border}"><p class="text-gray-500 text-sm">${c.label}</p><p class="text-3xl font-bold">${c.value}</p><p class="text-xs text-gray-400">${c.sub}</p></div>`).join('');
+            ].map(c => `<div class="stat-card bg-white rounded-xl shadow-lg p-5 cursor-pointer hover:shadow-xl transition" onclick="showDocDetails('', '')" border-l-4 ${c.border}"><p class="text-gray-500 text-sm">${c.label}</p><p class="text-3xl font-bold">${c.value}</p><p class="text-xs text-gray-400">${c.sub}</p></div>`).join('');
             const docTypes = [{key:'lto',label:'LTO Registration'},{key:'fire',label:'Fire Permit'},{key:'dost',label:'DOST Calibration'}];
             document.getElementById('docStats').innerHTML = docTypes.map(d => { const data=t.documentBreakdown[d.key]; const total=data.valid+data.expired+data.missing; const pct=total>0?Math.round((data.valid/total)*100):0; return `<div class="stat-card bg-white rounded-xl shadow-lg p-5"><div class="flex justify-between mb-2"><span class="font-semibold">${d.label}</span><span class="text-sm font-bold px-2 py-1 rounded-full ${pct>=80?'bg-green-100 text-green-700':pct>=50?'bg-yellow-100 text-yellow-700':'bg-red-100 text-red-700'}">${pct}%</span></div><div class="w-full bg-gray-200 rounded-full h-3 mb-2"><div class="progress-bar h-3 rounded-full ${pct>=80?'bg-green-500':pct>=50?'bg-yellow-500':'bg-red-500'}" style="inline-size:${pct}%"></div></div><div class="flex justify-between text-xs text-gray-500"><span>✅ ${data.valid}</span><span>❌ ${data.expired}</span><span>➖ ${data.missing}</span></div></div>` }).join('');
         }
@@ -338,7 +338,45 @@
         async function toggleClient(id) { await api(`/clients/${id}/toggle-status`,'PATCH'); loadClients(); }
         async function deleteClient(id,email) { if(!confirm(`Delete ${email}?`))return; await api(`/clients/${id}`,'DELETE'); loadClients(); }
 
-        function logout() { localStorage.clear(); window.location.href = '/'; }
+        async function showDocDetails(docType, docLabel) {
+  document.getElementById('docModalTitle').textContent = docLabel + ' - Document Status';
+  document.getElementById('docDetailModal').classList.remove('hidden');
+  
+  const data = await api('/trucks/all');
+  if (data.status !== 'success') return;
+  
+  var filtered = data.data.filter(function(t) {
+    var docs = t.documents || [];
+    var doc = docs.find(function(d) { return d.document_type === docType; });
+    return !doc || new Date(doc.expiry_date) < new Date();
+  }).map(function(t) {
+    var docs = t.documents || [];
+    var doc = docs.find(function(d) { return d.document_type === docType; });
+    return {
+      plate_no: t.plate_no,
+      make: t.make,
+      driver_name: t.driver_name,
+      hauler_name: t.hauler_name,
+      doc_status: doc ? (new Date(doc.expiry_date) < new Date() ? 'Expired' : 'Valid') : 'Missing',
+      doc_expiry: doc ? doc.expiry_date : null
+    };
+  });
+
+  window._docFiltered = filtered;
+  
+  var html = '<div class="mb-4 flex gap-2 no-print">';
+  html += '<input type="text" id="docFilterInput" placeholder="Search trucks..." class="flex-1 px-3 py-2 border rounded text-sm" oninput="filterDocTrucks()">';
+  html += '<select id="docStatusFilter" class="px-3 py-2 border rounded text-sm" onchange="filterDocTrucks()"><option value="all">All</option><option value="expired">Expired</option><option value="missing">Missing</option></select>';
+  html += '</div>';
+  html += '<div id="docPrintArea"><div class="hidden print-only text-center mb-4"><h2 class="text-xl font-bold">FuelTrak - ' + docLabel + ' Report</h2><p class="text-sm text-gray-500" id="docPrintDate"></p></div>';
+  html += '<div class="table-wrap"><table class="w-full text-sm bg-white rounded-lg shadow" id="docTruckTable"><thead class="bg-gray-50"><tr><th class="py-2 px-3 text-left">Plate</th><th class="py-2 px-3 text-left">Make</th><th class="py-2 px-3 text-left">Driver</th><th class="py-2 px-3 text-left">Hauler</th><th class="py-2 px-3 text-left">Status</th><th class="py-2 px-3 text-left">Expiry</th></tr></thead><tbody></tbody></table></div></div>';
+  html += '<p class="text-xs text-gray-500 mt-2">Showing ' + filtered.length + ' truck(s)</p>';
+  
+  document.getElementById('docDetailContent').innerHTML = html;
+  renderDocTrucks(filtered);
+}
+
+function logout() { localStorage.clear(); window.location.href = '/'; }
         loadDashboard();
     </script>
 <div id="docDetailModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"><div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[85vh] overflow-y-auto p-4 md:p-6"><div class="flex justify-between items-center mb-4"><h3 class="text-lg font-bold" id="docModalTitle">Document Details</h3><div class="flex space-x-2 no-print"><button onclick="printDocList()" class="bg-blue-600 text-white px-3 py-1 rounded text-sm"><i class="fas fa-print mr-1"></i>Print</button><button onclick="document.getElementById('docDetailModal').classList.add('hidden')" class="text-2xl">&times;</button></div></div><div id="docDetailContent"></div></div></div>
