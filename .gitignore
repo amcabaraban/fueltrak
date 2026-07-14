@@ -1,6 +1,9 @@
-﻿node_modules/
+node_modules
 .env
-logs/
-uploads/
-.vercel
-.vercel
+uploads
+logs
+*.log
+add-column.js
+add-wc*.js
+step*.js
+fix-*.js
