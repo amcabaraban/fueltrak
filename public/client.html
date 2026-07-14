@@ -264,7 +264,7 @@
                     if (truck && truck.driver_name) document.getElementById('driverName').value = truck.driver_name;
                     if (truck && truck.hauler_name) document.getElementById('hauler').value = truck.hauler_name;
                 } else {
-                    truckVerified = false;
+                    truckVerified = false; msg.classList.add('hidden');
                     submitBtn.disabled = true;
                     statusDiv.innerHTML = '<span class="text-red-600">? Truck not found</span>';
                     statusDiv.classList.remove('hidden');
