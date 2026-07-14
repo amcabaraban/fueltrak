@@ -236,25 +236,39 @@
         async function deleteClient(id, email) { if (!confirm('Delete ' + email + '?')) return; await api('/clients/'+id, 'DELETE'); loadClients(); }
 
         async function showTruckDocs(filter) {
-            console.log('showTruckDocs called with filter:', filter);
-            var data = await api('/trucks/all');
-            console.log('API response:', data);
-            if (data.status !== 'success') return;
-            var trucks = data.data || data;
-            var result = [];
-            trucks.forEach(function(t) {
-                var docs = t.documents || [];
-                var allValid = ['lto_registration','fire_permit','dost_calibration'].every(function(type) {
-                    return docs.find(function(d) { return d.document_type === type && new Date(d.expiry_date) >= new Date(); });
-                });
-                if (filter === 'validDocs' && allValid) result.push(t);
-                if (filter === 'expiredDocs' && !allValid) result.push(t);
-            });
-            var msg = filter === 'validDocs' ? 'Trucks with ALL valid documents' : 'Trucks with expired/missing documents';
-            var list = result.map(function(t) { return t.plate_no + ' - ' + t.make + ' (' + t.driver_name + ')'; }).join('\n');
-            alert(msg + ':\n\n' + (list || 'None'));
+          var data = await api('/trucks/all');
+          if (data.status !== 'success') return;
+          var trucks = data.data || data;
+          var title = filter === 'validDocs' ? 'Trucks with ALL Valid Documents' : 'Trucks with Expired/Missing Documents';
+          document.getElementById('docModalTitle').textContent = title;
+          var result = [];
+          trucks.forEach(function(t) {
+            var docs = t.documents || [];
+            var lto = docs.find(function(d){return d.document_type==='lto_registration';});
+            var fire = docs.find(function(d){return d.document_type==='fire_permit';});
+            var dost = docs.find(function(d){return d.document_type==='dost_calibration';});
+            var allValid = lto && fire && dost && new Date(lto.expiry_date) >= new Date() && new Date(fire.expiry_date) >= new Date() && new Date(dost.expiry_date) >= new Date();
+            if ((filter === 'validDocs' && allValid) || (filter === 'expiredDocs' && !allValid)) {
+              result.push({plate_no:t.plate_no,make:t.make,driver:t.driver_name,lto:lto,fire:fire,dost:dost});
+            }
+          });
+          var html = '<div class="table-wrap"><table class="w-full text-sm"><thead class="bg-gray-50"><tr><th class="py-2 px-2 text-left">Plate</th><th class="py-2 px-2 text-left">Make</th><th class="py-2 px-2 text-left">Driver</th><th class="py-2 px-2 text-left">LTO</th><th class="py-2 px-2 text-left">Fire</th><th class="py-2 px-2 text-left">DOST</th></tr></thead><tbody>';
+          result.forEach(function(t) {
+            html += '<tr class="border-b">';
+            html += '<td class="py-2 px-2 font-semibold">'+t.plate_no+'</td>';
+            html += '<td class="py-2 px-2">'+t.make+'</td>';
+            html += '<td class="py-2 px-2">'+(t.driver||'-')+'</td>';
+            html += '<td class="py-2 px-2">'+(t.lto?new Date(t.lto.expiry_date).toLocaleDateString()+' ('+(new Date(t.lto.expiry_date)>=new Date()?'Valid':'Expired')+')':'Missing')+'</td>';
+            html += '<td class="py-2 px-2">'+(t.fire?new Date(t.fire.expiry_date).toLocaleDateString()+' ('+(new Date(t.fire.expiry_date)>=new Date()?'Valid':'Expired')+')':'Missing')+'</td>';
+            html += '<td class="py-2 px-2">'+(t.dost?new Date(t.dost.expiry_date).toLocaleDateString()+' ('+(new Date(t.dost.expiry_date)>=new Date()?'Valid':'Expired')+')':'Missing')+'</td>';
+            html += '</tr>';
+          });
+          html += '</tbody></table></div>';
+          if (result.length === 0) html = '<p class="text-center py-8 text-gray-500">No trucks found</p>';
+          document.getElementById('docDetailContent').innerHTML = html;
+          document.getElementById('docDetailModal').classList.remove('hidden');
         }
-        
+                
         function logout() { localStorage.clear(); window.location.href = '/'; }
         loadDashboard();
     </script>
