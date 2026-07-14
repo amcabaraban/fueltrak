@@ -252,8 +252,45 @@
             alert(msg + ':\n\n' + (list || 'None'));
         }
 
+        
+        async function showTruckDocs(filter) {
+          var data = await api('/trucks/all');
+          if (data.status !== 'success') return;
+          var trucks = data.data;
+          var title = filter === 'valid' ? 'Trucks with ALL Valid Documents' : 'Trucks with Expired/Missing Documents';
+          document.getElementById('docModalTitle').textContent = title;
+          var result = [];
+          trucks.forEach(function(t) {
+            var docs = t.documents || [];
+            var lto = docs.find(function(d){return d.document_type==="lto_registration";});
+            var fire = docs.find(function(d){return d.document_type==="fire_permit";});
+            var dost = docs.find(function(d){return d.document_type==="dost_calibration";});
+            var allValid = lto && fire && dost && new Date(lto.expiry_date) >= new Date() && new Date(fire.expiry_date) >= new Date() && new Date(dost.expiry_date) >= new Date();
+            if ((filter === 'valid' && allValid) || (filter === 'expired' && !allValid)) {
+              result.push({plate_no:t.plate_no,make:t.make,driver:t.driver_name,hauler:t.hauler_name,lto:lto,fire:fire,dost:dost,allValid:allValid});
+            }
+          });
+          var html = '<div class="table-wrap"><table class="w-full text-sm"><thead class="bg-gray-50"><tr><th class="py-2 px-2 text-left">Plate</th><th class="py-2 px-2 text-left">Make</th><th class="py-2 px-2 text-left">Driver</th><th class="py-2 px-2 text-left">LTO</th><th class="py-2 px-2 text-left">Fire</th><th class="py-2 px-2 text-left">DOST</th></tr></thead><tbody>';
+          result.forEach(function(t) {
+            html += '<tr class="border-b">';
+            html += '<td class="py-2 px-2 font-semibold">'+t.plate_no+'</td>';
+            html += '<td class="py-2 px-2">'+t.make+'</td>';
+            html += '<td class="py-2 px-2">'+(t.driver||'-')+'</td>';
+            html += '<td class="py-2 px-2">'+(t.lto?new Date(t.lto.expiry_date).toLocaleDateString()+' ('+(new Date(t.lto.expiry_date)>=new Date()?'Valid':'Expired')+')':'Missing')+'</td>';
+            html += '<td class="py-2 px-2">'+(t.fire?new Date(t.fire.expiry_date).toLocaleDateString()+' ('+(new Date(t.fire.expiry_date)>=new Date()?'Valid':'Expired')+')':'Missing')+'</td>';
+            html += '<td class="py-2 px-2">'+(t.dost?new Date(t.dost.expiry_date).toLocaleDateString()+' ('+(new Date(t.dost.expiry_date)>=new Date()?'Valid':'Expired')+')':'Missing')+'</td>';
+            html += '</tr>';
+          });
+          html += "</tbody></table></div>";
+          if (result.length === 0) html = "<p class=\"text-center py-8 text-gray-500\">No trucks found</p>";
+          document.getElementById('docDetailContent').innerHTML = html;
+          document.getElementById('docDetailModal').classList.remove('hidden');
+        }
+
         function logout() { localStorage.clear(); window.location.href = '/'; }
         loadDashboard();
     </script>
+
+<div id="docDetailModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"><div class="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[80vh] overflow-y-auto p-4 md:p-6"><div class="flex justify-between items-center mb-4"><h3 class="text-lg font-bold" id="docModalTitle">Truck Documents</h3><button onclick="document.getElementById('docDetailModal').classList.add('hidden')" class="text-2xl no-print">&times;</button></div><div id="docDetailContent"></div></div></div>
 </body>
 </html>
