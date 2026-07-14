@@ -13,8 +13,8 @@
         .progress-bar { transition: width 0.5s ease; }
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
         .pulse { animation: pulse 2s infinite; }
-        .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; max-width: 100%; }
-        @media (max-width: 640px) { .stat-card h3 { font-size: .875rem; } table { font-size: .75rem; } table th, table td { padding: .5rem .25rem; } }
+        .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; max-inline-size: 100%; }
+        @media (max-inline-size: 640px) { .stat-card h3 { font-size: .875rem; } table { font-size: .75rem; } table th, table td { padding: .5rem .25rem; } }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen pb-20 md:pb-0">
@@ -133,16 +133,16 @@
             ].map(function(c) { return '<div class="stat-card bg-gradient-to-br '+c.gradient+' rounded-xl shadow-lg p-3 md:p-5 text-white"><p class="text-xs md:text-sm opacity-90">'+c.label+'</p><p class="text-xl md:text-3xl font-bold mt-1">'+c.value+'</p></div>'; }).join('');
             document.getElementById('fleetStats').innerHTML = [
                 { label:'Total Trucks',value:t.total,sub:t.active+' active, '+t.inactive+' inactive',border:'border-blue-500' },
-                { label:'Valid Docs',value:t.withValidDocs,sub:'Documents current',border:'border-green-500' },
-                { label:'Expired Docs',value:t.withExpiredDocs,sub:'Needs attention',border:'border-red-500' },
+                { label:'Valid Docs',value:t.withValidDocs,sub:'Click to view',border:'border-green-500',click:'validDocs' },
+                { label:'Expired Docs',value:t.withExpiredDocs,sub:'Click to view',border:'border-red-500',click:'expiredDocs' },
                 { label:'Capacity',value:(t.totalCapacity/1000).toFixed(1)+'k L',sub:'Total fleet',border:'border-purple-500' }
-            ].map(function(c) { return '<div class="stat-card bg-white rounded-xl shadow-lg p-3 md:p-5 border-l-4 '+c.border+'"><p class="text-gray-500 text-xs md:text-sm">'+c.label+'</p><p class="text-xl md:text-3xl font-bold">'+c.value+'</p><p class="text-xs text-gray-400">'+c.sub+'</p></div>'; }).join('');
+                        ].map(function(c) { return '<div class="stat-card bg-white rounded-xl shadow-lg p-3 md:p-5 border-l-4 '+c.border+'"'+(c.click?' onclick="showTruckDocs(\''+c.click+'\')" style="cursor:pointer"':'')+'><p class="text-gray-500 text-xs md:text-sm">'+c.label+'</p><p class="text-xl md:text-3xl font-bold">'+c.value+'</p><p class="text-xs text-gray-400">'+c.sub+'</p></div>'; }).join('');
             var docTypes = [{key:'lto',label:'LTO'},{key:'fire',label:'Fire'},{key:'dost',label:'DOST'}];
             document.getElementById('docStats').innerHTML = docTypes.map(function(d) {
                 var data = t.documentBreakdown[d.key];
                 var total = data.valid + data.expired + data.missing;
                 var pct = total > 0 ? Math.round((data.valid/total)*100) : 0;
-                return '<div class="stat-card bg-white rounded-xl shadow-lg p-3 md:p-5"><div class="flex justify-between mb-2"><span class="font-semibold text-xs md:text-sm">'+d.label+'</span><span class="text-xs font-bold px-2 py-1 rounded-full '+(pct>=80?'bg-green-100 text-green-700':pct>=50?'bg-yellow-100 text-yellow-700':'bg-red-100 text-red-700')+'">'+pct+'%</span></div><div class="w-full bg-gray-200 rounded-full h-2 md:h-3 mb-2"><div class="progress-bar h-2 md:h-3 rounded-full '+(pct>=80?'bg-green-500':pct>=50?'bg-yellow-500':'bg-red-500')+'" style="width:'+pct+'%"></div></div><div class="flex justify-between text-xs text-gray-500"><span>Valid: '+data.valid+'</span><span>Expired: '+data.expired+'</span><span>Missing: '+data.missing+'</span></div></div>';
+                return '<div class="stat-card bg-white rounded-xl shadow-lg p-3 md:p-5"><div class="flex justify-between mb-2"><span class="font-semibold text-xs md:text-sm">'+d.label+'</span><span class="text-xs font-bold px-2 py-1 rounded-full '+(pct>=80?'bg-green-100 text-green-700':pct>=50?'bg-yellow-100 text-yellow-700':'bg-red-100 text-red-700')+'">'+pct+'%</span></div><div class="w-full bg-gray-200 rounded-full h-2 md:h-3 mb-2"><div class="progress-bar h-2 md:h-3 rounded-full '+(pct>=80?'bg-green-500':pct>=50?'bg-yellow-500':'bg-red-500')+'" style="inline-size:'+pct+'%"></div></div><div class="flex justify-between text-xs text-gray-500"><span>Valid: '+data.valid+'</span><span>Expired: '+data.expired+'</span><span>Missing: '+data.missing+'</span></div></div>';
             }).join('');
         }
 
@@ -209,7 +209,7 @@
                 if (f === 'inactive' && t.is_active) return false;
                 return true;
             });
-            document.getElementById('truckList').innerHTML = '<div class="table-wrap"><table class="w-full text-sm bg-white rounded-lg shadow" style="min-width:600px"><thead class="bg-gray-50"><tr><th class="py-3 px-4 text-left">Plate</th><th class="py-3 px-4 text-left">Make</th><th class="py-3 px-4 text-left">Driver</th><th class="py-3 px-4 text-left">Capacity</th><th class="py-3 px-4 text-center">Docs</th><th class="py-3 px-4 text-center">Actions</th></tr></thead><tbody>'+filtered.map(function(t) {
+            document.getElementById('truckList').innerHTML = '<div class="table-wrap"><table class="w-full text-sm bg-white rounded-lg shadow" style="min-inline-size:600px"><thead class="bg-gray-50"><tr><th class="py-3 px-4 text-left">Plate</th><th class="py-3 px-4 text-left">Make</th><th class="py-3 px-4 text-left">Driver</th><th class="py-3 px-4 text-left">Capacity</th><th class="py-3 px-4 text-center">Docs</th><th class="py-3 px-4 text-center">Actions</th></tr></thead><tbody>'+filtered.map(function(t) {
                 var docs = t.documents || [];
                 var valid = ['lto_registration','fire_permit','dost_calibration'].every(function(type) { return docs.find(function(d) { return d.document_type === type && new Date(d.expiry_date) >= new Date(); }); });
                 return '<tr class="border-b '+(t.is_active?'':'opacity-50')+'"><td class="py-2 px-4 font-semibold">'+t.plate_no+'</td><td class="py-2 px-4">'+t.make+'</td><td class="py-2 px-4">'+(t.driver_name||'-')+'</td><td class="py-2 px-4">'+parseFloat(t.total_capacity).toLocaleString()+'L</td><td class="py-2 px-4 text-center">'+(valid?'Y':'N')+'</td><td class="py-2 px-4"><div class="flex space-x-2 justify-center"><button onclick="editTruck('+t.id+')" class="text-blue-600"><i class="fas fa-edit"></i></button>'+(t.is_active?'<button onclick="deleteTruck('+t.id+',\''+t.plate_no+'\')" class="text-red-600"><i class="fas fa-trash"></i></button>':'<button onclick="restoreTruck('+t.id+')" class="text-green-600"><i class="fas fa-undo"></i></button>')+'</div></td></tr>';
@@ -227,13 +227,30 @@
 
         async function loadClients() { var data = await api('/clients'); if (data.status === 'success') { allClients = data.data; searchClients(); } }
 
-        function searchClients() { var s = document.getElementById('clientSearch').value.toLowerCase(); var f = document.getElementById('clientStatusFilter').value; var filtered = allClients.filter(function(c) { if (s && ![c.company_name,c.email,c.mobile].some(function(v) { return (v||'').toLowerCase().indexOf(s) >= 0; })) return false; if (f === 'active' && !c.is_active) return false; if (f === 'inactive' && c.is_active) return false; return true; }); document.getElementById('clientList').innerHTML = '<div class="table-wrap"><table class="w-full text-sm bg-white rounded-lg shadow" style="min-width:600px"><thead class="bg-gray-50"><tr><th class="py-3 px-4">Company</th><th class="py-3 px-4">Email</th><th class="py-3 px-4">Mobile</th><th class="py-3 px-4">ATLs</th><th class="py-3 px-4">Actions</th></tr></thead><tbody>'+filtered.map(function(c) { return '<tr class="border-b '+(c.is_active?'':'opacity-50')+'"><td class="py-2 px-4 font-semibold">'+(c.company_name||'-')+'</td><td class="py-2 px-4">'+c.email+'</td><td class="py-2 px-4">'+c.mobile+'</td><td class="py-2 px-4 text-center">'+c.total_atls+'</td><td class="py-2 px-4"><div class="flex space-x-2 justify-center"><button onclick="editClient('+c.id+')" class="text-green-600"><i class="fas fa-edit"></i></button>'+(c.is_active?'<button onclick="toggleClient('+c.id+')" class="text-orange-600"><i class="fas fa-ban"></i></button>':'<button onclick="toggleClient('+c.id+')" class="text-green-600"><i class="fas fa-check"></i></button>')+'<button onclick="deleteClient('+c.id+',\''+c.email+'\')" class="text-red-600"><i class="fas fa-trash"></i></button></div></td></tr>'; }).join('')+'</tbody></table></div>'; }
+        function searchClients() { var s = document.getElementById('clientSearch').value.toLowerCase(); var f = document.getElementById('clientStatusFilter').value; var filtered = allClients.filter(function(c) { if (s && ![c.company_name,c.email,c.mobile].some(function(v) { return (v||'').toLowerCase().indexOf(s) >= 0; })) return false; if (f === 'active' && !c.is_active) return false; if (f === 'inactive' && c.is_active) return false; return true; }); document.getElementById('clientList').innerHTML = '<div class="table-wrap"><table class="w-full text-sm bg-white rounded-lg shadow" style="min-inline-size:600px"><thead class="bg-gray-50"><tr><th class="py-3 px-4">Company</th><th class="py-3 px-4">Email</th><th class="py-3 px-4">Mobile</th><th class="py-3 px-4">ATLs</th><th class="py-3 px-4">Actions</th></tr></thead><tbody>'+filtered.map(function(c) { return '<tr class="border-b '+(c.is_active?'':'opacity-50')+'"><td class="py-2 px-4 font-semibold">'+(c.company_name||'-')+'</td><td class="py-2 px-4">'+c.email+'</td><td class="py-2 px-4">'+c.mobile+'</td><td class="py-2 px-4 text-center">'+c.total_atls+'</td><td class="py-2 px-4"><div class="flex space-x-2 justify-center"><button onclick="editClient('+c.id+')" class="text-green-600"><i class="fas fa-edit"></i></button>'+(c.is_active?'<button onclick="toggleClient('+c.id+')" class="text-orange-600"><i class="fas fa-ban"></i></button>':'<button onclick="toggleClient('+c.id+')" class="text-green-600"><i class="fas fa-check"></i></button>')+'<button onclick="deleteClient('+c.id+',\''+c.email+'\')" class="text-red-600"><i class="fas fa-trash"></i></button></div></td></tr>'; }).join('')+'</tbody></table></div>'; }
 
         function showAddClient() { document.getElementById('editClientId').value=''; document.getElementById('clientModalTitle').textContent='Add Client'; ['clientEmail','clientMobile','clientCompany','clientPassword'].forEach(function(id) { document.getElementById(id).value=''; }); document.getElementById('clientModal').classList.remove('hidden'); }
         async function editClient(id) { var data = await api('/clients/'+id); if (data.status === 'success') { var c = data.data; document.getElementById('editClientId').value = c.id; document.getElementById('clientModalTitle').textContent = 'Edit Client'; document.getElementById('clientEmail').value = c.email; document.getElementById('clientMobile').value = c.mobile; document.getElementById('clientCompany').value = c.company_name || ''; document.getElementById('clientPassword').value = ''; document.getElementById('clientModal').classList.remove('hidden'); } }
         async function saveClient(e) { e.preventDefault(); var id = document.getElementById('editClientId').value; var body = {email:document.getElementById('clientEmail').value,mobile:document.getElementById('clientMobile').value,company_name:document.getElementById('clientCompany').value}; var pw = document.getElementById('clientPassword').value; if (pw) body.password = pw; var url = id ? '/clients/'+id : '/clients'; var method = id ? 'PUT' : 'POST'; var data = await api(url, method, body); if (data.status === 'success') { document.getElementById('clientModal').classList.add('hidden'); loadClients(); } else { alert(data.error || 'Error'); } }
         async function toggleClient(id) { await api('/clients/'+id+'/toggle-status', 'PATCH'); loadClients(); }
         async function deleteClient(id, email) { if (!confirm('Delete ' + email + '?')) return; await api('/clients/'+id, 'DELETE'); loadClients(); }
+                async function showTruckDocs(filter) {
+            var data = await api('/trucks/all');
+            if (data.status !== 'success') return;
+            var trucks = data.data;
+            var result = [];
+            trucks.forEach(function(t) {
+                var docs = t.documents || [];
+                var allValid = ['lto_registration','fire_permit','dost_calibration'].every(function(type) {
+                    return docs.find(function(d) { return d.document_type === type && new Date(d.expiry_date) >= new Date(); });
+                });
+                if (filter === 'validDocs' && allValid) result.push(t);
+                if (filter === 'expiredDocs' && !allValid) result.push(t);
+            });
+            var msg = filter === 'validDocs' ? 'Trucks with ALL valid documents' : 'Trucks with expired/missing documents';
+            var list = result.map(function(t) { return t.plate_no + ' - ' + t.make + ' (' + t.driver_name + ')'; }).join('\n');
+            alert(msg + ':\n\n' + (list || 'None'));
+        }
 
         function logout() { localStorage.clear(); window.location.href = '/'; }
         loadDashboard();
