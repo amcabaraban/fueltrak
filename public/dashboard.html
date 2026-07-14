@@ -181,7 +181,7 @@
             ];
             document.getElementById('atlStats').innerHTML = cards.map(c => `<div class="stat-card bg-gradient-to-br ${c.gradient} rounded-xl shadow-lg p-5 text-white"><p class="text-sm opacity-90">${c.label}</p><p class="text-3xl font-bold mt-2">${c.value}</p></div>`).join('');
             document.getElementById('fleetStats').innerHTML = [
-                { label:'Total Trucks',value:t.total,sub:`${t.active} active · ${t.inactive} inactive`,border:'border-blue-500' },
+                { label:'Total Trucks',value:t.total,sub:`${t.active} active ï¿½ ${t.inactive} inactive`,border:'border-blue-500' },
                 { label:'Valid Docs',value:t.withValidDocs,sub:'All documents current',border:'border-green-500' },
                 { label:'Expired Docs',value:t.withExpiredDocs,sub:'Needs attention',border:'border-red-500' },
                 { label:'Fleet Capacity',value:(t.totalCapacity/1000).toFixed(1)+'k L',sub:'Total capacity',border:'border-purple-500' }
@@ -338,11 +338,11 @@
         async function toggleClient(id) { await api(`/clients/${id}/toggle-status`,'PATCH'); loadClients(); }
         async function deleteClient(id,email) { if(!confirm(`Delete ${email}?`))return; await api(`/clients/${id}`,'DELETE'); loadClients(); }
 
-        async function showDocDetails(docType, docLabel) {
+        async function showDocDetails(docType, docLabel) { console.log('Loading docs for:', docType);
   document.getElementById('docModalTitle').textContent = docLabel + ' - Document Status';
   document.getElementById('docDetailModal').classList.remove('hidden');
   
-  const data = await api('/trucks/all');
+  const data = await api('/trucks/all'); console.log('Trucks data:', data);
   if (data.status !== 'success') return;
   
   var filtered = data.data.filter(function(t) {
