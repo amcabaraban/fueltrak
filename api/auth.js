@@ -2,6 +2,7 @@ const express = require('express');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const compression = require('compression');
+const cors = require('cors');
 const mysql = require('mysql2/promise');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
@@ -10,9 +11,10 @@ const NodeCache = require('node-cache');
 const app = express();
 const otpCache = new NodeCache({ stdTTL: 600 });
 
-app.use(express.json());
+app.use(express.json({ limit: "10kb" }));
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(compression());
+app.use(cors({ origin: ['https://fueltrak-seven.vercel.app', 'http://localhost:3000'], credentials: true }));
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
