@@ -151,7 +151,7 @@
             var data = await api('/dispatch/pending');
             if (data.status === 'success') {
                 document.getElementById('pendingATLs').innerHTML = data.data.map(function(a) {
-                    return '<div class="bg-white rounded-lg shadow p-3 md:p-4 flex flex-col sm:flex-row justify-between gap-2"><div><p class="font-bold text-sm">'+(a.atl_code||'N/A')+' - '+a.plate_no+'</p><p class="text-xs md:text-sm">'+(a.company||'')+' | Vol: '+(a.volume||'N/A')+'L | '+a.driver_name+'</p></div><div class="flex space-x-2 self-end sm:self-center"><button onclick="verifyATL('+a.id+',\'approve\')" class="bg-green-500 text-white px-2 py-1 rounded text-xs">Approve</button><button onclick="verifyATL('+a.id+',\'reject\')" class="bg-red-500 text-white px-2 py-1 rounded text-xs">Reject</button></div></div>';
+                    return '<div class="bg-white rounded-lg shadow p-3 md:p-4 flex flex-col sm:flex-row justify-between gap-2"><div><p class="font-bold text-sm">'+(a.atl_code||'N/A')+' - '+a.plate_no+'</p><p class="text-xs md:text-sm">'+(a.company||'')+' | SO: '+(a.so_number||'N/A')+' | Vol: '+(a.volume||'N/A')+'L | '+a.driver_name+'</p></div><div class="flex space-x-2 self-end sm:self-center"><button onclick="verifyATL('+a.id+',\'approve\')" class="bg-green-500 text-white px-2 py-1 rounded text-xs">Approve</button><button onclick="verifyATL('+a.id+',\'reject\')" class="bg-red-500 text-white px-2 py-1 rounded text-xs">Reject</button></div></div>';
                 }).join('') || '<p class="text-gray-500 text-center py-8">No pending ATLs</p>';
             }
         }
