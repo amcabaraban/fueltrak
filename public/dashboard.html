@@ -338,11 +338,11 @@
         async function toggleClient(id) { await api(`/clients/${id}/toggle-status`,'PATCH'); loadClients(); }
         async function deleteClient(id,email) { if(!confirm(`Delete ${email}?`))return; await api(`/clients/${id}`,'DELETE'); loadClients(); }
 
-        async function showDocDetails(docType, docLabel) { console.log('Loading docs for:', docType);
+        async function showDocDetails(docType, docLabel) {
   document.getElementById('docModalTitle').textContent = docLabel + ' - Document Status';
   document.getElementById('docDetailModal').classList.remove('hidden');
   
-  const data = await api('/trucks/all'); console.log('Trucks data:', data);
+  const data = await api('/trucks/all');
   if (data.status !== 'success') return;
   
   var filtered = data.data.filter(function(t) {
