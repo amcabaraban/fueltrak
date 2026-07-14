@@ -319,7 +319,7 @@
                                 <span class="font-mono font-bold text-blue-900 bg-blue-50 px-2 py-1 rounded text-xs">${a.atl_code||'N/A'}</span>
                                 <p class="font-bold text-lg mt-1">${a.plate_no}</p>
                                 <p class="text-sm">${a.company||''} | Vol: ${a.volume?Number(a.volume).toLocaleString()+'L':'N/A'} | ${a.driver_name}</p>
-                                <p class="text-xs">SI: ${a.has_si?'? With SI':'? No SI'} | ${a.so_number?'SO: '+a.so_number:''} | ${new Date(a.scheduled_date).toLocaleDateString()}</p>
+                                <p class="text-xs">SI:  | ${a.so_number?'SO: '+a.so_number:''} | ${new Date(a.scheduled_date).toLocaleDateString()}</p>
                             </div>
                             <div class="text-right">
                                 <span class="px-3 py-1 rounded-full text-xs font-semibold ${a.status==='completed'?'bg-green-100 text-green-800':a.status==='dispatched'?'bg-orange-100 text-orange-800':a.status==='cancelled'?'bg-gray-200 text-gray-700':a.status==='approved'?'bg-blue-100 text-blue-800':'bg-yellow-100 text-yellow-800'}">${a.status.toUpperCase()}</span>
@@ -340,7 +340,7 @@
                         <div><p class="text-xs text-gray-500">Company</p><p class="font-semibold">${a.company||'N/A'}</p></div>
                         <div><p class="text-xs text-gray-500">SO Number</p><p>${a.so_number||'N/A'}</p></div>
                         <div><p class="text-xs text-gray-500">Status</p><span class="px-2 py-1 rounded text-xs font-semibold">${a.status}</span></div>
-                        <div><p class="text-xs text-gray-500">SI</p><p>${a.has_si?'? With SI':'? No SI'}</p></div>
+                        <div><p class="text-xs text-gray-500">SI</p><p></p></div>
                         <div><p class="text-xs text-gray-500">Volume</p><p>${a.volume?Number(a.volume).toLocaleString()+'L':'N/A'}</p></div>
                         <div><p class="text-xs text-gray-500">Plate No</p><p class="font-semibold">${a.plate_no}</p></div>
                         <div><p class="text-xs text-gray-500">Driver</p><p>${a.driver_name||'N/A'}</p></div>
