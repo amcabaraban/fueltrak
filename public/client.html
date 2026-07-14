@@ -56,31 +56,71 @@
             <div id="recentATLCodes" class="mb-8"></div>
         </div>
 
-        <!-- SUBMIT ATL VIEW -->
+                <!-- SUBMIT ATL VIEW -->
         <div id="submitView" class="hidden">
-            <div class="bg-white rounded-2xl shadow-lg p-8 max-w-2xl px-2 md:px-0 mx-auto">
-                <h2 class="text-2xl font-bold mb-6"><i class="fas fa-plus-circle text-blue-600 mr-2"></i>Submit New ATL</h2>
+            <div class="bg-white rounded-2xl shadow-lg p-4 sm:p-6 md:p-8 max-w-2xl mx-auto">
+                <h2 class="text-xl sm:text-2xl font-bold mb-6"><i class="fas fa-plus-circle text-blue-600 mr-2"></i>Submit New ATL</h2>
                 <form onsubmit="submitATL(event)" class="space-y-5">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
-                        <div><label class="block text-xs font-semibold text-gray-700 mb-1.5">Company *</label><input type="text" id="company" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required></div>
-                        <div><label class="block text-xs font-semibold text-gray-700 mb-1.5">SO Number</label><input type="text" id="soNumber" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Optional"></div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-700 mb-1.5">Company <span class="text-red-500">*</span></label>
+                            <input type="text" id="company" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" required>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-700 mb-1.5">SO Number</label>
+                            <input type="text" id="soNumber" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" placeholder="Optional">
+                        </div>
                     </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
-                        <div><label class="block text-xs font-semibold text-gray-700 mb-1.5">Scheduled Date *</label><input type="date" id="scheduledDate" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required></div>
-                        <div><label class="block text-xs font-semibold text-gray-700 mb-1.5">Volume (Liters) *</label><input type="number" id="volume" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required min="1"><p class="text-xs text-gray-400 mt-1" id="capacityHint"></p></div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-700 mb-1.5">Scheduled Date <span class="text-red-500">*</span></label>
+                            <input type="date" id="scheduledDate" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" required>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-700 mb-1.5">Volume (Liters) <span class="text-red-500">*</span></label>
+                            <input type="number" id="volume" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" required min="1">
+                            <p class="text-xs text-gray-400 mt-1" id="capacityHint"></p>
+                        </div>
                     </div>
-                    <div><label class="block text-xs font-semibold text-gray-700 mb-1.5">Sales Invoice</label><div class="flex space-x-6"><label class="flex items-center cursor-pointer"><input type="radio" name="siOption" value="yes" class="mr-2"> With SI</label><label class="flex items-center cursor-pointer"><input type="radio" name="siOption" value="no" checked class="mr-2"> No SI</label></div></div>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div><label class="block text-xs font-semibold text-gray-700 mb-1.5">Hauler *</label><input type="text" id="hauler" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required></div>
-                        <div><label class="block text-xs font-semibold text-gray-700 mb-1.5">Plate Number *</label><input type="text" id="plateNo" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg uppercase focus:ring-2 focus:ring-blue-500" required onblur="verifyTruck()"><div id="truckStatus" class="mt-1 text-xs hidden"></div></div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-700 mb-2">Sales Invoice</label>
+                        <div class="flex items-center space-x-6">
+                            <label class="flex items-center cursor-pointer space-x-2">
+                                <input type="radio" name="siOption" value="yes" class="w-4 h-4 text-blue-600">
+                                <span class="text-sm text-gray-700">With SI</span>
+                            </label>
+                            <label class="flex items-center cursor-pointer space-x-2">
+                                <input type="radio" name="siOption" value="no" checked class="w-4 h-4 text-blue-600">
+                                <span class="text-sm text-gray-700">No SI</span>
+                            </label>
+                        </div>
                     </div>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div><label class="block text-xs font-semibold text-gray-700 mb-1.5">Driver's Name *</label><input type="text" id="driverName" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required></div>
-                        <div><label class="block text-xs font-semibold text-gray-700 mb-1.5">Contact Number *</label><input type="text" id="contactNumber" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required></div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-700 mb-1.5">Hauler <span class="text-red-500">*</span></label>
+                            <input type="text" id="hauler" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" required>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-700 mb-1.5">Plate Number <span class="text-red-500">*</span></label>
+                            <input type="text" id="plateNo" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg uppercase focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" required onblur="verifyTruck()">
+                            <div id="truckStatus" class="mt-1 text-xs hidden"></div>
+                        </div>
                     </div>
-                    <button type="submit" id="submitBtn" class="w-full bg-blue-900 text-white py-3 rounded-lg font-semibold hover:bg-blue-800 disabled:opacity-50" disabled>Submit ATL</button>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-700 mb-1.5">Driver's Name <span class="text-red-500">*</span></label>
+                            <input type="text" id="driverName" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" required>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-700 mb-1.5">Contact Number <span class="text-red-500">*</span></label>
+                            <input type="text" id="contactNumber" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" required>
+                        </div>
+                    </div>
+                    <button type="submit" id="submitBtn" class="w-full bg-blue-900 text-white py-3 rounded-lg font-semibold hover:bg-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition text-sm">
+                        <i class="fas fa-paper-plane mr-2"></i>Submit ATL
+                    </button>
                 </form>
-                <div id="atlMessage" class="mt-3 text-sm text-center hidden"></div>
+                <div id="atlMessage" class="mt-4 text-sm text-center hidden"></div>
             </div>
         </div>
 
