@@ -49,6 +49,7 @@
                 <button onclick="openTab('trucks')" class="stat-card bg-gradient-to-br from-green-400 to-green-500 text-white rounded-xl shadow-lg p-6 text-left w-full"><i class="fas fa-truck text-3xl mb-3"></i><h3 class="font-bold text-lg">Trucks</h3></button>
                 <button onclick="openTab('clients')" class="stat-card bg-gradient-to-br from-purple-400 to-purple-500 text-white rounded-xl shadow-lg p-6 text-left w-full"><i class="fas fa-users text-3xl mb-3"></i><h3 class="font-bold text-lg">Clients</h3></button>
                 <a href="/reports" class="stat-card bg-gradient-to-br from-teal-400 to-teal-500 text-white rounded-xl shadow-lg p-6 text-left block"><i class="fas fa-chart-bar text-3xl mb-3"></i><h3 class="font-bold text-lg">Reports</h3></a>
+                <a href="/docs-report" class="stat-card bg-gradient-to-br from-orange-400 to-orange-500 text-white rounded-xl shadow-lg p-6 text-left block"><i class="fas fa-file-alt text-3xl mb-3"></i><h3 class="font-bold text-lg">Doc Report</h3></a>
             </div>
         </div>
 
@@ -268,7 +269,7 @@
           document.getElementById('docDetailContent').innerHTML = html;
           document.getElementById('docDetailModal').classList.remove('hidden');
         }
-                
+
         function logout() { localStorage.clear(); window.location.href = '/'; }
         loadDashboard();
     </script>
