@@ -512,6 +512,15 @@ app.delete('/api/clients/:id', authenticate, authorize('management'), async (req
 });
 
 
+
+// ============ UPDATE WC ============
+app.put("/api/dispatch/update-wc/:id", authenticate, authorize("dispatcher", "management"), async (req, res) => {
+  try {
+    const { printed_wc } = req.body;
+    await pool.execute("UPDATE authority_to_load SET printed_wc = ? WHERE id = ?", [printed_wc || null, req.params.id]);
+    res.json({ status: "success", message: "WC updated" });
+  } catch (error) { res.status(400).json({ error: error.message }); }
+});
 // ============ HEALTH ============
 app.get('/api/health', (req, res) => res.json({ status: 'OK', db: process.env.DB_NAME }));
 
