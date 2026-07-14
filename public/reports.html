@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -127,7 +127,7 @@
                             <th class="py-3 px-3 text-right">Actual (L)</th>
                             <th class="py-3 px-3 text-center">SI</th>
                             <th class="py-3 px-3 text-center">Status</th>
-                            <th class="py-3 px-3 text-left">Date</th><th class="py-3 px-3 text-center">Printed WC</th>
+                            <th class="py-3 px-3 text-center">Printed WC</th><th class="py-3 px-3 text-left">Date</th><th class="py-3 px-3 text-center">Printed WC</th>
                             <th class="py-3 px-3 text-center">Rev</th>
                             <th class="py-3 px-3 text-center">Details</th>
                         </tr>
@@ -206,7 +206,7 @@
                         <td class="py-2 px-3">${r.driver_name||'-'}</td>
                         <td class="py-2 px-3 text-right">${r.volume.toLocaleString()}</td>
                         <td class="py-2 px-3 text-right font-semibold">${r.actual_volume ? r.actual_volume.toLocaleString() : '-'}</td>
-                        <td class="py-2 px-3 text-center">${r.has_si ? '✓ With SI' : '✗ No SI'}</td>
+                        <td class="py-2 px-3 text-center">${r.has_si ? '? With SI' : '? No SI'}</td>
                         <td class="py-2 px-3 text-center"><span class="px-2 py-1 rounded text-xs ${r.status==='completed'?'bg-green-100 text-green-800':r.status==='cancelled'?'bg-red-100 text-red-800':'bg-orange-100 text-orange-800'}">${r.status}</span></td>
                         <td class="py-2 px-3 text-xs">${r.completed_date ? new Date(r.completed_date).toLocaleDateString() : r.dispatch_date ? new Date(r.dispatch_date).toLocaleDateString() : '-'}</td>
                         <td class="py-2 px-3 text-center">${r.revision_count > 0 ? `<span class="bg-purple-100 text-purple-800 px-2 py-1 rounded text-xs">${r.revision_count}</span>` : '0'}</td>
@@ -258,7 +258,7 @@
                             <div><p class="text-xs text-gray-500">Company</p><p class="font-semibold">${a.company || 'N/A'}</p></div>
                             <div><p class="text-xs text-gray-500">SO Number</p><p>${a.so_number || 'N/A'}</p></div>
                             <div><p class="text-xs text-gray-500">Status</p><span class="px-2 py-1 rounded text-xs ${a.status==='completed'?'bg-green-100 text-green-800':a.status==='cancelled'?'bg-red-100 text-red-800':a.status==='dispatched'?'bg-orange-100 text-orange-800':'bg-blue-100 text-blue-800'}">${a.status}</span></div>
-                            <div><p class="text-xs text-gray-500">SI</p><p>${a.has_si ? '✓ With SI' : '✗ No SI'}</p></div>
+                            <div><p class="text-xs text-gray-500">SI</p><p>${a.has_si ? '? With SI' : '? No SI'}</p></div>
                             <div><p class="text-xs text-gray-500">Volume</p><p>${a.volume ? Number(a.volume).toLocaleString() + ' L' : 'N/A'}</p></div>
                             <div><p class="text-xs text-gray-500">Actual Volume</p><p class="font-semibold">${a.actual_volume ? Number(a.actual_volume).toLocaleString() + ' L' : 'N/A'}</p></div>
                             <div><p class="text-xs text-gray-500">Plate No</p><p class="font-semibold">${a.plate_no}</p></div>
@@ -271,7 +271,7 @@
                         </div>
                         ${revisions.length > 0 ? `
                             <div class="mt-4 border-t pt-3">
-                                <h4 class="font-semibold text-sm mb-2">ðŸ“ Revision History (${revisions.length})</h4>
+                                <h4 class="font-semibold text-sm mb-2">📝 Revision History (${revisions.length})</h4>
                                 <div class="space-y-2 max-h-40 overflow-y-auto">
                                     ${revisions.map((r, i) => `
                                         <div class="bg-gray-50 p-2 rounded text-xs">
@@ -372,10 +372,13 @@
             }
         }
 
-        function logout() { localStorage.clear(); window.location.href = '/'; }
+        async function editWC(id, cell) { const current = cell.textContent.trim(); const wc = prompt('Enter Printed WC (12 digits):', current === '-' ? '' : current); if (wc === null) return; const wcClean = wc.replace(/\D/g,'').substring(0,12); const res = await fetch('/api/dispatch/update-wc/' + id, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify({ printed_wc: wcClean || null }) }); const data = await res.json(); if (data.status === 'success') { cell.textContent = wcClean || '-'; cell.classList.add('bg-green-100'); setTimeout(() => cell.classList.remove('bg-green-100'), 1000); } }
+
+function logout() { localStorage.clear(); window.location.href = '/'; }
 
         loadFilters();
         loadReports();
     </script>
 </body>
 </html>
+
