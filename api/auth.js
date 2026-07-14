@@ -282,9 +282,9 @@ app.post('/api/dispatch/start-loading/:id', authenticate, authorize('dispatcher'
 
 app.post('/api/dispatch/complete-loading/:id', authenticate, authorize('dispatcher', 'management'), async (req, res) => {
   try {
-    const { actual_volume, remarks } = req.body;
-    await pool.execute("UPDATE authority_to_load SET status = 'completed', completed_date = NOW(), completed_by = ?, actual_volume = ?, remarks = ? WHERE id = ?",
-      [req.user.id, actual_volume || null, remarks || 'Loading completed', req.params.id]);
+    const { actual_volume, remarks, printed_wc } = req.body;
+    await pool.execute("UPDATE authority_to_load SET status = 'completed', completed_date = NOW(), completed_by = ?, actual_volume = ?, remarks = ?, printed_wc = ? WHERE id = ?",
+      [req.user.id, actual_volume || null, remarks || 'Loading completed', printed_wc || null, req.params.id]);
     const [updated] = await pool.execute('SELECT * FROM authority_to_load WHERE id = ?', [req.params.id]);
     res.json({ status: 'success', data: updated[0] });
   } catch (error) { res.status(400).json({ error: error.message }); }
@@ -643,7 +643,7 @@ app.get('/api/reports/export', authenticate, authorize('dispatcher', 'management
     if (startDate) { query += ' AND DATE(createdAt) >= ?'; params.push(startDate); }
     if (endDate) { query += ' AND DATE(createdAt) <= ?'; params.push(endDate); }
     const [atls] = await pool.execute(query, params);
-    let csv = 'ATL Code,SO Number,Company,Plate No,Driver,Hauler,Volume,Status,Date\n';
+    let csv = 'ATL Code,SO Number,Company,Plate No,Driver,Hauler,Volume,Status,Date,Printed WC\n';
     for (const a of atls) {
       csv += `"${a.atl_code||''}","${a.so_number||''}","${a.company||''}","${a.plate_no||''}","${a.driver_name||''}","${a.hauler||''}",${a.volume||0},"${a.status}","${a.scheduled_date}"\n`;
     }
