@@ -544,6 +544,8 @@ app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, '..', 'pub
 app.get('/dashboard.html', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'dashboard.html')));
 app.get('/client', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'client.html')));
 app.get('/client.html', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'client.html')));
+
+app.get('/docs-report', (req, res) => res.sendFile(require('path').join(__dirname, '..', 'public', 'docs-report.html')));
 app.get('/reports', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'reports.html')));
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'index.html')));
 app.get('/api/health', (req, res) => res.json({ status: 'OK', db: process.env.DB_NAME }));
