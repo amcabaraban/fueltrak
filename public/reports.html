@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -98,6 +98,8 @@
                             <th>Driver</th>
                             <th>Volume (L)</th>
                             <th>Actual (L)</th>
+                            <th>Printed WC</th>
+                            <th>TPS Series</th>
                             <th>Status</th>
                             <th>Date</th>
                         </tr>
@@ -128,7 +130,9 @@
                             <th class="py-3 px-3 text-right">Actual (L)</th>
                             <th class="py-3 px-3 text-center">SI</th>
                             <th class="py-3 px-3 text-center">Status</th>
-                            <th class="py-3 px-3 text-center">Date</th><th class="py-3 px-3 text-center">Printed WC</th>
+                            <th class="py-3 px-3 text-center">Date</th>
+                            <th class="py-3 px-3 text-center">Printed WC</th>
+                            <th class="py-3 px-3 text-center">TPS Series</th>
                             <th class="py-3 px-3 text-center">Rev</th>
                             <th class="py-3 px-3 text-center">Details</th>
                         </tr>
@@ -208,7 +212,9 @@
                         <td class="py-2 px-3 text-right">${r.volume.toLocaleString()}</td>
                         <td class="py-2 px-3 text-right font-semibold">${r.actual_volume ? r.actual_volume.toLocaleString() : '-'}</td>
                         <td class="py-2 px-3 text-center text-xs">${r.has_si==1?"With SI":"No SI"}</td><td class="py-2 px-3 text-center"><span class="px-2 py-1 rounded text-xs ${r.status==='completed'?'bg-green-100 text-green-800':r.status==='cancelled'?'bg-red-100 text-red-800':'bg-orange-100 text-orange-800'}">${r.status}</span></td>
-                        <td class="py-2 px-3 text-xs">${r.completed_date ? new Date(r.completed_date).toLocaleDateString() : r.dispatch_date ? new Date(r.dispatch_date).toLocaleDateString() : '-'}</td><td class="py-2 px-3 text-center font-mono text-xs cursor-pointer hover:bg-yellow-50" onclick="editWC(${r.id}, this)">${r.printed_wc||"-"}</td>
+                        <td class="py-2 px-3 text-xs">${r.completed_date ? new Date(r.completed_date).toLocaleDateString() : r.dispatch_date ? new Date(r.dispatch_date).toLocaleDateString() : '-'}</td>
+                        <td class="py-2 px-3 text-center font-mono text-xs cursor-pointer hover:bg-yellow-50" onclick="editWC(${r.id}, this)">${r.printed_wc||"-"}</td>
+                        <td class="py-2 px-3 text-center font-mono text-xs">${r.tps_start||"-"}</td>
                         <td class="py-2 px-3 text-center">${r.revision_count > 0 ? `<span class="bg-purple-100 text-purple-800 px-2 py-1 rounded text-xs">${r.revision_count}</span>` : '0'}</td>
                         <td class="py-2 px-3 text-center"><button onclick="viewDetails(${r.id})" class="text-blue-600 hover:underline text-xs"><i class="fas fa-eye"></i></button></td>
                     </tr>
