@@ -234,8 +234,11 @@
         async function saveClient(e) { e.preventDefault(); var id = document.getElementById('editClientId').value; var body = {email:document.getElementById('clientEmail').value,mobile:document.getElementById('clientMobile').value,company_name:document.getElementById('clientCompany').value}; var pw = document.getElementById('clientPassword').value; if (pw) body.password = pw; var url = id ? '/clients/'+id : '/clients'; var method = id ? 'PUT' : 'POST'; var data = await api(url, method, body); if (data.status === 'success') { document.getElementById('clientModal').classList.add('hidden'); loadClients(); } else { alert(data.error || 'Error'); } }
         async function toggleClient(id) { await api('/clients/'+id+'/toggle-status', 'PATCH'); loadClients(); }
         async function deleteClient(id, email) { if (!confirm('Delete ' + email + '?')) return; await api('/clients/'+id, 'DELETE'); loadClients(); }
-                async function showTruckDocs(filter) {
+
+        async function showTruckDocs(filter) {
+            console.log('showTruckDocs called with filter:', filter);
             var data = await api('/trucks/all');
+            console.log('API response:', data);
             if (data.status !== 'success') return;
             var trucks = data.data || data;
             var result = [];
