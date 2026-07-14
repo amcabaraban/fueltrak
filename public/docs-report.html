@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FuelTrak - Document Reports</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <style>
+        .stat-card { transition: all 0.3s ease; }
+        .stat-card:hover { transform: translateY(-3px); }
+        .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; max-width: 100%; }
+        @media print { nav, .no-print { display: none !important; } }
+        @media (max-width: 640px) { table { font-size: .75rem; } }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <nav class="bg-gradient-to-r from-blue-900 to-blue-800 text-white shadow-xl sticky top-0 z-50 no-print">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="bg-white/20 p-2 rounded-lg"><i class="fas fa-file-alt text-2xl text-yellow-400"></i></div>
+                <div><span class="font-bold text-sm sm:text-lg md:text-xl">Document Reports</span></div>
+            </div>
+            <div class="flex items-center space-x-3">
+                <span id="userInfo" class="text-sm bg-white/10 px-3 py-1 rounded-full"></span>
+                <a href="/dashboard" class="bg-white/20 px-3 py-1 rounded text-sm hover:bg-white/30"><i class="fas fa-chart-pie mr-1"></i>Dashboard</a>
+                <button onclick="logout()" class="bg-red-500/80 hover:bg-red-500 px-4 py-2 rounded text-sm"><i class="fas fa-sign-out-alt mr-1"></i>Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        <h1 class="text-2xl md:text-3xl font-bold mb-2">Document Compliance Reports</h1>
+        <p class="text-gray-500 text-sm mb-6">Overview of all truck documents (LTO Registration, Fire Permit, DOST Calibration)</p>
+
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8" id="summaryCards"></div>
+
+        <!-- Filter -->
+        <div class="bg-white rounded-xl shadow-lg p-4 mb-6 no-print">
+            <div class="flex flex-wrap gap-3 items-end">
+                <div>
+                    <label class="text-xs font-semibold">Document Type</label>
+                    <select id="docTypeFilter" class="px-3 py-2 border rounded text-sm" onchange="loadReport()">
+                        <option value="all">All Documents</option>
+                        <option value="lto_registration">LTO Registration</option>
+                        <option value="fire_permit">Fire Permit</option>
+                        <option value="dost_calibration">DOST Calibration</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-xs font-semibold">Status</label>
+                    <select id="statusFilter" class="px-3 py-2 border rounded text-sm" onchange="loadReport()">
+                        <option value="all">All</option>
+                        <option value="expired">Expired</option>
+                        <option value="missing">Missing</option>
+                        <option value="valid">Valid</option>
+                    </select>
+                </div>
+                <button onclick="printReport()" class="bg-blue-600 text-white px-4 py-2 rounded text-sm"><i class="fas fa-print mr-1"></i>Print</button>
+            </div>
+        </div>
+
+        <!-- Table -->
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+            <div class="table-wrap">
+                <table class="w-full text-sm" id="reportTable">
+                    <thead class="bg-gray-50 border-b">
+                        <tr>
+                            <th class="py-3 px-3 text-left">Plate No</th>
+                            <th class="py-3 px-3 text-left">Make</th>
+                            <th class="py-3 px-3 text-left">Driver</th>
+                            <th class="py-3 px-3 text-left">Hauler</th>
+                            <th class="py-3 px-3 text-left">Document Type</th>
+                            <th class="py-3 px-3 text-left">Expiry Date</th>
+                            <th class="py-3 px-3 text-center">Status</th>
+                            <th class="py-3 px-3 text-left">Days Left</th>
+                        </tr>
+                    </thead>
+                    <tbody id="reportBody">
+                        <tr><td colspan="8" class="text-center py-8 text-gray-500">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="px-4 py-3 border-t text-sm text-gray-500" id="reportCount"></div>
+        </div>
+    </div>
+
+    <script>
+        const API = '/api';
+        const token = localStorage.getItem('fueltrak_token');
+        const user = JSON.parse(localStorage.getItem('fueltrak_user') || '{}');
+        if (!token || !['dispatcher','management'].includes(user.role)) window.location.href = '/';
+        document.getElementById('userInfo').textContent = user.email + ' (' + user.role + ')';
+
+        async function api(url) {
+            var res = await fetch(API + url, { headers: { 'Authorization': 'Bearer ' + token } });
+            return await res.json();
+        }
+
+        async function loadReport() {
+            var data = await api('/trucks/all');
+            if (data.status !== 'success') return;
+            var trucks = data.data;
+            var docFilter = document.getElementById('docTypeFilter').value;
+            var statusFilter = document.getElementById('statusFilter').value;
+            var rows = [];
+            var totalDocs = 0, expiredDocs = 0, missingDocs = 0, validDocs = 0;
+
+            trucks.forEach(function(t) {
+                var docs = t.documents || [];
+                ['lto_registration','fire_permit','dost_calibration'].forEach(function(type) {
+                    if (docFilter !== 'all' && type !== docFilter) return;
+                    var doc = docs.find(function(d) { return d.document_type === type; });
+                    var typeLabel = type === 'lto_registration' ? 'LTO Registration' : type === 'fire_permit' ? 'Fire Permit' : 'DOST Calibration';
+                    var expiry = doc ? new Date(doc.expiry_date) : null;
+                    var daysLeft = expiry ? Math.ceil((expiry - new Date()) / (1000 * 60 * 60 * 24)) : null;
+                    var status = !doc ? 'Missing' : daysLeft < 0 ? 'Expired' : 'Valid';
+                    var statusColor = status === 'Valid' ? 'bg-green-100 text-green-800' : status === 'Expired' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800';
+
+                    if (statusFilter !== 'all' && statusFilter !== status.toLowerCase()) return;
+
+                    totalDocs++;
+                    if (status === 'Expired') expiredDocs++;
+                    else if (status === 'Missing') missingDocs++;
+                    else validDocs++;
+
+                    rows.push({
+                        plate_no: t.plate_no, make: t.make, driver: t.driver_name,
+                        hauler: t.hauler_name, type: typeLabel, expiry: expiry,
+                        daysLeft: daysLeft, status: status, statusColor: statusColor
+                    });
+                });
+            });
+
+            // Summary
+            document.getElementById('summaryCards').innerHTML = [
+                { label:'Total Docs',value:totalDocs,color:'text-blue-700',bg:'bg-blue-50' },
+                { label:'Valid',value:validDocs,color:'text-green-700',bg:'bg-green-50' },
+                { label:'Expired',value:expiredDocs,color:'text-red-700',bg:'bg-red-50' },
+                { label:'Missing',value:missingDocs,color:'text-yellow-700',bg:'bg-yellow-50' },
+                { label:'Trucks',value:trucks.length,color:'text-purple-700',bg:'bg-purple-50' }
+            ].map(function(c) { return '<div class="'+c.bg+' rounded-xl shadow p-4 text-center"><p class="text-2xl font-bold '+c.color+'">'+c.value+'</p><p class="text-xs text-gray-500">'+c.label+'</p></div>'; }).join('');
+
+            // Table
+            document.getElementById('reportBody').innerHTML = rows.map(function(r) {
+                return '<tr class="border-b hover:bg-gray-50">' +
+                    '<td class="py-2 px-3 font-semibold">'+r.plate_no+'</td>' +
+                    '<td class="py-2 px-3">'+r.make+'</td>' +
+                    '<td class="py-2 px-3">'+(r.driver||'-')+'</td>' +
+                    '<td class="py-2 px-3">'+(r.hauler||'-')+'</td>' +
+                    '<td class="py-2 px-3 text-xs">'+r.type+'</td>' +
+                    '<td class="py-2 px-3">'+(r.expiry?r.expiry.toLocaleDateString():'N/A')+'</td>' +
+                    '<td class="py-2 px-3 text-center"><span class="px-2 py-1 rounded text-xs '+r.statusColor+'">'+r.status+'</span></td>' +
+                    '<td class="py-2 px-3">'+(r.daysLeft!==null?(r.daysLeft<0?'<span class="text-red-600">'+r.daysLeft+'d</span>':r.daysLeft+'d'):'N/A')+'</td>' +
+                    '</tr>';
+            }).join('') || '<tr><td colspan="8" class="text-center py-8 text-gray-500">No documents found</td></tr>';
+
+            document.getElementById('reportCount').textContent = 'Showing ' + rows.length + ' document(s)';
+        }
+
+        function printReport() { window.print(); }
+        function logout() { localStorage.clear(); window.location.href = '/'; }
+        loadReport();
+    </script>
+</body>
+</html>
