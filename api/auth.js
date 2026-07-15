@@ -683,6 +683,20 @@ app.get('/dashboard.html', (req, res) => res.sendFile(require('path').join(__dir
 app.get('/reports.html', (req, res) => res.sendFile(require('path').join(__dirname, '..', 'public', 'reports.html')));
 app.get('/atl.html', (req, res) => res.sendFile(require('path').join(__dirname, '..', 'public', 'atl.html')));
 
+app.put('/api/dispatch/update-si/:id', authenticate, authorize('dispatcher', 'management'), async (req, res) => {
+  try {
+    await pool.execute('UPDATE authority_to_load SET has_si = ? WHERE id = ?', [req.body.has_si, req.params.id]);
+    res.json({ status: 'success' });
+  } catch (error) { res.status(400).json({ error: error.message }); }
+});
+
+app.put('/api/dispatch/update-tps/:id', authenticate, authorize('dispatcher', 'management'), async (req, res) => {
+  try {
+    await pool.execute('UPDATE authority_to_load SET tps_start = ?, tps_end = ? WHERE id = ?', [req.body.tps_start, req.body.tps_end, req.params.id]);
+    res.json({ status: 'success' });
+  } catch (error) { res.status(400).json({ error: error.message }); }
+});
+
 module.exports = app;
 
 

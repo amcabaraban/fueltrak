@@ -211,10 +211,14 @@
                         <td class="py-2 px-3">${r.driver_name||'-'}</td>
                         <td class="py-2 px-3 text-right">${r.volume.toLocaleString()}</td>
                         <td class="py-2 px-3 text-right font-semibold">${r.actual_volume ? r.actual_volume.toLocaleString() : '-'}</td>
-                        <td class="py-2 px-3 text-center text-xs">${r.has_si==1?"With SI":"No SI"}</td><td class="py-2 px-3 text-center"><span class="px-2 py-1 rounded text-xs ${r.status==='completed'?'bg-green-100 text-green-800':r.status==='cancelled'?'bg-red-100 text-red-800':'bg-orange-100 text-orange-800'}">${r.status}</span></td>
+                        <td class="py-2 px-3 text-center text-xs cursor-pointer hover:bg-blue-50" onclick="toggleSI(${r.id}, this)">${r.has_si==1?"With SI":"No SI"}</td>
+                        <td class="py-2 px-3 text-center"><span class="px-2 py-1 rounded text-xs ${r.status==='completed'?'bg-green-100 text-green-800':r.status==='cancelled'?'bg-red-100 text-red-800':'bg-orange-100 text-orange-800'}">${r.status}</span></td>
                         <td class="py-2 px-3 text-xs">${r.completed_date ? new Date(r.completed_date).toLocaleDateString() : r.dispatch_date ? new Date(r.dispatch_date).toLocaleDateString() : '-'}</td>
                         <td class="py-2 px-3 text-center font-mono text-xs cursor-pointer hover:bg-yellow-50" onclick="editWC(${r.id}, this)">${r.printed_wc||"-"}</td>
-                        <td class="py-2 px-3 text-center font-mono text-xs">${r.tps_start||"-"}</td>
+                        <td class="py-2 px-3 text-center font-mono text-xs">
+                            <input type="text" id="tps_from_${r.id}" value="${r.tps_start||''}" placeholder="From" class="w-16 px-1 py-0.5 border rounded text-xs" onchange="updateTPS(${r.id})">
+                            <input type="text" id="tps_to_${r.id}" value="${r.tps_end||''}" placeholder="To" class="w-16 px-1 py-0.5 border rounded text-xs" onchange="updateTPS(${r.id})">
+                        </td>
                         <td class="py-2 px-3 text-center">${r.revision_count > 0 ? `<span class="bg-purple-100 text-purple-800 px-2 py-1 rounded text-xs">${r.revision_count}</span>` : '0'}</td>
                         <td class="py-2 px-3 text-center"><button onclick="viewDetails(${r.id})" class="text-blue-600 hover:underline text-xs"><i class="fas fa-eye"></i></button></td>
                     </tr>
@@ -380,8 +384,54 @@
 
         async function editWC(id, cell) { const current = cell.textContent.trim(); const wc = prompt('Enter Printed WC (12 digits):', current === '-' ? '' : current); if (wc === null) return; const wcClean = wc.replace(/\D/g,'').substring(0,12); const res = await fetch('/api/dispatch/update-wc/' + id, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify({ printed_wc: wcClean || null }) }); const data = await res.json(); if (data.status === 'success') { cell.textContent = wcClean || '-'; cell.classList.add('bg-green-100'); setTimeout(() => cell.classList.remove('bg-green-100'), 1000); } }
 
-function logout() { localStorage.clear(); window.location.href = '/'; }
+        async function toggleSI(id, cell) {
+            var current = cell.textContent.trim() === 'With SI';
+            var news = !current;
+            var res = await fetch('/api/dispatch/update-si/' + id, { 
+                method: 'PUT', 
+                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, 
+                body: JSON.stringify({ has_si: news ? 1 : 0 }) 
+            });
+            var data = await res.json();
+            if (data.status === 'success') { 
+                cell.textContent = news ? 'With SI' : 'No SI'; 
+                cell.classList.add('bg-green-100'); 
+                setTimeout(function(){ cell.classList.remove('bg-green-100'); }, 1000);
+            }
+        }
 
+        var truckTPSMap = {};
+
+        async function loadTruckTPS() {
+            var res = await fetch('/api/trucks/all', { headers: { 'Authorization': 'Bearer ' + token } });
+            var data = await res.json();
+            if (data.status === 'success') {
+                data.data.forEach(function(t) { truckTPSMap[t.id] = t.num_tps || 0; });
+            }
+        }
+
+        async function updateTPS(id) {
+            var fromEl = document.getElementById('tps_from_' + id);
+            var toEl = document.getElementById('tps_to_' + id);
+            var fromVal = fromEl.value.trim();
+            
+            if (fromVal && truckTPSMap[id]) {
+                var fromNum = parseInt(fromVal) || 0;
+                var tpsCount = truckTPSMap[id] || 0;
+                var toNum = fromNum + tpsCount - 1;
+                toEl.value = String(toNum).padStart(fromVal.length, '0');
+            }
+            
+            var res = await fetch('/api/dispatch/update-tps/' + id, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                body: JSON.stringify({ tps_start: fromVal, tps_end: toEl.value })
+            });
+        }
+
+        function logout() { localStorage.clear(); window.location.href = '/'; }
+
+        loadTruckTPS();
         loadFilters();
         loadReports();
     </script>
