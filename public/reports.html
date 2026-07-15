@@ -160,6 +160,16 @@
         const user = JSON.parse(localStorage.getItem('fueltrak_user') || '{}');
         if (!token || !['dispatcher','management'].includes(user.role)) {
             window.location.replace('/');
+        } else {
+            fetch('/api/auth/profile', { headers: { 'Authorization': 'Bearer ' + token } })
+                .then(function(res) { return res.json(); })
+                .then(function(data) {
+                    if (data.status !== 'success') {
+                        localStorage.clear();
+                        window.location.replace('/');
+                    }
+                })
+                .catch(function() {});
         }
         document.getElementById('userInfo').textContent = `${user.email} (${user.role})`;
 

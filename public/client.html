@@ -175,7 +175,19 @@
         const API = '/api';
         const token = localStorage.getItem('fueltrak_token');
         const user = JSON.parse(localStorage.getItem('fueltrak_user') || '{}');
-        if (!token || user.role !== 'client') window.location.href = '/';
+        if (!token || user.role !== 'client') {
+            window.location.replace('/');
+        } else {
+            fetch('/api/auth/profile', { headers: { 'Authorization': 'Bearer ' + token } })
+                .then(function(res) { return res.json(); })
+                .then(function(data) {
+                    if (data.status !== 'success') {
+                        localStorage.clear();
+                        window.location.replace('/');
+                    }
+                })
+                .catch(function() {});
+        }
         document.getElementById('userInfo').textContent = `${user.email}`;
         document.getElementById('welcomeDate').textContent = new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
         document.getElementById('scheduledDate').value = new Date().toISOString().split('T')[0];
@@ -356,7 +368,7 @@
                 msg.classList.remove('hidden'); 
             }
         }
-        
+
         // ============ HISTORY ============
         async function loadHistory() {
             const data = await api('/client/dashboard');
