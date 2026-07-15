@@ -393,7 +393,7 @@ app.post('/api/trucks', authenticate, authorize('dispatcher', 'management'), asy
     const [existing] = await pool.execute('SELECT id FROM trucks WHERE plate_no = ?', [plate_no.toUpperCase()]);
     if (existing.length) return res.status(400).json({ error: 'Truck already exists' });
     const [result] = await pool.execute(
-      'INSERT INTO trucks (plate_no, make, driver_name, hauler_name, total_capacity, num_tps, calibration_date, next_calibration_date, discharge_line, remarks, is_active, createdAt) VALUES (?,?,?,?,?,?,?,?,?,?,1,NOW())',
+      'INSERT INTO trucks (plate_no, make, driver_name, hauler_name, total_capacity, num_tps, calibration_date, next_calibration_date, discharge_line, remarks, is_active, createdAt, updatedAt) VALUES (?,?,?,?,?,?,?,?,?,?,1,NOW(),NOW())',
       [plate_no.toUpperCase(), make, driver_name || null, hauler_name || null, total_capacity || 0, num_tps || 0, calibration_date || null, next_calibration_date || null, discharge_line || 'including', remarks || null]
     );
     if (documents && Array.isArray(documents)) {
