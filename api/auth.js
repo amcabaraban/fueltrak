@@ -125,7 +125,30 @@ app.post('/api/auth/login', async (req, res) => {
     if (!isMatch) return res.status(401).json({ error: 'Invalid credentials' });
     await pool.execute('UPDATE users SET last_login = NOW() WHERE id = ?', [user.id]);
     const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET || 'secret', { expiresIn: '24h' });
-    res.json({ status: 'success', token, user: { id: user.id, email: user.email, role: user.role, mobile: user.mobile, company_name: user.company_name } });
+
+    // Check if already logged in on another device
+    if (user.current_token) {
+        try {
+            jwt.verify(user.current_token, process.env.JWT_SECRET || 'secret');
+            // Old token still valid - return special response asking to logout
+            return res.json({ 
+                status: 'existing_session', 
+                message: 'Already logged in on another device. Do you want to logout the other device and continue here?',
+                user: { id: user.id, email: user.email, role: user.role }
+            });
+        } catch(e) {
+            // Old token expired, proceed
+        }
+    }
+
+    await pool.execute('UPDATE users SET current_token = ?, last_login = NOW() WHERE id = ?', [token, user.id]);
+
+    res.json({
+        status: 'success',
+        token,
+        user: { id: user.id, email: user.email, role: user.role, mobile: user.mobile, company_name: user.company_name }
+    });
+  
   } catch (error) {
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -133,6 +156,28 @@ app.post('/api/auth/login', async (req, res) => {
 
 app.get('/api/auth/profile', authenticate, (req, res) => {
   res.json({ status: 'success', user: req.user });
+});
+
+app.post('/api/auth/force-login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const [users] = await pool.execute('SELECT * FROM users WHERE email = ?', [email]);
+    if (!users.length) return res.status(401).json({ error: 'Invalid credentials' });
+    const user = users[0];
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) return res.status(401).json({ error: 'Invalid credentials' });
+    
+    const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET || 'secret', { expiresIn: '24h' });
+    await pool.execute('UPDATE users SET current_token = ?, last_login = NOW() WHERE id = ?', [token, user.id]);
+    
+    res.json({
+      status: 'success',
+      token,
+      user: { id: user.id, email: user.email, role: user.role, mobile: user.mobile, company_name: user.company_name }
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
 app.post('/api/auth/forgot-password', async (req, res) => {
@@ -733,6 +778,15 @@ app.get('/api/chat-list', authenticate, async (req, res) => {
       }
     }
     res.json({ status: 'success', data: users });
+  } catch (error) { res.status(500).json({ error: error.message }); }
+});
+
+
+app.get("/api/client/atl/:id", authenticate, authorize("client"), async (req, res) => {
+  try {
+    var [atls] = await pool.execute("SELECT * FROM authority_to_load WHERE id = ? AND client_id = ?", [req.params.id, req.user.id]);
+    if (!atls.length) return res.status(404).json({ error: "ATL not found" });
+    res.json({ status: "success", data: atls[0] });
   } catch (error) { res.status(500).json({ error: error.message }); }
 });
 
