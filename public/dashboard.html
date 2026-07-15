@@ -322,19 +322,6 @@
         function searchTrucks() {
             currentTruckPage = 1;
             paginateTrucks();
-            var s = document.getElementById('truckSearch').value.toLowerCase();
-            var f = document.getElementById('truckStatusFilter').value;
-            var filtered = allTrucks.filter(function(t) {
-                if (s && ![t.plate_no,t.driver_name,t.hauler_name,t.make].some(function(v) { return (v||'').toLowerCase().indexOf(s) >= 0; })) return false;
-                if (f === 'active' && !t.is_active) return false;
-                if (f === 'inactive' && t.is_active) return false;
-                return true;
-            });
-            document.getElementById('truckList').innerHTML = '<div class="table-wrap"><table class="w-full text-sm bg-white rounded-lg shadow" style="min-inline-size:600px"><thead class="bg-gray-50"><tr><th class="py-3 px-4 text-left">Plate</th><th class="py-3 px-4 text-left">Make</th><th class="py-3 px-4 text-left">Driver</th><th class="py-3 px-4 text-left">Capacity</th><th class="py-3 px-4 text-center">Docs</th><th class="py-3 px-4 text-center">Actions</th></tr></thead><tbody>'+filtered.map(function(t) {
-                var docs = t.documents || [];
-                var valid = ['lto_registration','fire_permit','dost_calibration'].every(function(type) { return docs.find(function(d) { return d.document_type === type && new Date(d.expiry_date) >= new Date(); }); });
-                return '<tr class="border-b '+(t.is_active?'':'opacity-50')+'"><td class="py-2 px-4 font-semibold">'+t.plate_no+'</td><td class="py-2 px-4">'+t.make+'</td><td class="py-2 px-4">'+(t.driver_name||'-')+'</td><td class="py-2 px-4">'+parseFloat(t.total_capacity).toLocaleString()+'L</td><td class="py-2 px-4 text-center">'+(valid?'Y':'N')+'</td><td class="py-2 px-4"><div class="flex space-x-2 justify-center"><button onclick="editTruck('+t.id+')" class="text-blue-600"><i class="fas fa-edit"></i></button>'+(t.is_active?'<button onclick="deleteTruck('+t.id+',\''+t.plate_no+'\')" class="text-red-600"><i class="fas fa-trash"></i></button>':'<button onclick="restoreTruck('+t.id+')" class="text-green-600"><i class="fas fa-undo"></i></button>')+'</div></td></tr>';
-            }).join('')+'</tbody></table></div>';
         }
 
         function showAddTruck() { document.getElementById('editTruckId').value=''; document.getElementById('formTitle').textContent='Add Truck'; document.getElementById('addTruckForm').classList.remove('hidden'); ['newPlate','newMake','newDriver','newHauler','newCapacity','newTps','docLTO','docFire','docDOST'].forEach(function(id) { document.getElementById(id).value=''; }); }
