@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -403,26 +403,28 @@
         }
 
         async function updateTPS(id, truckId) {
-            var fromEl = document.getElementById('tps_from_' + id);
-            var toEl = document.getElementById('tps_to_' + id);
-            var fromVal = fromEl.value.trim();
-            
-            if (fromVal && truckTPSMap[truckId]) {
-                var tpsCount = truckTPSMap[truckId] || 0;
-                if (tpsCount > 0) {
-                    var fromNum = parseInt(fromVal) || 0;
-                    var toNum = fromNum + tpsCount - 1;
-                    toEl.value = String(toNum).padStart(fromVal.length, '0');
+                var fromEl = document.getElementById("tps_from_" + id);
+                var toEl = document.getElementById("tps_to_" + id);
+                var toVal = toEl.value.trim();
+                
+                if (toVal.startsWith("=")) {
+                    var formula = toVal.substring(1);
+                    if (fromEl.value) {
+                        formula = formula.replace(/from/i, fromEl.value);
+                    }
+                    try {
+                        var result = eval(formula);
+                        toEl.value = String(result).padStart(fromEl.value.length, "0");
+                    } catch(e) {}
                 }
+                
+                var res = await fetch("/api/dispatch/update-tps/" + id, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+                    body: JSON.stringify({ tps_start: fromEl.value, tps_end: toEl.value })
+                });
             }
             
-            var res = await fetch('/api/dispatch/update-tps/' + id, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-                body: JSON.stringify({ tps_start: fromVal, tps_end: toEl.value })
-            });
-        }
-
         function logout() { localStorage.clear(); window.location.href = '/'; }
 
         loadTruckTPS();
@@ -432,6 +434,7 @@
 <div id="chatWidget" class="hidden fixed bottom-4 right-4 z-50 w-80 bg-white rounded-xl shadow-2xl border"><div class="bg-blue-900 text-white p-3 rounded-t-xl flex justify-between items-center cursor-pointer" onclick="toggleChat()"><span><i class="fas fa-comments mr-2"></i><span id="chatTitle">Chat</span></span><button onclick="event.stopPropagation();closeChat()" class="text-white">&times;</button></div><div id="chatBody" class="h-64 overflow-y-auto p-3 space-y-2"></div><div class="p-2 border-t flex gap-2"><input type="text" id="chatInput" placeholder="Type message..." class="flex-1 px-2 py-1 border rounded text-sm" onkeypress="if(event.key==='Enter')sendChat()"><button onclick="sendChat()" class="bg-blue-900 text-white px-3 py-1 rounded text-sm"><i class="fas fa-paper-plane"></i></button></div></div><button onclick="openChat()" class="fixed bottom-4 right-4 z-50 bg-blue-900 text-white p-3 rounded-full shadow-lg hover:bg-blue-800" id="chatButton"><i class="fas fa-comments"></i></button>
 </body>
 </html>
+
 
 
 
