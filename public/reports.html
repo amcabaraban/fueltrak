@@ -390,24 +390,30 @@
 
         var truckTPSMap = {};
 
+        var truckTPSMap = {};
+
         async function loadTruckTPS() {
             var res = await fetch('/api/trucks/all', { headers: { 'Authorization': 'Bearer ' + token } });
             var data = await res.json();
             if (data.status === 'success') {
-                data.data.forEach(function(t) { truckTPSMap[t.id] = t.num_tps || 0; });
+                data.data.forEach(function(t) { 
+                    truckTPSMap[t.id] = parseInt(t.num_tps) || 0; 
+                });
             }
         }
 
-        async function updateTPS(id) {
+        async function updateTPS(id, truckId) {
             var fromEl = document.getElementById('tps_from_' + id);
             var toEl = document.getElementById('tps_to_' + id);
             var fromVal = fromEl.value.trim();
             
-            if (fromVal && truckTPSMap[id]) {
-                var fromNum = parseInt(fromVal) || 0;
-                var tpsCount = truckTPSMap[id] || 0;
-                var toNum = fromNum + tpsCount - 1;
-                toEl.value = String(toNum).padStart(fromVal.length, '0');
+            if (fromVal && truckTPSMap[truckId]) {
+                var tpsCount = truckTPSMap[truckId] || 0;
+                if (tpsCount > 0) {
+                    var fromNum = parseInt(fromVal) || 0;
+                    var toNum = fromNum + tpsCount - 1;
+                    toEl.value = String(toNum).padStart(fromVal.length, '0');
+                }
             }
             
             var res = await fetch('/api/dispatch/update-tps/' + id, {
@@ -417,9 +423,11 @@
             });
         }
 
+        loadTruckTPS();
+
         function logout() { localStorage.clear(); window.location.href = '/'; }
 
-        loadTruckTPS();
+        
         loadFilters();
         loadReports();
     </script>
