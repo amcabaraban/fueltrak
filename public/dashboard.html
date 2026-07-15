@@ -425,35 +425,57 @@
           document.getElementById('docDetailModal').classList.remove('hidden');
         }
 
-        var currentChatATL = null;
+        var currentChatUser = null;
+        var currentChatName = '';
 
-        function openChat(atlId, title) {
-            currentChatATL = atlId || prompt('Enter ATL ID to chat about:');
-            if (!currentChatATL) return;
-            document.getElementById('chatTitle').textContent = title || 'Chat - ATL #' + currentChatATL;
+        async function openChat(userId, userName) {
+            if (userId) {
+                currentChatUser = userId;
+                currentChatName = userName;
+            } else {
+                // Show contact list
+                var res = await fetch('/api/chat-list', { headers: { 'Authorization': 'Bearer ' + token } });
+                var data = await res.json();
+                if (data.status === 'success' && data.data.length > 0) {
+                    if (data.data.length === 1) {
+                        currentChatUser = data.data[0].id;
+                        currentChatName = data.data[0].email;
+                    } else {
+                        // Show list to pick from
+                        var list = data.data.map(function(u, i) { return (i+1) + '. ' + u.email; }).join('\n');
+                        var choice = prompt('Select contact:\n\n' + list + '\n\nEnter number:');
+                        var idx = parseInt(choice) - 1;
+                        if (idx >= 0 && idx < data.data.length) {
+                            currentChatUser = data.data[idx].id;
+                            currentChatName = data.data[idx].email;
+                        } else { return; }
+                    }
+                } else { return; }
+            }
+            
+            document.getElementById('chatTitle').textContent = 'Chat - ' + currentChatName;
             document.getElementById('chatWidget').classList.remove('hidden');
             document.getElementById('chatButton').classList.add('hidden');
             loadChatMessages();
-        }
-
-        function toggleChat() {
-            var body = document.getElementById('chatBody');
-            body.style.display = body.style.display === 'none' ? 'block' : 'none';
-        }
-
-        function closeChat() {
-            document.getElementById('chatWidget').classList.add('hidden');
-            document.getElementById('chatButton').classList.remove('hidden');
+            setInterval(loadChatMessages, 5000);
         }
 
         async function loadChatMessages() {
-            if (!currentChatATL) return;
-            var res = await fetch('/api/chat/' + currentChatATL, { headers: { 'Authorization': 'Bearer ' + token } });
+            if (!currentChatUser) return;
+            var res = await fetch('/api/chat/' + currentChatUser, { headers: { 'Authorization': 'Bearer ' + token } });
             var data = await res.json();
             if (data.status === 'success') {
-                document.getElementById('chatBody').innerHTML = data.data.map(function(m) {
-                    return '<div class="' + (m.sender_id == user.id ? 'text-right' : '') + '"><div class="inline-block ' + (m.sender_id == user.id ? 'bg-blue-100' : 'bg-gray-100') + ' rounded-lg px-3 py-1 text-sm max-w-[80%]"><p class="text-xs text-gray-500">' + m.sender_email + '</p><p>' + m.message + '</p></div></div>';
-                }).join('');
+                var html = '';
+                data.data.forEach(function(m) {
+                    var isMe = m.sender_id == user.id;
+                    html += '<div class="' + (isMe ? 'text-right' : 'text-left') + ' mb-2">';
+                    html += '<div class="inline-block ' + (isMe ? 'bg-blue-100' : 'bg-gray-100') + ' rounded-lg px-3 py-1.5 text-sm max-w-[80%]">';
+                    html += '<p class="text-[10px] text-gray-500">' + (isMe ? 'You' : m.sender_email) + '</p>';
+                    html += '<p>' + m.message + '</p>';
+                    html += '<p class="text-[9px] text-gray-400">' + new Date(m.created_at).toLocaleTimeString() + '</p>';
+                    html += '</div></div>';
+                });
+                document.getElementById('chatBody').innerHTML = html || '<p class="text-center text-gray-400 text-sm">No messages yet</p>';
                 document.getElementById('chatBody').scrollTop = document.getElementById('chatBody').scrollHeight;
             }
         }
@@ -461,14 +483,19 @@
         async function sendChat() {
             var input = document.getElementById('chatInput');
             var msg = input.value.trim();
-            if (!msg || !currentChatATL) return;
+            if (!msg || !currentChatUser) return;
             await fetch('/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-                body: JSON.stringify({ atl_id: currentChatATL, message: msg })
+                body: JSON.stringify({ receiver_id: currentChatUser, message: msg })
             });
             input.value = '';
             loadChatMessages();
+        }
+
+        function closeChat() {
+            document.getElementById('chatWidget').classList.add('hidden');
+            document.getElementById('chatButton').classList.remove('hidden');
         }
 
         function logout() { localStorage.clear(); window.location.href = '/'; }

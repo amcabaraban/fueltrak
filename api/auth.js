@@ -698,23 +698,42 @@ app.put('/api/dispatch/update-tps/:id', authenticate, authorize('dispatcher', 'm
 });
 
 // ============ CHAT ROUTES ============
-app.get('/api/chat/:atlId', authenticate, async (req, res) => {
+// Get chat messages between current user and a specific client
+app.get('/api/chat/:clientId', authenticate, async (req, res) => {
   try {
     var [messages] = await pool.execute(
-      'SELECT cm.*, u.email as sender_email FROM chat_messages cm JOIN users u ON cm.sender_id = u.id WHERE cm.atl_id = ? ORDER BY cm.created_at ASC',
-      [req.params.atlId]
+      'SELECT cm.*, u.email as sender_email FROM chat_messages cm JOIN users u ON cm.sender_id = u.id WHERE (cm.sender_id = ? AND cm.receiver_id = ?) OR (cm.sender_id = ? AND cm.receiver_id = ?) ORDER BY cm.created_at ASC LIMIT 50',
+      [req.user.id, req.params.clientId, req.params.clientId, req.user.id]
     );
     res.json({ status: 'success', data: messages });
   } catch (error) { res.status(500).json({ error: error.message }); }
 });
 
+// Send message to a client
 app.post('/api/chat', authenticate, async (req, res) => {
   try {
-    var { atl_id, message } = req.body;
-    await pool.execute('INSERT INTO chat_messages (sender_id, atl_id, message) VALUES (?, ?, ?)',
-      [req.user.id, atl_id, message]);
+    var { receiver_id, message } = req.body;
+    await pool.execute('INSERT INTO chat_messages (sender_id, receiver_id, message) VALUES (?, ?, ?)',
+      [req.user.id, receiver_id, message]);
     res.json({ status: 'success', message: 'Sent' });
   } catch (error) { res.status(400).json({ error: error.message }); }
+});
+
+// Get chat list (clients for admin, admin for clients)
+app.get('/api/chat-list', authenticate, async (req, res) => {
+  try {
+    if (req.user.role === 'client') {
+      // Client sees admin/dispatcher
+      var [users] = await pool.execute("SELECT id, email FROM users WHERE role IN ('dispatcher','management') LIMIT 5");
+    } else {
+      // Admin sees clients who have chatted
+      var [users] = await pool.execute("SELECT DISTINCT u.id, u.email FROM users u JOIN chat_messages cm ON (cm.sender_id = u.id OR cm.receiver_id = u.id) WHERE u.role = 'client' AND (cm.sender_id = ? OR cm.receiver_id = ?) LIMIT 20", [req.user.id, req.user.id]);
+      if (users.length === 0) {
+        var [users] = await pool.execute("SELECT id, email FROM users WHERE role = 'client' LIMIT 10");
+      }
+    }
+    res.json({ status: 'success', data: users });
+  } catch (error) { res.status(500).json({ error: error.message }); }
 });
 
 module.exports = app;
