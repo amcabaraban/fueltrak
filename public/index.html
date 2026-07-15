@@ -189,7 +189,7 @@
                 const data = await res.json();
 
                 if (data.status === 'success') {
-                    // Check if role matches selected role
+                    // Check role matches selected tab
                     if (selectedRole === 'client' && data.user.role !== 'client') {
                         errorDiv.textContent = 'This account is not a client account. Please switch to Admin login.';
                         errorDiv.classList.remove('hidden');
@@ -208,6 +208,28 @@
                         window.location.href = '/client';
                     } else {
                         window.location.href = '/dashboard';
+                    }
+                } else if (data.status === 'existing_session') {
+                    if (confirm('Already logged in on another device.\n\nClick OK to logout other device and continue here.')) {
+                        const res2 = await fetch(API + '/auth/force-login', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ email, password })
+                        });
+                        const data2 = await res2.json();
+                        if (data2.status === 'success') {
+                            localStorage.setItem('fueltrak_token', data2.token);
+                            localStorage.setItem('fueltrak_user', JSON.stringify(data2.user));
+
+                            if (data2.user.role === 'client') {
+                                window.location.href = '/client';
+                            } else {
+                                window.location.href = '/dashboard';
+                            }
+                        } else {
+                            errorDiv.textContent = data2.error || 'Force login failed';
+                            errorDiv.classList.remove('hidden');
+                        }
                     }
                 } else {
                     errorDiv.textContent = data.error || 'Login failed';
