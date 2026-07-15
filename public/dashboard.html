@@ -312,8 +312,8 @@
         async function loadTrucks() { 
             var data = await api('/trucks'); 
             if (data.status === 'success') { 
-                allTrucks = data.data; 
-                searchTrucks();
+                allTruckRecords = data.data;
+                allTrucks = data.data;
                 currentTruckPage = 1;
                 paginateTrucks(); 
             } 
