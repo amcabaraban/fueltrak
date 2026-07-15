@@ -172,9 +172,17 @@
                 document.getElementById('clientFilter').innerHTML = '<option value="">All Clients</option>' + data.data.clients.map(c => `<option value="${c.id}">${c.label}</option>`).join('');
                 document.getElementById('truckFilter').innerHTML = '<option value="">All Trucks</option>' + data.data.trucks.map(t => `<option value="${t.id}">${t.label}</option>`).join('');
             }
+            document.getElementById('startDate').value = new Date().toISOString().split('T')[0];
+            document.getElementById('endDate').value = new Date().toISOString().split('T')[0];
         }
 
         async function loadReports() {
+            // Set default to today if not already set
+            if (!document.getElementById('startDate').value && !document.getElementById('endDate').value) {
+                document.getElementById('startDate').value = new Date().toISOString().split('T')[0];
+                document.getElementById('endDate').value = new Date().toISOString().split('T')[0];
+            }
+            
             const params = new URLSearchParams();
             const start = document.getElementById('startDate').value;
             const end = document.getElementById('endDate').value;
@@ -192,7 +200,6 @@
             if (data.status === 'success') {
                 const d = data.data;
                 
-                // Summary cards
                 document.getElementById('summaryCards').innerHTML = `
                     <div class="bg-white rounded-xl shadow p-4 text-center"><p class="text-2xl font-bold">${d.summary.total_records}</p><p class="text-xs text-gray-500">Total Records</p></div>
                     <div class="bg-green-50 rounded-xl shadow p-4 text-center"><p class="text-2xl font-bold text-green-700">${d.summary.completed}</p><p class="text-xs text-gray-500">Completed</p></div>
@@ -201,7 +208,6 @@
                     <div class="bg-blue-50 rounded-xl shadow p-4 text-center"><p class="text-2xl font-bold text-blue-700">${d.summary.total_actual_volume.toLocaleString()}L</p><p class="text-xs text-gray-500">Actual Volume</p></div>
                 `;
 
-                // Table
                 document.getElementById('reportTableBody').innerHTML = d.records.map(r => `
                     <tr class="border-b hover:bg-gray-50">
                         <td class="py-2 px-3 font-mono text-xs font-bold text-blue-900">${r.atl_code||'-'}</td>
@@ -209,7 +215,7 @@
                         <td class="py-2 px-3">${r.company||'-'}</td>
                         <td class="py-2 px-3 font-semibold">${r.plate_no}</td>
                         <td class="py-2 px-3">${r.driver_name||'-'}</td>
-                        <td class="py-2 px-3 text-right">${r.volume.toLocaleString()}</td>
+                        <td class="py-2 px-3 text-right">${r.volume ? r.volume.toLocaleString() : '0'}</td>
                         <td class="py-2 px-3 text-right font-semibold">${r.actual_volume ? r.actual_volume.toLocaleString() : '-'}</td>
                         <td class="py-2 px-3 text-center text-xs cursor-pointer hover:bg-blue-50" onclick="toggleSI(${r.id}, this)">${r.has_si==1?"With SI":"No SI"}</td>
                         <td class="py-2 px-3 text-center"><span class="px-2 py-1 rounded text-xs ${r.status==='completed'?'bg-green-100 text-green-800':r.status==='cancelled'?'bg-red-100 text-red-800':'bg-orange-100 text-orange-800'}">${r.status}</span></td>
@@ -219,15 +225,15 @@
                             <input type="text" id="tps_from_${r.id}" value="${r.tps_start||''}" placeholder="From" class="w-16 px-1 py-0.5 border rounded text-xs" onchange="updateTPS(${r.id})">
                             <input type="text" id="tps_to_${r.id}" value="${r.tps_end||''}" placeholder="To" class="w-16 px-1 py-0.5 border rounded text-xs" onchange="updateTPS(${r.id})">
                         </td>
-                        <td class="py-2 px-3 text-center">${r.revision_count > 0 ? `<span class="bg-purple-100 text-purple-800 px-2 py-1 rounded text-xs">${r.revision_count}</span>` : '0'}</td>
+                        <td class="py-2 px-3 text-center">${r.revision_count > 0 ? '<span class="bg-purple-100 text-purple-800 px-2 py-1 rounded text-xs">' + r.revision_count + '</span>' : '0'}</td>
                         <td class="py-2 px-3 text-center"><button onclick="viewDetails(${r.id})" class="text-blue-600 hover:underline text-xs"><i class="fas fa-eye"></i></button></td>
                     </tr>
-                `).join('') || '<tr><td colspan="13" class="text-center py-8 text-gray-500">No records found</td></tr>';
+                `).join('') || '<tr><td colspan="14" class="text-center py-8 text-gray-500">No records found</td></tr>';
 
-                document.getElementById('reportCount').textContent = `Showing ${d.records.length} record(s)`;
+                document.getElementById('reportCount').textContent = 'Showing ' + d.records.length + ' record(s)';
             }
         }
-
+        
         async function viewDetails(id) {
             try {
                 // Fetch ATL directly with truck and client info
@@ -308,6 +314,8 @@
 
         function clearFilters() {
             ['startDate','endDate','statusFilter','clientFilter','truckFilter'].forEach(id => document.getElementById(id).value = '');
+            document.getElementById('startDate').value = new Date().toISOString().split('T')[0];
+            document.getElementById('endDate').value = new Date().toISOString().split('T')[0];
             document.getElementById('statusFilter').value = 'completed,cancelled,dispatched';
             loadReports();
         }
