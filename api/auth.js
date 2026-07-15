@@ -670,7 +670,7 @@ app.get('/api/reports/export', authenticate, authorize('dispatcher', 'management
     const [atls] = await pool.execute(query, params);
     let csv = 'ATL Code,SO Number,Company,Plate No,Driver,Hauler,Contact Number,Volume (L),Actual Volume (L),SI,Status,Scheduled Date,Dispatch Date,Completed Date,Printed WC,TPS From,TPS To,Remarks\n';
     for (const a of atls) {
-      csv += `"${a.atl_code||''}","${a.so_number||''}","${a.company||''}","${a.plate_no||''}","${a.driver_name||''}","${a.hauler||''}",${a.volume||0},"${a.status}","${a.scheduled_date}"\n`;
+      csv += "","","","","","","",,,"","","","","","","","",""\n;
     }
     res.setHeader('Content-Type', 'text/csv');
     res.setHeader('Content-Disposition', 'attachment; filename=report.csv');
