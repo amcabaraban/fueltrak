@@ -83,7 +83,10 @@
                     </tbody>
                 </table>
             </div>
-            <div class="px-4 py-3 border-t text-sm text-gray-500" id="reportCount"></div>
+            <div class="px-4 py-3 border-t flex justify-between items-center">
+                <div class="text-sm text-gray-500" id="reportCount"></div>
+                <div class="flex items-center space-x-2" id="pagination"></div>
+            </div>
         </div>
     </div>
 
@@ -99,6 +102,59 @@
         async function api(url) {
             var res = await fetch(API + url, { headers: { 'Authorization': 'Bearer ' + token } });
             return await res.json();
+        }
+
+        var currentPage = 1;
+        var recordsPerPage = 10;
+        var allDocRecords = [];
+
+        function paginateDocs() {
+            var totalPages = Math.ceil(allDocRecords.length / recordsPerPage);
+            var start = (currentPage - 1) * recordsPerPage;
+            var end = start + recordsPerPage;
+            var pageData = allDocRecords.slice(start, end);
+            
+            renderDocRows(pageData);
+            
+            var pagHTML = '';
+            pagHTML += '<button onclick="changeDocPage(' + (currentPage - 1) + ')" class="px-2 py-1 border rounded text-xs ' + (currentPage === 1 ? 'text-gray-300 cursor-not-allowed' : 'hover:bg-gray-100') + '" ' + (currentPage === 1 ? 'disabled' : '') + '><i class="fas fa-chevron-left"></i></button>';
+            
+            for (var i = 1; i <= totalPages; i++) {
+                if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
+                    pagHTML += '<button onclick="changeDocPage(' + i + ')" class="px-2 py-1 border rounded text-xs ' + (i === currentPage ? 'bg-blue-900 text-white' : 'hover:bg-gray-100') + '">' + i + '</button>';
+                } else if (i === currentPage - 3 || i === currentPage + 3) {
+                    pagHTML += '<span class="px-1 text-xs">...</span>';
+                }
+            }
+            
+            pagHTML += '<button onclick="changeDocPage(' + (currentPage + 1) + ')" class="px-2 py-1 border rounded text-xs ' + (currentPage === totalPages ? 'text-gray-300 cursor-not-allowed' : 'hover:bg-gray-100') + '" ' + (currentPage === totalPages ? 'disabled' : '') + '><i class="fas fa-chevron-right"></i></button>';
+            pagHTML += '<span class="text-xs text-gray-400 ml-2">' + allDocRecords.length + ' total</span>';
+            
+            document.getElementById('pagination').innerHTML = pagHTML;
+        }
+
+        function changeDocPage(page) {
+            if (page < 1 || page > Math.ceil(allDocRecords.length / recordsPerPage)) return;
+            currentPage = page;
+            paginateDocs();
+        }
+
+        function renderDocRows(records) {
+            document.getElementById('reportBody').innerHTML = records.map(function(r) {
+                var statusColor = r.status === 'Valid' ? 'bg-green-100 text-green-800' : r.status === 'Expired' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800';
+                return '<tr class="border-b hover:bg-gray-50">' +
+                    '<td class="py-2 px-3 font-semibold">' + r.plate_no + '</td>' +
+                    '<td class="py-2 px-3">' + r.make + '</td>' +
+                    '<td class="py-2 px-3">' + (r.driver || '-') + '</td>' +
+                    '<td class="py-2 px-3">' + (r.hauler || '-') + '</td>' +
+                    '<td class="py-2 px-3 text-xs">' + r.type + '</td>' +
+                    '<td class="py-2 px-3">' + (r.expiry ? r.expiry.toLocaleDateString() : 'N/A') + '</td>' +
+                    '<td class="py-2 px-3 text-center"><span class="px-2 py-1 rounded text-xs ' + statusColor + '">' + r.status + '</span></td>' +
+                    '<td class="py-2 px-3">' + (r.daysLeft !== null ? (r.daysLeft < 0 ? '<span class="text-red-600">' + r.daysLeft + 'd</span>' : r.daysLeft + 'd') : 'N/A') + '</td>' +
+                    '</tr>';
+            }).join('') || '<tr><td colspan="8" class="text-center py-8 text-gray-500">No documents found</td></tr>';
+            
+            document.getElementById('reportCount').textContent = 'Showing ' + records.length + ' of ' + allDocRecords.length + ' document(s)';
         }
 
         async function loadReport() {
@@ -145,6 +201,10 @@
                 { label:'Trucks',value:trucks.length,color:'text-purple-700',bg:'bg-purple-50' }
             ].map(function(c) { return '<div class="'+c.bg+' rounded-xl shadow p-4 text-center"><p class="text-2xl font-bold '+c.color+'">'+c.value+'</p><p class="text-xs text-gray-500">'+c.label+'</p></div>'; }).join('');
 
+            allDocRecords = rows;
+            currentPage = 1;
+            paginateDocs();
+            
             // Table
             document.getElementById('reportBody').innerHTML = rows.map(function(r) {
                 return '<tr class="border-b hover:bg-gray-50">' +
