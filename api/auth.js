@@ -697,6 +697,26 @@ app.put('/api/dispatch/update-tps/:id', authenticate, authorize('dispatcher', 'm
   } catch (error) { res.status(400).json({ error: error.message }); }
 });
 
+// ============ CHAT ROUTES ============
+app.get('/api/chat/:atlId', authenticate, async (req, res) => {
+  try {
+    var [messages] = await pool.execute(
+      'SELECT cm.*, u.email as sender_email FROM chat_messages cm JOIN users u ON cm.sender_id = u.id WHERE cm.atl_id = ? ORDER BY cm.created_at ASC',
+      [req.params.atlId]
+    );
+    res.json({ status: 'success', data: messages });
+  } catch (error) { res.status(500).json({ error: error.message }); }
+});
+
+app.post('/api/chat', authenticate, async (req, res) => {
+  try {
+    var { atl_id, message } = req.body;
+    await pool.execute('INSERT INTO chat_messages (sender_id, atl_id, message) VALUES (?, ?, ?)',
+      [req.user.id, atl_id, message]);
+    res.json({ status: 'success', message: 'Sent' });
+  } catch (error) { res.status(400).json({ error: error.message }); }
+});
+
 module.exports = app;
 
 

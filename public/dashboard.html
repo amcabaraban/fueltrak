@@ -91,6 +91,22 @@
         <div id="editLoadingModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"><div class="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 p-4 sm:p-6"><div class="flex justify-between mb-4"><h3 class="text-lg font-bold">Edit Loading</h3><button onclick="document.getElementById('editLoadingModal').classList.add('hidden')" class="text-2xl">&times;</button></div><form onsubmit="saveLoadingEdit(event)" class="space-y-3"><input type="hidden" id="editLoadingId"><div><label class="text-xs font-semibold">Volume (L)</label><input type="number" id="editVolume" class="w-full px-3 py-2 border rounded"></div><div><label class="text-xs font-semibold">Actual (L)</label><input type="number" id="editActualVolume" class="w-full px-3 py-2 border rounded"></div><div><label class="text-xs font-semibold">Driver</label><input type="text" id="editDriver" class="w-full px-3 py-2 border rounded"></div><div><label class="text-xs font-semibold">Hauler</label><input type="text" id="editHauler" class="w-full px-3 py-2 border rounded"></div><div><label class="text-xs font-semibold">Remarks</label><textarea id="editRemarks" class="w-full px-3 py-2 border rounded" rows="2"></textarea></div><button type="submit" class="w-full bg-blue-900 text-white py-2 rounded font-semibold">Save</button></form></div></div>
     </div>
 
+    <div id="chatWidget" class="hidden fixed bottom-4 right-4 z-50 w-80 bg-white rounded-xl shadow-2xl border">
+        <div class="bg-blue-900 text-white p-3 rounded-t-xl flex justify-between items-center cursor-pointer" onclick="toggleChat()">
+            <span><i class="fas fa-comments mr-2"></i><span id="chatTitle">Chat</span></span>
+            <button onclick="event.stopPropagation();document.getElementById('chatWidget').classList.add('hidden')" class="text-white">&times;</button>
+        </div>
+        <div id="chatBody" class="h-64 overflow-y-auto p-3 space-y-2" id="chatMessages"></div>
+        <div class="p-2 border-t flex gap-2">
+            <input type="text" id="chatInput" placeholder="Type message..." class="flex-1 px-2 py-1 border rounded text-sm">
+            <button onclick="sendChat()" class="bg-blue-900 text-white px-3 py-1 rounded text-sm"><i class="fas fa-paper-plane"></i></button>
+        </div>
+    </div>
+
+    <button onclick="openChat()" class="fixed bottom-4 right-4 z-50 bg-blue-900 text-white p-3 rounded-full shadow-lg hover:bg-blue-800" id="chatButton">
+        <i class="fas fa-comments"></i>
+    </button>
+
     <script>
         const API = '/api';
         const token = localStorage.getItem('fueltrak_token');
@@ -407,6 +423,52 @@
           if (result.length === 0) html = '<p class="text-center py-8 text-gray-500">No trucks found</p>';
           document.getElementById('docDetailContent').innerHTML = html;
           document.getElementById('docDetailModal').classList.remove('hidden');
+        }
+
+        var currentChatATL = null;
+
+        function openChat(atlId, title) {
+            currentChatATL = atlId || prompt('Enter ATL ID to chat about:');
+            if (!currentChatATL) return;
+            document.getElementById('chatTitle').textContent = title || 'Chat - ATL #' + currentChatATL;
+            document.getElementById('chatWidget').classList.remove('hidden');
+            document.getElementById('chatButton').classList.add('hidden');
+            loadChatMessages();
+        }
+
+        function toggleChat() {
+            var body = document.getElementById('chatBody');
+            body.style.display = body.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function closeChat() {
+            document.getElementById('chatWidget').classList.add('hidden');
+            document.getElementById('chatButton').classList.remove('hidden');
+        }
+
+        async function loadChatMessages() {
+            if (!currentChatATL) return;
+            var res = await fetch('/api/chat/' + currentChatATL, { headers: { 'Authorization': 'Bearer ' + token } });
+            var data = await res.json();
+            if (data.status === 'success') {
+                document.getElementById('chatBody').innerHTML = data.data.map(function(m) {
+                    return '<div class="' + (m.sender_id == user.id ? 'text-right' : '') + '"><div class="inline-block ' + (m.sender_id == user.id ? 'bg-blue-100' : 'bg-gray-100') + ' rounded-lg px-3 py-1 text-sm max-w-[80%]"><p class="text-xs text-gray-500">' + m.sender_email + '</p><p>' + m.message + '</p></div></div>';
+                }).join('');
+                document.getElementById('chatBody').scrollTop = document.getElementById('chatBody').scrollHeight;
+            }
+        }
+
+        async function sendChat() {
+            var input = document.getElementById('chatInput');
+            var msg = input.value.trim();
+            if (!msg || !currentChatATL) return;
+            await fetch('/api/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                body: JSON.stringify({ atl_id: currentChatATL, message: msg })
+            });
+            input.value = '';
+            loadChatMessages();
         }
 
         function logout() { localStorage.clear(); window.location.href = '/'; }
