@@ -306,7 +306,7 @@ app.post('/api/dispatch/complete-loading/:id', authenticate, authorize('dispatch
 
 app.post('/api/dispatch/cancel-loading/:id', authenticate, authorize('dispatcher', 'management'), async (req, res) => {
   try {
-    await pool.execute("UPDATE authority_to_load SET status = 'approved', dispatch_date = NULL, remarks = ? WHERE id = ?",
+    await pool.execute("UPDATE authority_to_load SET status = 'pending', dispatch_date = NULL, remarks = ? WHERE id = ?",
       ['Loading cancelled: ' + (req.body.reason || 'No reason'), req.params.id]);
     const [updated] = await pool.execute('SELECT * FROM authority_to_load WHERE id = ?', [req.params.id]);
     res.json({ status: 'success', data: updated[0] });

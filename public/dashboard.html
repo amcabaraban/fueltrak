@@ -53,7 +53,20 @@
             </div>
         </div>
 
-        <div id="tabVerify" class="hidden"><div class="flex items-center mb-4"><button onclick="showDashboard()" class="text-gray-500 hover:text-gray-700 mr-3"><i class="fas fa-arrow-left text-xl"></i></button><h2 class="text-xl font-bold">Pending ATL Verifications</h2></div><div id="pendingATLs" class="space-y-3"></div></div>
+        <div id="tabVerify" class="hidden">
+            <div class="flex items-center mb-4"><button onclick="showDashboard()" class="text-gray-500 hover:text-gray-700 mr-3"><i class="fas fa-arrow-left text-xl"></i></button><h2 class="text-xl font-bold">Pending ATL Verifications</h2></div>
+            <div class="bg-white rounded-lg shadow p-3 mb-4">
+                <div class="flex flex-wrap gap-2">
+                    <input type="text" id="pendingSearch" placeholder="Search plate, company, ATL code..." class="flex-1 px-3 py-2 border rounded text-sm" oninput="filterPending()">
+                    <select id="pendingFilter" class="px-3 py-2 border rounded text-sm" onchange="filterPending()">
+                        <option value="all">All</option>
+                        <option value="pending">Pending</option>
+                        <option value="cancellation">Cancellation Requests</option>
+                    </select>
+                </div>
+            </div>
+            <div id="pendingATLs" class="space-y-3"></div>
+        </div>
 
         <div id="tabLoading" class="hidden">
             <div class="flex items-center mb-4"><button onclick="showDashboard()" class="text-gray-500 hover:text-gray-700 mr-3"><i class="fas fa-arrow-left text-xl"></i></button><h2 class="text-xl font-bold">Loading Management</h2></div>
@@ -147,13 +160,47 @@
             }).join('');
         }
 
+        var allPendingATLs = [];
+
         async function loadPending() {
             var data = await api('/dispatch/pending');
             if (data.status === 'success') {
-                document.getElementById('pendingATLs').innerHTML = data.data.map(function(a) {
-                    return '<div class="bg-white rounded-lg shadow p-3 md:p-4 flex flex-col sm:flex-row justify-between gap-2"><div><p class="font-bold text-sm">'+(a.atl_code||'N/A')+' - '+a.plate_no+'</p><p class="text-xs md:text-sm">'+(a.company||'')+' | SO: '+(a.so_number||'N/A')+' | Vol: '+(a.volume||'N/A')+'L | '+a.driver_name+'</p></div><div class="flex space-x-2 self-end sm:self-center"><button onclick="verifyATL('+a.id+',\'approve\')" class="bg-green-500 text-white px-2 py-1 rounded text-xs">Approve</button><button onclick="verifyATL('+a.id+',\'reject\')" class="bg-red-500 text-white px-2 py-1 rounded text-xs">Reject</button></div></div>';
-                }).join('') || '<p class="text-gray-500 text-center py-8">No pending ATLs</p>';
+                allPendingATLs = data.data;
+                filterPending();
             }
+        }
+
+        function filterPending() {
+            var search = (document.getElementById('pendingSearch').value || '').toLowerCase();
+            var filter = document.getElementById('pendingFilter').value;
+            var filtered = allPendingATLs;
+            
+            if (search) {
+                filtered = filtered.filter(function(a) {
+                    return (a.plate_no||'').toLowerCase().indexOf(search) >= 0 ||
+                        (a.company||'').toLowerCase().indexOf(search) >= 0 ||
+                        (a.atl_code||'').toLowerCase().indexOf(search) >= 0 ||
+                        (a.driver_name||'').toLowerCase().indexOf(search) >= 0;
+                });
+            }
+            if (filter === 'cancellation') {
+                filtered = filtered.filter(function(a) { return a.remarks && a.remarks.indexOf('CANCELLATION') >= 0; });
+            }
+            
+            document.getElementById('pendingATLs').innerHTML = filtered.map(function(a) {
+                var isCancellation = a.remarks && a.remarks.indexOf('CANCELLATION') >= 0;
+                return '<div class="bg-white rounded-lg shadow p-3 md:p-4 flex flex-col sm:flex-row justify-between gap-2">' +
+                    '<div><p class="font-bold text-sm">'+(a.atl_code||'N/A')+' - '+a.plate_no+'</p>' +
+                    '<p class="text-xs md:text-sm">'+(a.company||'')+' | SO: '+(a.so_number||'N/A')+' | Vol: '+(a.volume||'N/A')+'L | '+a.driver_name+'</p>' +
+                    (isCancellation?'<p class="text-red-600 text-xs">Cancellation Requested</p>':'') +
+                    '</div><div class="flex space-x-2 self-end sm:self-center">' +
+                    (isCancellation ?
+                        '<button onclick="handleCancel('+a.id+',\'approve_cancel\')" class="bg-red-500 text-white px-2 py-1 rounded text-xs">Approve Cancel</button>' +
+                        '<button onclick="handleCancel('+a.id+',\'reject_cancel\')" class="bg-green-500 text-white px-2 py-1 rounded text-xs">Reject Cancel</button>' :
+                        '<button onclick="verifyATL('+a.id+',\'approve\')" class="bg-green-500 text-white px-2 py-1 rounded text-xs">Approve</button>' +
+                        '<button onclick="verifyATL('+a.id+',\'reject\')" class="bg-red-500 text-white px-2 py-1 rounded text-xs">Reject</button>') +
+                    '</div></div>';
+            }).join('') || '<p class="text-gray-500 text-center py-8">No pending ATLs found</p>';
         }
 
         async function verifyATL(id, action) { 
@@ -185,7 +232,7 @@
         }
 
         async function cancelLoading(id) { 
-            if (!confirm('Cancel this loading? ATL will revert to approved status.')) return;
+            if (!confirm('Cancel this loading? ATL will go back to pending verification.')) return;
             var reason = prompt('Reason for cancellation:'); 
             if (!reason) return; 
             await api('/dispatch/cancel-loading/'+id, 'POST', { reason: reason }); 
@@ -315,7 +362,7 @@
         }
 
         async function toggleClient(id) { await api('/clients/'+id+'/toggle-status', 'PATCH'); loadClients(); }
-        
+
         async function deleteClient(id, email) { 
             if (!confirm('WARNING: Delete client ' + email + '?\n\nThis cannot be undone if they have no active ATLs.')) return;
             await api('/clients/'+id, 'DELETE'); 
