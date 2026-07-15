@@ -790,6 +790,9 @@ app.get("/api/client/atl/:id", authenticate, authorize("client"), async (req, re
   } catch (error) { res.status(500).json({ error: error.message }); }
 });
 
+
+app.get('/tutorial', (req, res) => res.sendFile(require('path').join(__dirname, '..', 'public', 'tutorial.html')));
+
 module.exports = app;
 
 
