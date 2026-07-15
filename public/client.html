@@ -281,44 +281,82 @@
         async function submitATL(e) {
             e.preventDefault();
             const msg = document.getElementById('atlMessage');
+            const volume = parseFloat(document.getElementById('volume').value);
             
-            var company = document.getElementById('company').value;
-            var plate = document.getElementById('plateNo').value.toUpperCase();
-            var volume = document.getElementById('volume').value;
-            var driver = document.getElementById('driverName').value;
-            var date = document.getElementById('scheduledDate').value;
-            
-            var summary = 'Please verify:\n\nCompany: ' + company + '\nPlate: ' + plate + '\nVolume: ' + Number(volume).toLocaleString() + ' L\nDriver: ' + driver + '\nDate: ' + date + '\nSI: ' + (hasSI ? 'With SI' : 'No SI');
-            if (!confirm(summary + '\n\nSubmit this ATL?')) return;
-
-            if (!truckVerified) { msg.textContent = 'Verify truck first'; msg.className = 'mt-3 text-sm text-red-600'; msg.classList.remove('hidden'); return; }
-            if (!volume || volume <= 0) { msg.textContent = 'Enter valid volume'; msg.className = 'mt-3 text-sm text-red-600'; msg.classList.remove('hidden'); return; }
+            if (!truckVerified) { 
+                msg.textContent = 'Verify truck first'; 
+                msg.className = 'mt-3 text-sm text-red-600'; 
+                msg.classList.remove('hidden'); 
+                return; 
+            }
+            if (!volume || volume <= 0) { 
+                msg.textContent = 'Enter valid volume'; 
+                msg.className = 'mt-3 text-sm text-red-600'; 
+                msg.classList.remove('hidden'); 
+                return; 
+            }
             
             const hasSI = document.querySelector('input[name="siOption"]:checked')?.value === 'yes';
+            
+            // Confirmation prompt
+            var company = document.getElementById('company').value;
+            var plate = document.getElementById('plateNo').value.toUpperCase();
+            var driver = document.getElementById('driverName').value;
+            var date = document.getElementById('scheduledDate').value;
+            var soNumber = document.getElementById('soNumber').value;
+            var hauler = document.getElementById('hauler').value;
+            var contact = document.getElementById('contactNumber').value;
+            
+            var summary = 'Please verify all details:\n\n' +
+                'Company: ' + company + '\n' +
+                'SO Number: ' + (soNumber || 'N/A') + '\n' +
+                'Plate: ' + plate + '\n' +
+                'Volume: ' + Number(volume).toLocaleString() + ' L\n' +
+                'Driver: ' + driver + '\n' +
+                'Hauler: ' + hauler + '\n' +
+                'Contact: ' + contact + '\n' +
+                'Date: ' + date + '\n' +
+                'SI: ' + (hasSI ? 'With SI' : 'No SI');
+            
+            if (!confirm(summary + '\n\nSubmit this ATL?')) return;
+            
             try {
                 const res = await api('/client/submit-atl', 'POST', {
-                    company: document.getElementById('company').value,
-                    so_number: document.getElementById('soNumber').value,
-                    volume, scheduled_date: document.getElementById('scheduledDate').value,
-                    hauler: document.getElementById('hauler').value,
-                    plate_no: document.getElementById('plateNo').value.toUpperCase(),
-                    driver_name: document.getElementById('driverName').value,
-                    contact_number: document.getElementById('contactNumber').value,
+                    company: company,
+                    so_number: soNumber,
+                    volume: volume,
+                    scheduled_date: date,
+                    hauler: hauler,
+                    plate_no: plate,
+                    driver_name: driver,
+                    contact_number: contact,
                     has_si: hasSI
                 });
+                
+                const data = res;
                 if (data.status === 'success') {
-                    const data = res; msg.innerHTML = `? Submitted!<br><span class="font-bold text-blue-900">Code: ${data.data.atl_code}</span>`;
+                    msg.innerHTML = '✅ Submitted!<br><span class="font-bold text-blue-900">Code: ' + (data.data ? data.data.atl_code : data.atl_code) + '</span>';
                     msg.className = 'mt-3 text-sm text-green-600 text-center';
-                    ['company','soNumber','volume','hauler','plateNo','driverName','contactNumber'].forEach(id => document.getElementById(id).value = '');
+                    ['company','soNumber','volume','hauler','plateNo','driverName','contactNumber'].forEach(function(id) {
+                        document.getElementById(id).value = '';
+                    });
                     document.querySelector('input[name="siOption"][value="no"]').checked = true;
                     document.getElementById('submitBtn').disabled = true;
                     truckVerified = false;
-                } else { msg.textContent = data.error; msg.className = 'mt-3 text-sm text-red-600'; }
+                    msg.classList.add('hidden');
+                } else { 
+                    msg.textContent = data.error || 'Error submitting ATL'; 
+                    msg.className = 'mt-3 text-sm text-red-600'; 
+                }
                 msg.classList.remove('hidden');
-                setTimeout(() => msg.classList.add('hidden'), 5000);
-            } catch (e) { msg.textContent = 'Error'; msg.className = 'mt-3 text-sm text-red-600'; msg.classList.remove('hidden'); }
+                setTimeout(function() { msg.classList.add('hidden'); }, 5000);
+            } catch(e) { 
+                msg.textContent = 'Connection error. Please try again.'; 
+                msg.className = 'mt-3 text-sm text-red-600'; 
+                msg.classList.remove('hidden'); 
+            }
         }
-
+        
         // ============ HISTORY ============
         async function loadHistory() {
             const data = await api('/client/dashboard');
