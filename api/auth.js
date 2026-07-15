@@ -638,7 +638,7 @@ app.post('/api/client/submit-atl', authenticate, authorize('client'), async (req
 
 app.post('/api/client/cancel-atl/:id', authenticate, authorize('client'), async (req, res) => {
   try {
-    await pool.execute("UPDATE authority_to_load SET status = 'pending', remarks = ? WHERE id = ? AND client_id = ?", ['Cancellation: ' + (req.body.reason || ''), req.params.id, req.user.id]);
+    await pool.execute("UPDATE authority_to_load SET status = 'cancelled', remarks = ? WHERE id = ? AND client_id = ?", ['Cancellation: ' + (req.body.reason || ''), req.params.id, req.user.id]);
     res.json({ status: 'success', message: 'Cancellation requested' });
   } catch (error) { res.status(400).json({ error: error.message }); }
 });
@@ -791,6 +791,7 @@ app.get("/api/client/atl/:id", authenticate, authorize("client"), async (req, re
 });
 
 module.exports = app;
+
 
 
 
