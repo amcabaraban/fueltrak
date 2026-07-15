@@ -156,7 +156,13 @@
             }
         }
 
-        async function verifyATL(id, action) { await api('/dispatch/verify/'+id, 'POST', {action: action, remarks: prompt('Remarks:')}); loadPending(); loadDashboard(); }
+        async function verifyATL(id, action) { 
+            var msg = action === 'approve' ? 'Approve this ATL?' : 'Reject this ATL?';
+            if (!confirm(msg)) return;
+            await api('/dispatch/verify/'+id, 'POST', {action: action, remarks: prompt('Remarks (optional):')}); 
+            loadPending(); 
+            loadDashboard(); 
+        }
 
         async function loadApproved() {
             var ongoingData = await api('/dispatch/ongoing-loading');
@@ -171,14 +177,31 @@
             }).join('') || '<p class="text-gray-500 text-center py-4">No approved ATLs waiting</p>' : '';
         }
 
-        async function startLoading(id) { if (confirm('Start loading?')) { await api('/dispatch/start-loading/'+id, 'POST'); loadApproved(); loadDashboard(); } }
-        async function cancelLoading(id) { var reason = prompt('Reason:'); if (!reason) return; await api('/dispatch/cancel-loading/'+id, 'POST', { reason: reason }); loadApproved(); loadDashboard(); }
+        async function startLoading(id) { 
+            if (!confirm('Start loading for this ATL? Make sure all details are correct.')) return;
+            await api('/dispatch/start-loading/'+id, 'POST'); 
+            loadApproved(); 
+            loadDashboard(); 
+        }
+
+        async function cancelLoading(id) { 
+            if (!confirm('Cancel this loading? ATL will revert to approved status.')) return;
+            var reason = prompt('Reason for cancellation:'); 
+            if (!reason) return; 
+            await api('/dispatch/cancel-loading/'+id, 'POST', { reason: reason }); 
+            loadApproved(); 
+            loadDashboard(); 
+        }
+        
         async function completeLoading(id) { 
+            if (!confirm('Complete this loading? This will finalize the ATL.')) return;
             var vol = prompt('Actual volume (L):'); 
             if (!vol) return; 
+            if (!confirm('Confirm volume: ' + Number(vol).toLocaleString() + ' L?')) return;
             var wc = prompt('Printed WC (12 digits, blank if none):'); 
             var wcClean = wc ? wc.replace(/\\D/g,'').substring(0,12) : null; 
-            var tps = prompt('TPS Series (e.g., 001-050 or starting number):'); 
+            var tps = prompt('TPS Series (e.g., 001-050):');
+            if (!confirm('Submit completed ATL?\nVolume: ' + vol + ' L\nWC: ' + (wcClean || 'N/A') + '\nTPS: ' + (tps || 'N/A'))) return;
             await api('/dispatch/complete-loading/'+id, 'POST', { actual_volume: vol, printed_wc: wcClean, tps_series: tps }); 
             loadApproved(); 
             loadDashboard(); 
@@ -231,8 +254,42 @@
 
         async function editTruck(id) { var data = await api('/trucks/'+id); if (data.status === 'success') { var t = data.data; document.getElementById('editTruckId').value = t.id; document.getElementById('formTitle').textContent = 'Edit Truck: ' + t.plate_no; document.getElementById('newPlate').value = t.plate_no; document.getElementById('newMake').value = t.make; document.getElementById('newDriver').value = t.driver_name || ''; document.getElementById('newHauler').value = t.hauler_name || ''; document.getElementById('newCapacity').value = t.total_capacity; document.getElementById('newTps').value = t.num_tps || 0; var docs = t.documents || []; var lto = docs.find(function(d) { return d.document_type === 'lto_registration'; }); var fire = docs.find(function(d) { return d.document_type === 'fire_permit'; }); var dost = docs.find(function(d) { return d.document_type === 'dost_calibration'; }); document.getElementById('docLTO').value = lto && lto.expiry_date ? lto.expiry_date.split('T')[0] : ''; document.getElementById('docFire').value = fire && fire.expiry_date ? fire.expiry_date.split('T')[0] : ''; document.getElementById('docDOST').value = dost && dost.expiry_date ? dost.expiry_date.split('T')[0] : ''; document.getElementById('addTruckForm').classList.remove('hidden'); } }
 
-        async function saveTruck(e) { e.preventDefault(); var id = document.getElementById('editTruckId').value; var docs = []; if (document.getElementById('docLTO').value) docs.push({type:'lto_registration',expiry_date:document.getElementById('docLTO').value}); if (document.getElementById('docFire').value) docs.push({type:'fire_permit',expiry_date:document.getElementById('docFire').value}); if (document.getElementById('docDOST').value) docs.push({type:'dost_calibration',expiry_date:document.getElementById('docDOST').value}); var body = {plate_no:document.getElementById('newPlate').value,make:document.getElementById('newMake').value,driver_name:document.getElementById('newDriver').value,hauler_name:document.getElementById('newHauler').value,total_capacity:document.getElementById('newCapacity').value,num_tps:document.getElementById('newTps').value,documents:docs}; var url = id ? '/trucks/'+id : '/trucks'; var method = id ? 'PUT' : 'POST'; var data = await api(url, method, body); if (data.status === 'success') { closeTruckForm(); loadTrucks(); loadDashboard(); } else { alert(data.error || 'Error'); } }
-        async function deleteTruck(id, plate) { if (!confirm('Deactivate ' + plate + '?')) return; await api('/trucks/'+id, 'DELETE'); loadTrucks(); }
+        async function saveTruck(e) { 
+            e.preventDefault(); 
+            var id = document.getElementById('editTruckId').value;
+            var plate = document.getElementById('newPlate').value;
+            var make = document.getElementById('newMake').value;
+            var driver = document.getElementById('newDriver').value;
+            var capacity = document.getElementById('newCapacity').value;
+            
+            var summary = 'Plate: ' + plate + '\nMake: ' + make + '\nDriver: ' + (driver || 'N/A') + '\nCapacity: ' + capacity + ' L';
+            if (!confirm('Save this truck?\n\n' + summary)) return;
+
+            var docs = []; 
+            if (document.getElementById('docLTO').value) docs.push({type:'lto_registration',expiry_date:document.getElementById('docLTO').value}); 
+            if (document.getElementById('docFire').value) docs.push({type:'fire_permit',expiry_date:document.getElementById('docFire').value});
+            if (document.getElementById('docDOST').value) docs.push({type:'dost_calibration',expiry_date:document.getElementById('docDOST').value}); 
+            
+            var body = {plate_no:document.getElementById('newPlate').value,make:document.getElementById('newMake').value,driver_name:document.getElementById('newDriver').value,hauler_name:document.getElementById('newHauler').value,total_capacity:document.getElementById('newCapacity').value,num_tps:document.getElementById('newTps').value,documents:docs}; 
+            var url = id ? '/trucks/'+id : '/trucks'; 
+            var method = id ? 'PUT' : 'POST'; 
+            var data = await api(url, method, body); 
+            if (data.status === 'success') { 
+                closeTruckForm(); 
+                loadTrucks(); 
+                loadDashboard(); 
+            } 
+            else { 
+                alert(data.error || 'Error'); 
+            } 
+        }
+
+        async function deleteTruck(id, plate) { 
+            if (!confirm('WARNING: This will deactivate truck ' + plate + '.\n\nAre you sure?')) return;
+            if (!confirm('Confirm deactivation of ' + plate + '?')) return;
+            await api('/trucks/'+id, 'DELETE'); 
+            loadTrucks(); 
+        }
         async function restoreTruck(id) { await api('/trucks/'+id+'/restore', 'PATCH'); loadTrucks(); }
 
         async function loadClients() { var data = await api('/clients'); if (data.status === 'success') { allClients = data.data; searchClients(); } }
@@ -241,9 +298,29 @@
 
         function showAddClient() { document.getElementById('editClientId').value=''; document.getElementById('clientModalTitle').textContent='Add Client'; ['clientEmail','clientMobile','clientCompany','clientPassword'].forEach(function(id) { document.getElementById(id).value=''; }); document.getElementById('clientModal').classList.remove('hidden'); }
         async function editClient(id) { var data = await api('/clients/'+id); if (data.status === 'success') { var c = data.data; document.getElementById('editClientId').value = c.id; document.getElementById('clientModalTitle').textContent = 'Edit Client'; document.getElementById('clientEmail').value = c.email; document.getElementById('clientMobile').value = c.mobile; document.getElementById('clientCompany').value = c.company_name || ''; document.getElementById('clientPassword').value = ''; document.getElementById('clientModal').classList.remove('hidden'); } }
-        async function saveClient(e) { e.preventDefault(); var id = document.getElementById('editClientId').value; var body = {email:document.getElementById('clientEmail').value,mobile:document.getElementById('clientMobile').value,company_name:document.getElementById('clientCompany').value}; var pw = document.getElementById('clientPassword').value; if (pw) body.password = pw; var url = id ? '/clients/'+id : '/clients'; var method = id ? 'PUT' : 'POST'; var data = await api(url, method, body); if (data.status === 'success') { document.getElementById('clientModal').classList.add('hidden'); loadClients(); } else { alert(data.error || 'Error'); } }
+        
+        async function saveClient(e) { 
+            e.preventDefault(); 
+            var id = document.getElementById('editClientId').value; 
+            var body = {email:document.getElementById('clientEmail').value,mobile:document.getElementById('clientMobile').value,company_name:document.getElementById('clientCompany').value}; 
+            var pw = document.getElementById('clientPassword').value; if (pw) body.password = pw; 
+            var url = id ? '/clients/'+id : '/clients'; 
+            var method = id ? 'PUT' : 'POST'; 
+            var data = await api(url, method, body); if (data.status === 'success') { 
+                document.getElementById('clientModal').classList.add('hidden'); loadClients(); 
+            } 
+            else { alert(data.error || 'Error'); 
+
+            } 
+        }
+
         async function toggleClient(id) { await api('/clients/'+id+'/toggle-status', 'PATCH'); loadClients(); }
-        async function deleteClient(id, email) { if (!confirm('Delete ' + email + '?')) return; await api('/clients/'+id, 'DELETE'); loadClients(); }
+        
+        async function deleteClient(id, email) { 
+            if (!confirm('WARNING: Delete client ' + email + '?\n\nThis cannot be undone if they have no active ATLs.')) return;
+            await api('/clients/'+id, 'DELETE'); 
+            loadClients(); 
+        }
 
         async function showTruckDocs(filter) {
           var data = await api('/trucks/all');

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -281,9 +281,19 @@
         async function submitATL(e) {
             e.preventDefault();
             const msg = document.getElementById('atlMessage');
-            const volume = parseFloat(document.getElementById('volume').value);
+            
+            var company = document.getElementById('company').value;
+            var plate = document.getElementById('plateNo').value.toUpperCase();
+            var volume = document.getElementById('volume').value;
+            var driver = document.getElementById('driverName').value;
+            var date = document.getElementById('scheduledDate').value;
+            
+            var summary = 'Please verify:\n\nCompany: ' + company + '\nPlate: ' + plate + '\nVolume: ' + Number(volume).toLocaleString() + ' L\nDriver: ' + driver + '\nDate: ' + date + '\nSI: ' + (hasSI ? 'With SI' : 'No SI');
+            if (!confirm(summary + '\n\nSubmit this ATL?')) return;
+
             if (!truckVerified) { msg.textContent = 'Verify truck first'; msg.className = 'mt-3 text-sm text-red-600'; msg.classList.remove('hidden'); return; }
             if (!volume || volume <= 0) { msg.textContent = 'Enter valid volume'; msg.className = 'mt-3 text-sm text-red-600'; msg.classList.remove('hidden'); return; }
+            
             const hasSI = document.querySelector('input[name="siOption"]:checked')?.value === 'yes';
             try {
                 const res = await api('/client/submit-atl', 'POST', {
