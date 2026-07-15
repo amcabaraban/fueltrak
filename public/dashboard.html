@@ -95,19 +95,25 @@
     </div>
 
     <div id="chatWidget" class="hidden fixed bottom-4 right-4 z-50 w-80 bg-white rounded-xl shadow-2xl border">
-        <div class="bg-blue-900 text-white p-3 rounded-t-xl flex justify-between items-center cursor-pointer" onclick="toggleChat()">
+        <div class="bg-blue-900 text-white p-3 rounded-t-xl flex justify-between items-center">
             <span><i class="fas fa-comments mr-2"></i><span id="chatTitle">Chat</span></span>
-            <button onclick="event.stopPropagation();document.getElementById('chatWidget').classList.add('hidden')" class="text-white">&times;</button>
+            <div>
+                <button onclick="showContactList()" class="text-white mr-2 text-sm"><i class="fas fa-users"></i></button>
+                <button onclick="closeChat()" class="text-white">&times;</button>
+            </div>
         </div>
-        <div id="chatBody" class="h-64 overflow-y-auto p-3 space-y-2" id="chatMessages"></div>
-        <div class="p-2 border-t flex gap-2">
-            <input type="text" id="chatInput" placeholder="Type message..." class="flex-1 px-2 py-1 border rounded text-sm">
+        <div id="contactList" class="h-64 overflow-y-auto">
+            <div class="p-3 text-center text-gray-400 text-sm">Loading contacts...</div>
+        </div>
+        <div id="chatBody" class="hidden h-64 overflow-y-auto p-3 space-y-2"></div>
+        <div id="chatInputArea" class="hidden p-2 border-t flex gap-2">
+            <input type="text" id="chatInput" placeholder="Type message..." class="flex-1 px-2 py-1 border rounded text-sm" onkeypress="if(event.key==='Enter')sendChat()">
             <button onclick="sendChat()" class="bg-blue-900 text-white px-3 py-1 rounded text-sm"><i class="fas fa-paper-plane"></i></button>
         </div>
     </div>
-
     <button onclick="openChat()" class="fixed bottom-4 right-4 z-50 bg-blue-900 text-white p-3 rounded-full shadow-lg hover:bg-blue-800" id="chatButton">
         <i class="fas fa-comments"></i>
+        <span id="unreadBadge" class="hidden absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">0</span>
     </button>
 
     <script>
@@ -430,37 +436,56 @@
 
         var currentChatUser = null;
         var currentChatName = '';
+        var chatInterval = null;
+        var contactList = [];
 
-        async function openChat(userId, userName) {
-            if (userId) {
-                currentChatUser = userId;
-                currentChatName = userName;
-            } else {
-                // Show contact list
-                var res = await fetch('/api/chat-list', { headers: { 'Authorization': 'Bearer ' + token } });
-                var data = await res.json();
-                if (data.status === 'success' && data.data.length > 0) {
-                    if (data.data.length === 1) {
-                        currentChatUser = data.data[0].id;
-                        currentChatName = data.data[0].email;
-                    } else {
-                        // Show list to pick from
-                        var list = data.data.map(function(u, i) { return (i+1) + '. ' + u.email; }).join('\n');
-                        var choice = prompt('Select contact:\n\n' + list + '\n\nEnter number:');
-                        var idx = parseInt(choice) - 1;
-                        if (idx >= 0 && idx < data.data.length) {
-                            currentChatUser = data.data[idx].id;
-                            currentChatName = data.data[idx].email;
-                        } else { return; }
-                    }
-                } else { return; }
-            }
-            
-            document.getElementById('chatTitle').textContent = 'Chat - ' + currentChatName;
+        async function openChat() {
             document.getElementById('chatWidget').classList.remove('hidden');
             document.getElementById('chatButton').classList.add('hidden');
+            loadContactList();
+        }
+
+        function showContactList() {
+            document.getElementById('contactList').classList.remove('hidden');
+            document.getElementById('chatBody').classList.add('hidden');
+            document.getElementById('chatInputArea').classList.add('hidden');
+            document.getElementById('chatTitle').textContent = 'Chat';
+            currentChatUser = null;
+            loadContactList();
+        }
+
+        async function loadContactList() {
+            var res = await fetch('/api/chat-list', { headers: { 'Authorization': 'Bearer ' + token } });
+            var data = await res.json();
+            if (data.status === 'success') {
+                contactList = data.data;
+                var html = '';
+                contactList.forEach(function(c) {
+                    html += '<div onclick="startChat(' + c.id + ', \'' + (c.email || c.company_name) + '\')" class="flex items-center p-3 hover:bg-gray-50 cursor-pointer border-b">';
+                    html += '<div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">';
+                    html += '<i class="fas fa-user text-blue-600 text-sm"></i>';
+                    html += '</div>';
+                    html += '<div class="flex-1">';
+                    html += '<p class="text-sm font-semibold">' + (c.company_name || c.email) + '</p>';
+                    html += '<p class="text-xs text-gray-400">' + (c.email || '') + '</p>';
+                    html += '</div>';
+                    html += '<div class="w-2 h-2 bg-green-400 rounded-full" title="Online"></div>';
+                    html += '</div>';
+                });
+                document.getElementById('contactList').innerHTML = html || '<p class="p-3 text-center text-gray-400 text-sm">No contacts available</p>';
+            }
+        }
+
+        function startChat(userId, userName) {
+            currentChatUser = userId;
+            currentChatName = userName;
+            document.getElementById('chatTitle').textContent = userName;
+            document.getElementById('contactList').classList.add('hidden');
+            document.getElementById('chatBody').classList.remove('hidden');
+            document.getElementById('chatInputArea').classList.remove('hidden');
             loadChatMessages();
-            setInterval(loadChatMessages, 5000);
+            if (chatInterval) clearInterval(chatInterval);
+            chatInterval = setInterval(loadChatMessages, 3000);
         }
 
         async function loadChatMessages() {
@@ -473,12 +498,12 @@
                     var isMe = m.sender_id == user.id;
                     html += '<div class="' + (isMe ? 'text-right' : 'text-left') + ' mb-2">';
                     html += '<div class="inline-block ' + (isMe ? 'bg-blue-100' : 'bg-gray-100') + ' rounded-lg px-3 py-1.5 text-sm max-w-[80%]">';
-                    html += '<p class="text-[10px] text-gray-500">' + (isMe ? 'You' : m.sender_email) + '</p>';
+                    html += '<p class="text-[10px] text-gray-500">' + (isMe ? 'You' : currentChatName) + '</p>';
                     html += '<p>' + m.message + '</p>';
-                    html += '<p class="text-[9px] text-gray-400">' + new Date(m.created_at).toLocaleTimeString() + '</p>';
+                    html += '<p class="text-[9px] text-gray-400 text-right">' + new Date(m.created_at).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) + '</p>';
                     html += '</div></div>';
                 });
-                document.getElementById('chatBody').innerHTML = html || '<p class="text-center text-gray-400 text-sm">No messages yet</p>';
+                document.getElementById('chatBody').innerHTML = html || '<p class="text-center text-gray-400 text-sm pt-10">Start the conversation!</p>';
                 document.getElementById('chatBody').scrollTop = document.getElementById('chatBody').scrollHeight;
             }
         }
@@ -487,18 +512,24 @@
             var input = document.getElementById('chatInput');
             var msg = input.value.trim();
             if (!msg || !currentChatUser) return;
+            input.value = '';
             await fetch('/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
                 body: JSON.stringify({ receiver_id: currentChatUser, message: msg })
             });
-            input.value = '';
             loadChatMessages();
         }
 
         function closeChat() {
             document.getElementById('chatWidget').classList.add('hidden');
             document.getElementById('chatButton').classList.remove('hidden');
+            if (chatInterval) clearInterval(chatInterval);
+        }
+
+        function toggleChat() {
+            var body = document.getElementById('chatBody');
+            body.style.display = body.style.display === 'none' ? 'block' : 'none';
         }
 
         function logout() { localStorage.clear(); window.location.href = '/'; }
