@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -234,8 +234,8 @@
                         <td class="py-2 px-3 text-xs">${r.completed_date ? new Date(r.completed_date).toLocaleDateString() : r.dispatch_date ? new Date(r.dispatch_date).toLocaleDateString() : '-'}</td>
                         <td class="py-2 px-3 text-center font-mono text-xs cursor-pointer hover:bg-yellow-50" onclick="editWC(${r.id}, this)">${r.printed_wc||"-"}</td>
                         <td class="py-2 px-3 text-center font-mono text-xs">
-                            <input type="text" id="tps_from_${r.id}" value="${r.tps_start||''}" placeholder="From" class="w-16 px-1 py-0.5 border rounded text-xs" onchange="updateTPS(${r.id})">
-                            <input type="text" id="tps_to_${r.id}" value="${r.tps_end||''}" placeholder="To" class="w-16 px-1 py-0.5 border rounded text-xs" onchange="updateTPS(${r.id})">
+                            <input type="text" id="tps_from_${r.id}" value="${r.tps_start||''}" placeholder="From" class="w-16 px-1 py-0.5 border rounded text-xs" onchange="updateTPS(${r.id}, ${r.truck_id})">
+                            <input type="text" id="tps_to_${r.id}" value="${r.tps_end||''}" placeholder="To" class="w-16 px-1 py-0.5 border rounded text-xs" onchange="updateTPS(${r.id}, ${r.truck_id})">
                         </td>
                         <td class="py-2 px-3 text-center">${r.revision_count > 0 ? '<span class="bg-purple-100 text-purple-800 px-2 py-1 rounded text-xs">' + r.revision_count + '</span>' : '0'}</td>
                         <td class="py-2 px-3 text-center"><button onclick="viewDetails(${r.id})" class="text-blue-600 hover:underline text-xs"><i class="fas fa-eye"></i></button></td>
@@ -423,17 +423,16 @@
             });
         }
 
-        loadTruckTPS();
-
         function logout() { localStorage.clear(); window.location.href = '/'; }
 
-        
+        loadTruckTPS();
         loadFilters();
         loadReports();
     </script>
 <div id="chatWidget" class="hidden fixed bottom-4 right-4 z-50 w-80 bg-white rounded-xl shadow-2xl border"><div class="bg-blue-900 text-white p-3 rounded-t-xl flex justify-between items-center cursor-pointer" onclick="toggleChat()"><span><i class="fas fa-comments mr-2"></i><span id="chatTitle">Chat</span></span><button onclick="event.stopPropagation();closeChat()" class="text-white">&times;</button></div><div id="chatBody" class="h-64 overflow-y-auto p-3 space-y-2"></div><div class="p-2 border-t flex gap-2"><input type="text" id="chatInput" placeholder="Type message..." class="flex-1 px-2 py-1 border rounded text-sm" onkeypress="if(event.key==='Enter')sendChat()"><button onclick="sendChat()" class="bg-blue-900 text-white px-3 py-1 rounded text-sm"><i class="fas fa-paper-plane"></i></button></div></div><button onclick="openChat()" class="fixed bottom-4 right-4 z-50 bg-blue-900 text-white p-3 rounded-full shadow-lg hover:bg-blue-800" id="chatButton"><i class="fas fa-comments"></i></button>
 </body>
 </html>
+
 
 
 
