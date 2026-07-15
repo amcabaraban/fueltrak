@@ -309,9 +309,18 @@
             if (data.status === 'success') { document.getElementById('editLoadingModal').classList.add('hidden'); loadApproved(); loadDashboard(); }
         }
 
-        async function loadTrucks() { var data = await api('/trucks'); if (data.status === 'success') { allTrucks = data.data; searchTrucks(); } }
+        async function loadTrucks() { 
+            var data = await api('/trucks'); 
+            if (data.status === 'success') { 
+                allTrucks = data.data; 
+                currentTruckPage = 1;
+                paginateTrucks();  
+            } 
+        }
 
         function searchTrucks() {
+            currentTruckPage = 1;
+            paginateTrucks();
             var s = document.getElementById('truckSearch').value.toLowerCase();
             var f = document.getElementById('truckStatusFilter').value;
             var filtered = allTrucks.filter(function(t) {
@@ -530,6 +539,70 @@
         function toggleChat() {
             var body = document.getElementById('chatBody');
             body.style.display = body.style.display === 'none' ? 'block' : 'none';
+        }
+
+        var currentTruckPage = 1;
+        var trucksPerPage = 10;
+        var allTruckRecords = [];
+
+        function paginateTrucks() {
+            var filtered = allTruckRecords;
+            var s = document.getElementById('truckSearch').value.toLowerCase();
+            var f = document.getElementById('truckStatusFilter').value;
+            
+            if (s) {
+                filtered = filtered.filter(function(t) {
+                    return [t.plate_no, t.driver_name, t.hauler_name, t.make].some(function(v) {
+                        return (v || '').toLowerCase().indexOf(s) >= 0;
+                    });
+                });
+            }
+            if (f === 'active') filtered = filtered.filter(function(t) { return t.is_active; });
+            if (f === 'inactive') filtered = filtered.filter(function(t) { return !t.is_active; });
+            
+            var totalPages = Math.ceil(filtered.length / trucksPerPage);
+            if (currentTruckPage > totalPages) currentTruckPage = totalPages || 1;
+            var start = (currentTruckPage - 1) * trucksPerPage;
+            var end = start + trucksPerPage;
+            var pageData = filtered.slice(start, end);
+            
+            document.getElementById('truckList').innerHTML = '<div class="table-wrap"><table class="w-full text-sm bg-white rounded-lg shadow" style="min-width:600px"><thead class="bg-gray-50"><tr><th class="py-3 px-4 text-left">Plate</th><th class="py-3 px-4 text-left">Make</th><th class="py-3 px-4 text-left">Driver</th><th class="py-3 px-4 text-left">Capacity</th><th class="py-3 px-4 text-center">Docs</th><th class="py-3 px-4 text-center">Actions</th></tr></thead><tbody>' + pageData.map(function(t) {
+                var docs = t.documents || [];
+                var valid = ['lto_registration','fire_permit','dost_calibration'].every(function(type) {
+                    return docs.find(function(d) { return d.document_type === type && new Date(d.expiry_date) >= new Date(); });
+                });
+                return '<tr class="border-b ' + (t.is_active ? '' : 'opacity-50') + '"><td class="py-2 px-4 font-semibold">' + t.plate_no + '</td><td class="py-2 px-4">' + t.make + '</td><td class="py-2 px-4">' + (t.driver_name || '-') + '</td><td class="py-2 px-4">' + parseFloat(t.total_capacity).toLocaleString() + 'L</td><td class="py-2 px-4 text-center">' + (valid ? 'Y' : 'N') + '</td><td class="py-2 px-4"><div class="flex space-x-2 justify-center"><button onclick="editTruck(' + t.id + ')" class="text-blue-600"><i class="fas fa-edit"></i></button>' + (t.is_active ? '<button onclick="deleteTruck(' + t.id + ',\'' + t.plate_no + '\')" class="text-red-600"><i class="fas fa-trash"></i></button>' : '<button onclick="restoreTruck(' + t.id + ')" class="text-green-600"><i class="fas fa-undo"></i></button>') + '</div></td></tr>';
+            }).join('') + '</tbody></table></div>';
+            
+            // Pagination controls
+            var pagHTML = '';
+            pagHTML += '<button onclick="changeTruckPage(' + (currentTruckPage - 1) + ')" class="px-2 py-1 border rounded text-xs ' + (currentTruckPage === 1 ? 'text-gray-300 cursor-not-allowed' : 'hover:bg-gray-100') + '" ' + (currentTruckPage === 1 ? 'disabled' : '') + '><i class="fas fa-chevron-left"></i></button>';
+            
+            for (var i = 1; i <= totalPages; i++) {
+                if (i === 1 || i === totalPages || (i >= currentTruckPage - 2 && i <= currentTruckPage + 2)) {
+                    pagHTML += '<button onclick="changeTruckPage(' + i + ')" class="px-2 py-1 border rounded text-xs ' + (i === currentTruckPage ? 'bg-blue-900 text-white' : 'hover:bg-gray-100') + '">' + i + '</button>';
+                } else if (i === currentTruckPage - 3 || i === currentTruckPage + 3) {
+                    pagHTML += '<span class="px-1 text-xs">...</span>';
+                }
+            }
+            
+            pagHTML += '<button onclick="changeTruckPage(' + (currentTruckPage + 1) + ')" class="px-2 py-1 border rounded text-xs ' + (currentTruckPage === totalPages ? 'text-gray-300 cursor-not-allowed' : 'hover:bg-gray-100') + '" ' + (currentTruckPage === totalPages ? 'disabled' : '') + '><i class="fas fa-chevron-right"></i></button>';
+            pagHTML += '<span class="text-xs text-gray-400 ml-2">' + filtered.length + ' total</span>';
+            
+            document.getElementById('truckSearchResults').innerHTML = 'Showing ' + pageData.length + ' of ' + filtered.length + ' trucks <span class="ml-4">' + pagHTML + '</span>';
+        }
+
+        function changeTruckPage(page) {
+            var filtered = allTruckRecords;
+            var s = document.getElementById('truckSearch').value.toLowerCase();
+            var f = document.getElementById('truckStatusFilter').value;
+            if (s) filtered = filtered.filter(function(t) { return [t.plate_no, t.driver_name, t.hauler_name, t.make].some(function(v) { return (v || '').toLowerCase().indexOf(s) >= 0; }); });
+            if (f === 'active') filtered = filtered.filter(function(t) { return t.is_active; });
+            if (f === 'inactive') filtered = filtered.filter(function(t) { return !t.is_active; });
+            var totalPages = Math.ceil(filtered.length / trucksPerPage);
+            if (page < 1 || page > totalPages) return;
+            currentTruckPage = page;
+            paginateTrucks();
         }
 
         function logout() { localStorage.clear(); window.location.href = '/'; }
