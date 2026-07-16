@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FuelTrak - Transaction Logs</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <style>
+        .table-wrap { overflow-x: auto; }
+        @media print { nav, .no-print { display: none !important; } }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <nav class="bg-gradient-to-r from-blue-900 to-blue-800 text-white shadow-xl sticky top-0 z-50 no-print">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="bg-white/20 p-2 rounded-lg"><i class="fas fa-history text-2xl text-yellow-400"></i></div>
+                <div><span class="font-bold text-xl">Transaction Logs</span></div>
+            </div>
+            <div class="flex items-center space-x-3">
+                <span id="userInfo" class="text-sm bg-white/10 px-3 py-1 rounded-full"></span>
+                <a href="/dashboard" class="bg-white/20 px-3 py-1 rounded text-sm hover:bg-white/30">Dashboard</a>
+                <button onclick="logout()" class="bg-red-500/80 hover:bg-red-500 px-4 py-2 rounded text-sm">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-3xl font-bold">Transaction Audit Logs</h1>
+            <button onclick="printLogs()" class="bg-blue-600 text-white px-4 py-2 rounded text-sm no-print"><i class="fas fa-print mr-1"></i>Print</button>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+            <div class="table-wrap">
+                <table class="w-full text-sm">
+                    <thead class="bg-gray-50 border-b">
+                        <tr>
+                            <th class="py-3 px-3 text-left">Date/Time</th>
+                            <th class="py-3 px-3 text-left">User</th>
+                            <th class="py-3 px-3 text-left">Action</th>
+                            <th class="py-3 px-3 text-left">Table</th>
+                            <th class="py-3 px-3 text-center">Record ID</th>
+                            <th class="py-3 px-3 text-left">Details</th>
+                        </tr>
+                    </thead>
+                    <tbody id="logBody">
+                        <tr><td colspan="6" class="text-center py-8 text-gray-500">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API = '/api';
+        const token = localStorage.getItem('fueltrak_token');
+        const user = JSON.parse(localStorage.getItem('fueltrak_user') || '{}');
+        if (!token || !['dispatcher','management'].includes(user.role)) window.location.replace('/');
+        document.getElementById('userInfo').textContent = user.email + ' (' + user.role + ')';
+
+        async function loadLogs() {
+            var res = await fetch('/api/audit-logs', { headers: { 'Authorization': 'Bearer ' + token } });
+            var data = await res.json();
+            if (data.status === 'success') {
+                document.getElementById('logBody').innerHTML = data.data.map(function(l) {
+                    var details = '';
+                    try { details = JSON.stringify(JSON.parse(l.details || '{}')); } catch(e) { details = l.details || ''; }
+                    return '<tr class="border-b hover:bg-gray-50">' +
+                        '<td class="py-2 px-3 text-xs">' + new Date(l.created_at).toLocaleString() + '</td>' +
+                        '<td class="py-2 px-3">' + (l.email || 'N/A') + '</td>' +
+                        '<td class="py-2 px-3"><span class="px-2 py-1 rounded text-xs bg-blue-100 text-blue-800">' + l.action + '</span></td>' +
+                        '<td class="py-2 px-3 text-xs">' + l.table_name + '</td>' +
+                        '<td class="py-2 px-3 text-center">' + l.record_id + '</td>' +
+                        '<td class="py-2 px-3 text-xs font-mono">' + details + '</td>' +
+                        '</tr>';
+                }).join('') || '<tr><td colspan="6" class="text-center py-8 text-gray-500">No logs found</td></tr>';
+            }
+        }
+
+        function printLogs() { window.print(); }
+        function logout() { localStorage.clear(); window.location.href = '/'; }
+        loadLogs();
+    </script>
+</body>
+</html>
