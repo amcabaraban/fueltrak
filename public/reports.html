@@ -28,11 +28,12 @@
     th.sort-desc::after { content: ' ?'; font-size: 10px; }
 th { cursor: pointer; user-select: none; } th.sort-asc::after { content: " ?"; font-size: 10px; } th.sort-desc::after { content: " ?"; font-size: 10px; }</style>
 <body class="bg-gray-50 min-h-screen">
-    <nav class="bg-gradient-to-r from-blue-900 to-blue-800 text-white shadow-xl sticky top-0 z-50 no-print" >
-        <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+    <nav class="bg-gradient-to-r from-blue-900 to-blue-800 text-white shadow-xl sticky top-0 z-50 no-print">
+        <!-- Desktop -->
+        <div class="hidden md:flex max-w-7xl mx-auto px-4 py-3 justify-between items-center">
             <div class="flex items-center space-x-3">
                 <div class="bg-white/20 p-2 rounded-lg"><i class="fas fa-gas-pump text-2xl text-yellow-400"></i></div>
-                <div><span class="font-bold text-sm sm:text-lg md:text-xl">FuelTrak Reports</span></div>
+                <div><span class="font-bold text-xl">FuelTrak Reports</span></div>
             </div>
             <div class="flex items-center space-x-3">
                 <span id="userInfo" class="text-sm bg-white/10 px-3 py-1 rounded-full"></span>
@@ -40,8 +41,19 @@ th { cursor: pointer; user-select: none; } th.sort-asc::after { content: " ?"; f
                 <button onclick="logout()" class="bg-red-500/80 hover:bg-red-500 px-4 py-2 rounded text-sm"><i class="fas fa-sign-out-alt mr-1"></i>Logout</button>
             </div>
         </div>
+        <!-- Mobile scrollable -->
+        <div class="flex md:hidden px-2 py-2 items-center space-x-1">
+            <div class="flex items-center space-x-1 flex-shrink-0">
+                <div class="bg-white/20 p-1 rounded"><i class="fas fa-gas-pump text-sm text-yellow-400"></i></div>
+                <span class="font-bold text-xs whitespace-nowrap">Reports</span>
+            </div>
+            <div class="flex-1 overflow-x-auto flex items-center space-x-1" style="-webkit-overflow-scrolling:touch;scrollbar-width:none">
+                <span id="userInfoMob" class="text-[9px] bg-white/10 px-1.5 py-0.5 rounded-full flex-shrink-0 max-w-[80px] truncate"></span>
+                <a href="/dashboard" class="bg-white/20 px-1.5 py-0.5 rounded text-[9px] hover:bg-white/30 flex-shrink-0 whitespace-nowrap"><i class="fas fa-chart-pie text-[10px] mr-0.5"></i>Dashboard</a>
+                <button onclick="logout()" class="bg-red-500/80 hover:bg-red-500 px-1.5 py-0.5 rounded text-[9px] flex-shrink-0 whitespace-nowrap"><i class="fas fa-sign-out-alt text-[10px]"></i>Logout</button>
+            </div>
+        </div>
     </nav>
-
     <div class="max-w-7xl mx-auto px-2 sm:px-4 md:px-6 py-8">
         <h1 class="text-3xl font-bold mb-6">Reports & Analytics</h1>
 
@@ -641,6 +653,8 @@ th { cursor: pointer; user-select: none; } th.sort-asc::after { content: " ?"; f
             header.classList.add(isAsc ? 'sort-desc' : 'sort-asc');
             rows.forEach(function(row) { tbody.appendChild(row); });
         }
+
+        document.getElementById('userInfoMob').textContent = document.getElementById('userInfo').textContent;
 
         function logout() { localStorage.clear(); window.location.href = '/'; }
 
