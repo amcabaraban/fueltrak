@@ -840,7 +840,10 @@ app.get("/api/audit-logs", authenticate, authorize("management"), async (req, re
   } catch (error) { res.status(500).json({ error: error.message }); }
 });
 
+app.get('/audit-logs', (req, res) => res.sendFile(require('path').join(__dirname, '..', 'public', 'audit-logs.html')));
+
 module.exports = app;
+
 
 
 
