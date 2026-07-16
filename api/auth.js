@@ -13,7 +13,7 @@ app.set('trust proxy', 1);
 const otpCache = new NodeCache({ stdTTL: 600 });
 
 app.use(express.json({ limit: "10kb" }));
-app.use(helmet());
+app.use(helmet({ contentSecurityPolicy: false }));
 app.use((req, res, next) => {
   if (['POST','PUT','DELETE','PATCH'].includes(req.method)) {
     const referer = req.get('Referer') || '';
@@ -862,6 +862,7 @@ app.get("/api/audit-logs", authenticate, authorize("management"), async (req, re
 });
 
 module.exports = app;
+
 
 
 
