@@ -790,6 +790,23 @@ app.get("/api/client/atl/:id", authenticate, authorize("client"), async (req, re
   } catch (error) { res.status(500).json({ error: error.message }); }
 });
 
+app.get('/api/demo-credentials', async (req, res) => {
+  try {
+    var [users] = await pool.execute(
+      "SELECT email, role FROM users WHERE email IN (?, ?, ?)",
+      ['admin@fueltrak.com', 'dispatcher@fueltrak.com', 'client1@hauler.com']
+    );
+    var credentials = {};
+    users.forEach(function(u) {
+      if (u.role === 'management') credentials.admin = u.email;
+      if (u.role === 'dispatcher') credentials.dispatcher = u.email;
+      if (u.role === 'client') credentials.client = u.email;
+    });
+    res.json({ status: 'success', data: credentials });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 app.get('/tutorial', (req, res) => res.sendFile(require('path').join(__dirname, '..', 'public', 'tutorial.html')));
 

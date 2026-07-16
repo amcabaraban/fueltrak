@@ -64,9 +64,9 @@
             <div class="mt-4 pt-4 border-t">
                 <p class="text-xs text-gray-500 text-center mb-2">Quick Login</p>
                 <div class="grid grid-cols-3 gap-1 sm:gap-2">
-                    <button onclick="quickLogin('admin@fueltrak.com')" class="text-[10px] sm:text-xs bg-blue-50 hover:bg-blue-100 text-blue-800 px-2 py-1.5 rounded transition">Admin</button>
-                    <button onclick="quickLogin('dispatcher@fueltrak.com')" class="text-xs bg-green-50 hover:bg-green-100 text-green-800 px-2 py-1.5 rounded transition">Dispatcher</button>
-                    <button onclick="quickLogin('client1@hauler.com')" class="text-xs bg-purple-50 hover:bg-purple-100 text-purple-800 px-2 py-1.5 rounded transition">Client</button>
+                    <button onclick="quickLogin('admin')" class="text-[10px] sm:text-xs bg-blue-50 hover:bg-blue-100 text-blue-800 px-2 py-1.5 rounded transition">Admin</button>
+                    <button onclick="quickLogin('dispatcher')" class="text-xs bg-green-50 hover:bg-green-100 text-green-800 px-2 py-1.5 rounded transition">Dispatcher</button>
+                    <button onclick="quickLogin('client1')" class="text-xs bg-purple-50 hover:bg-purple-100 text-purple-800 px-2 py-1.5 rounded transition">Client</button>
                 </div>
                 <p class="text-xs text-gray-400 text-center mt-1">All Rights Reserved.</p>
             </div>
@@ -349,6 +349,37 @@
                 msgDiv.classList.remove('hidden');
             }
         }
+
+        var demoEmails = {};
+
+        async function loadDemoCredentials() {
+            try {
+                var res = await fetch('/api/demo-credentials');
+                var data = await res.json();
+                if (data.status === 'success') {
+                    demoEmails = data.data;
+                }
+            } catch(e) {
+                // Fallback if API unavailable
+                console.log('Demo credentials not loaded');
+            }
+        }
+
+        function quickLogin(role) {
+            var email = demoEmails[role] || '';
+            document.getElementById('email').value = email;
+            document.getElementById('password').value = 'Admin123!';
+            
+            if (role === 'client') {
+                switchRole('client');
+            } else {
+                switchRole('admin');
+            }
+        }
+
+        // Call on page load
+        loadDemoCredentials();
+
     </script>
 </body>
 </html>
