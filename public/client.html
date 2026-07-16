@@ -640,6 +640,12 @@
             }
         });
 
+        function maskEmail(email) {
+            if (!email) return 'N/A';
+            var parts = email.split('@');
+            return parts[0].substring(0, 3) + '***@' + parts[1];
+        }
+
         document.getElementById('userInfoMob').textContent = document.getElementById('userInfo').textContent;
 
         function logout() { localStorage.clear(); window.location.href = '/'; }

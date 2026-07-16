@@ -136,7 +136,8 @@
                     // API might be down, stay on page
                 });
         }
-        document.getElementById('userInfo').textContent = user.email + ' (' + user.role + ')';
+        var maskedEmail = user.email.split('@')[0].substring(0, 3) + '***@' + user.email.split('@')[1];
+        document.getElementById('userInfo').textContent = maskedEmail + ' (' + user.role + ')';
         document.getElementById('welcomeDate').textContent = new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
 
         let allTrucks = [], allClients = [];
@@ -369,7 +370,7 @@
 
         async function loadClients() { var data = await api('/clients'); if (data.status === 'success') { allClients = data.data; searchClients(); } }
 
-        function searchClients() { var s = document.getElementById('clientSearch').value.toLowerCase(); var f = document.getElementById('clientStatusFilter').value; var filtered = allClients.filter(function(c) { if (s && ![c.company_name,c.email,c.mobile].some(function(v) { return (v||'').toLowerCase().indexOf(s) >= 0; })) return false; if (f === 'active' && !c.is_active) return false; if (f === 'inactive' && c.is_active) return false; return true; }); document.getElementById('clientList').innerHTML = '<div class="table-wrap"><table class="w-full text-sm bg-white rounded-lg shadow" style="min-inline-size:600px"><thead class="bg-gray-50"><tr><th class="py-3 px-4">Company</th><th class="py-3 px-4">Email</th><th class="py-3 px-4">Mobile</th><th class="py-3 px-4">ATLs</th><th class="py-3 px-4">Actions</th></tr></thead><tbody>'+filtered.map(function(c) { return '<tr class="border-b '+(c.is_active?'':'opacity-50')+'"><td class="py-2 px-4 font-semibold">'+(c.company_name||'-')+'</td><td class="py-2 px-4">'+c.email+'</td><td class="py-2 px-4">'+c.mobile+'</td><td class="py-2 px-4 text-center">'+c.total_atls+'</td><td class="py-2 px-4"><div class="flex space-x-2 justify-center"><button onclick="editClient('+c.id+')" class="text-green-600"><i class="fas fa-edit"></i></button>'+(c.is_active?'<button onclick="toggleClient('+c.id+')" class="text-orange-600"><i class="fas fa-ban"></i></button>':'<button onclick="toggleClient('+c.id+')" class="text-green-600"><i class="fas fa-check"></i></button>')+'<button onclick="deleteClient('+c.id+',\''+c.email+'\')" class="text-red-600"><i class="fas fa-trash"></i></button></div></td></tr>'; }).join('')+'</tbody></table></div>'; }
+        function searchClients() { var s = document.getElementById('clientSearch').value.toLowerCase(); var f = document.getElementById('clientStatusFilter').value; var filtered = allClients.filter(function(c) { if (s && ![c.company_name,c.email,c.mobile].some(function(v) { return (v||'').toLowerCase().indexOf(s) >= 0; })) return false; if (f === 'active' && !c.is_active) return false; if (f === 'inactive' && c.is_active) return false; return true; }); document.getElementById('clientList').innerHTML = '<div class="table-wrap"><table class="w-full text-sm bg-white rounded-lg shadow" style="min-inline-size:600px"><thead class="bg-gray-50"><tr><th class="py-3 px-4">Company</th><th class="py-3 px-4">Email</th><th class="py-3 px-4">Mobile</th><th class="py-3 px-4">ATLs</th><th class="py-3 px-4">Actions</th></tr></thead><tbody>'+filtered.map(function(c) { return '<tr class="border-b '+(c.is_active?'':'opacity-50')+'"><td class="py-2 px-4 font-semibold">'+(c.company_name||'-')+'</td><td class="py-2 px-4">'+c.email.split('@')[0].substring(0, 3)+'***@'+c.email.split('@')[1]+'</td><td class="py-2 px-4">'+c.mobile+'</td><td class="py-2 px-4 text-center">'+c.total_atls+'</td><td class="py-2 px-4"><div class="flex space-x-2 justify-center"><button onclick="editClient('+c.id+')" class="text-green-600"><i class="fas fa-edit"></i></button>'+(c.is_active?'<button onclick="toggleClient('+c.id+')" class="text-orange-600"><i class="fas fa-ban"></i></button>':'<button onclick="toggleClient('+c.id+')" class="text-green-600"><i class="fas fa-check"></i></button>')+'<button onclick="deleteClient('+c.id+',\''+c.email+'\')" class="text-red-600"><i class="fas fa-trash"></i></button></div></td></tr>'; }).join('')+'</tbody></table></div>'; }
 
         function showAddClient() { document.getElementById('editClientId').value=''; document.getElementById('clientModalTitle').textContent='Add Client'; ['clientEmail','clientMobile','clientCompany','clientPassword'].forEach(function(id) { document.getElementById(id).value=''; }); document.getElementById('clientModal').classList.remove('hidden'); }
         async function editClient(id) { var data = await api('/clients/'+id); if (data.status === 'success') { var c = data.data; document.getElementById('editClientId').value = c.id; document.getElementById('clientModalTitle').textContent = 'Edit Client'; document.getElementById('clientEmail').value = c.email; document.getElementById('clientMobile').value = c.mobile; document.getElementById('clientCompany').value = c.company_name || ''; document.getElementById('clientPassword').value = ''; document.getElementById('clientModal').classList.remove('hidden'); } }
@@ -463,8 +464,8 @@
                     html += '<i class="fas fa-user text-blue-600 text-sm"></i>';
                     html += '</div>';
                     html += '<div class="flex-1">';
-                    html += '<p class="text-sm font-semibold">' + (c.company_name || c.email) + '</p>';
-                    html += '<p class="text-xs text-gray-400">' + (c.email || '') + '</p>';
+                    html += '<p class="text-sm font-semibold">' + (c.company_name || c.email.split('@')[0].substring(0, 3)+'***@'+c.email.split('@')[1]) + '</p>';
+                    html += '<p class="text-xs text-gray-400">' + (c.email ? c.email.split('@')[0].substring(0, 3)+'***@'+c.email.split('@')[1] : '') + '</p>';
                     html += '</div>';
                     html += '<div class="w-2 h-2 bg-green-400 rounded-full" title="Online"></div>';
                     html += '</div>';
@@ -554,7 +555,7 @@
             var end = start + trucksPerPage;
             var pageData = filtered.slice(start, end);
             
-            document.getElementById('truckList').innerHTML = '<div class="table-wrap"><table class="w-full text-sm bg-white rounded-lg shadow" style="min-width:600px"><thead class="bg-gray-50"><tr><th class="py-3 px-4 text-left">Plate</th><th class="py-3 px-4 text-left">Make</th><th class="py-3 px-4 text-left">Driver</th><th class="py-3 px-4 text-left">Capacity</th><th class="py-3 px-4 text-center">Docs</th><th class="py-3 px-4 text-center">Actions</th></tr></thead><tbody>' + pageData.map(function(t) {
+            document.getElementById('truckList').innerHTML = '<div class="table-wrap"><table class="w-full text-sm bg-white rounded-lg shadow" style="min-inline-size:600px"><thead class="bg-gray-50"><tr><th class="py-3 px-4 text-left">Plate</th><th class="py-3 px-4 text-left">Make</th><th class="py-3 px-4 text-left">Driver</th><th class="py-3 px-4 text-left">Capacity</th><th class="py-3 px-4 text-center">Docs</th><th class="py-3 px-4 text-center">Actions</th></tr></thead><tbody>' + pageData.map(function(t) {
                 var docs = t.documents || [];
                 var valid = ['lto_registration','fire_permit','dost_calibration'].every(function(type) {
                     return docs.find(function(d) { return d.document_type === type && new Date(d.expiry_date) >= new Date(); });
@@ -591,6 +592,12 @@
             if (page < 1 || page > totalPages) return;
             currentTruckPage = page;
             paginateTrucks();
+        }
+
+        function maskEmail(email) {
+            if (!email) return 'N/A';
+            var parts = email.split('@');
+            return parts[0].substring(0, 3) + '***@' + parts[1];
         }
 
         function logout() { localStorage.clear(); window.location.href = '/'; }
