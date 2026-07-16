@@ -40,7 +40,7 @@
                 <p class="text-blue-100 mt-2">Real-time overview of all operations</p>
             </div>
             <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-8" id="atlStats"></div>
-            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mb-8" id="fleetStats"></div>
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 mb-8" id="fleetStats"></div>
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-8" id="docStats"></div>
             <h2 class="text-xl font-bold text-gray-800 mb-4">Quick Actions</h2>
             <div class="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
@@ -211,13 +211,13 @@
                 { label:'Loaded Today',value:s.loadedToday,gradient:'from-indigo-400 to-indigo-500' },
                 { label:'Total Vol',value:(s.totalVolume/1000).toFixed(1)+'k L',gradient:'from-purple-400 to-purple-500' }
             ].map(function(c) { return '<div class="stat-card bg-gradient-to-br '+c.gradient+' rounded-xl shadow-lg p-3 md:p-5 text-white"><p class="text-xs md:text-sm opacity-90">'+c.label+'</p><p class="text-xl md:text-3xl font-bold mt-1">'+c.value+'</p></div>'; }).join('');
-            document.getElementById('fleetStats').innerHTML = [
+                            document.getElementById('fleetStats').innerHTML = [
                 { label:'Total Trucks',value:t.total,sub:t.active+' active, '+t.inactive+' inactive',border:'border-blue-500' },
                 { label:'Valid Docs',value:t.withValidDocs,sub:'Click to view',border:'border-green-500',click:'validDocs' },
                 { label:'Expired Docs',value:t.withExpiredDocs,sub:'Click to view',border:'border-red-500',click:'expiredDocs' },
                 { label:'Backloads',value:(s.totalBackload ? (s.totalBackload/1000).toFixed(1)+'k L' : '0 L'),sub:'Total deducted',border:'border-orange-500' },
-                { label:'Capacity',value:(t.totalCapacity/1000).toFixed(1)+'k L',sub:'Total fleet',border:'border-purple-500' }
-                        ].map(function(c) { return '<div class="stat-card bg-white rounded-xl shadow-lg p-3 md:p-5 border-l-4 '+c.border+'"'+(c.click?' onclick="showTruckDocs(\''+c.click+'\')" style="cursor:pointer"':'')+'><p class="text-gray-500 text-xs md:text-sm">'+c.label+'</p><p class="text-xl md:text-3xl font-bold">'+c.value+'</p><p class="text-xs text-gray-400">'+c.sub+'</p></div>'; }).join('');
+                { label:'Capacity',value:(t.totalCapacity/1000).toFixed(1)+'k L',sub:'Total fleet',border:'border-purple-500' }                        
+            ].map(function(c) { return '<div class="stat-card bg-white rounded-xl shadow-lg p-2 md:p-3 border-l-4 '+c.border+'"'+(c.click?' onclick="showTruckDocs(\''+c.click+'\')" style="cursor:pointer"':'')+'><p class="text-gray-500 text-[10px] md:text-xs">'+c.label+'</p><p class="text-lg md:text-xl font-bold">'+c.value+'</p><p class="text-[9px] text-gray-400 truncate">'+c.sub+'</p></div>'; }).join('');
             var docTypes = [{key:'lto',label:'LTO'},{key:'fire',label:'Fire'},{key:'dost',label:'DOST'}];
             document.getElementById('docStats').innerHTML = docTypes.map(function(d) {
                 var data = t.documentBreakdown[d.key];
