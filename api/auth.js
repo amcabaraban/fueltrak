@@ -9,21 +9,10 @@ const jwt = require('jsonwebtoken');
 const NodeCache = require('node-cache');
 
 const app = express();
-app.set('trust proxy', 1);
 const otpCache = new NodeCache({ stdTTL: 600 });
 
 app.use(express.json({ limit: "10kb" }));
 app.use(helmet({ contentSecurityPolicy: false }));
-app.use((req, res, next) => {
-  if (['POST','PUT','DELETE','PATCH'].includes(req.method)) {
-    const referer = req.get('Referer') || '';
-    const host = req.get('Host') || '';
-    if (referer && !referer.includes(host) && !referer.includes('localhost')) {
-      return res.status(403).json({ error: 'Invalid request origin' });
-    }
-  }
-  next();
-});
 app.use(compression());
 app.use(cors({ origin: ['https://fueltrak-seven.vercel.app', 'http://localhost:3000'], credentials: true }));
 
@@ -288,7 +277,6 @@ app.post('/api/dispatch/verify/:id', authenticate, authorize('dispatcher', 'mana
     if (!status) return res.status(400).json({ error: 'Invalid action' });
     await pool.execute('UPDATE authority_to_load SET status = ?, verified_by = ?, remarks = ? WHERE id = ?', [status, req.user.id, remarks || null, req.params.id]);
     await logAudit(req.user.id, 'VERIFY_ATL', 'authority_to_load', req.params.id, {status, remarks});
-    await logAudit(req.user.id, 'VERIFY_ATL', 'authority_to_load', req.params.id, {status, remarks});
     const [updated] = await pool.execute('SELECT * FROM authority_to_load WHERE id = ?', [req.params.id]);
     if (!updated.length) return res.status(404).json({ error: 'ATL not found' });
     res.json({ status: 'success', data: updated[0] });
@@ -355,7 +343,6 @@ app.post('/api/dispatch/start-loading/:id', authenticate, authorize('dispatcher'
 app.post('/api/dispatch/complete-loading/:id', authenticate, authorize('dispatcher', 'management'), async (req, res) => {
   try {
     const { actual_volume, remarks, printed_wc, tps_series } = req.body;
-    await logAudit(req.user.id, "COMPLETE_LOADING", "authority_to_load", req.params.id, {actual_volume, printed_wc, tps_series});
     await logAudit(req.user.id, "COMPLETE_LOADING", "authority_to_load", req.params.id, {actual_volume, printed_wc, tps_series});
     await pool.execute("UPDATE authority_to_load SET status = 'completed', completed_date = NOW(), completed_by = ?, actual_volume = ?, remarks = ?, printed_wc = ?, tps_start = ? WHERE id = ?",
       [req.user.id, actual_volume || null, remarks || 'Loading completed', printed_wc || null, tps_series || null, req.params.id]);
@@ -853,18 +840,7 @@ app.get("/api/audit-logs", authenticate, authorize("management"), async (req, re
   } catch (error) { res.status(500).json({ error: error.message }); }
 });
 
-
-app.get("/api/audit-logs", authenticate, authorize("management"), async (req, res) => {
-  try {
-    var [logs] = await pool.execute("SELECT al.*, u.email FROM audit_logs al JOIN users u ON al.user_id = u.id ORDER BY al.created_at DESC LIMIT 100");
-    res.json({ status: "success", data: logs });
-  } catch (error) { res.status(500).json({ error: error.message }); }
-});
-
 module.exports = app;
-
-
-
 
 
 
