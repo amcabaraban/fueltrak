@@ -245,11 +245,11 @@ app.get('/api/dispatch/enhanced-stats', authenticate, authorize('dispatcher', 'm
     const [completed] = await pool.execute('SELECT COUNT(*) as count FROM authority_to_load WHERE status = ?', ['completed']);
     const today = new Date().toISOString().split('T')[0];
     const [loadedToday] = await pool.execute("SELECT COUNT(*) as count FROM authority_to_load WHERE status IN ('dispatched','completed') AND DATE(dispatch_date) = ?", [today]);
-    const [volumeRows] = await pool.execute("SELECT COALESCE(SUM(volume),0) as totalVolume, COALESCE(SUM(CASE WHEN DATE(dispatch_date) = ? THEN volume ELSE 0 END),0) as todayVolume FROM authority_to_load WHERE status IN ('dispatched','completed')", [today]);
+    const [volumeRows] = await pool.execute("SELECT COALESCE(SUM(atl.volume),0) as totalVolume, COALESCE(SUM(CASE WHEN DATE(atl.dispatch_date) = ? THEN atl.volume ELSE 0 END),0) as todayVolume, COALESCE((SELECT SUM(volume) FROM backloads),0) as totalBackload, COALESCE((SELECT SUM(volume) FROM backloads WHERE DATE(created_at) = ?),0) as todayBackload FROM authority_to_load atl WHERE atl.status IN ('dispatched','completed')", [today, today]);
     res.json({ status: 'success', data: {
       pending: pending[0].count, approved: approved[0].count, loading: loading[0].count,
       completed: completed[0].count, loadedToday: loadedToday[0].count,
-      totalVolume: volumeRows[0].totalVolume, todayVolume: volumeRows[0].todayVolume
+      totalVolume: volumeRows[0].totalVolume - (volumeRows[0].totalBackload || 0), todayVolume: volumeRows[0].todayVolume - (volumeRows[0].todayBackload || 0), totalBackload: volumeRows[0].totalBackload || 0, todayBackload: volumeRows[0].todayBackload || 0
     }});
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -259,7 +259,7 @@ app.get('/api/dispatch/enhanced-stats', authenticate, authorize('dispatcher', 'm
 // ============ DISPATCH PENDING ============
 app.get('/api/dispatch/pending', authenticate, authorize('dispatcher', 'management'), async (req, res) => {
   try {
-    const [atls] = await pool.execute("SELECT * FROM authority_to_load WHERE status IN ('pending','verified') ORDER BY createdAt DESC");
+    const [atls] = await pool.execute("SELECT * FROM authority_to_load WHERE status IN ('pending','verified') ORDER BY atl.createdAt DESC");
     const result = [];
     for (const atl of atls) {
       const [trucks] = await pool.execute('SELECT * FROM trucks WHERE id = ?', [atl.truck_id]);
@@ -628,7 +628,7 @@ app.post('/api/client/submit-atl', authenticate, authorize('client'), async (req
     const [trucks] = await pool.execute('SELECT * FROM trucks WHERE plate_no = ? AND is_active = 1', [plate_no.toUpperCase()]);
     if (!trucks.length) return res.status(404).json({ error: 'Truck not found' });
     const truck = trucks[0];
-    const [existing] = await pool.execute("SELECT id FROM authority_to_load WHERE client_id = ? AND truck_id = ? AND status IN ('pending','approved')", [req.user.id, truck.id]);
+    const [existing] = await pool.execute("SELECT id FROM authority_to_load WHERE client_id = ? AND atl.truck_id = ? AND status IN ('pending','approved')", [req.user.id, truck.id]);
     if (existing.length) return res.status(400).json({ error: 'You already have a pending ATL' });
     const atlCode = await generateATLCode(company || req.user.company_name);
     await pool.execute('INSERT INTO authority_to_load (client_id, truck_id, atl_code, company, so_number, volume, hauler, plate_no, driver_name, contact_number, has_si, scheduled_date, status, createdAt) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,NOW())', [req.user.id, truck.id, atlCode, company || req.user.company_name, so_number || null, volume || null, hauler || truck.hauler_name, truck.plate_no, driver_name || truck.driver_name, contact_number || req.user.mobile, has_si || false, scheduled_date, 'pending']);
@@ -638,7 +638,7 @@ app.post('/api/client/submit-atl', authenticate, authorize('client'), async (req
 
 app.post('/api/client/cancel-atl/:id', authenticate, authorize('client'), async (req, res) => {
   try {
-    await pool.execute("UPDATE authority_to_load SET status = 'cancelled', remarks = ? WHERE id = ? AND client_id = ?", ['Cancellation: ' + (req.body.reason || ''), req.params.id, req.user.id]);
+    await pool.execute("UPDATE authority_to_load SET status = 'cancelled', remarks = ? WHERE id = ? AND atl.client_id = ?", ['Cancellation: ' + (req.body.reason || ''), req.params.id, req.user.id]);
     res.json({ status: 'success', message: 'Cancellation requested' });
   } catch (error) { res.status(400).json({ error: error.message }); }
 });
@@ -683,14 +683,14 @@ app.get('/api/reports/filters', authenticate, authorize('dispatcher', 'managemen
 app.get('/api/reports/summary', authenticate, authorize('dispatcher', 'management'), async (req, res) => {
   try {
     const { startDate, endDate, status, clientId, truckId } = req.query;
-    let query = 'SELECT * FROM authority_to_load WHERE 1=1';
+    let query = 'SELECT atl.*, (SELECT COUNT(*) FROM backloads WHERE atl_id = atl.id) as backload_count, (SELECT COALESCE(SUM(volume),0) FROM backloads WHERE atl_id = atl.id) as backload_volume FROM authority_to_load atl WHERE 1=1';
     const params = [];
     if (status) { const statuses = status.split(','); query += ' AND status IN (' + statuses.map(() => '?').join(',') + ')'; params.push(...statuses); }
     else { query += " AND status IN ('completed','cancelled','dispatched')"; }
-    if (startDate) { query += ' AND DATE(createdAt) >= ?'; params.push(startDate); }
-    if (endDate) { query += ' AND DATE(createdAt) <= ?'; params.push(endDate); }
+    if (startDate) { query += ' AND DATE(atl.createdAt) >= ?'; params.push(startDate); }
+    if (endDate) { query += ' AND DATE(atl.createdAt) <= ?'; params.push(endDate); }
     if (clientId) { query += ' AND client_id = ?'; params.push(clientId); }
-    if (truckId) { query += ' AND truck_id = ?'; params.push(truckId); }
+    if (truckId) { query += ' AND truck_id = ?'; params.push(truckId); } if (req.query.hasBackload === '1') { query += ' AND atl.id IN (SELECT DISTINCT atl_id FROM backloads)'; }
     query += ' ORDER BY createdAt DESC';
     const [atls] = await pool.execute(query, params);
     const result = [];
@@ -713,9 +713,9 @@ app.get('/api/reports/export', authenticate, authorize('dispatcher', 'management
     if (startDate) { query += ' AND DATE(createdAt) >= ?'; params.push(startDate); }
     if (endDate) { query += ' AND DATE(createdAt) <= ?'; params.push(endDate); }
     const [atls] = await pool.execute(query, params);
-    let csv = 'ATL Code,SO Number,Company,Plate No,Driver,Hauler,Contact Number,Volume (L),Actual Volume (L),SI,Status,Scheduled Date,Dispatch Date,Completed Date,Printed WC,TPS From,TPS To,Remarks\n';
+    let csv = 'ATL Code,SO Number,Company,Plate No,Driver,Hauler,Contact Number,Volume (L),Actual Volume (L),Backload (L),SI,Status,Scheduled Date,Dispatch Date,Completed Date,Printed WC,TPS From,TPS To,Remarks\n';
     for (const a of atls) {
-      csv += '"' + (a.atl_code||'') + '","' + (a.so_number||'') + '","' + (a.company||'') + '","' + (a.plate_no||'') + '","' + (a.driver_name||'') + '","' + (a.hauler||'') + '","' + (a.contact_number||'') + '",' + (a.volume||0) + ',' + (a.actual_volume||0) + ',"' + (a.has_si==1?'With SI':'No SI') + '","' + (a.status) + '","' + (a.scheduled_date||'') + '","' + (a.dispatch_date?new Date(a.dispatch_date).toLocaleDateString():'') + '","' + (a.completed_date?new Date(a.completed_date).toLocaleDateString():'') + '","' + (a.printed_wc||'') + '","' + (a.tps_start||'') + '","' + (a.tps_end||'') + '","' + ((a.remarks||'').replace(/"/g,'""')) + '"\n';
+      csv += '"' + (a.atl_code||'') + '","' + (a.so_number||'') + '","' + (a.company||'') + '","' + (a.plate_no||'') + '","' + (a.driver_name||'') + '","' + (a.hauler||'') + '","' + (a.contact_number||'') + '",' + (a.volume||0) + ',' + (a.actual_volume||0) + ',' + (a.backload_volume||0) + '","' + (a.company||'') + '","' + (a.plate_no||'') + '","' + (a.driver_name||'') + '","' + (a.hauler||'') + '","' + (a.contact_number||'') + '",' + (a.volume||0) + ',' + (a.actual_volume||0) + ',"' + (a.has_si==1?'With SI':'No SI') + '","' + (a.status) + '","' + (a.scheduled_date||'') + '","' + (a.dispatch_date?new Date(a.dispatch_date).toLocaleDateString():'') + '","' + (a.completed_date?new Date(a.completed_date).toLocaleDateString():'') + '","' + (a.printed_wc||'') + '","' + (a.tps_start||'') + '","' + (a.tps_end||'') + '","' + ((a.remarks||'').replace(/"/g,'""')) + '"\n';
     }
     res.setHeader('Content-Type', 'text/csv');
     res.setHeader('Content-Disposition', 'attachment; filename=report.csv');
