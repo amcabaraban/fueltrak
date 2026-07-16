@@ -15,6 +15,9 @@
         .pulse { animation: pulse 2s infinite; }
         .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; max-inline-size: 100%; }
         @media (max-inline-size: 640px) { .stat-card h3 { font-size: .875rem; } table { font-size: .75rem; } table th, table td { padding: .5rem .25rem; } }
+        th { cursor: pointer; user-select: none; }
+        th.sort-asc::after { content: ' ▲'; font-size: 10px; }
+        th.sort-desc::after { content: ' ▼'; font-size: 10px; }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen pb-20 md:pb-0">
@@ -75,6 +78,11 @@
                     <i class="fas fa-file-alt text-2xl md:text-3xl mb-2"></i>
                     <h3 class="font-bold text-sm md:text-lg">Doc Report</h3>
                     <p class="text-xs opacity-90 hidden sm:block">Documents</p>
+                </a>
+                <a href="/audit-logs" class="stat-card bg-gradient-to-br from-gray-600 to-gray-700 text-white rounded-xl shadow-lg p-4 md:p-6 text-left block">
+                    <i class="fas fa-history text-2xl md:text-3xl mb-2"></i>
+                    <h3 class="font-bold text-sm md:text-lg">Audit Logs</h3>
+                    <p class="text-xs opacity-90 hidden sm:block">Transactions</p>
                 </a>
             </div>
         </div>
@@ -701,6 +709,39 @@
             a.download = title.replace(/\s+/g, '_') + '_' + new Date().toISOString().split('T')[0] + '.csv';
             a.click();
             window.URL.revokeObjectURL(url);
+        }
+
+        function sortTable(tableId, columnIndex) {
+            var table = document.getElementById(tableId);
+            if (!table) {
+                // Try finding by closest table
+                var container = document.getElementById(tableId);
+                if (container) table = container.querySelector('table');
+            }
+            if (!table) return;
+            
+            var tbody = table.querySelector('tbody');
+            var rows = Array.from(tbody.querySelectorAll('tr'));
+            var header = table.querySelectorAll('th')[columnIndex];
+            var isAsc = header.classList.contains('sort-asc');
+            
+            // Clear all sort indicators
+            table.querySelectorAll('th').forEach(function(th) { th.classList.remove('sort-asc', 'sort-desc'); });
+            
+            rows.sort(function(a, b) {
+                var aVal = (a.cells[columnIndex]?.textContent || '').trim().replace(/[,%]/g, '');
+                var bVal = (b.cells[columnIndex]?.textContent || '').trim().replace(/[,%]/g, '');
+                var aNum = parseFloat(aVal);
+                var bNum = parseFloat(bVal);
+                
+                if (!isNaN(aNum) && !isNaN(bNum)) {
+                    return isAsc ? bNum - aNum : aNum - bNum;
+                }
+                return isAsc ? bVal.localeCompare(aVal) : aVal.localeCompare(bVal);
+            });
+            
+            header.classList.add(isAsc ? 'sort-desc' : 'sort-asc');
+            rows.forEach(function(row) { tbody.appendChild(row); });
         }
 
         function logout() { localStorage.clear(); window.location.href = '/'; }
