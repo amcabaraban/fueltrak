@@ -259,7 +259,7 @@ app.get('/api/dispatch/enhanced-stats', authenticate, authorize('dispatcher', 'm
 // ============ DISPATCH PENDING ============
 app.get('/api/dispatch/pending', authenticate, authorize('dispatcher', 'management'), async (req, res) => {
   try {
-    const [atls] = await pool.execute("SELECT * FROM authority_to_load WHERE status IN ('pending','verified') ORDER BY atl.createdAt DESC");
+    const [atls] = await pool.execute("SELECT * FROM authority_to_load WHERE status IN ('pending','verified') ORDER BY createdAt DESC");
     const result = [];
     for (const atl of atls) {
       const [trucks] = await pool.execute('SELECT * FROM trucks WHERE id = ?', [atl.truck_id]);
@@ -831,6 +831,8 @@ app.get('/api/backloads/:atlId', authenticate, async (req, res) => {
 app.get('/tutorial', (req, res) => res.sendFile(require('path').join(__dirname, '..', 'public', 'tutorial.html')));
 
 module.exports = app;
+
+
 
 
 
