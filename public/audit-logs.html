@@ -32,9 +32,6 @@
             <div class="flex-1 overflow-x-auto flex items-center space-x-1" style="-webkit-overflow-scrolling:touch;scrollbar-width:none">
                 <span id="userInfoMob" class="text-[9px] bg-white/10 px-1.5 py-0.5 rounded-full flex-shrink-0 max-w-[80px] truncate"></span>
                 <button onclick="showView('dashboard')" class="bg-white/20 px-1.5 py-0.5 rounded text-[9px] hover:bg-white/30 flex-shrink-0 whitespace-nowrap"><i class="fas fa-chart-pie text-[10px] mr-0.5"></i>Dashboard</button>
-                <button onclick="showView('submit')" class="bg-white/20 px-1.5 py-0.5 rounded text-[9px] hover:bg-white/30 flex-shrink-0 whitespace-nowrap"><i class="fas fa-plus-circle text-[10px] mr-0.5"></i>New</button>
-                <button onclick="showView('history')" class="bg-white/20 px-1.5 py-0.5 rounded text-[9px] hover:bg-white/30 flex-shrink-0 whitespace-nowrap"><i class="fas fa-list text-[10px] mr-0.5"></i>History</button>
-                <button onclick="showView('reports')" class="bg-white/20 px-1.5 py-0.5 rounded text-[9px] hover:bg-white/30 flex-shrink-0 whitespace-nowrap"><i class="fas fa-chart-bar text-[10px] mr-0.5"></i>Reports</button>
                 <button onclick="logout()" class="bg-red-500/80 hover:bg-red-500 px-1.5 py-0.5 rounded text-[9px] flex-shrink-0 whitespace-nowrap"><i class="fas fa-sign-out-alt text-[10px]"></i></button>
             </div>
         </div>
@@ -48,6 +45,13 @@
         if(!token||!['dispatcher','management'].includes(user.role))window.location.replace('/');
         document.getElementById('userInfo').textContent=user.email+' ('+user.role+')';
         async function loadLogs(){var res=await fetch('/api/audit-logs',{headers:{'Authorization':'Bearer '+token}});var data=await res.json();if(data.status==='success'){document.getElementById('logBody').innerHTML=data.data.map(function(l){var d='';try{d=JSON.stringify(JSON.parse(l.details||'{}'))}catch(e){d=l.details||''}return'<tr class=border-b><td class=py-2 px-3 text-xs>'+new Date(l.created_at).toLocaleString()+'</td><td class=py-2 px-3>'+(l.email||'N/A')+'</td><td class=py-2 px-3><span class=px-2 py-1 rounded text-xs bg-blue-100 text-blue-800>'+l.action+'</span></td><td class=py-2 px-3 text-xs>'+l.table_name+'</td><td class=py-2 px-3 text-center>'+l.record_id+'</td><td class=py-2 px-3 text-xs>'+d+'</td></tr>'}).join('')||'<tr><td colspan=6 class=text-center py-8>No logs found</td></tr>'}}
+        function showView(view) {
+            ['dashboardView','submitView','historyView','reportsView'].forEach(v => document.getElementById(v).classList.add('hidden'));
+            document.getElementById(view + 'View').classList.remove('hidden');
+            if (view === 'dashboard') loadDashboard();
+            if (view === 'history') loadHistory();
+            if (view === 'reports') loadClientReports();
+        }
         function logout(){localStorage.clear();window.location.href='/'}
         loadLogs();
     </script>

@@ -237,6 +237,14 @@
             document.getElementById('reportCount').textContent = 'Showing ' + rows.length + ' document(s)';
         }
 
+        function showView(view) {
+            ['dashboardView','submitView','historyView','reportsView'].forEach(v => document.getElementById(v).classList.add('hidden'));
+            document.getElementById(view + 'View').classList.remove('hidden');
+            if (view === 'dashboard') loadDashboard();
+            if (view === 'history') loadHistory();
+            if (view === 'reports') loadClientReports();
+        }
+
         function printReport() { window.print(); }
         function logout() { localStorage.clear(); window.location.href = '/'; }
         loadReport();

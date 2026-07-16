@@ -657,6 +657,14 @@ th { cursor: pointer; user-select: none; } th.sort-asc::after { content: " ?"; f
             rows.forEach(function(row) { tbody.appendChild(row); });
         }
 
+        function showView(view) {
+            ['dashboardView','submitView','historyView','reportsView'].forEach(v => document.getElementById(v).classList.add('hidden'));
+            document.getElementById(view + 'View').classList.remove('hidden');
+            if (view === 'dashboard') loadDashboard();
+            if (view === 'history') loadHistory();
+            if (view === 'reports') loadClientReports();
+        }
+
         document.getElementById('userInfoMob').textContent = document.getElementById('userInfo').textContent;
 
         function logout() { localStorage.clear(); window.location.href = '/'; }
