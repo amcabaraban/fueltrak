@@ -628,7 +628,7 @@ app.post('/api/client/submit-atl', authenticate, authorize('client'), async (req
     const [trucks] = await pool.execute('SELECT * FROM trucks WHERE plate_no = ? AND is_active = 1', [plate_no.toUpperCase()]);
     if (!trucks.length) return res.status(404).json({ error: 'Truck not found' });
     const truck = trucks[0];
-    const [existing] = await pool.execute("SELECT id FROM authority_to_load WHERE client_id = ? AND atl.truck_id = ? AND status IN ('pending','approved')", [req.user.id, truck.id]);
+    const [existing] = await pool.execute("SELECT id FROM authority_to_load WHERE client_id = ? AND truck_id = ? AND status IN ('pending','approved')", [req.user.id, truck.id]);
     if (existing.length) return res.status(400).json({ error: 'You already have a pending ATL' });
     const atlCode = await generateATLCode(company || req.user.company_name);
     await pool.execute('INSERT INTO authority_to_load (client_id, truck_id, atl_code, company, so_number, volume, hauler, plate_no, driver_name, contact_number, has_si, scheduled_date, status, createdAt) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,NOW())', [req.user.id, truck.id, atlCode, company || req.user.company_name, so_number || null, volume || null, hauler || truck.hauler_name, truck.plate_no, driver_name || truck.driver_name, contact_number || req.user.mobile, has_si || false, scheduled_date, 'pending']);
@@ -638,7 +638,7 @@ app.post('/api/client/submit-atl', authenticate, authorize('client'), async (req
 
 app.post('/api/client/cancel-atl/:id', authenticate, authorize('client'), async (req, res) => {
   try {
-    await pool.execute("UPDATE authority_to_load SET status = 'cancelled', remarks = ? WHERE id = ? AND atl.client_id = ?", ['Cancellation: ' + (req.body.reason || ''), req.params.id, req.user.id]);
+    await pool.execute("UPDATE authority_to_load SET status = 'cancelled', remarks = ? WHERE id = ? AND client_id = ?", ['Cancellation: ' + (req.body.reason || ''), req.params.id, req.user.id]);
     res.json({ status: 'success', message: 'Cancellation requested' });
   } catch (error) { res.status(400).json({ error: error.message }); }
 });
@@ -831,6 +831,8 @@ app.get('/api/backloads/:atlId', authenticate, async (req, res) => {
 app.get('/tutorial', (req, res) => res.sendFile(require('path').join(__dirname, '..', 'public', 'tutorial.html')));
 
 module.exports = app;
+
+
 
 
 
