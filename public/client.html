@@ -161,12 +161,28 @@
         </div>
 
         <!-- REPORTS VIEW -->
-        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
-            <div class="overflow-x-auto" style="-webkit-overflow-scrolling:touch">
-                <table class="w-full text-sm" style="min-width:700px">
-                    <thead class="bg-gray-50 border-b"><tr><th class="py-3 px-3 text-left">ATL Code</th><th class="py-3 px-3 text-left">SO #</th><th class="py-3 px-3 text-left">Company</th><th class="py-3 px-3 text-left">Plate</th><th class="py-3 px-3 text-left">Driver</th><th class="py-3 px-3 text-right">Volume</th><th class="py-3 px-3 text-center">SI</th><th class="py-3 px-3 text-center">Status</th><th class="py-3 px-3 text-left">Date</th><th class="py-3 px-3 text-center">Printed WC</th></tr></thead>
-                    <tbody id="reportTableBody"><tr><td colspan="10" class="text-center py-8 text-gray-500">Loading...</td></tr></tbody>
-                </table>
+        <div id="reportsView" class="hidden">
+            <h2 class="text-2xl font-bold mb-6"><i class="fas fa-chart-bar mr-2"></i>My Reports</h2>
+            <div class="bg-white rounded-xl shadow-lg p-6 mb-6 no-print">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div><label class="text-xs font-semibold">Start Date</label><input type="date" id="startDate" class="w-full px-3 py-2 border rounded" onchange="loadClientReports()"></div>
+                    <div><label class="text-xs font-semibold">End Date</label><input type="date" id="endDate" class="w-full px-3 py-2 border rounded" onchange="loadClientReports()"></div>
+                    <div><label class="text-xs font-semibold">Status</label><select id="statusFilter" class="w-full px-3 py-2 border rounded" onchange="loadClientReports()"><option value="">All</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option><option value="dispatched">Ongoing</option><option value="pending">Pending</option><option value="approved">Approved</option></select></div>
+                    <div class="flex items-end space-x-2">
+                        <button onclick="clearClientFilters()" class="text-blue-600 text-sm">Clear</button>
+                        <button onclick="printClientReport()" class="bg-blue-600 text-white px-4 py-2 rounded text-sm"><i class="fas fa-print mr-1"></i>Print</button>
+                        <button onclick="exportClientCSV()" class="bg-green-600 text-white px-4 py-2 rounded text-sm"><i class="fas fa-download mr-1"></i>Export</button>
+                    </div>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6" id="reportSummaryCards"></div>
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                <div class="overflow-x-auto" style="-webkit-overflow-scrolling:touch">
+                    <table class="w-full text-sm" style="min-width:700px">
+                        <thead class="bg-gray-50 border-b"><tr><th class="py-3 px-3 text-left">ATL Code</th><th class="py-3 px-3 text-left">SO #</th><th class="py-3 px-3 text-left">Company</th><th class="py-3 px-3 text-left">Plate</th><th class="py-3 px-3 text-left">Driver</th><th class="py-3 px-3 text-right">Volume</th><th class="py-3 px-3 text-center">SI</th><th class="py-3 px-3 text-center">Status</th><th class="py-3 px-3 text-left">Date</th><th class="py-3 px-3 text-center">Printed WC</th></tr></thead>
+                        <tbody id="reportTableBody"><tr><td colspan="10" class="text-center py-8 text-gray-500">Loading...</td></tr></tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
