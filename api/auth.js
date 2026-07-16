@@ -12,7 +12,28 @@ const app = express();
 const otpCache = new NodeCache({ stdTTL: 600 });
 
 app.use(express.json({ limit: "10kb" }));
-app.use(helmet({ contentSecurityPolicy: false }));
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "https://cdn.tailwindcss.com", "https://cdnjs.cloudflare.com", "'unsafe-inline'"],
+      styleSrc: ["'self'", "https://cdnjs.cloudflare.com", "https://cdn.tailwindcss.com", "'unsafe-inline'"],
+      fontSrc: ["'self'", "https://cdnjs.cloudflare.com"],
+      imgSrc: ["'self'", "data:"],
+      connectSrc: ["'self'"]
+    }
+  }
+}));
+app.use((req, res, next) => {
+  if (['POST','PUT','DELETE','PATCH'].includes(req.method)) {
+    const referer = req.get('Referer') || '';
+    const host = req.get('Host') || '';
+    if (referer && !referer.includes(host) && !referer.includes('localhost')) {
+      return res.status(403).json({ error: 'Invalid request origin' });
+    }
+  }
+  next();
+});
 app.use(compression());
 app.use(cors({ origin: ['https://fueltrak-seven.vercel.app', 'http://localhost:3000'], credentials: true }));
 
