@@ -215,6 +215,7 @@
                 { label:'Total Trucks',value:t.total,sub:t.active+' active, '+t.inactive+' inactive',border:'border-blue-500' },
                 { label:'Valid Docs',value:t.withValidDocs,sub:'Click to view',border:'border-green-500',click:'validDocs' },
                 { label:'Expired Docs',value:t.withExpiredDocs,sub:'Click to view',border:'border-red-500',click:'expiredDocs' },
+                { label:'Backloads',value:(s.totalBackload ? (s.totalBackload/1000).toFixed(1)+'k L' : '0 L'),sub:'Total deducted',border:'border-orange-500' },
                 { label:'Capacity',value:(t.totalCapacity/1000).toFixed(1)+'k L',sub:'Total fleet',border:'border-purple-500' }
                         ].map(function(c) { return '<div class="stat-card bg-white rounded-xl shadow-lg p-3 md:p-5 border-l-4 '+c.border+'"'+(c.click?' onclick="showTruckDocs(\''+c.click+'\')" style="cursor:pointer"':'')+'><p class="text-gray-500 text-xs md:text-sm">'+c.label+'</p><p class="text-xl md:text-3xl font-bold">'+c.value+'</p><p class="text-xs text-gray-400">'+c.sub+'</p></div>'; }).join('');
             var docTypes = [{key:'lto',label:'LTO'},{key:'fire',label:'Fire'},{key:'dost',label:'DOST'}];
