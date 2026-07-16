@@ -307,12 +307,18 @@
                 const data = await api('/client/verify-truck/' + encodeURIComponent(plate));
                 
                 if (data.status === 'success' && data.data) {
-                    const truck = data.data.truck;
-                    const canProceed = data.data.can_proceed;
+                    var truck = data.data.truck;
+                    var canProceed = data.data.can_proceed;
+                    var documents = data.data.documents || {};
                     
-                    if (truck && truck.total_capacity) {
-                        capacityHint.textContent = 'Truck capacity: ' + Number(truck.total_capacity).toLocaleString() + ' L';
-                        volumeInput.max = truck.total_capacity;
+                    // Check for expired documents
+                    var expiredDocs = [];
+                    if (documents.lto_registration && documents.lto_registration.status === 'expired') expiredDocs.push('LTO Registration');
+                    if (documents.fire_permit && documents.fire_permit.status === 'expired') expiredDocs.push('Fire Permit');
+                    if (documents.dost_calibration && documents.dost_calibration.status === 'expired') expiredDocs.push('DOST Calibration');
+                    
+                    if (expiredDocs.length > 0) {
+                        alert('WARNING: This truck has expired documents:\n\n' + expiredDocs.join('\n') + '\n\nProceed with caution.');
                     }
                     
                     truckVerified = canProceed;

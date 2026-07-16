@@ -44,12 +44,23 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-8" id="docStats"></div>
             <h2 class="text-xl font-bold text-gray-800 mb-4">Quick Actions</h2>
             <div class="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
-                <button onclick="openTab('verify')" class="stat-card bg-gradient-to-br from-yellow-400 to-yellow-500 text-white rounded-xl shadow-lg p-4 md:p-6 text-left w-full"><i class="fas fa-clipboard-check text-2xl md:text-3xl mb-2"></i><h3 class="font-bold text-sm md:text-lg">Verify ATL</h3><p class="text-xs opacity-90 hidden sm:block">Review pending</p></button>
-                <button onclick="openTab('loading')" class="stat-card bg-gradient-to-br from-blue-400 to-blue-500 text-white rounded-xl shadow-lg p-4 md:p-6 text-left w-full"><i class="fas fa-truck-loading text-2xl md:text-3xl mb-2"></i><h3 class="font-bold text-sm md:text-lg">Loading</h3><p class="text-xs opacity-90 hidden sm:block">Manage loading</p></button>
-                <button onclick="openTab('trucks')" class="stat-card bg-gradient-to-br from-green-400 to-green-500 text-white rounded-xl shadow-lg p-4 md:p-6 text-left w-full"><i class="fas fa-truck text-2xl md:text-3xl mb-2"></i><h3 class="font-bold text-sm md:text-lg">Trucks</h3><p class="text-xs opacity-90 hidden sm:block">Fleet management</p></button>
-                <button onclick="openTab('clients')" class="stat-card bg-gradient-to-br from-purple-400 to-purple-500 text-white rounded-xl shadow-lg p-4 md:p-6 text-left w-full"><i class="fas fa-users text-2xl md:text-3xl mb-2"></i><h3 class="font-bold text-sm md:text-lg">Clients</h3><p class="text-xs opacity-90 hidden sm:block">Accounts</p></button>
-                <a href="/reports" class="stat-card bg-gradient-to-br from-teal-400 to-teal-500 text-white rounded-xl shadow-lg p-4 md:p-6 text-left block"><i class="fas fa-chart-bar text-2xl md:text-3xl mb-2"></i><h3 class="font-bold text-sm md:text-lg">Reports</h3><p class="text-xs opacity-90 hidden sm:block">Analytics</p></a>
-                <a href="/docs-report" class="stat-card bg-gradient-to-br from-orange-400 to-orange-500 text-white rounded-xl shadow-lg p-4 md:p-6 text-left block"><i class="fas fa-file-alt text-2xl md:text-3xl mb-2"></i><h3 class="font-bold text-sm md:text-lg">Doc Report</h3><p class="text-xs opacity-90 hidden sm:block">Documents</p></a>
+                <button onclick="openTab('verify')" class="stat-card bg-gradient-to-br from-yellow-400 to-yellow-500 text-white rounded-xl shadow-lg p-4 md:p-6 text-left w-full relative">
+                    <i class="fas fa-clipboard-check text-2xl md:text-3xl mb-2"></i>
+                    <h3 class="font-bold text-sm md:text-lg">Verify ATL</h3>
+                    <p class="text-xs opacity-90 hidden sm:block">Review pending</p>
+                    <span id="pendingBadge" class="absolute top-2 right-2 bg-red-500 text-white text-xs w-6 h-6 rounded-full flex items-center justify-center font-bold hidden">0</span>
+                </button>
+                <button onclick="openTab('loading')" class="stat-card bg-gradient-to-br from-blue-400 to-blue-500 text-white rounded-xl shadow-lg p-4 md:p-6 text-left w-full relative">
+                    <i class="fas fa-truck-loading text-2xl md:text-3xl mb-2"></i>
+                    <h3 class="font-bold text-sm md:text-lg">Loading</h3>
+                    <p class="text-xs opacity-90 hidden sm:block">Manage loading</p>
+                    <span id="loadingBadge" class="absolute top-2 right-2 bg-orange-500 text-white text-xs w-6 h-6 rounded-full flex items-center justify-center font-bold hidden">0</span>
+                </button>
+                <!-- keep the rest of the buttons unchanged -->
+                <button onclick="openTab('trucks')" ...>Trucks</button>
+                <button onclick="openTab('clients')" ...>Clients</button>
+                <a href="/reports" ...>Reports</a>
+                <a href="/docs-report" ...>Doc Report</a>
             </div>
         </div>
 
@@ -198,6 +209,26 @@
                 var pct = total > 0 ? Math.round((data.valid/total)*100) : 0;
                 return '<div class="stat-card bg-white rounded-xl shadow-lg p-3 md:p-5"><div class="flex justify-between mb-2"><span class="font-semibold text-xs md:text-sm">'+d.label+'</span><span class="text-xs font-bold px-2 py-1 rounded-full '+(pct>=80?'bg-green-100 text-green-700':pct>=50?'bg-yellow-100 text-yellow-700':'bg-red-100 text-red-700')+'">'+pct+'%</span></div><div class="w-full bg-gray-200 rounded-full h-2 md:h-3 mb-2"><div class="progress-bar h-2 md:h-3 rounded-full '+(pct>=80?'bg-green-500':pct>=50?'bg-yellow-500':'bg-red-500')+'" style="inline-size:'+pct+'%"></div></div><div class="flex justify-between text-xs text-gray-500"><span>Valid: '+data.valid+'</span><span>Expired: '+data.expired+'</span><span>Missing: '+data.missing+'</span></div></div>';
             }).join('');
+            // Update badges
+            var pendingCount = s.pending || 0;
+            var loadingCount = s.loading || 0;
+
+            var pendingBadge = document.getElementById('pendingBadge');
+            var loadingBadge = document.getElementById('loadingBadge');
+
+            if (pendingCount > 0) {
+                pendingBadge.textContent = pendingCount > 99 ? '99+' : pendingCount;
+                pendingBadge.classList.remove('hidden');
+            } else {
+                pendingBadge.classList.add('hidden');
+            }
+
+            if (loadingCount > 0) {
+                loadingBadge.textContent = loadingCount > 99 ? '99+' : loadingCount;
+                loadingBadge.classList.remove('hidden');
+            } else {
+                loadingBadge.classList.add('hidden');
+            }
         }
 
         var allPendingATLs = [];
