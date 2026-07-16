@@ -264,7 +264,7 @@ app.get('/api/dispatch/pending', authenticate, authorize('dispatcher', 'manageme
     for (const atl of atls) {
       const [trucks] = await pool.execute('SELECT * FROM trucks WHERE id = ?', [atl.truck_id]);
       const [clients] = await pool.execute('SELECT id, email, company_name FROM users WHERE id = ?', [atl.client_id]);
-      result.push({ ...atl, truck: trucks[0] || null, client: clients[0] || null, completed_by_user: completedBy[0] || null });
+      result.push({ ...atl, truck: trucks[0] || null, client: clients[0] || null });
     }
     res.json({ status: 'success', data: result });
   } catch (error) { res.status(500).json({ error: error.message }); }
@@ -300,7 +300,7 @@ app.get('/api/dispatch/approved-for-loading', authenticate, authorize('dispatche
     for (const atl of atls) {
       const [trucks] = await pool.execute('SELECT * FROM trucks WHERE id = ?', [atl.truck_id]);
       const [clients] = await pool.execute('SELECT id, email, company_name FROM users WHERE id = ?', [atl.client_id]);
-      result.push({ ...atl, truck: trucks[0] || null, client: clients[0] || null, completed_by_user: completedBy[0] || null });
+      result.push({ ...atl, truck: trucks[0] || null, client: clients[0] || null });
     }
     res.json({ status: 'success', data: result });
   } catch (error) { res.status(500).json({ error: error.message }); }
@@ -313,7 +313,7 @@ app.get('/api/dispatch/ongoing-loading', authenticate, authorize('dispatcher', '
     for (const atl of atls) {
       const [trucks] = await pool.execute('SELECT * FROM trucks WHERE id = ?', [atl.truck_id]);
       const [clients] = await pool.execute('SELECT id, email, company_name FROM users WHERE id = ?', [atl.client_id]);
-      result.push({ ...atl, truck: trucks[0] || null, client: clients[0] || null, completed_by_user: completedBy[0] || null });
+      result.push({ ...atl, truck: trucks[0] || null, client: clients[0] || null });
     }
     res.json({ status: 'success', data: result });
   } catch (error) { res.status(500).json({ error: error.message }); }
@@ -326,7 +326,7 @@ app.get('/api/dispatch/loading-history', authenticate, authorize('dispatcher', '
     for (const atl of atls) {
       const [trucks] = await pool.execute('SELECT * FROM trucks WHERE id = ?', [atl.truck_id]);
       const [clients] = await pool.execute('SELECT id, email, company_name FROM users WHERE id = ?', [atl.client_id]);
-      result.push({ ...atl, truck: trucks[0] || null, client: clients[0] || null, completed_by_user: completedBy[0] || null });
+      result.push({ ...atl, truck: trucks[0] || null, client: clients[0] || null });
     }
     res.json({ status: 'success', data: result });
   } catch (error) { res.status(500).json({ error: error.message }); }
@@ -701,7 +701,7 @@ app.get('/api/reports/summary', authenticate, authorize('dispatcher', 'managemen
       const [trucks] = await pool.execute('SELECT plate_no, make, total_capacity FROM trucks WHERE id = ?', [atl.truck_id]);
       const [clients] = await pool.execute('SELECT email, company_name FROM users WHERE id = ?', [atl.client_id]); const [completedBy] = await pool.execute('SELECT email FROM users WHERE id = ?', [atl.completed_by]);
       const vol = parseFloat(atl.volume) || 0; totalVolume += vol; if (atl.status === 'completed') { completedCount++; totalActualVolume += parseFloat(atl.actual_volume) || vol; } if (atl.status === 'cancelled') cancelledCount++; if (atl.status === 'dispatched') dispatchedCount++;
-      result.push({ ...atl, truck: trucks[0] || null, client: clients[0] || null, completed_by_user: completedBy[0] || null });
+      result.push({ ...atl, truck: trucks[0] || null, client: clients[0] || null });
     }
     res.json({ status: 'success', data: { records: result, summary: { total_records: atls.length, completed: completedCount, cancelled: cancelledCount, dispatched: dispatchedCount, total_volume: totalVolume, total_actual_volume: totalActualVolume, average_volume: atls.length > 0 ? Math.round(totalVolume / atls.length) : 0 } } });
   } catch (error) { res.status(500).json({ error: error.message }); }
@@ -841,6 +841,7 @@ app.get("/api/audit-logs", authenticate, authorize("management"), async (req, re
 });
 
 module.exports = app;
+
 
 
 
