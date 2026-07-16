@@ -34,6 +34,12 @@ const pool = mysql.createPool({
   connectionLimit: 10
 });
 
+async function logAudit(userId, action, tableName, recordId, details) {
+  try {
+    await pool.execute("INSERT INTO audit_logs (user_id, action, table_name, record_id, details) VALUES (?, ?, ?, ?, ?)", [userId, action, tableName, recordId, JSON.stringify(details)]);
+  } catch(e) {}
+}
+
 // ============ HELPERS ============
 function generateOTP() {
   return Math.floor(100000 + Math.random() * 900000).toString();
@@ -832,9 +838,6 @@ app.get('/api/backloads/:atlId', authenticate, async (req, res) => {
 
 app.get('/tutorial', (req, res) => res.sendFile(require('path').join(__dirname, '..', 'public', 'tutorial.html')));
 
-
-
-
 app.get("/api/audit-logs", authenticate, authorize("dispatcher", "management"), async (req, res) => {
   try {
     var [logs] = await pool.execute("SELECT al.*, u.email FROM audit_logs al JOIN users u ON al.user_id = u.id ORDER BY al.created_at DESC LIMIT 100");
@@ -845,33 +848,3 @@ app.get("/api/audit-logs", authenticate, authorize("dispatcher", "management"), 
 app.get('/audit-logs', (req, res) => res.sendFile(require('path').join(__dirname, '..', 'public', 'audit-logs.html')));
 
 module.exports = app;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
