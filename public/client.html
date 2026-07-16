@@ -285,7 +285,7 @@
                 `;
                 const codes = data.data.recentATLs.slice(0, 5);
                 if (codes.length > 0) {
-                    document.getElementById('recentATLCodes').innerHTML = `<div class="bg-white rounded-xl shadow-lg p-6"><h3 class="font-semibold mb-3">?? Recent ATL Codes</h3><div class="space-y-2">${codes.map(a => `<div class="flex justify-between items-center text-sm"><span class="font-mono font-bold text-blue-900">${a.atl_code||'N/A'}</span><span class="text-xs px-2 py-1 rounded ${a.status==='completed'?'bg-green-100 text-green-800':a.status==='dispatched'?'bg-orange-100 text-orange-800':'bg-gray-100'}">${a.status}</span></div>`).join('')}</div></div>`;
+                    document.getElementById('recentATLCodes').innerHTML = `<div class="bg-white rounded-xl shadow-lg p-6"><h3 class="font-semibold mb-3">Recent ATL Codes</h3><div class="space-y-2">${codes.map(a => `<div class="flex justify-between items-center text-sm"><span class="font-mono font-bold text-blue-900">${a.atl_code||'N/A'}</span><span class="text-xs px-2 py-1 rounded ${a.status==='completed'?'bg-green-100 text-green-800':a.status==='dispatched'?'bg-orange-100 text-orange-800':'bg-gray-100'}">${a.status}</span></div>`).join('')}</div></div>`;
                 }
             }
         }
