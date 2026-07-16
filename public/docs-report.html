@@ -43,7 +43,10 @@
         </div>
     </nav>
     <div class="max-w-7xl mx-auto px-4 py-8">
-        <h1 class="text-2xl md:text-3xl font-bold mb-2">Document Compliance Reports</h1>
+        <div class="flex items-center mb-4"><button onclick="showDashboard()" class="text-gray-500 hover:text-gray-700 mr-3">
+            <i class="fas fa-arrow-left text-xl"></i></button>
+            <h1 class="text-2xl md:text-3xl font-bold mb-2">Document Compliance Reports</h1>
+        </div>
         <p class="text-gray-500 text-sm mb-6">Overview of all truck documents (LTO Registration, Fire Permit, DOST Calibration)</p>
 
         <!-- Summary Cards -->
@@ -243,7 +246,7 @@
         }
 
         document.getElementById('userInfoMob').textContent = document.getElementById('userInfo').textContent;
-        
+
         function printReport() { window.print(); }
         function logout() { localStorage.clear(); window.location.href = '/'; }
         loadReport();
