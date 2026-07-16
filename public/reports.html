@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -22,6 +22,10 @@
     }
     .print-only { display: none; }
     @media print { .print-only { display: block; } }
+
+    th { cursor: pointer; user-select: none; }
+    th.sort-asc::after { content: ' ?'; font-size: 10px; }
+    th.sort-desc::after { content: ' ?'; font-size: 10px; }
 </style>
 <body class="bg-gray-50 min-h-screen">
     <nav class="bg-gradient-to-r from-blue-900 to-blue-800 text-white shadow-xl sticky top-0 z-50 no-print" >
@@ -603,6 +607,39 @@
             }
         }
 
+        function sortTable(tableId, columnIndex) {
+            var table = document.getElementById(tableId);
+            if (!table) {
+                // Try finding by closest table
+                var container = document.getElementById(tableId);
+                if (container) table = container.querySelector('table');
+            }
+            if (!table) return;
+            
+            var tbody = table.querySelector('tbody');
+            var rows = Array.from(tbody.querySelectorAll('tr'));
+            var header = table.querySelectorAll('th')[columnIndex];
+            var isAsc = header.classList.contains('sort-asc');
+            
+            // Clear all sort indicators
+            table.querySelectorAll('th').forEach(function(th) { th.classList.remove('sort-asc', 'sort-desc'); });
+            
+            rows.sort(function(a, b) {
+                var aVal = (a.cells[columnIndex]?.textContent || '').trim().replace(/[,%]/g, '');
+                var bVal = (b.cells[columnIndex]?.textContent || '').trim().replace(/[,%]/g, '');
+                var aNum = parseFloat(aVal);
+                var bNum = parseFloat(bVal);
+                
+                if (!isNaN(aNum) && !isNaN(bNum)) {
+                    return isAsc ? bNum - aNum : aNum - bNum;
+                }
+                return isAsc ? bVal.localeCompare(aVal) : aVal.localeCompare(bVal);
+            });
+            
+            header.classList.add(isAsc ? 'sort-desc' : 'sort-asc');
+            rows.forEach(function(row) { tbody.appendChild(row); });
+        }
+
         function logout() { localStorage.clear(); window.location.href = '/'; }
 
         loadTruckTPS();
@@ -612,6 +649,7 @@
 <div id="chatWidget" class="hidden fixed bottom-4 right-4 z-50 w-80 bg-white rounded-xl shadow-2xl border"><div class="bg-blue-900 text-white p-3 rounded-t-xl flex justify-between items-center cursor-pointer" onclick="toggleChat()"><span><i class="fas fa-comments mr-2"></i><span id="chatTitle">Chat</span></span><button onclick="event.stopPropagation();closeChat()" class="text-white">&times;</button></div><div id="chatBody" class="h-64 overflow-y-auto p-3 space-y-2"></div><div class="p-2 border-t flex gap-2"><input type="text" id="chatInput" placeholder="Type message..." class="flex-1 px-2 py-1 border rounded text-sm" onkeypress="if(event.key==='Enter')sendChat()"><button onclick="sendChat()" class="bg-blue-900 text-white px-3 py-1 rounded text-sm"><i class="fas fa-paper-plane"></i></button></div></div><button onclick="openChat()" class="fixed bottom-4 right-4 z-50 bg-blue-900 text-white p-3 rounded-full shadow-lg hover:bg-blue-800" id="chatButton"><i class="fas fa-comments"></i></button>
 </body>
 </html>
+
 
 
 
