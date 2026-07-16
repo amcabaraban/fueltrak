@@ -215,7 +215,7 @@
                 { label:'Total Trucks',value:t.total,sub:t.active+' active, '+t.inactive+' inactive',border:'border-blue-500' },
                 { label:'Valid Docs',value:t.withValidDocs,sub:'Click to view',border:'border-green-500',click:'validDocs' },
                 { label:'Expired Docs',value:t.withExpiredDocs,sub:'Click to view',border:'border-red-500',click:'expiredDocs' },
-                { label:'Backloads',value:(s.totalBackload ? (s.totalBackload/1000).toFixed(1)+'k L' : '0 L'),sub:'Total deducted',border:'border-orange-500' },
+                { label:'Backloads',value:(s.totalBackload ? (s.totalBackload/1000).toFixed(1)+'k L' : '0 L'),sub:'Click to view details',border:'border-orange-500',click:'backloads' },
                 { label:'Capacity',value:(t.totalCapacity/1000).toFixed(1)+'k L',sub:'Total fleet',border:'border-purple-500' }                        
             ].map(function(c) { return '<div class="stat-card bg-white rounded-xl shadow-lg p-2 md:p-3 border-l-4 '+c.border+'"'+(c.click?' onclick="showTruckDocs(\''+c.click+'\')" style="cursor:pointer"':'')+'><p class="text-gray-500 text-[10px] md:text-xs">'+c.label+'</p><p class="text-lg md:text-xl font-bold">'+c.value+'</p><p class="text-[9px] text-gray-400 truncate">'+c.sub+'</p></div>'; }).join('');
             var docTypes = [{key:'lto',label:'LTO'},{key:'fire',label:'Fire'},{key:'dost',label:'DOST'}];
@@ -446,37 +446,64 @@
         }
 
         async function showTruckDocs(filter) {
-          var data = await api('/trucks/all');
-          if (data.status !== 'success') return;
-          var trucks = data.data || data;
-          var title = filter === 'validDocs' ? 'Trucks with ALL Valid Documents' : 'Trucks with Expired/Missing Documents';
-          document.getElementById('docModalTitle').textContent = title;
-          var result = [];
-          trucks.forEach(function(t) {
-            var docs = t.documents || [];
-            var lto = docs.find(function(d){return d.document_type==='lto_registration';});
-            var fire = docs.find(function(d){return d.document_type==='fire_permit';});
-            var dost = docs.find(function(d){return d.document_type==='dost_calibration';});
-            var allValid = lto && fire && dost && new Date(lto.expiry_date) >= new Date() && new Date(fire.expiry_date) >= new Date() && new Date(dost.expiry_date) >= new Date();
-            if ((filter === 'validDocs' && allValid) || (filter === 'expiredDocs' && !allValid)) {
-              result.push({plate_no:t.plate_no,make:t.make,driver:t.driver_name,lto:lto,fire:fire,dost:dost});
+            if (filter === 'backloads') {
+                // Fetch backload data
+                var res = await fetch('/api/reports/summary?hasBackload=1', { headers: { 'Authorization': 'Bearer ' + token } });
+                var data = await res.json();
+                if (data.status !== 'success') return;
+                
+                var records = data.data.records.filter(function(r) { return r.backload_count > 0; });
+                document.getElementById('docModalTitle').textContent = 'Backload Records (' + records.length + ')';
+                
+                var html = '<div class="table-wrap"><table class="w-full text-sm"><thead class="bg-gray-50"><tr><th class="py-2 px-2 text-left">ATL Code</th><th class="py-2 px-2 text-left">Plate</th><th class="py-2 px-2 text-left">Company</th><th class="py-2 px-2 text-right">Volume (L)</th><th class="py-2 px-2 text-right">Backload (L)</th><th class="py-2 px-2 text-center">Count</th></tr></thead><tbody>';
+                
+                records.forEach(function(r) {
+                    html += '<tr class="border-b">';
+                    html += '<td class="py-2 px-2 font-mono text-xs">' + (r.atl_code || 'N/A') + '</td>';
+                    html += '<td class="py-2 px-2">' + r.plate_no + '</td>';
+                    html += '<td class="py-2 px-2">' + (r.company || '-') + '</td>';
+                    html += '<td class="py-2 px-2 text-right">' + (r.volume || 0).toLocaleString() + '</td>';
+                    html += '<td class="py-2 px-2 text-right font-semibold text-red-600">' + (r.backload_volume || 0).toLocaleString() + '</td>';
+                    html += '<td class="py-2 px-2 text-center">' + (r.backload_count || 0) + '</td>';
+                    html += '</tr>';
+                });
+                
+                html += '</tbody></table></div>';
+                document.getElementById('docDetailContent').innerHTML = html;
+                document.getElementById('docDetailModal').classList.remove('hidden');
+                return;
             }
-          });
-          var html = '<div class="table-wrap"><table class="w-full text-sm"><thead class="bg-gray-50"><tr><th class="py-2 px-2 text-left">Plate</th><th class="py-2 px-2 text-left">Make</th><th class="py-2 px-2 text-left">Driver</th><th class="py-2 px-2 text-left">LTO</th><th class="py-2 px-2 text-left">Fire</th><th class="py-2 px-2 text-left">DOST</th></tr></thead><tbody>';
-          result.forEach(function(t) {
-            html += '<tr class="border-b">';
-            html += '<td class="py-2 px-2 font-semibold">'+t.plate_no+'</td>';
-            html += '<td class="py-2 px-2">'+t.make+'</td>';
-            html += '<td class="py-2 px-2">'+(t.driver||'-')+'</td>';
-            html += '<td class="py-2 px-2">'+(t.lto?new Date(t.lto.expiry_date).toLocaleDateString()+' ('+(new Date(t.lto.expiry_date)>=new Date()?'Valid':'Expired')+')':'Missing')+'</td>';
-            html += '<td class="py-2 px-2">'+(t.fire?new Date(t.fire.expiry_date).toLocaleDateString()+' ('+(new Date(t.fire.expiry_date)>=new Date()?'Valid':'Expired')+')':'Missing')+'</td>';
-            html += '<td class="py-2 px-2">'+(t.dost?new Date(t.dost.expiry_date).toLocaleDateString()+' ('+(new Date(t.dost.expiry_date)>=new Date()?'Valid':'Expired')+')':'Missing')+'</td>';
-            html += '</tr>';
-          });
-          html += '</tbody></table></div>';
-          if (result.length === 0) html = '<p class="text-center py-8 text-gray-500">No trucks found</p>';
-          document.getElementById('docDetailContent').innerHTML = html;
-          document.getElementById('docDetailModal').classList.remove('hidden');
+            var data = await api('/trucks/all');
+            if (data.status !== 'success') return;
+            var trucks = data.data || data;
+            var title = filter === 'validDocs' ? 'Trucks with ALL Valid Documents' : 'Trucks with Expired/Missing Documents';
+            document.getElementById('docModalTitle').textContent = title;
+            var result = [];
+            trucks.forEach(function(t) {
+                var docs = t.documents || [];
+                var lto = docs.find(function(d){return d.document_type==='lto_registration';});
+                var fire = docs.find(function(d){return d.document_type==='fire_permit';});
+                var dost = docs.find(function(d){return d.document_type==='dost_calibration';});
+                var allValid = lto && fire && dost && new Date(lto.expiry_date) >= new Date() && new Date(fire.expiry_date) >= new Date() && new Date(dost.expiry_date) >= new Date();
+                if ((filter === 'validDocs' && allValid) || (filter === 'expiredDocs' && !allValid)) {
+                result.push({plate_no:t.plate_no,make:t.make,driver:t.driver_name,lto:lto,fire:fire,dost:dost});
+                }
+            });
+            var html = '<div class="table-wrap"><table class="w-full text-sm"><thead class="bg-gray-50"><tr><th class="py-2 px-2 text-left">Plate</th><th class="py-2 px-2 text-left">Make</th><th class="py-2 px-2 text-left">Driver</th><th class="py-2 px-2 text-left">LTO</th><th class="py-2 px-2 text-left">Fire</th><th class="py-2 px-2 text-left">DOST</th></tr></thead><tbody>';
+            result.forEach(function(t) {
+                html += '<tr class="border-b">';
+                html += '<td class="py-2 px-2 font-semibold">'+t.plate_no+'</td>';
+                html += '<td class="py-2 px-2">'+t.make+'</td>';
+                html += '<td class="py-2 px-2">'+(t.driver||'-')+'</td>';
+                html += '<td class="py-2 px-2">'+(t.lto?new Date(t.lto.expiry_date).toLocaleDateString()+' ('+(new Date(t.lto.expiry_date)>=new Date()?'Valid':'Expired')+')':'Missing')+'</td>';
+                html += '<td class="py-2 px-2">'+(t.fire?new Date(t.fire.expiry_date).toLocaleDateString()+' ('+(new Date(t.fire.expiry_date)>=new Date()?'Valid':'Expired')+')':'Missing')+'</td>';
+                html += '<td class="py-2 px-2">'+(t.dost?new Date(t.dost.expiry_date).toLocaleDateString()+' ('+(new Date(t.dost.expiry_date)>=new Date()?'Valid':'Expired')+')':'Missing')+'</td>';
+                html += '</tr>';
+            });
+            html += '</tbody></table></div>';
+            if (result.length === 0) html = '<p class="text-center py-8 text-gray-500">No trucks found</p>';
+            document.getElementById('docDetailContent').innerHTML = html;
+            document.getElementById('docDetailModal').classList.remove('hidden');
         }
 
         var currentChatUser = null;
