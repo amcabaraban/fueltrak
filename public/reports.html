@@ -371,7 +371,7 @@ th { cursor: pointer; user-select: none; } th.sort-asc::after { content: " ?"; f
                 document.getElementById('backloadSection').classList.remove('hidden');
                 document.getElementById('backloadTableBody').innerHTML = backloadRecords.map(function(r) {
                     return '<tr class="border-b hover:bg-gray-50">' +
-                        '<td class="py-2 px-3 font-mono text-xs font-bold text-blue-900">' + (r.scheduled_date || '-') + '</td>' +
+                        '<td class="py-2 px-3 text-xs">' + (r.scheduled_date ? new Date(r.scheduled_date).toLocaleDateString() : '-') + '</td>' +
                         '<td class="py-2 px-3 text-xs font-semibold">' + (r.so_number || '-') + '</td>' +
                         '<td class="py-2 px-3 font-mono text-xs font-bold text-blue-900">' + (r.atl_code || '-') + '</td>' +
                         '<td class="py-2 px-3 font-semibold">' + r.plate_no + '</td>' +
@@ -529,8 +529,6 @@ th { cursor: pointer; user-select: none; } th.sort-asc::after { content: " ?"; f
                 setTimeout(function(){ cell.classList.remove('bg-green-100'); }, 1000);
             }
         }
-
-        var truckTPSMap = {};
 
         var truckTPSMap = {};
 
