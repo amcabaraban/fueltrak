@@ -276,8 +276,8 @@
                     </td>
                     <td class="py-2 px-3 text-center">${r.revision_count > 0 ? '<span class="bg-purple-100 text-purple-800 px-2 py-1 rounded text-xs">' + r.revision_count + '</span>' : '0'}</td>
                     <td class="py-2 px-3 text-center">
-                        <button onclick="viewDetails(${r.id})" class="text-blue-600 hover:underline text-xs"><i class="fas fa-eye"></i></button>
                         <button onclick="openBackload(${r.id})" class="text-orange-600 hover:underline text-xs mr-2" title="Record Backload"><i class="fas fa-undo"></i></button>
+                        <button onclick="viewDetails(${r.id})" class="text-blue-600 hover:underline text-xs"><i class="fas fa-eye"></i></button>
                     </td>
                 </tr>
             `).join('') || '<tr><td colspan="14" class="text-center py-8 text-gray-500">No records found</td></tr>';
@@ -340,7 +340,10 @@
                             <input type="text" id="tps_to_${r.id}" value="${r.tps_end||''}" placeholder="To" class="w-16 px-1 py-0.5 border rounded text-xs" onchange="updateTPS(${r.id}, ${r.truck_id})">
                         </td>
                         <td class="py-2 px-3 text-center">${r.revision_count > 0 ? '<span class="bg-purple-100 text-purple-800 px-2 py-1 rounded text-xs">' + r.revision_count + '</span>' : '0'}</td>
-                        <td class="py-2 px-3 text-center"><button onclick="viewDetails(${r.id})" class="text-blue-600 hover:underline text-xs"><i class="fas fa-eye"></i></button></td>
+                        <td class="py-2 px-3 text-center">
+                            <button onclick="openBackload(${r.id})" class="text-orange-600 hover:underline text-xs mr-2" title="Record Backload"><i class="fas fa-undo"></i></button>
+                            <button onclick="viewDetails(${r.id})" class="text-blue-600 hover:underline text-xs"><i class="fas fa-eye"></i></button>
+                        </td>
                     </tr>
                 `).join('') || '<tr><td colspan="14" class="text-center py-8 text-gray-500">No records found</td></tr>';
 
