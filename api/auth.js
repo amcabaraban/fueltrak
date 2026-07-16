@@ -276,6 +276,7 @@ app.post('/api/dispatch/verify/:id', authenticate, authorize('dispatcher', 'mana
     const status = action === 'approve' ? 'approved' : action === 'reject' ? 'rejected' : null;
     if (!status) return res.status(400).json({ error: 'Invalid action' });
     await pool.execute('UPDATE authority_to_load SET status = ?, verified_by = ?, remarks = ? WHERE id = ?', [status, req.user.id, remarks || null, req.params.id]);
+    await logAudit(req.user.id, 'VERIFY_ATL', 'authority_to_load', req.params.id, {status, remarks});
     const [updated] = await pool.execute('SELECT * FROM authority_to_load WHERE id = ?', [req.params.id]);
     if (!updated.length) return res.status(404).json({ error: 'ATL not found' });
     res.json({ status: 'success', data: updated[0] });
@@ -342,6 +343,7 @@ app.post('/api/dispatch/start-loading/:id', authenticate, authorize('dispatcher'
 app.post('/api/dispatch/complete-loading/:id', authenticate, authorize('dispatcher', 'management'), async (req, res) => {
   try {
     const { actual_volume, remarks, printed_wc, tps_series } = req.body;
+    await logAudit(req.user.id, "COMPLETE_LOADING", "authority_to_load", req.params.id, {actual_volume, printed_wc, tps_series});
     await pool.execute("UPDATE authority_to_load SET status = 'completed', completed_date = NOW(), completed_by = ?, actual_volume = ?, remarks = ?, printed_wc = ?, tps_start = ? WHERE id = ?",
       [req.user.id, actual_volume || null, remarks || 'Loading completed', printed_wc || null, tps_series || null, req.params.id]);
     const [updated] = await pool.execute('SELECT * FROM authority_to_load WHERE id = ?', [req.params.id]);
@@ -829,6 +831,14 @@ app.get('/api/backloads/:atlId', authenticate, async (req, res) => {
 });
 
 app.get('/tutorial', (req, res) => res.sendFile(require('path').join(__dirname, '..', 'public', 'tutorial.html')));
+
+
+app.get("/api/audit-logs", authenticate, authorize("management"), async (req, res) => {
+  try {
+    var [logs] = await pool.execute("SELECT al.*, u.email FROM audit_logs al JOIN users u ON al.user_id = u.id ORDER BY al.created_at DESC LIMIT 100");
+    res.json({ status: "success", data: logs });
+  } catch (error) { res.status(500).json({ error: error.message }); }
+});
 
 module.exports = app;
 
