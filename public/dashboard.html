@@ -459,6 +459,8 @@
                 
                 records.forEach(function(r) {
                     html += '<tr class="border-b">';
+                    html += '<td class="py-2 px-2 font-semibold">' + new Date(r.scheduled_date).toLocaleDateString() + '</td>';
+                    html += '<td class="py-2 px-2 font-semibold">' + (r.so_number || 'N/A') + '</td>';    
                     html += '<td class="py-2 px-2 font-mono text-xs">' + (r.atl_code || 'N/A') + '</td>';
                     html += '<td class="py-2 px-2">' + r.plate_no + '</td>';
                     html += '<td class="py-2 px-2">' + (r.company || '-') + '</td>';
