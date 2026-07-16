@@ -135,6 +135,7 @@
                             <th class="py-3 px-3 text-center">TPS Series</th>
                             <th class="py-3 px-3 text-center">Rev</th>
                             <th class="py-3 px-3 text-center">Details</th>
+                            <th class="py-3 px-3 text-center">Backload</th>
                         </tr>
                     </thead>
                     <tbody id="reportTableBody">
@@ -154,6 +155,33 @@
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[80vh] overflow-y-auto p-6">
             <div class="flex justify-between mb-4"><h3 class="text-lg font-bold">ATL Details</h3><button onclick="document.getElementById('detailModal').classList.add('hidden')" class="text-2xl">&times;</button></div>
             <div id="detailContent"></div>
+        </div>
+    </div>
+
+    <div id="backloadModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
+            <div class="flex justify-between mb-4">
+                <h3 class="text-lg font-bold"><i class="fas fa-undo mr-2 text-orange-600"></i>Record Backload</h3>
+                <button onclick="document.getElementById('backloadModal').classList.add('hidden')" class="text-2xl">&times;</button>
+            </div>
+            <form onsubmit="submitBackload(event)" class="space-y-4">
+                <input type="hidden" id="backloadAtlId">
+                <div>
+                    <label class="block text-xs font-semibold mb-1">ATL Code</label>
+                    <input type="text" id="backloadAtlCode" class="w-full px-3 py-2 border rounded bg-gray-50" readonly>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold mb-1">Volume (Liters) *</label>
+                    <input type="number" id="backloadVolume" class="w-full px-3 py-2 border rounded" required min="1" placeholder="Enter backload volume">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold mb-1">Reason *</label>
+                    <textarea id="backloadReason" class="w-full px-3 py-2 border rounded" rows="3" required placeholder="Reason for backload..."></textarea>
+                </div>
+                <button type="submit" class="w-full bg-orange-600 text-white py-2 rounded font-semibold hover:bg-orange-700">
+                    <i class="fas fa-save mr-2"></i>Record Backload
+                </button>
+            </form>
         </div>
     </div>
 
@@ -247,7 +275,10 @@
                         <input type="text" id="tps_to_${r.id}" value="${r.tps_end||''}" placeholder="To" class="w-16 px-1 py-0.5 border rounded text-xs" onchange="updateTPS(${r.id}, ${r.truck_id})">
                     </td>
                     <td class="py-2 px-3 text-center">${r.revision_count > 0 ? '<span class="bg-purple-100 text-purple-800 px-2 py-1 rounded text-xs">' + r.revision_count + '</span>' : '0'}</td>
-                    <td class="py-2 px-3 text-center"><button onclick="viewDetails(${r.id})" class="text-blue-600 hover:underline text-xs"><i class="fas fa-eye"></i></button></td>
+                    <td class="py-2 px-3 text-center">
+                        <button onclick="viewDetails(${r.id})" class="text-blue-600 hover:underline text-xs"><i class="fas fa-eye"></i></button>
+                        <button onclick="openBackload(${r.id})" class="text-orange-600 hover:underline text-xs mr-2" title="Record Backload"><i class="fas fa-undo"></i></button>
+                    </td>
                 </tr>
             `).join('') || '<tr><td colspan="14" class="text-center py-8 text-gray-500">No records found</td></tr>';
             
@@ -500,6 +531,40 @@
             if (!email) return 'N/A';
             var parts = email.split('@');
             return parts[0].substring(0, 3) + '***@' + parts[1];
+        }
+
+        function openBackload(atlId) {
+            document.getElementById('backloadAtlId').value = atlId;
+            // Find ATL code from the table
+            var row = event.target.closest('tr');
+            var atlCode = row ? row.cells[0].textContent.trim() : 'N/A';
+            document.getElementById('backloadAtlCode').value = atlCode;
+            document.getElementById('backloadVolume').value = '';
+            document.getElementById('backloadReason').value = '';
+            document.getElementById('backloadModal').classList.remove('hidden');
+        }
+
+        async function submitBackload(e) {
+            e.preventDefault();
+            var atlId = document.getElementById('backloadAtlId').value;
+            var volume = document.getElementById('backloadVolume').value;
+            var reason = document.getElementById('backloadReason').value;
+            
+            if (!confirm('Record backload of ' + Number(volume).toLocaleString() + ' L?\n\nReason: ' + reason)) return;
+            
+            var res = await fetch('/api/backloads', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                body: JSON.stringify({ atl_id: atlId, volume: volume, reason: reason })
+            });
+            var data = await res.json();
+            if (data.status === 'success') {
+                alert('Backload recorded successfully!');
+                document.getElementById('backloadModal').classList.add('hidden');
+                loadReports();
+            } else {
+                alert(data.error || 'Error recording backload');
+            }
         }
 
         function logout() { localStorage.clear(); window.location.href = '/'; }

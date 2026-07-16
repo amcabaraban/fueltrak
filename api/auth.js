@@ -808,6 +808,26 @@ app.get('/api/demo-credentials', async (req, res) => {
   }
 });
 
+// ============ BACKLOAD ROUTES ============
+app.post('/api/backloads', authenticate, authorize('dispatcher', 'management'), async (req, res) => {
+  try {
+    var { atl_id, volume, reason } = req.body;
+    await pool.execute('INSERT INTO backloads (atl_id, volume, reason, created_by) VALUES (?, ?, ?, ?)',
+      [atl_id, volume, reason, req.user.id]);
+    res.json({ status: 'success', message: 'Backload recorded' });
+  } catch (error) { res.status(400).json({ error: error.message }); }
+});
+
+app.get('/api/backloads/:atlId', authenticate, async (req, res) => {
+  try {
+    var [backloads] = await pool.execute(
+      'SELECT b.*, u.email as created_by_email FROM backloads b JOIN users u ON b.created_by = u.id WHERE b.atl_id = ? ORDER BY b.created_at DESC',
+      [req.params.atlId]
+    );
+    res.json({ status: 'success', data: backloads });
+  } catch (error) { res.status(500).json({ error: error.message }); }
+});
+
 app.get('/tutorial', (req, res) => res.sendFile(require('path').join(__dirname, '..', 'public', 'tutorial.html')));
 
 module.exports = app;
