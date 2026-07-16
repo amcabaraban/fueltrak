@@ -56,11 +56,26 @@
                     <p class="text-xs opacity-90 hidden sm:block">Manage loading</p>
                     <span id="loadingBadge" class="absolute top-2 right-2 bg-orange-500 text-white text-xs w-6 h-6 rounded-full flex items-center justify-center font-bold hidden">0</span>
                 </button>
-                <!-- keep the rest of the buttons unchanged -->
-                <button onclick="openTab('trucks')" ...>Trucks</button>
-                <button onclick="openTab('clients')" ...>Clients</button>
-                <a href="/reports" ...>Reports</a>
-                <a href="/docs-report" ...>Doc Report</a>
+                <button onclick="openTab('trucks')" class="stat-card bg-gradient-to-br from-green-400 to-green-500 text-white rounded-xl shadow-lg p-4 md:p-6 text-left w-full">
+                    <i class="fas fa-truck text-2xl md:text-3xl mb-2"></i>
+                    <h3 class="font-bold text-sm md:text-lg">Trucks</h3>
+                    <p class="text-xs opacity-90 hidden sm:block">Fleet management</p>
+                </button>
+                <button onclick="openTab('clients')" class="stat-card bg-gradient-to-br from-purple-400 to-purple-500 text-white rounded-xl shadow-lg p-4 md:p-6 text-left w-full">
+                    <i class="fas fa-users text-2xl md:text-3xl mb-2"></i>
+                    <h3 class="font-bold text-sm md:text-lg">Clients</h3>
+                    <p class="text-xs opacity-90 hidden sm:block">Accounts</p>
+                </button>
+                <a href="/reports" class="stat-card bg-gradient-to-br from-teal-400 to-teal-500 text-white rounded-xl shadow-lg p-4 md:p-6 text-left block">
+                    <i class="fas fa-chart-bar text-2xl md:text-3xl mb-2"></i>
+                    <h3 class="font-bold text-sm md:text-lg">Reports</h3>
+                    <p class="text-xs opacity-90 hidden sm:block">Analytics</p>
+                </a>
+                <a href="/docs-report" class="stat-card bg-gradient-to-br from-orange-400 to-orange-500 text-white rounded-xl shadow-lg p-4 md:p-6 text-left block">
+                    <i class="fas fa-file-alt text-2xl md:text-3xl mb-2"></i>
+                    <h3 class="font-bold text-sm md:text-lg">Doc Report</h3>
+                    <p class="text-xs opacity-90 hidden sm:block">Documents</p>
+                </a>
             </div>
         </div>
 
