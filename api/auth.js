@@ -842,6 +842,14 @@ app.get("/api/audit-logs", authenticate, authorize("management"), async (req, re
 
 app.get('/audit-logs', (req, res) => res.sendFile(require('path').join(__dirname, '..', 'public', 'audit-logs.html')));
 
+
+app.get("/api/audit-logs", authenticate, authorize("dispatcher", "management"), async (req, res) => {
+  try {
+    var [logs] = await pool.execute("SELECT al.*, u.email FROM audit_logs al JOIN users u ON al.user_id = u.id ORDER BY al.created_at DESC LIMIT 100");
+    res.json({ status: "success", data: logs });
+  } catch (error) { res.status(500).json({ error: error.message }); }
+});
+
 module.exports = app;
 
 
