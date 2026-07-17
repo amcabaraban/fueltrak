@@ -37,7 +37,37 @@
     /* Highlighted Volume Field */
     .vol-highlight { font-size: 16px !important; font-weight: bold; color: #000; }
     
-    @media print { .buttons { display: none; } }
+    @media print {
+        .no-print { display: none !important; }
+        body { 
+            padding: 0 !important; 
+            margin: 0 !important;
+            background: white !important;
+        }
+        .container { 
+            max-inline-size: 100% !important; 
+            border: 1px solid #000 !important; 
+            padding: 8px !important;
+            margin: 0 !important;
+            page-break-after: avoid;
+        }
+        @page {
+            size: A4;
+            margin: 5mm;
+        }
+        h1 { font-size: 14px !important; }
+        .section-title { font-size: 10px !important; margin-block-start: 8px !important; margin-block-end: 5px !important; }
+        .field-row { margin-block-end: 2px !important; }
+        .field-label { inline-size: 120px !important; font-size: 9px !important; }
+        .field-value { font-size: 9px !important; }
+        .field-value input { font-size: 9px !important; }
+        table { font-size: 8px !important; }
+        .comp-table th, .comp-table td { padding: 1px 2px !important; font-size: 7px !important; }
+        .comp-table input[type="text"] { font-size: 7px !important; padding: 1px !important; }
+        .flex-row { gap: 8px !important; margin-block-end: 8px !important; }
+        .col-half { padding: 6px !important; }
+        .depot { margin-block-end: 8px !important; font-size: 10px !important; }
+    }
 </style>
 </head>
 <body>
