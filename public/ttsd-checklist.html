@@ -207,96 +207,68 @@
 </div>
 
 <script>
-    const truckData = {"NDJ 4836": {"driver": "BRONIOLA, CHRISTIAN", "capacities": [10.0, 20.0, 10.0, 10.0], "comps": 4}, "NIB 9642": {"driver": "LAZARO, ACE GABRIEL", "capacities": [10.0, 6.0, 6.0, 6.0, 4.0, 4.0, 14.0], "comps": 7}};
+    const token = localStorage.getItem('fueltrak_token');
+    if (!token) window.location.href = '/';
 
-    const datalist = document.getElementById('plateList');
-    Object.keys(truckData).forEach(plate => {
-        const option = document.createElement('option');
-        option.value = plate;
-        datalist.appendChild(option);
-    });
+    // Populate datalist from API
+    async function loadPlateList() {
+        try {
+            var res = await fetch('/api/truck-masterlist', { headers: { 'Authorization': 'Bearer ' + token } });
+            var data = await res.json();
+            if (data.status === 'success') {
+                var datalist = document.getElementById('plateList');
+                data.data.forEach(function(t) {
+                    var option = document.createElement('option');
+                    option.value = t.plate_no;
+                    datalist.appendChild(option);
+                });
+            }
+        } catch(e) {}
+    }
 
-    document.getElementById('plateNo').addEventListener('input', function() {
-        const match = truckData[this.value.trim().toUpperCase()];
-        const customerVal = document.getElementById('customerName').value;
+    // Auto-fill when plate selected
+    document.getElementById('plateNo').addEventListener('input', async function() {
+        var plate = this.value.trim().toUpperCase();
+        if (plate.length < 3) return;
         
-        for(let i=0; i<12; i++) {
-            const chk = document.querySelectorAll('.active-chk')[i];
-            if (match && i < match.comps) {
-                chk.checked = true;
-                chk.disabled = false;
-                document.getElementById('cap_cot'+(i+1)).value = match.capacities[i] || '';
-                document.querySelectorAll('.comp-customer')[i].value = customerVal;
-            } else {
-                chk.checked = false;
-                chk.disabled = true;
-                document.querySelectorAll('.comp-customer')[i].value = "N/A";
-                document.querySelectorAll('.dhc-seal')[i].value = "N/A";
-                document.querySelectorAll('.prod')[i].value = "N/A";
-                document.getElementById('cap_cot'+(i+1)).value = "N/A";
-                document.querySelectorAll('.dv-seal')[i].value = "N/A";
-                if(i < 3) document.querySelectorAll('.vbox')[i].value = "";
+        try {
+            var res = await fetch('/api/truck-masterlist/' + encodeURIComponent(plate), {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            var data = await res.json();
+            if (data.status === 'success' && data.data) {
+                var t = data.data;
+                document.getElementById('driverName').value = t.driver_name || '';
+                document.getElementById('customerName').value = t.hauler_name || '';
+                document.querySelectorAll('.comp-customer').forEach(input => input.value = t.hauler_name || '');
+                
+                var caps = [t.cot1, t.cot2, t.cot3, t.cot4, t.cot5, t.cot6, t.cot7, t.cot8, t.cot9, t.cot10];
+                for (var i = 0; i < 10; i++) {
+                    var el = document.getElementById('cap_cot' + (i+1));
+                    if (el) el.value = caps[i] || '';
+                }
             }
-        }
-        if (match) document.getElementById('driverName').value = match.driver;
-        autoFillSeals();
-        calculateVolume();
-    });
-
-    document.querySelectorAll('.active-chk').forEach((chk, i) => {
-        chk.addEventListener('change', function() {
-            if(!this.checked) {
-                document.querySelectorAll('.comp-customer')[i].value = "EMPTY / LOADED";
-                document.querySelectorAll('.dhc-seal')[i].value = "EMPTY / LOADED";
-                document.querySelectorAll('.prod')[i].value = "EMPTY / LOADED";
-                document.getElementById('cap_cot'+(i+1)).value = "EMPTY / LOADED";
-                document.querySelectorAll('.dv-seal')[i].value = "EMPTY / LOADED";
-            } else {
-                document.querySelectorAll('.comp-customer')[i].value = document.getElementById('customerName').value;
-                const match = truckData[document.getElementById('plateNo').value.trim().toUpperCase()];
-                document.getElementById('cap_cot'+(i+1)).value = (match && match.capacities[i]) ? match.capacities[i] : "";
-                document.querySelectorAll('.dhc-seal')[i].value = "";
-                document.querySelectorAll('.prod')[i].value = "";
-                document.querySelectorAll('.dv-seal')[i].value = "";
-            }
-            autoFillSeals();
-            calculateVolume();
-        });
+        } catch(e) {}
     });
 
     document.getElementById('customerName').addEventListener('input', function() {
-        document.querySelectorAll('.active-chk').forEach((chk, i) => {
-            if (chk.checked) document.querySelectorAll('.comp-customer')[i].value = this.value;
-        });
+        document.querySelectorAll('.comp-customer').forEach(input => input.value = this.value);
     });
-
-    function calculateVolume() {
-        let total = 0;
-        document.querySelectorAll('.active-chk').forEach((chk, i) => {
-            if(chk.checked) {
-                const val = parseFloat(document.getElementById('cap_cot' + (i + 1)).value);
-                if(!isNaN(val)) total += val;
-            }
-        });
-        document.getElementById('totalVol').value = total.toFixed(2);
-        document.getElementById('tableTotalVol').value = total.toFixed(2);
-    }
 
     function autoFillSeals() {
         const start = parseInt(document.getElementById('tpsStart').value);
-        if (isNaN(start)) return;
+        if (isNaN(start)) { alert('Please enter TPS Series Begin first'); return; }
 
         const activeChks = document.querySelectorAll('.active-chk');
         const capacities = document.querySelectorAll('.capacity');
         const dvSeals = document.querySelectorAll('.dv-seal');
         const dhcSeals = document.querySelectorAll('.dhc-seal');
-        const vbox = document.querySelectorAll('.vbox');
         
         let currentDV = start;
         let lastDV = start - 1;
 
-        for (let i = 0; i < 12; i++) {
-            if (activeChks[i].checked && !isNaN(parseFloat(capacities[i].value))) {
+        for (let i = 0; i < capacities.length; i++) {
+            if (activeChks[i].checked && capacities[i].value && capacities[i].value.trim() !== "") {
                 dvSeals[i].value = currentDV;
                 lastDV = currentDV;
                 currentDV++;
@@ -304,34 +276,20 @@
                 dvSeals[i].value = "";
             }
         }
-        
+
         let currentDHC = lastDV + 1;
-        let lastDHC = currentDHC - 1;
-        for (let i = 0; i < 12; i++) {
-            if (activeChks[i].checked && !isNaN(parseFloat(capacities[i].value))) {
+        for (let i = 0; i < capacities.length; i++) {
+            if (activeChks[i].checked && capacities[i].value && capacities[i].value.trim() !== "") {
                 dhcSeals[i].value = currentDHC;
-                lastDHC = currentDHC;
                 currentDHC++;
             } else {
                 dhcSeals[i].value = "";
             }
         }
-
-        const match = truckData[document.getElementById('plateNo').value.trim().toUpperCase()];
-        let currentVBox = lastDHC + 1;
-        
-        // Populate VBox only up to index 2 (COT 3)
-        for (let i = 0; i < 3; i++) {
-            if (match && i < match.comps) {
-                vbox[i].value = currentVBox;
-                currentVBox++;
-            } else {
-                vbox[i].value = "";
-            }
-        }
     }
 
-    document.getElementById('tpsStart').addEventListener('input', autoFillSeals);
+    function logout() { localStorage.clear(); window.location.href = '/'; }
+    loadPlateList();
 </script>
 </body>
 </html>
