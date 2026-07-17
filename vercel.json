@@ -13,9 +13,10 @@
     { "src": "/reports", "dest": "/api/auth.js" },
     { "src": "/docs-report", "dest": "/api/auth.js" },
     { "src": "/audit-logs", "dest": "/api/auth.js" },
-    { "src": "/ttsd-checklist", "dest": "/api/auth.js" }, { "src": "/tutorial", "dest": "/api/auth.js" },
+    { "src": "/trucks", "dest": "/api/auth.js" }, { "src": "/ttsd-checklist", "dest": "/api/auth.js" }, { "src": "/tutorial", "dest": "/api/auth.js" },
     { "src": "/", "dest": "/api/auth.js" },
     { "src": "/(.*)", "dest": "/public/" }
   ]
 }
+
 

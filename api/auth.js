@@ -874,7 +874,17 @@ app.get('/api/truck-masterlist/:plateNo', authenticate, async (req, res) => {
   } catch (error) { res.status(500).json({ error: error.message }); }
 });
 
+
+app.get('/api/truck-masterlist-all', authenticate, async (req, res) => {
+  try {
+    var [rows] = await pool.execute('SELECT * FROM truck_masterlist ORDER BY plate_no ASC');
+    res.json({ status: 'success', data: rows });
+  } catch (error) { res.status(500).json({ error: error.message }); }
+});
+app.get('/trucks', (req, res) => res.sendFile(require('path').join(__dirname, '..', 'public', 'trucks.html')));
+
 module.exports = app;
+
 
 
 
