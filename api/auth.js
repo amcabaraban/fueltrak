@@ -626,7 +626,8 @@ app.get('/api/client/verify-truck/:plateNo', authenticate, authorize('client'), 
     const [docs] = await pool.execute('SELECT * FROM truck_documents WHERE truck_id = ?', [truck.id]);
     const docStatus = {}; let allValid = true;
     ['lto_registration','fire_permit','dost_calibration'].forEach(type => { const doc = docs.find(d => d.document_type === type); const days = doc ? Math.ceil((new Date(doc.expiry_date) - new Date()) / 86400000) : -1; docStatus[type] = { status: days < 0 ? 'expired' : days <= 30 ? 'expiring_soon' : 'valid', valid: days >= 0, days_remaining: days }; if (days < 0) allValid = false; });
-    res.json({ status: 'success', data: { truck: { id: truck.id, plate_no: truck.plate_no, make: truck.make, driver_name: truck.driver_name, total_capacity: truck.total_capacity }, documents: docStatus, can_proceed: allValid } });
+    var [masterlist] = await pool.execute('SELECT * FROM truck_masterlist WHERE plate_no = ?', [req.params.plateNo.toUpperCase()]);
+    res.json({ status: 'success', data: { truck: { id: truck.id, plate_no: truck.plate_no, make: truck.make, driver_name: truck.driver_name, total_capacity: truck.total_capacity, masterlist: masterlist[0] || null }, documents: docStatus, can_proceed: allValid } });
   } catch (error) { res.status(500).json({ error: error.message }); }
 });
 
@@ -868,6 +869,7 @@ app.get('/api/truck-masterlist/:plateNo', authenticate, async (req, res) => {
 });
 
 module.exports = app;
+
 
 
 
