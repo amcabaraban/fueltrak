@@ -621,7 +621,13 @@ app.get('/api/client/dashboard', authenticate, authorize('client'), async (req, 
 app.get('/api/client/verify-truck/:plateNo', authenticate, authorize('client'), async (req, res) => {
   try {
     const [trucks] = await pool.execute('SELECT * FROM trucks WHERE plate_no = ? AND is_active = 1', [req.params.plateNo.toUpperCase()]);
-    if (!trucks.length) return res.status(404).json({ error: 'Truck not found', can_proceed: false });
+    if (!trucks.length) {
+    var [master] = await pool.execute('SELECT * FROM truck_masterlist WHERE plate_no = ?', [req.params.plateNo.toUpperCase()]);
+    if (master.length) {
+      return res.json({ status: 'success', data: { truck: { plate_no: master[0].plate_no, driver_name: master[0].driver_name, total_capacity: master[0].total_capacity, masterlist: master[0] }, documents: {}, can_proceed: true } });
+    }
+    return res.status(404).json({ error: 'Truck not found', can_proceed: false });
+  }
     const truck = trucks[0];
     const [docs] = await pool.execute('SELECT * FROM truck_documents WHERE truck_id = ?', [truck.id]);
     const docStatus = {}; let allValid = true;
@@ -869,6 +875,7 @@ app.get('/api/truck-masterlist/:plateNo', authenticate, async (req, res) => {
 });
 
 module.exports = app;
+
 
 
 
