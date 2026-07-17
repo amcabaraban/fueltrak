@@ -324,7 +324,9 @@
         var capacities = document.querySelectorAll('.capacity');
         var dvSeals = document.querySelectorAll('.dv-seal');
         var dhcSeals = document.querySelectorAll('.dhc-seal');
+        var vbox = document.querySelectorAll('.vbox');
         
+        // DV Seals
         var currentDV = start;
         var lastDV = start - 1;
 
@@ -338,17 +340,34 @@
             }
         }
         
+        // DHC Seals
         var currentDHC = lastDV + 1;
+        var lastDHC = currentDHC - 1;
         for (var i = 0; i < 12; i++) {
             if (activeChks[i].checked && !isNaN(parseFloat(capacities[i].value))) {
                 dhcSeals[i].value = currentDHC;
+                lastDHC = currentDHC;
                 currentDHC++;
             } else {
                 dhcSeals[i].value = "";
             }
         }
-    }
 
+        // Valve Box (TPS) for COT 1-3 - continues after DHC
+        var plate = document.getElementById('plateNo').value.trim().toUpperCase();
+        var match = truckData[plate];
+        var currentVBox = lastDHC + 1;
+        
+        for (var i = 0; i < 3; i++) {
+            if (match && i < match.comps) {
+                if (vbox[i]) vbox[i].value = currentVBox;
+                currentVBox++;
+            } else {
+                if (vbox[i]) vbox[i].value = "";
+            }
+        }
+    }
+    
     document.getElementById('tpsStart').addEventListener('input', autoFillSeals);
 
     function logout() { localStorage.clear(); window.location.href = '/'; }
