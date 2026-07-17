@@ -5,34 +5,34 @@
 <title>Tank Truck Delivery Checklist</title>
 <style>
     body { font-family: Arial, sans-serif; font-size: 11px; line-height: 1.4; margin: 0; padding: 20px; color: #333; background: #fff; }
-    .container { max-width: 1000px; margin: auto; border: 2px solid #000; padding: 15px; box-sizing: border-box; }
-    h1 { text-align: center; font-size: 16px; margin-top: 0; margin-bottom: 5px; text-transform: uppercase; border-bottom: 2px solid #000; padding-bottom: 5px; }
-    .depot { text-align: right; font-weight: bold; margin-bottom: 15px; }
-    .flex-row { display: flex; justify-content: space-between; margin-bottom: 15px; gap: 15px; }
+    .container { max-inline-size: 1000px; margin: auto; border: 2px solid #000; padding: 15px; box-sizing: border-box; }
+    h1 { text-align: center; font-size: 16px; margin-block-start: 0; margin-block-end: 5px; text-transform: uppercase; border-block-end: 2px solid #000; padding-block-end: 5px; }
+    .depot { text-align: end; font-weight: bold; margin-block-end: 15px; }
+    .flex-row { display: flex; justify-content: space-between; margin-block-end: 15px; gap: 15px; }
     .col-half { flex: 1; border: 1px solid #000; padding: 10px; box-sizing: border-box; }
-    .section-title { font-weight: bold; text-align: center; margin-bottom: 10px; text-decoration: underline; font-size: 12px; margin-top: 15px; }
-    .field-row { display: flex; margin-bottom: 5px; align-items: center; }
-    .field-label { width: 140px; font-weight: bold; }
-    .field-value { flex: 1; border-bottom: 1px solid #000; }
-    table { width: 100%; border-collapse: collapse; margin-top: 10px; margin-bottom: 15px; }
-    th, td { border: 1px solid #000; padding: 5px; text-align: left; vertical-align: top; }
+    .section-title { font-weight: bold; text-align: center; margin-block-end: 10px; text-decoration: underline; font-size: 12px; margin-block-start: 15px; }
+    .field-row { display: flex; margin-block-end: 5px; align-items: center; }
+    .field-label { inline-size: 140px; font-weight: bold; }
+    .field-value { flex: 1; border-block-end: 1px solid #000; }
+    table { inline-size: 100%; border-collapse: collapse; margin-block-start: 10px; margin-block-end: 15px; }
+    th, td { border: 1px solid #000; padding: 5px; text-align: start; vertical-align: top; }
     th { background-color: #f0f0f0; text-align: center; }
     .center { text-align: center; }
-    .signature-row { display: flex; justify-content: space-around; margin-top: 30px; margin-bottom: 20px; }
-    .signature-box { text-align: center; width: 200px; }
-    .sig-line { border-bottom: 1px solid #000; height: 30px; margin-bottom: 5px; }
-    .buttons { margin-top: 20px; text-align: center; margin-bottom: 20px; }
+    .signature-row { display: flex; justify-content: space-around; margin-block-start: 30px; margin-block-end: 20px; }
+    .signature-box { text-align: center; inline-size: 200px; }
+    .sig-line { border-block-end: 1px solid #000; block-size: 30px; margin-block-end: 5px; }
+    .buttons { margin-block-start: 20px; text-align: center; margin-block-end: 20px; }
     button { padding: 10px 20px; font-size: 14px; cursor: pointer; margin: 0 5px; }
     
     /* Checklist Table Styles */
-    .checklist-input { width: 100%; border: none; text-align: center; background: transparent; font-size: 11px; font-weight: bold; }
-    .checklist-input:focus { outline: none; border-bottom: 1px solid #000; }
+    .checklist-input { inline-size: 100%; border: none; text-align: center; background: transparent; font-size: 11px; font-weight: bold; }
+    .checklist-input:focus { outline: none; border-block-end: 1px solid #000; }
     
     /* Compartment Table Styles */
     .comp-table th, .comp-table td { padding: 2px 4px; text-align: center; vertical-align: middle; }
-    .comp-table td:first-child { text-align: right; font-weight: bold; width: 15%; padding-right: 10px; }
-    .comp-table input[type="text"] { width: 100%; box-sizing: border-box; border: none; background-color: #fcfcfc; border-bottom: 1px dashed #ccc; font-size: 10px; text-align: center; padding: 3px; }
-    .comp-table input[type="text"]:focus { outline: none; background-color: #fff; border-bottom: 1px solid #000; }
+    .comp-table td:first-child { text-align: end; font-weight: bold; inline-size: 15%; padding-inline-end: 10px; }
+    .comp-table input[type="text"] { inline-size: 100%; box-sizing: border-box; border: none; background-color: #fcfcfc; border-block-end: 1px dashed #ccc; font-size: 10px; text-align: center; padding: 3px; }
+    .comp-table input[type="text"]:focus { outline: none; background-color: #fff; border-block-end: 1px solid #000; }
     
     /* Highlighted Volume Field */
     .vol-highlight { font-size: 16px !important; font-weight: bold; color: #000; }
@@ -48,20 +48,20 @@
 
     <div class="flex-row">
         <div class="col-half">
-            <div class="section-title" style="margin-top:0;">To be accomplished by the Petron Gate Guard</div>
-            <div class="field-row"><div class="field-label">Customer Name:</div><div class="field-value"><input type="text" id="customerName" style="width:100%; border:none;"></div></div>
-            <div class="field-row"><div class="field-label">Plate #:</div><div class="field-value"><input type="text" id="plateNo" list="plateList" placeholder="Select Plate..." style="width:100%; border:none;"></div></div>
+            <div class="section-title" style="margin-block-start:0;">To be accomplished by the Petron Gate Guard</div>
+            <div class="field-row"><div class="field-label">Customer Name:</div><div class="field-value"><input type="text" id="customerName" style="inline-size:100%; border:none;"></div></div>
+            <div class="field-row"><div class="field-label">Plate #:</div><div class="field-value"><input type="text" id="plateNo" list="plateList" placeholder="Select Plate..." style="inline-size:100%; border:none;"></div></div>
             <datalist id="plateList"></datalist>
-            <div class="field-row"><div class="field-label">Driver:</div><div class="field-value"><input type="text" id="driverName" style="width:100%; border:none;"></div></div>
-            <div class="field-row"><div class="field-label">TPS Series Begin:</div><div class="field-value"><input type="text" id="tpsStart" style="width:100%; border:none;"></div></div>
-            <div class="field-row"><div class="field-label">Date / Time Out:</div><div class="field-value"><input type="datetime-local" style="width:100%; border:none;"></div></div>
+            <div class="field-row"><div class="field-label">Driver:</div><div class="field-value"><input type="text" id="driverName" style="inline-size:100%; border:none;"></div></div>
+            <div class="field-row"><div class="field-label">TPS Series Begin:</div><div class="field-value"><input type="text" id="tpsStart" style="inline-size:100%; border:none;"></div></div>
+            <div class="field-row"><div class="field-label">Date / Time Out:</div><div class="field-value"><input type="datetime-local" style="inline-size:100%; border:none;"></div></div>
         </div>
         <div class="col-half">
-            <div class="section-title" style="margin-top:0;">To be accomplished by Customer/ Receiver</div>
-            <div class="field-row"><div class="field-label">Arrival Date/Time:</div><div class="field-value"><input type="datetime-local" style="width:100%; border:none;"></div></div>
-            <div class="field-row"><div class="field-label">Total Vol (Loaded):</div><div class="field-value"><input type="text" id="totalVol" class="vol-highlight" style="width:100%; border:none;" readonly></div></div>
-            <div class="field-row"><div class="field-label">Start of Unloading:</div><div class="field-value"><input type="time" style="width:100%; border:none;"></div></div>
-            <div class="field-row"><div class="field-label">End of Unloading:</div><div class="field-value"><input type="time" style="width:100%; border:none;"></div></div>
+            <div class="section-title" style="margin-block-start:0;">To be accomplished by Customer/ Receiver</div>
+            <div class="field-row"><div class="field-label">Arrival Date/Time:</div><div class="field-value"><input type="datetime-local" style="inline-size:100%; border:none;"></div></div>
+            <div class="field-row"><div class="field-label">Total Vol (Loaded):</div><div class="field-value"><input type="text" id="totalVol" class="vol-highlight" style="inline-size:100%; border:none;" readonly></div></div>
+            <div class="field-row"><div class="field-label">Start of Unloading:</div><div class="field-value"><input type="time" style="inline-size:100%; border:none;"></div></div>
+            <div class="field-row"><div class="field-label">End of Unloading:</div><div class="field-value"><input type="time" style="inline-size:100%; border:none;"></div></div>
         </div>
     </div>
 
@@ -78,7 +78,7 @@
             <tr><td>Capacity (KL)</td><td><input type="text" class="capacity" id="cap_cot1"></td><td><input type="text" class="capacity" id="cap_cot2"></td><td><input type="text" class="capacity" id="cap_cot3"></td><td><input type="text" class="capacity" id="cap_cot4"></td><td><input type="text" class="capacity" id="cap_cot5"></td><td><input type="text" class="capacity" id="cap_cot6"></td><td><input type="text" class="capacity" id="cap_cot7"></td><td><input type="text" class="capacity" id="cap_cot8"></td><td><input type="text" class="capacity" id="cap_cot9"></td><td><input type="text" class="capacity" id="cap_cot10"></td><td><input type="text" class="capacity" id="cap_cot11"></td><td><input type="text" class="capacity" id="cap_cot12"></td></tr>
             <tr><td>DV Seal Nos.</td><td><input type="text" class="dv-seal"></td><td><input type="text" class="dv-seal"></td><td><input type="text" class="dv-seal"></td><td><input type="text" class="dv-seal"></td><td><input type="text" class="dv-seal"></td><td><input type="text" class="dv-seal"></td><td><input type="text" class="dv-seal"></td><td><input type="text" class="dv-seal"></td><td><input type="text" class="dv-seal"></td><td><input type="text" class="dv-seal"></td><td><input type="text" class="dv-seal"></td><td><input type="text" class="dv-seal"></td></tr>
             <tr><td>Valve Box (TPS)</td><td><input type="text" class="vbox"></td><td><input type="text" class="vbox"></td><td><input type="text" class="vbox"></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-            <tr><td>Total Volume Loaded (KL)</td><td colspan="12"><input type="text" id="tableTotalVol" class="vol-highlight" style="width:100%; text-align:center; border:none; background:transparent;" readonly></td></tr>
+            <tr><td>Total Volume Loaded (KL)</td><td colspan="12"><input type="text" id="tableTotalVol" class="vol-highlight" style="inline-size:100%; text-align:center; border:none; background:transparent;" readonly></td></tr>
         </tbody>
     </table>
 
@@ -86,10 +86,10 @@
     <table>
         <thead>
             <tr>
-                <th style="width: 5%;">No.</th>
+                <th style="inline-size: 5%;">No.</th>
                 <th>Items to Check / Activities to be done:</th>
-                <th style="width: 12%;">Receiver</th>
-                <th style="width: 12%;">Driver</th>
+                <th style="inline-size: 12%;">Receiver</th>
+                <th style="inline-size: 12%;">Driver</th>
             </tr>
         </thead>
         <tbody>
@@ -119,50 +119,50 @@
     </div>
 
     <div class="section-title">Feedback / Comments for this delivery:</div>
-    <div style="border:1px solid #000; padding:10px; min-height:80px; margin-bottom:15px;">
-        <textarea style="width:100%; border:none; min-height:60px; resize:vertical;" placeholder="Enter feedback or comments..."></textarea>
+    <div style="border:1px solid #000; padding:10px; min-block-size:80px; margin-block-end:15px;">
+        <textarea style="inline-size:100%; border:none; min-block-size:60px; resize:vertical;" placeholder="Enter feedback or comments..."></textarea>
     </div>
 
     <!-- Split Load Section -->
     <div class="section-title">If with split load: (To be accomplished by TTLR Guard)</div>
     <div class="flex-row">
         <div class="col-half">
-            <div class="field-row"><div class="field-label">Dealer(s) Name:</div><div class="field-value"><input type="text" style="width:100%; border:none;"></div></div>
-            <div class="field-row"><div class="field-label">Invoice(s) No.:</div><div class="field-value"><input type="text" style="width:100%; border:none;"></div></div>
-            <div class="field-row"><div class="field-label">CHECK #:</div><div class="field-value"><input type="text" style="width:100%; border:none;"></div></div>
+            <div class="field-row"><div class="field-label">Dealer(s) Name:</div><div class="field-value"><input type="text" style="inline-size:100%; border:none;"></div></div>
+            <div class="field-row"><div class="field-label">Invoice(s) No.:</div><div class="field-value"><input type="text" style="inline-size:100%; border:none;"></div></div>
+            <div class="field-row"><div class="field-label">CHECK #:</div><div class="field-value"><input type="text" style="inline-size:100%; border:none;"></div></div>
         </div>
         <div class="col-half">
-            <div class="field-row"><div class="field-label">Date/Time TT Returned:</div><div class="field-value"><input type="datetime-local" style="width:100%; border:none;"></div></div>
+            <div class="field-row"><div class="field-label">Date/Time TT Returned:</div><div class="field-value"><input type="datetime-local" style="inline-size:100%; border:none;"></div></div>
         </div>
     </div>
 
     <!-- Signatures -->
     <div class="flex-row">
         <div class="col-half">
-            <div class="section-title" style="margin-top:0;">Kitrol Personnel</div>
-            <div style="height:40px; border-bottom:1px solid #000; margin-bottom:5px;"></div>
+            <div class="section-title" style="margin-block-start:0;">Kitrol Personnel</div>
+            <div style="block-size:40px; border-block-end:1px solid #000; margin-block-end:5px;"></div>
             <p style="text-align:center; font-size:10px;">Signature over printed name</p>
         </div>
         <div class="col-half">
-            <div class="section-title" style="margin-top:0;">Guard on Duty</div>
-            <div style="height:40px; border-bottom:1px solid #000; margin-bottom:5px;"></div>
+            <div class="section-title" style="margin-block-start:0;">Guard on Duty</div>
+            <div style="block-size:40px; border-block-end:1px solid #000; margin-block-end:5px;"></div>
             <p style="text-align:center; font-size:10px;">Signature over printed name</p>
         </div>
     </div>
 
     <!-- Notes -->
-    <div style="border:1px solid #000; padding:10px; margin-bottom:15px; font-size:10px;">
+    <div style="border:1px solid #000; padding:10px; margin-block-end:15px; font-size:10px;">
         <strong>Notes:</strong> If OK to unload, receiver to provide initials/signature per compartment. If compartment is empty, indicate "Empty". If tank truck has fewer compartments, indicate "n/a"
     </div>
 
     <!-- Discharge Line -->
     <div class="field-row">
         <div class="field-label">DISCHARGE PIPE/LINE:</div>
-        <div class="field-value"><input type="text" value="INCLUDING" style="width:100%; border:none; font-weight:bold;"></div>
+        <div class="field-value"><input type="text" value="INCLUDING" style="inline-size:100%; border:none; font-weight:bold;"></div>
     </div>
     <div class="field-row">
         <div class="field-label">IF UNDERLOAD, APPROVED BY:</div>
-        <div class="field-value"><input type="text" value="TONY/DENMARK" style="width:100%; border:none; font-weight:bold;"></div>
+        <div class="field-value"><input type="text" value="TONY/DENMARK" style="inline-size:100%; border:none; font-weight:bold;"></div>
     </div>
     <div class="field-row">
         <div class="field-label"></div>
