@@ -41,6 +41,8 @@
     .comp-table tr { height: 32px; }
     .comp-table thead tr { height: 28px; }
     
+    .capacity { font-size: 13px; font-weight: bold; }
+
     /* Highlighted Volume Field */
     .vol-highlight { font-size: 16px !important; font-weight: bold; color: #000; }
     
@@ -275,7 +277,7 @@
                     if (match && i < match.comps) {
                         chk.checked = true;
                         chk.disabled = false;
-                        document.getElementById('cap_cot'+(i+1)).value = match.capacities[i] || '';
+                        document.getElementById('cap_cot'+(i+1)).value = match.capacities[i] ? Math.round(match.capacities[i] / 100) / 10 : '';
                         document.querySelectorAll('.comp-customer')[i].value = customerVal;
                     } else {
                         chk.checked = false;
@@ -327,13 +329,11 @@
         document.querySelectorAll('.active-chk').forEach(function(chk, i) {
             if (chk.checked) {
                 var val = parseFloat(document.getElementById('cap_cot' + (i + 1)).value);
-                if (!isNaN(val)) total += val;
+                if (!isNaN(val)) total += val * 1000; // Convert KL back to L for total
             }
         });
         var totalEl = document.getElementById('totalVol');
-        if (totalEl) totalEl.value = total.toFixed(2);
-        var tableEl = document.getElementById('tableTotalVol');
-        if (tableEl) tableEl.value = total.toFixed(2);
+        if (totalEl) totalEl.value = (total / 1000).toFixed(0) + ' KL';
     }
 
     function autoFillSeals() {
@@ -386,6 +386,15 @@
                 if (vbox[i]) vbox[i].value = "";
             }
         }
+    }
+
+    function formatCapacities() {
+        document.querySelectorAll('.capacity').forEach(function(el) {
+            var val = parseFloat(el.value);
+            if (!isNaN(val) && val > 0) {
+                el.value = (val / 1000).toFixed(2); // Convert to KL
+            }
+        });
     }
 
     document.getElementById('tpsStart').addEventListener('input', autoFillSeals);
