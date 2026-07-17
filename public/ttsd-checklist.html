@@ -10,8 +10,8 @@
     .depot { text-align: end; font-weight: bold; margin-block-end: 15px; }
     .flex-row { display: flex; justify-content: space-between; margin-block-end: 15px; gap: 15px; }
     .col-half { flex: 1; border: 1px solid #000; padding: 10px; box-sizing: border-box; }
-    .section-title { font-weight: bold; text-align: center; margin-bottom: 5px; text-decoration: underline; font-size: 14px; margin-top: 10px; }
-    .feedback-box textarea { min-height: 40px; }
+    .section-title { font-weight: bold; text-align: center; margin-block-end: 5px; text-decoration: underline; font-size: 14px; margin-block-start: 10px; }
+    .feedback-box textarea { min-block-size: 40px; }
     .field-row { display: flex; margin-block-end: 5px; align-items: center; }
     .field-label { inline-size: 140px; font-weight: bold; }
     .field-value { flex: 1; border-block-end: 1px solid #000; }
@@ -20,9 +20,9 @@
     th { background-color: #f0f0f0; text-align: center; }
     .center { text-align: center; }
     .signature-row { display: flex; justify-content: space-around; margin-block-start: 30px; margin-block-end: 20px; }
-    .signature-box { text-align: center; width: 200px; margin-top: 5px; }
-    .sig-line { border-bottom: 1px solid #000; height: 25px; margin-bottom: 2px; }
-    .compact-row { margin-bottom: 2px; }
+    .signature-box { text-align: center; inline-size: 200px; margin-block-start: 5px; }
+    .sig-line { border-block-end: 1px solid #000; block-size: 25px; margin-block-end: 2px; }
+    .compact-row { margin-block-end: 2px; }
     .buttons { margin-block-start: 20px; text-align: center; margin-block-end: 20px; }
     button { padding: 10px 20px; font-size: 14px; cursor: pointer; margin: 0 5px; }
     
@@ -31,10 +31,15 @@
     .checklist-input:focus { outline: none; border-block-end: 1px solid #000; }
     
     /* Compartment Table Styles */
-    .comp-table th, .comp-table td { padding: 2px 4px; text-align: center; vertical-align: middle; }
-    .comp-table td:first-child { text-align: end; font-weight: bold; inline-size: 15%; padding-inline-end: 10px; }
-    .comp-table input[type="text"] { inline-size: 100%; box-sizing: border-box; border: none; background-color: #fcfcfc; border-block-end: 1px dashed #ccc; font-size: 10px; text-align: center; padding: 3px; }
-    .comp-table input[type="text"]:focus { outline: none; background-color: #fff; border-block-end: 1px solid #000; }
+    .comp-table th, .comp-table td { padding: 3px 5px; text-align: center; vertical-align: middle; font-size: 11px; }
+    .comp-table td:first-child { text-align: right; font-weight: bold; width: 12%; padding-right: 8px; font-size: 11px; }
+    .comp-table input[type="text"] { width: 100%; box-sizing: border-box; border: none; background-color: #fcfcfc; border-bottom: 1px dashed #ccc; font-size: 11px; text-align: center; padding: 5px 3px; }
+    .comp-table select { width: 100%; box-sizing: border-box; border: none; background-color: #fcfcfc; border-bottom: 1px dashed #ccc; font-size: 10px; text-align: center; padding: 4px 2px; }
+    .comp-table input[type="checkbox"] { width: 16px; height: 16px; }
+    .comp-table th { font-size: 10px; padding: 4px 2px; }
+
+    .comp-table tr { height: 32px; }
+    .comp-table thead tr { height: 28px; }
     
     /* Highlighted Volume Field */
     .vol-highlight { font-size: 16px !important; font-weight: bold; color: #000; }
@@ -97,7 +102,7 @@
         </div>
     </div>
 
-    <div class="section-title">Sealing Plan / Compartmentation</div>
+    <div class="section-title" style="font-size:14px; margin-top:10px;">Sealing Plan / Compartmentation</div>
     <table class="comp-table">
         <thead>
             <tr><th>Compartment No.</th><th>COT 1</th><th>COT 2</th><th>COT 3</th><th>COT 4</th><th>COT 5</th><th>COT 6</th><th>COT 7</th><th>COT 8</th><th>COT 9</th><th>COT 10</th><th>COT 11</th><th>COT 12</th></tr>
@@ -107,18 +112,18 @@
             <tr><td>Customer Name</td><td><input type="text" class="comp-customer"></td><td><input type="text" class="comp-customer"></td><td><input type="text" class="comp-customer"></td><td><input type="text" class="comp-customer"></td><td><input type="text" class="comp-customer"></td><td><input type="text" class="comp-customer"></td><td><input type="text" class="comp-customer"></td><td><input type="text" class="comp-customer"></td><td><input type="text" class="comp-customer"></td><td><input type="text" class="comp-customer"></td><td><input type="text" class="comp-customer"></td><td><input type="text" class="comp-customer"></td></tr>
             <tr><td>DHC Seal Nos.</td><td><input type="text" class="dhc-seal"></td><td><input type="text" class="dhc-seal"></td><td><input type="text" class="dhc-seal"></td><td><input type="text" class="dhc-seal"></td><td><input type="text" class="dhc-seal"></td><td><input type="text" class="dhc-seal"></td><td><input type="text" class="dhc-seal"></td><td><input type="text" class="dhc-seal"></td><td><input type="text" class="dhc-seal"></td><td><input type="text" class="dhc-seal"></td><td><input type="text" class="dhc-seal"></td><td><input type="text" class="dhc-seal"></td></tr>
             <tr><td>Product</td>
-                <td><select class="prod" style="width:100%;border:none;background:#fcfcfc;font-size:10px;text-align:center"><option value="">-</option><option>ADO</option><option>UNLEADED</option><option>PREMIUM</option></select></td>
-                <td><select class="prod" style="width:100%;border:none;background:#fcfcfc;font-size:10px;text-align:center"><option value="">-</option><option>ADO</option><option>UNLEADED</option><option>PREMIUM</option></select></td>
-                <td><select class="prod" style="width:100%;border:none;background:#fcfcfc;font-size:10px;text-align:center"><option value="">-</option><option>ADO</option><option>UNLEADED</option><option>PREMIUM</option></select></td>
-                <td><select class="prod" style="width:100%;border:none;background:#fcfcfc;font-size:10px;text-align:center"><option value="">-</option><option>ADO</option><option>UNLEADED</option><option>PREMIUM</option></select></td>
-                <td><select class="prod" style="width:100%;border:none;background:#fcfcfc;font-size:10px;text-align:center"><option value="">-</option><option>ADO</option><option>UNLEADED</option><option>PREMIUM</option></select></td>
-                <td><select class="prod" style="width:100%;border:none;background:#fcfcfc;font-size:10px;text-align:center"><option value="">-</option><option>ADO</option><option>UNLEADED</option><option>PREMIUM</option></select></td>
-                <td><select class="prod" style="width:100%;border:none;background:#fcfcfc;font-size:10px;text-align:center"><option value="">-</option><option>ADO</option><option>UNLEADED</option><option>PREMIUM</option></select></td>
-                <td><select class="prod" style="width:100%;border:none;background:#fcfcfc;font-size:10px;text-align:center"><option value="">-</option><option>ADO</option><option>UNLEADED</option><option>PREMIUM</option></select></td>
-                <td><select class="prod" style="width:100%;border:none;background:#fcfcfc;font-size:10px;text-align:center"><option value="">-</option><option>ADO</option><option>UNLEADED</option><option>PREMIUM</option></select></td>
-                <td><select class="prod" style="width:100%;border:none;background:#fcfcfc;font-size:10px;text-align:center"><option value="">-</option><option>ADO</option><option>UNLEADED</option><option>PREMIUM</option></select></td>
-                <td><select class="prod" style="width:100%;border:none;background:#fcfcfc;font-size:10px;text-align:center"><option value="">-</option><option>ADO</option><option>UNLEADED</option><option>PREMIUM</option></select></td>
-                <td><select class="prod" style="width:100%;border:none;background:#fcfcfc;font-size:10px;text-align:center"><option value="">-</option><option>ADO</option><option>UNLEADED</option><option>PREMIUM</option></select></td>
+                <td><select class="prod" style="inline-size:100%;border:none;background:#fcfcfc;font-size:10px;text-align:center"><option value="">-</option><option>ADO</option><option>UNLEADED</option><option>PREMIUM</option></select></td>
+                <td><select class="prod" style="inline-size:100%;border:none;background:#fcfcfc;font-size:10px;text-align:center"><option value="">-</option><option>ADO</option><option>UNLEADED</option><option>PREMIUM</option></select></td>
+                <td><select class="prod" style="inline-size:100%;border:none;background:#fcfcfc;font-size:10px;text-align:center"><option value="">-</option><option>ADO</option><option>UNLEADED</option><option>PREMIUM</option></select></td>
+                <td><select class="prod" style="inline-size:100%;border:none;background:#fcfcfc;font-size:10px;text-align:center"><option value="">-</option><option>ADO</option><option>UNLEADED</option><option>PREMIUM</option></select></td>
+                <td><select class="prod" style="inline-size:100%;border:none;background:#fcfcfc;font-size:10px;text-align:center"><option value="">-</option><option>ADO</option><option>UNLEADED</option><option>PREMIUM</option></select></td>
+                <td><select class="prod" style="inline-size:100%;border:none;background:#fcfcfc;font-size:10px;text-align:center"><option value="">-</option><option>ADO</option><option>UNLEADED</option><option>PREMIUM</option></select></td>
+                <td><select class="prod" style="inline-size:100%;border:none;background:#fcfcfc;font-size:10px;text-align:center"><option value="">-</option><option>ADO</option><option>UNLEADED</option><option>PREMIUM</option></select></td>
+                <td><select class="prod" style="inline-size:100%;border:none;background:#fcfcfc;font-size:10px;text-align:center"><option value="">-</option><option>ADO</option><option>UNLEADED</option><option>PREMIUM</option></select></td>
+                <td><select class="prod" style="inline-size:100%;border:none;background:#fcfcfc;font-size:10px;text-align:center"><option value="">-</option><option>ADO</option><option>UNLEADED</option><option>PREMIUM</option></select></td>
+                <td><select class="prod" style="inline-size:100%;border:none;background:#fcfcfc;font-size:10px;text-align:center"><option value="">-</option><option>ADO</option><option>UNLEADED</option><option>PREMIUM</option></select></td>
+                <td><select class="prod" style="inline-size:100%;border:none;background:#fcfcfc;font-size:10px;text-align:center"><option value="">-</option><option>ADO</option><option>UNLEADED</option><option>PREMIUM</option></select></td>
+                <td><select class="prod" style="inline-size:100%;border:none;background:#fcfcfc;font-size:10px;text-align:center"><option value="">-</option><option>ADO</option><option>UNLEADED</option><option>PREMIUM</option></select></td>
             </tr>
             <tr><td>Capacity (KL)</td><td><input type="text" class="capacity" id="cap_cot1"></td><td><input type="text" class="capacity" id="cap_cot2"></td><td><input type="text" class="capacity" id="cap_cot3"></td><td><input type="text" class="capacity" id="cap_cot4"></td><td><input type="text" class="capacity" id="cap_cot5"></td><td><input type="text" class="capacity" id="cap_cot6"></td><td><input type="text" class="capacity" id="cap_cot7"></td><td><input type="text" class="capacity" id="cap_cot8"></td><td><input type="text" class="capacity" id="cap_cot9"></td><td><input type="text" class="capacity" id="cap_cot10"></td><td><input type="text" class="capacity" id="cap_cot11"></td><td><input type="text" class="capacity" id="cap_cot12"></td></tr>
             <tr><td>DV Seal Nos.</td><td><input type="text" class="dv-seal"></td><td><input type="text" class="dv-seal"></td><td><input type="text" class="dv-seal"></td><td><input type="text" class="dv-seal"></td><td><input type="text" class="dv-seal"></td><td><input type="text" class="dv-seal"></td><td><input type="text" class="dv-seal"></td><td><input type="text" class="dv-seal"></td><td><input type="text" class="dv-seal"></td><td><input type="text" class="dv-seal"></td><td><input type="text" class="dv-seal"></td><td><input type="text" class="dv-seal"></td></tr>
@@ -164,8 +169,8 @@
     </div>
 
     <div class="section-title">Feedback / Comments for this delivery:</div>
-    <div style="border:1px solid #000; padding:5px; min-height:40px; margin-bottom:8px;">
-        <textarea style="width:100%; border:none; min-height:30px; resize:vertical; font-size:10px;" placeholder="Enter feedback or comments..."></textarea>
+    <div style="border:1px solid #000; padding:5px; min-block-size:40px; margin-block-end:8px;">
+        <textarea style="inline-size:100%; border:none; min-block-size:30px; resize:vertical; font-size:10px;" placeholder="Enter feedback or comments..."></textarea>
     </div>
 
     <!-- Split Load Section -->
