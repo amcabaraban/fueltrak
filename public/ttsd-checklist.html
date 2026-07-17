@@ -30,18 +30,27 @@
     .checklist-input { inline-size: 100%; border: none; text-align: center; background: transparent; font-size: 11px; font-weight: bold; }
     .checklist-input:focus { outline: none; border-block-end: 1px solid #000; }
     
-    /* Compartment Table Styles */
-    .comp-table th, .comp-table td { padding: 3px 5px; text-align: center; vertical-align: middle; font-size: 11px; }
-    .comp-table td:first-child { text-align: right; font-weight: bold; width: 12%; padding-right: 8px; font-size: 11px; }
-    .comp-table input[type="text"] { width: 100%; box-sizing: border-box; border: none; background-color: #fcfcfc; border-bottom: 1px dashed #ccc; font-size: 11px; text-align: center; padding: 5px 3px; }
-    .comp-table select { width: 100%; box-sizing: border-box; border: none; background-color: #fcfcfc; border-bottom: 1px dashed #ccc; font-size: 10px; text-align: center; padding: 4px 2px; }
-    .comp-table input[type="checkbox"] { width: 16px; height: 16px; }
-    .comp-table th { font-size: 10px; padding: 4px 2px; }
+    /* Gate Guard & Customer/Receiver fields */
+    .field-label { width: 140px; font-weight: bold; font-size: 12px; }
+    .field-value { flex: 1; border-bottom: 1px solid #000; font-size: 13px; }
+    .field-value input { width: 100%; border: none; outline: none; font-size: 13px; padding: 4px 0; }
+    .field-value select { width: 100%; border: none; outline: none; font-size: 13px; padding: 4px 0; background: transparent; }
 
-    .comp-table tr { height: 32px; }
-    .comp-table thead tr { height: 28px; }
-    
-    .capacity { font-size: 13px; font-weight: bold; }
+    /* Sealing Plan / Compartmentation */
+    .comp-table th, .comp-table td { padding: 5px 6px; text-align: center; vertical-align: middle; font-size: 12px; }
+    .comp-table td:first-child { text-align: right; font-weight: bold; width: 12%; padding-right: 10px; font-size: 12px; }
+    .comp-table input[type="text"] { width: 100%; box-sizing: border-box; border: none; background-color: #fcfcfc; border-bottom: 1px dashed #ccc; font-size: 12px; text-align: center; padding: 6px 4px; }
+    .comp-table select { width: 100%; box-sizing: border-box; border: none; background-color: #fcfcfc; border-bottom: 1px dashed #ccc; font-size: 11px; text-align: center; padding: 5px 3px; }
+    .comp-table input[type="checkbox"] { width: 18px; height: 18px; }
+    .comp-table th { font-size: 11px; padding: 5px 3px; background-color: #f0f0f0; }
+    .comp-table tr { height: 36px; }
+    .capacity { font-size: 14px !important; font-weight: bold !important; }
+
+    /* Section titles */
+    .section-title { font-weight: bold; text-align: center; margin-bottom: 8px; text-decoration: underline; font-size: 15px; margin-top: 12px; }
+
+    /* Total Volume */
+    #totalVol { font-size: 15px !important; font-weight: bold; }
 
     /* Highlighted Volume Field */
     .vol-highlight { font-size: 16px !important; font-weight: bold; color: #000; }
