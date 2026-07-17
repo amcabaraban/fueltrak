@@ -836,6 +836,7 @@ app.get('/api/backloads/:atlId', authenticate, async (req, res) => {
   } catch (error) { res.status(500).json({ error: error.message }); }
 });
 
+app.get('/ttsd-checklist', (req, res) => res.sendFile(require('path').join(__dirname, '..', 'public', 'ttsd-checklist.html')));
 app.get('/tutorial', (req, res) => res.sendFile(require('path').join(__dirname, '..', 'public', 'tutorial.html')));
 
 app.get("/api/audit-logs", authenticate, authorize("dispatcher", "management"), async (req, res) => {
@@ -848,3 +849,4 @@ app.get("/api/audit-logs", authenticate, authorize("dispatcher", "management"), 
 app.get('/audit-logs', (req, res) => res.sendFile(require('path').join(__dirname, '..', 'public', 'audit-logs.html')));
 
 module.exports = app;
+
