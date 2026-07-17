@@ -31,23 +31,23 @@
     .checklist-input:focus { outline: none; border-block-end: 1px solid #000; }
     
     /* Gate Guard & Customer/Receiver fields */
-    .field-label { width: 140px; font-weight: bold; font-size: 12px; }
-    .field-value { flex: 1; border-bottom: 1px solid #000; font-size: 13px; }
-    .field-value input { width: 100%; border: none; outline: none; font-size: 13px; padding: 4px 0; }
-    .field-value select { width: 100%; border: none; outline: none; font-size: 13px; padding: 4px 0; background: transparent; }
+    .field-label { inline-size: 140px; font-weight: bold; font-size: 12px; }
+    .field-value { flex: 1; border-block-end: 1px solid #000; font-size: 13px; }
+    .field-value input { inline-size: 100%; border: none; outline: none; font-size: 13px; padding: 4px 0; }
+    .field-value select { inline-size: 100%; border: none; outline: none; font-size: 13px; padding: 4px 0; background: transparent; }
 
     /* Sealing Plan / Compartmentation */
     .comp-table th, .comp-table td { padding: 5px 6px; text-align: center; vertical-align: middle; font-size: 12px; }
-    .comp-table td:first-child { text-align: right; font-weight: bold; width: 12%; padding-right: 10px; font-size: 12px; }
-    .comp-table input[type="text"] { width: 100%; box-sizing: border-box; border: none; background-color: #fcfcfc; border-bottom: 1px dashed #ccc; font-size: 12px; text-align: center; padding: 6px 4px; }
-    .comp-table select { width: 100%; box-sizing: border-box; border: none; background-color: #fcfcfc; border-bottom: 1px dashed #ccc; font-size: 11px; text-align: center; padding: 5px 3px; }
-    .comp-table input[type="checkbox"] { width: 18px; height: 18px; }
+    .comp-table td:first-child { text-align: end; font-weight: bold; inline-size: 12%; padding-inline-end: 10px; font-size: 12px; }
+    .comp-table input[type="text"] { inline-size: 100%; box-sizing: border-box; border: none; background-color: #fcfcfc; border-block-end: 1px dashed #ccc; font-size: 12px; text-align: center; padding: 6px 4px; }
+    .comp-table select { inline-size: 100%; box-sizing: border-box; border: none; background-color: #fcfcfc; border-block-end: 1px dashed #ccc; font-size: 11px; text-align: center; padding: 5px 3px; }
+    .comp-table input[type="checkbox"] { inline-size: 18px; block-size: 18px; }
     .comp-table th { font-size: 11px; padding: 5px 3px; background-color: #f0f0f0; }
-    .comp-table tr { height: 36px; }
+    .comp-table tr { block-size: 36px; }
     .capacity { font-size: 14px !important; font-weight: bold !important; }
 
     /* Section titles */
-    .section-title { font-weight: bold; text-align: center; margin-bottom: 8px; text-decoration: underline; font-size: 15px; margin-top: 12px; }
+    .section-title { font-weight: bold; text-align: center; margin-block-end: 8px; text-decoration: underline; font-size: 15px; margin-block-start: 12px; }
 
     /* Total Volume */
     #totalVol { font-size: 15px !important; font-weight: bold; }
@@ -113,7 +113,7 @@
         </div>
     </div>
 
-    <div class="section-title" style="font-size:14px; margin-top:10px;">Sealing Plan / Compartmentation</div>
+    <div class="section-title" style="font-size:14px; margin-block-start:10px;">Sealing Plan / Compartmentation</div>
     <table class="comp-table">
         <thead>
             <tr><th>Compartment No.</th><th>COT 1</th><th>COT 2</th><th>COT 3</th><th>COT 4</th><th>COT 5</th><th>COT 6</th><th>COT 7</th><th>COT 8</th><th>COT 9</th><th>COT 10</th><th>COT 11</th><th>COT 12</th></tr>
@@ -338,11 +338,13 @@
         document.querySelectorAll('.active-chk').forEach(function(chk, i) {
             if (chk.checked) {
                 var val = parseFloat(document.getElementById('cap_cot' + (i + 1)).value);
-                if (!isNaN(val)) total += val * 1000; // Convert KL back to L for total
+                if (!isNaN(val) && val > 0) total += val;
             }
         });
         var totalEl = document.getElementById('totalVol');
-        if (totalEl) totalEl.value = (total / 1000).toFixed(0) + ' KL';
+        if (totalEl) totalEl.value = total.toFixed(2) + ' KL';
+        var tableEl = document.getElementById('tableTotalVol');
+        if (tableEl) tableEl.value = total.toFixed(2) + ' KL';
     }
 
     function autoFillSeals() {
