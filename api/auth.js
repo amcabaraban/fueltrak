@@ -11,6 +11,8 @@ const path = require('path');
 
 const app = express();
 const otpCache = new NodeCache({ stdTTL: 600 });
+const tokenBlacklist = new Set();
+setInterval(() => { tokenBlacklist.forEach(t => { try { jwt.verify(t, process.env.JWT_SECRET || 'secret'); } catch(e) { tokenBlacklist.delete(t); } }); }, 3600000);
 
 app.set('trust proxy', 1);
 app.use(express.json({ limit: "10kb" }));
@@ -88,6 +90,7 @@ const authenticate = async (req, res, next) => {
   try {
     const token = req.header('Authorization')?.replace('Bearer ', '');
     if (!token) return res.status(401).json({ error: 'Please authenticate' });
+    if (tokenBlacklist.has(token)) return res.status(401).json({ error: 'Token revoked. Please login again.' });
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret');
     const [rows] = await pool.execute('SELECT id, email, role, mobile, company_name, is_active FROM users WHERE id = ?', [decoded.id]);
     if (!rows.length || !rows[0].is_active) return res.status(401).json({ error: 'Invalid token' });
@@ -119,6 +122,33 @@ app.post('/api/auth/register', async (req, res) => {
   } catch (error) { res.status(400).json({ error: error.message }); }
 });
 
+// ============ ACCOUNT LOCKOUT ============
+const loginAttempts = new Map(); // In-memory store (use DB for production)
+
+function getLoginKey(email) {
+  return 'login_' + email.toLowerCase();
+}
+
+async function checkLockout(email) {
+  const key = getLoginKey(email);
+  const attempts = loginAttempts.get(key);
+  if (attempts && attempts.count >= 5 && (Date.now() - attempts.lastAttempt) < 15 * 60 * 1000) {
+    const minutesLeft = Math.ceil((15 * 60 * 1000 - (Date.now() - attempts.lastAttempt)) / 60000);
+    return { locked: true, minutesLeft };
+  }
+  return { locked: false };
+}
+
+function recordFailedAttempt(email) {
+  const key = getLoginKey(email);
+  const current = loginAttempts.get(key) || { count: 0, lastAttempt: 0 };
+  loginAttempts.set(key, { count: current.count + 1, lastAttempt: Date.now() });
+}
+
+function resetAttempts(email) {
+  loginAttempts.delete(getLoginKey(email));
+}
+
 app.post('/api/auth/verify-otp', async (req, res) => {
   try {
     const { email, otp } = req.body;
@@ -147,6 +177,11 @@ app.post('/api/auth/resend-otp', async (req, res) => {
 app.post('/api/auth/login', async (req, res) => {
   try {
     const { email, password } = req.body;
+    // Check lockout
+    const lockout = await checkLockout(email);
+    if (lockout.locked) {
+      return res.status(429).json({ error: `Account locked. Try again in ${lockout.minutesLeft} minutes.` });
+    }
     const [users] = await pool.execute('SELECT * FROM users WHERE email = ?', [email]);
     if (!users.length) return res.status(401).json({ error: 'Invalid credentials' });
     const user = users[0];
@@ -188,6 +223,8 @@ app.post('/api/auth/forgot-password', async (req, res) => {
     if (!users.length) return res.status(404).json({ error: 'Email not found' });
     const otp = generateOTP();
     otpCache.set('reset_' + email, otp);
+
+    
     console.log('Reset OTP for ' + email + ': ' + otp);
     res.json({ status: 'success', message: 'OTP sent. Check console.', otp });
   } catch (error) { res.status(500).json({ error: error.message }); }
@@ -876,6 +913,12 @@ app.post('/api/migrate', authenticate, authorize('management'), async (req, res)
   res.json({ status: 'success', message: `Created: ${created}, Skipped: ${skipped}, Failed: ${failed}`, results });
 });
 
+// ============ LOGOUT ============
+app.post('/api/auth/logout', authenticate, async (req, res) => {
+  try { const t = req.header('Authorization')?.replace('Bearer ', ''); if(t){tokenBlacklist.add(t); await pool.execute('UPDATE users SET current_token = NULL WHERE id = ?',[req.user.id]);} await logAudit(req.user.id,'LOGOUT','users',req.user.id,{email:req.user.email}); res.json({status:'success',message:'Logged out'}); }
+  catch(e) { res.status(400).json({error:e.message}); }
+});
+
 // ============ PAGE ROUTES ============
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'index.html')));
 app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'dashboard.html')));
@@ -892,5 +935,3 @@ app.get('/tutorial', (req, res) => res.sendFile(path.join(__dirname, '..', 'publ
 app.get('/audit-logs', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'audit-logs.html')));
 
 module.exports = app;
-
-
