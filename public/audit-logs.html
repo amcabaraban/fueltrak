@@ -3,107 +3,90 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FuelTrak - Transaction Logs</title>
+    <title>FuelTrak - Audit Logs</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
     <style>
-        .table-wrap{overflow-x:auto}@media print{nav,.no-print{display:none!important}}
-        #sidebar{transition:transform 0.3s}@media(max-inline-size:767px){#sidebar{transform:translateX(-100%)}#sidebar.open{transform:translateX(0)}body.sidebar-open{overflow:hidden}}@media(min-inline-size:768px){body{padding-inline-start:176px}}  
-    #sidebar{transition:transform 0.3s}@media(max-inline-size:767px){#sidebar{transform:translateX(-100%)}#sidebar.open{transform:translateX(0)}body.sidebar-open{overflow:hidden}}@media(min-inline-size:768px){body{padding-inline-start:0}@media(min-inline-size:768px){body{padding-inline-start:176px}}}
-</style>
+        @media print { body{background:white!important} nav,.no-print,#sidebar,#sidebarOverlay{display:none!important} body{padding-left:0!important} }
+        #sidebar{transition:transform 0.3s}
+        @media(max-width:767px){#sidebar{transform:translateX(-100%)}#sidebar.open{transform:translateX(0)}body.sidebar-open{overflow:hidden}}
+        @media(min-width:768px){body{padding-left:176px}}
+        .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+        table{min-width:700px;font-size:13px}
+        td{white-space:nowrap}
+    </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
 <div class="main-content">
-        <nav class="bg-gradient-to-r from-blue-900 to-blue-800 text-white shadow-xl sticky top-0 z-20 no-print">
-            <!-- Desktop -->
-            <div class="hidden md:flex max-w-7xl mx-auto px-4 py-3 justify-between items-center">
-                <div class="flex items-center space-x-3">
-                    <div class="bg-white/20 p-2 rounded-lg"><i class="fas fa-history text-2xl text-yellow-400"></i></div>
-                    <div><span class="font-bold text-xl">Transaction Logs</span></div>
-                </div>
-                <div class="flex items-center space-x-3">
-                    <span id="userInfo" class="text-sm bg-white/10 px-3 py-1 rounded-full"></span>
-                    <a href="/dashboard" class="bg-white/20 px-3 py-1 rounded text-sm hover:bg-white/30"><i class="fas fa-chart-pie mr-1"></i>Dashboard</a>
-                    <button onclick="logout()" class="bg-red-500/80 hover:bg-red-500 px-4 py-2 rounded text-sm"><i class="fas fa-sign-out-alt mr-1"></i>Logout</button>
-                </div>
-            </div>
-            <!-- Mobile scrollable -->
-            <div class="flex md:hidden px-2 py-2 items-center space-x-1">
-                <div class="flex items-center space-x-1 flex-shrink-0">
-                    <div class="bg-white/20 p-1 rounded"><i class="fas fa-history text-sm text-yellow-400"></i></div>
-                    <span class="font-bold text-xs whitespace-nowrap">Audit Logs</span>
-                </div>
-                <div class="flex-1 overflow-x-auto flex items-center space-x-1" style="-webkit-overflow-scrolling:touch;scrollbar-width:none">
-                    <span id="userInfoMob" class="text-[9px] bg-white/10 px-1.5 py-0.5 rounded-full flex-shrink-0 max-w-[80px] truncate"></span>
-                    <a href="/dashboard" class="bg-white/20 px-1.5 py-0.5 rounded text-[9px] hover:bg-white/30 flex-shrink-0 whitespace-nowrap"><i class="fas fa-chart-pie text-[10px] mr-0.5"></i>Dashboard</a>
-                    <button onclick="logout()" class="bg-red-500/80 hover:bg-red-500 px-1.5 py-0.5 rounded text-[9px] flex-shrink-0 whitespace-nowrap"><i class="fas fa-sign-out-alt text-[10px]"></i>Logout</button>
-                </div>
-            </div>
-        </nav>
+    <!-- Sidebar -->
+    <div class="fixed left-0 top-0 h-full w-14 md:w-48 bg-blue-900 text-white z-40 pt-16 overflow-y-auto no-print" id="sidebar">
+        <a href="/dashboard" class="flex items-center px-2 md:px-4 py-3 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap"><i class="fas fa-tachometer-alt w-6 text-center"></i><span class="hidden md:inline ml-2">Dashboard</span></a>
+        <a href="/reports" class="flex items-center px-2 md:px-4 py-3 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap"><i class="fas fa-chart-bar w-6 text-center"></i><span class="hidden md:inline ml-2">Reports</span></a>
+        <a href="/trucks" class="flex items-center px-2 md:px-4 py-3 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap"><i class="fas fa-truck w-6 text-center"></i><span class="hidden md:inline ml-2">Truck Masterlist</span></a>
+        <a href="/docs-report" class="flex items-center px-2 md:px-4 py-3 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap"><i class="fas fa-file-alt w-6 text-center"></i><span class="hidden md:inline ml-2">Doc Report</span></a>
+        <a href="/ttsd-checklist" class="flex items-center px-2 md:px-4 py-3 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap"><i class="fas fa-clipboard-check w-6 text-center"></i><span class="hidden md:inline ml-2">TTSD Checklist</span></a>
+        <a href="/audit-logs" class="flex items-center px-2 md:px-4 py-3 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap"><i class="fas fa-history w-6 text-center"></i><span class="hidden md:inline ml-2">Audit Logs</span></a>
+        <div class="border-t border-blue-700 mt-2 pt-2"><button onclick="logout()" class="flex items-center px-2 md:px-4 py-3 hover:bg-red-700 text-xs md:text-sm w-full text-left whitespace-nowrap"><i class="fas fa-sign-out-alt w-6 text-center"></i><span class="hidden md:inline ml-2">Logout</span></button></div>
+    </div>
+    <div id="sidebarOverlay" class="hidden fixed inset-0 bg-black bg-opacity-50 z-30 md:hidden" onclick="toggleSidebar()"></div>
+    <button onclick="toggleSidebar()" class="fixed top-2 left-2 z-50 md:hidden bg-blue-900 text-white p-2 rounded no-print"><i class="fas fa-bars"></i></button>
 
-        <!-- Sidebar Navigation -->
-        <div class="fixed left-0 top-0 h-full w-14 md:w-48 bg-blue-900 text-white z-40 pt-16 overflow-y-auto no-print" id="sidebar">
-            <a href="/dashboard" class="flex items-center px-2 md:px-4 py-3 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap" title="Dashboard">
-                <i class="fas fa-tachometer-alt w-6 text-center"></i><span class="hidden md:inline ml-2">Dashboard</span>
-            </a>
-            <a href="/reports" class="flex items-center px-2 md:px-4 py-3 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap" title="Reports">
-                <i class="fas fa-chart-bar w-6 text-center"></i><span class="hidden md:inline ml-2">Reports</span>
-            </a>
-            <a href="/trucks" class="flex items-center px-2 md:px-4 py-3 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap" title="Truck Masterlist">
-                <i class="fas fa-truck w-6 text-center"></i><span class="hidden md:inline ml-2">Truck Masterlist</span>
-            </a>
-            <a href="/docs-report" class="flex items-center px-2 md:px-4 py-3 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap" title="Doc Report">
-                <i class="fas fa-file-alt w-6 text-center"></i><span class="hidden md:inline ml-2">Doc Report</span>
-            </a>
-            <a href="/ttsd-checklist" class="flex items-center px-2 md:px-4 py-3 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap" title="TTSD Checklist">
-                <i class="fas fa-clipboard-check w-6 text-center"></i><span class="hidden md:inline ml-2">TTSD Checklist</span>
-            </a>
-            <a href="/audit-logs" class="flex items-center px-2 md:px-4 py-3 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap" title="Audit Logs">
-                <i class="fas fa-history w-6 text-center"></i><span class="hidden md:inline ml-2">Audit Logs</span>
-            </a>
-            
-            <div class="border-t border-blue-700 mt-2 pt-2">
-                <button onclick="logout()" class="flex items-center px-2 md:px-4 py-3 hover:bg-red-700 text-xs md:text-sm w-full text-left whitespace-nowrap">
-                    <i class="fas fa-sign-out-alt w-6 text-center"></i><span class="hidden md:inline ml-2">Logout</span>
-                </button>
-            </div>
+    <nav class="bg-gradient-to-r from-blue-900 to-blue-800 text-white shadow-xl sticky top-0 z-20 no-print">
+        <div class="hidden md:flex max-w-7xl mx-auto px-4 py-3 justify-between items-center">
+            <div class="flex items-center space-x-3"><div class="bg-white/20 p-2 rounded-lg"><i class="fas fa-history text-2xl text-yellow-400"></i></div><div><span class="font-bold text-xl">Transaction Audit Logs</span></div></div>
+            <div class="flex items-center space-x-3"><span id="userInfo" class="text-sm bg-white/10 px-3 py-1 rounded-full"></span><a href="/dashboard" class="bg-white/20 px-3 py-1 rounded text-sm hover:bg-white/30"><i class="fas fa-chart-pie mr-1"></i>Dashboard</a><button onclick="logout()" class="bg-red-500/80 hover:bg-red-500 px-4 py-2 rounded text-sm"><i class="fas fa-sign-out-alt mr-1"></i>Logout</button></div>
         </div>
+    </nav>
 
-        <!-- Overlay for mobile sidebar -->
-        <div id="sidebarOverlay" class="hidden fixed inset-0 bg-black bg-opacity-50 z-30 md:hidden" onclick="toggleSidebar()"></div>
-
-        <!-- Mobile hamburger -->
-        <button onclick="toggleSidebar()" class="fixed top-2 left-2 z-50 md:hidden bg-blue-900 text-white p-2 rounded">
-            <i class="fas fa-bars"></i>
-        </button>
-
-        <div class="max-w-7xl mx-auto px-4 py-8">
-            <div class="flex justify-between items-center mb-6"><h1 class="text-3xl font-bold">Transaction Audit Logs</h1><button onclick="window.print()" class="bg-blue-600 text-white px-4 py-2 rounded text-sm no-print"><i class="fas fa-print mr-1"></i>Print</button></div>
-            <div class="bg-white rounded-xl shadow-lg overflow-hidden"><div class="table-wrap"><table class="w-full text-sm"><thead class="bg-gray-50 border-b"><tr><th class="py-3 px-3 text-left">Date/Time</th><th class="py-3 px-3 text-left">User</th><th class="py-3 px-3 text-left">Action</th><th class="py-3 px-3 text-left">Table</th><th class="py-3 px-3 text-center">Record ID</th><th class="py-3 px-3 text-left">Details</th></tr></thead><tbody id="logBody"><tr><td colspan="6" class="text-center py-8 text-gray-500">Loading...</td></tr></tbody></table></div></div>
+    <div class="max-w-7xl mx-auto px-2 sm:px-4 py-8">
+        <h1 class="text-2xl font-bold mb-4">Transaction Audit Logs</h1>
+        <div class="flex justify-end mb-4 no-print"><button onclick="window.print()" class="bg-blue-600 text-white px-4 py-2 rounded text-sm"><i class="fas fa-print mr-1"></i>Print</button></div>
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+            <div class="table-wrap">
+                <table>
+                    <thead class="bg-gray-50 border-b">
+                        <tr>
+                            <th class="py-3 px-3 text-left">Date/Time</th>
+                            <th class="py-3 px-3 text-left">User</th>
+                            <th class="py-3 px-3 text-left">Action</th>
+                            <th class="py-3 px-3 text-left">Table</th>
+                            <th class="py-3 px-3 text-left">Record ID</th>
+                            <th class="py-3 px-3 text-left">Details</th>
+                        </tr>
+                    </thead>
+                    <tbody id="logBody"><tr><td colspan="6" class="text-center py-8 text-gray-500">Loading...</td></tr></tbody>
+                </table>
+            </div>
+            <div class="px-4 py-2 border-t text-xs text-gray-500" id="logCount"></div>
         </div>
-        <script>
-            const token=localStorage.getItem('fueltrak_token');const user=JSON.parse(localStorage.getItem('fueltrak_user')||'{}');
-            if(!token||!['dispatcher','management'].includes(user.role))window.location.replace('/');
-            document.getElementById('userInfo').textContent=user.email+' ('+user.role+')';
-            async function loadLogs(){var res=await fetch('/api/audit-logs',{headers:{'Authorization':'Bearer '+token}});var data=await res.json();if(data.status==='success'){document.getElementById('logBody').innerHTML=data.data.map(function(l){var d='';try{d=JSON.stringify(JSON.parse(l.details||'{}'))}catch(e){d=l.details||''}return'<tr class=border-b><td class=py-2 px-3 text-xs>'+new Date(l.created_at).toLocaleString()+'</td><td class=py-2 px-3>'+(l.email||'N/A')+'</td><td class=py-2 px-3><span class=px-2 py-1 rounded text-xs bg-blue-100 text-blue-800>'+l.action+'</span></td><td class=py-2 px-3 text-xs>'+l.table_name+'</td><td class=py-2 px-3 text-center>'+l.record_id+'</td><td class=py-2 px-3 text-xs>'+d+'</td></tr>'}).join('')||'<tr><td colspan=6 class=text-center py-8>No logs found</td></tr>'}}
-            function showView(view) {
-                ['dashboardView','submitView','historyView','reportsView'].forEach(v => document.getElementById(v).classList.add('hidden'));
-                document.getElementById(view + 'View').classList.remove('hidden');
-                if (view === 'dashboard') loadDashboard();
-                if (view === 'history') loadHistory();
-                if (view === 'reports') loadClientReports();
+    </div>
+
+    <script>
+        const token=localStorage.getItem('fueltrak_token');const user=JSON.parse(localStorage.getItem('fueltrak_user')||'{}');
+        if(!token||!['dispatcher','management'].includes(user.role))window.location.replace('/');
+        document.getElementById('userInfo').textContent=user.email.split('@')[0].substring(0,3)+'***@'+user.email.split('@')[1]+' ('+user.role+')';
+
+        async function loadLogs(){
+            const r=await fetch('/api/audit-logs',{headers:{'Authorization':'Bearer '+token}});
+            const d=await r.json();
+            if(d.status==='success'){
+                document.getElementById('logBody').innerHTML=d.data.map(l=>`
+                    <tr class="border-b hover:bg-gray-50">
+                        <td class="py-2 px-3 text-xs">${new Date(l.created_at).toLocaleString()}</td>
+                        <td class="py-2 px-3">${l.email||'-'}</td>
+                        <td class="py-2 px-3"><span class="px-2 py-0.5 rounded text-xs ${l.action.includes('COMPLETE')?'bg-green-100 text-green-800':l.action.includes('VERIFY')?'bg-blue-100 text-blue-800':'bg-gray-100'}">${l.action}</span></td>
+                        <td class="py-2 px-3 text-xs">${l.table_name}</td>
+                        <td class="py-2 px-3 text-xs">${l.record_id}</td>
+                        <td class="py-2 px-3 text-xs max-w-xs truncate">${l.details||'-'}</td>
+                    </tr>`).join('')||'<tr><td colspan="6" class="text-center py-8 text-gray-500">No logs found</td></tr>';
+                document.getElementById('logCount').textContent=d.data.length+' records';
             }
-            function toggleSidebar(){document.getElementById("sidebar").classList.toggle("open");document.getElementById("sidebarOverlay").classList.toggle("hidden");document.body.classList.toggle("sidebar-open");}
-            document.getElementById('userInfoMob').textContent = document.getElementById('userInfo').textContent;
-
-            function logout(){localStorage.clear();window.location.href='/'}
-            loadLogs();
-        </script>
-    </div></body>
+        }
+        function toggleSidebar(){document.getElementById("sidebar").classList.toggle("open");document.getElementById("sidebarOverlay").classList.toggle("hidden");document.body.classList.toggle("sidebar-open")}
+        function logout(){localStorage.clear();window.location.href='/'}
+        loadLogs();
+    </script>
+</div>
+</body>
 </html>
-
-
-
-
-
