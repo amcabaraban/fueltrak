@@ -634,6 +634,14 @@ app.post('/api/sync-all-documents', authenticate, authorize('dispatcher', 'manag
   } catch (error) { res.status(400).json({ error: error.message }); }
 });
 
+// ============ AUDIT LOGS ============
+app.get("/api/audit-logs", authenticate, authorize("dispatcher", "management"), async (req, res) => {
+  try {
+    const [logs] = await pool.execute("SELECT al.*, u.email FROM audit_logs al JOIN users u ON al.user_id = u.id ORDER BY al.created_at DESC LIMIT 100");
+    res.json({ status: "success", data: logs });
+  } catch (error) { res.status(500).json({ error: error.message }); }
+});
+
 // ============ PAGE ROUTES ============
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'index.html')));
 app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'dashboard.html')));
