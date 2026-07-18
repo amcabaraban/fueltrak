@@ -14,8 +14,6 @@
 </head>
 <body class="bg-gray-50 min-h-screen">
 <div class="main-content">
-    <div id="sidebarOverlay" class="hidden fixed inset-0 bg-black bg-opacity-50 z-30 md:hidden" onclick="toggleSidebar()"></div><button onclick="toggleSidebar()" class="fixed top-2 left-2 z-50 md:hidden bg-blue-900 text-white p-2 rounded no-print"><i class="fas fa-bars"></i></button><div class="fixed left-0 top-0 h-full w-12 md:w-44 bg-blue-900 text-white z-40 pt-16 overflow-y-auto no-print" id="sidebar" style="transition:transform 0.3s"><a href="/dashboard" class="flex items-center px-1 md:px-3 py-2.5 hover:bg-blue-800 text-[10px] md:text-xs whitespace-nowrap"><i class="fas fa-tachometer-alt w-5 text-center text-sm"></i><span class="hidden md:inline ml-2">Dashboard</span></a><a href="/reports" class="flex items-center px-1 md:px-3 py-2.5 hover:bg-blue-800 text-[10px] md:text-xs whitespace-nowrap"><i class="fas fa-chart-bar w-5 text-center text-sm"></i><span class="hidden md:inline ml-2">Reports</span></a><a href="/trucks" class="flex items-center px-1 md:px-3 py-2.5 hover:bg-blue-800 text-[10px] md:text-xs whitespace-nowrap"><i class="fas fa-truck w-5 text-center text-sm"></i><span class="hidden md:inline ml-2">Trucks</span></a><a href="/docs-report" class="flex items-center px-1 md:px-3 py-2.5 hover:bg-blue-800 text-[10px] md:text-xs whitespace-nowrap"><i class="fas fa-file-alt w-5 text-center text-sm"></i><span class="hidden md:inline ml-2">Doc Report</span></a><a href="/ttsd-checklist" class="flex items-center px-1 md:px-3 py-2.5 hover:bg-blue-800 text-[10px] md:text-xs whitespace-nowrap"><i class="fas fa-clipboard-check w-5 text-center text-sm"></i><span class="hidden md:inline ml-2">TTSD</span></a><a href="/audit-logs" class="flex items-center px-1 md:px-3 py-2.5 hover:bg-blue-800 text-[10px] md:text-xs whitespace-nowrap"><i class="fas fa-history w-5 text-center text-sm"></i><span class="hidden md:inline ml-2">Audit</span></a><div class="border-t border-blue-700 mt-1 pt-1"><button onclick="logout()" class="flex items-center px-1 md:px-3 py-2.5 hover:bg-red-700 text-[10px] md:text-xs w-full text-left whitespace-nowrap"><i class="fas fa-sign-out-alt w-5 text-center text-sm"></i><span class="hidden md:inline ml-2">Logout</span></button></div></div><body class="bg-gray-50 min-h-screen"><div class="main-content">
-
         <nav class="bg-gradient-to-r from-blue-900 to-blue-800 text-white shadow-xl sticky top-0 z-50 no-print">
             <!-- Desktop -->
             <div class="hidden md:flex max-w-7xl mx-auto px-4 py-3 justify-between items-center">
@@ -42,6 +40,43 @@
                 </div>
             </div>
         </nav>
+
+        <!-- Sidebar Navigation -->
+        <div class="fixed left-0 top-0 h-full w-14 md:w-48 bg-blue-900 text-white z-40 pt-16 overflow-y-auto no-print" id="sidebar">
+            <a href="/dashboard" class="flex items-center px-2 md:px-4 py-3 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap" title="Dashboard">
+                <i class="fas fa-tachometer-alt w-6 text-center"></i><span class="hidden md:inline ml-2">Dashboard</span>
+            </a>
+            <a href="/reports" class="flex items-center px-2 md:px-4 py-3 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap" title="Reports">
+                <i class="fas fa-chart-bar w-6 text-center"></i><span class="hidden md:inline ml-2">Reports</span>
+            </a>
+            <a href="/trucks" class="flex items-center px-2 md:px-4 py-3 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap" title="Truck Masterlist">
+                <i class="fas fa-truck w-6 text-center"></i><span class="hidden md:inline ml-2">Truck Masterlist</span>
+            </a>
+            <a href="/docs-report" class="flex items-center px-2 md:px-4 py-3 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap" title="Doc Report">
+                <i class="fas fa-file-alt w-6 text-center"></i><span class="hidden md:inline ml-2">Doc Report</span>
+            </a>
+            <a href="/ttsd-checklist" class="flex items-center px-2 md:px-4 py-3 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap" title="TTSD Checklist">
+                <i class="fas fa-clipboard-check w-6 text-center"></i><span class="hidden md:inline ml-2">TTSD Checklist</span>
+            </a>
+            <a href="/audit-logs" class="flex items-center px-2 md:px-4 py-3 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap" title="Audit Logs">
+                <i class="fas fa-history w-6 text-center"></i><span class="hidden md:inline ml-2">Audit Logs</span>
+            </a>
+            
+            <div class="border-t border-blue-700 mt-2 pt-2">
+                <button onclick="logout()" class="flex items-center px-2 md:px-4 py-3 hover:bg-red-700 text-xs md:text-sm w-full text-left whitespace-nowrap">
+                    <i class="fas fa-sign-out-alt w-6 text-center"></i><span class="hidden md:inline ml-2">Logout</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Overlay for mobile sidebar -->
+        <div id="sidebarOverlay" class="hidden fixed inset-0 bg-black bg-opacity-50 z-30 md:hidden" onclick="toggleSidebar()"></div>
+
+        <!-- Mobile hamburger -->
+        <button onclick="toggleSidebar()" class="fixed top-2 left-2 z-50 md:hidden bg-blue-900 text-white p-2 rounded">
+            <i class="fas fa-bars"></i>
+        </button>
+
         <div class="max-w-7xl mx-auto px-4 py-8">
             <div class="flex justify-between items-center mb-6"><h1 class="text-3xl font-bold">Transaction Audit Logs</h1><button onclick="window.print()" class="bg-blue-600 text-white px-4 py-2 rounded text-sm no-print"><i class="fas fa-print mr-1"></i>Print</button></div>
             <div class="bg-white rounded-xl shadow-lg overflow-hidden"><div class="table-wrap"><table class="w-full text-sm"><thead class="bg-gray-50 border-b"><tr><th class="py-3 px-3 text-left">Date/Time</th><th class="py-3 px-3 text-left">User</th><th class="py-3 px-3 text-left">Action</th><th class="py-3 px-3 text-left">Table</th><th class="py-3 px-3 text-center">Record ID</th><th class="py-3 px-3 text-left">Details</th></tr></thead><tbody id="logBody"><tr><td colspan="6" class="text-center py-8 text-gray-500">Loading...</td></tr></tbody></table></div></div>
