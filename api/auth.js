@@ -729,6 +729,79 @@ app.get('/api/docs-report/summary', authenticate, authorize('dispatcher', 'manag
   } catch (error) { res.status(500).json({ error: error.message }); }
 });
 
+// ============ CLIENTS ============
+app.get('/api/clients', authenticate, authorize('dispatcher', 'management'), async (req, res) => {
+  try {
+    const [clients] = await pool.execute("SELECT id, email, mobile, company_name, is_active, is_verified, last_login, createdAt FROM users WHERE role = 'client' ORDER BY createdAt DESC");
+    const result = [];
+    for (const client of clients) {
+      const [atls] = await pool.execute('SELECT COUNT(*) as total FROM authority_to_load WHERE client_id = ?', [client.id]);
+      result.push({ ...client, total_atls: atls[0].total });
+    }
+    res.json({ status: 'success', data: result, total: result.length });
+  } catch (error) { res.status(500).json({ error: error.message }); }
+});
+
+app.get('/api/clients/:id', authenticate, authorize('dispatcher', 'management'), async (req, res) => {
+  try {
+    const [clients] = await pool.execute("SELECT id, email, mobile, company_name, is_active, is_verified, last_login, createdAt FROM users WHERE id = ? AND role = 'client'", [req.params.id]);
+    if (!clients.length) return res.status(404).json({ error: 'Client not found' });
+    res.json({ status: 'success', data: clients[0] });
+  } catch (error) { res.status(500).json({ error: error.message }); }
+});
+
+app.post('/api/clients', authenticate, authorize('dispatcher', 'management'), async (req, res) => {
+  try {
+    const { email, password, mobile, company_name } = req.body;
+    if (!email || !password || !mobile) return res.status(400).json({ error: 'Email, password, and mobile are required' });
+    const [existing] = await pool.execute('SELECT id FROM users WHERE email = ?', [email]);
+    if (existing.length) return res.status(400).json({ error: 'Email already registered' });
+    const hashedPassword = await bcrypt.hash(password, 12);
+    await pool.execute('INSERT INTO users (email, password, mobile, company_name, role, is_verified, is_active, createdAt) VALUES (?,?,?,?,?,1,1,NOW())',
+      [email, hashedPassword, mobile, company_name || null, 'client']);
+    await logAudit(req.user.id, "CREATE_CLIENT", "users", 0, {email});
+    res.status(201).json({ status: 'success', message: 'Client created' });
+  } catch (error) { res.status(400).json({ error: error.message }); }
+});
+
+app.put('/api/clients/:id', authenticate, authorize('dispatcher', 'management'), async (req, res) => {
+  try {
+    const { email, mobile, company_name, password } = req.body;
+    if (email) {
+      const [dup] = await pool.execute('SELECT id FROM users WHERE email = ? AND id != ?', [email, req.params.id]);
+      if (dup.length) return res.status(400).json({ error: 'Email already in use' });
+    }
+    let query = 'UPDATE users SET email=?, mobile=?, company_name=?';
+    let params = [email, mobile, company_name];
+    if (password && password.length >= 8) {
+      const hashed = await bcrypt.hash(password, 12);
+      query += ', password=?';
+      params.push(hashed);
+    }
+    params.push(req.params.id);
+    await pool.execute(query + ' WHERE id = ?', params);
+    await logAudit(req.user.id, "UPDATE_CLIENT", "users", req.params.id, {email});
+    res.json({ status: 'success', message: 'Client updated' });
+  } catch (error) { res.status(400).json({ error: error.message }); }
+});
+
+app.patch('/api/clients/:id/toggle-status', authenticate, authorize('management'), async (req, res) => {
+  try {
+    const [clients] = await pool.execute("SELECT is_active FROM users WHERE id = ? AND role = 'client'", [req.params.id]);
+    if (!clients.length) return res.status(404).json({ error: 'Client not found' });
+    const newStatus = clients[0].is_active ? 0 : 1;
+    await pool.execute('UPDATE users SET is_active = ? WHERE id = ?', [newStatus, req.params.id]);
+    res.json({ status: 'success', message: 'Client ' + (newStatus ? 'activated' : 'deactivated') });
+  } catch (error) { res.status(400).json({ error: error.message }); }
+});
+
+app.delete('/api/clients/:id', authenticate, authorize('management'), async (req, res) => {
+  try {
+    await pool.execute("DELETE FROM users WHERE id = ? AND role = 'client'", [req.params.id]);
+    res.json({ status: 'success', message: 'Client deleted' });
+  } catch (error) { res.status(400).json({ error: error.message }); }
+});
+
 // ============ PAGE ROUTES ============
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'index.html')));
 app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'dashboard.html')));
