@@ -313,17 +313,29 @@
         async function loadDashboard() {
             const data = await api('/atl/summary');
             if (data.status === 'success') {
-                const s = data.data.stats;
+                const atls = data.data.recent || [];
+                
+                // Calculate stats from the ATL array
+                const stats = {
+                    total: atls.length,
+                    dispatched: atls.filter(a => a.status === 'dispatched').length,
+                    completed: atls.filter(a => a.status === 'completed').length,
+                    pending: atls.filter(a => a.status === 'pending').length,
+                    approved: atls.filter(a => a.status === 'approved').length,
+                    cancelled: atls.filter(a => a.status === 'cancelled' || a.status === 'rejected').length
+                };
+                
                 document.getElementById('atlStats').innerHTML = `
-                    <div class="stat-card bg-gradient-to-br from-blue-400 to-blue-500 text-white rounded-xl shadow-lg p-5 text-center"><p class="text-sm opacity-90">Total</p><p class="text-3xl font-bold">${s.total}</p></div>
-                    <div class="stat-card bg-gradient-to-br from-green-400 to-green-500 text-white rounded-xl shadow-lg p-5 text-center"><p class="text-sm opacity-90">Dispatched</p><p class="text-3xl font-bold">${s.successful+s.dispatched||0}</p></div>
-                    <div class="stat-card bg-gradient-to-br from-yellow-400 to-yellow-500 text-white rounded-xl shadow-lg p-5 text-center"><p class="text-sm opacity-90">Pending</p><p class="text-3xl font-bold">${s.pending}</p></div>
-                    <div class="stat-card bg-gradient-to-br from-blue-400 to-blue-500 text-white rounded-xl shadow-lg p-5 text-center"><p class="text-sm opacity-90">Approved</p><p class="text-3xl font-bold">${s.approved}</p></div>
-                    <div class="stat-card bg-gradient-to-br from-red-400 to-red-500 text-white rounded-xl shadow-lg p-5 text-center"><p class="text-sm opacity-90">Failed/Cancelled</p><p class="text-3xl font-bold">${s.failed+s.cancelled||0}</p></div>
+                    <div class="stat-card bg-gradient-to-br from-blue-400 to-blue-500 text-white rounded-xl shadow-lg p-5 text-center"><p class="text-sm opacity-90">Total</p><p class="text-3xl font-bold">${stats.total}</p></div>
+                    <div class="stat-card bg-gradient-to-br from-green-400 to-green-500 text-white rounded-xl shadow-lg p-5 text-center"><p class="text-sm opacity-90">Dispatched</p><p class="text-3xl font-bold">${stats.dispatched}</p></div>
+                    <div class="stat-card bg-gradient-to-br from-yellow-400 to-yellow-500 text-white rounded-xl shadow-lg p-5 text-center"><p class="text-sm opacity-90">Pending</p><p class="text-3xl font-bold">${stats.pending}</p></div>
+                    <div class="stat-card bg-gradient-to-br from-blue-400 to-blue-500 text-white rounded-xl shadow-lg p-5 text-center"><p class="text-sm opacity-90">Approved</p><p class="text-3xl font-bold">${stats.approved}</p></div>
+                    <div class="stat-card bg-gradient-to-br from-red-400 to-red-500 text-white rounded-xl shadow-lg p-5 text-center"><p class="text-sm opacity-90">Cancelled</p><p class="text-3xl font-bold">${stats.cancelled}</p></div>
                 `;
-                const codes = data.data.recentATLs.slice(0, 5);
+                
+                const codes = atls.slice(0, 5);
                 if (codes.length > 0) {
-                    document.getElementById('recentATLCodes').innerHTML = `<div class="bg-white rounded-xl shadow-lg p-6"><h3 class="font-semibold mb-3">Recent ATL Codes</h3><div class="space-y-2">${codes.map(a => `<div class="flex justify-between items-center text-sm"><span class="font-mono font-bold text-blue-900">${a.atl_code||'N/A'}</span><span class="text-xs px-2 py-1 rounded ${a.status==='completed'?'bg-green-100 text-green-800':a.status==='dispatched'?'bg-orange-100 text-orange-800':'bg-gray-100'}">${a.status}</span></div>`).join('')}</div></div>`;
+                    document.getElementById('recentATLCodes').innerHTML = `<div class="bg-white rounded-xl shadow-lg p-6"><h3 class="font-semibold mb-3">Recent ATL Codes</h3><div class="space-y-2">${codes.map(a => `<div class="flex justify-between items-center text-sm"><span class="font-mono font-bold text-blue-900">${a.atl_code || 'N/A'}</span><span class="text-xs px-2 py-1 rounded ${a.status==='completed'?'bg-green-100 text-green-800':a.status==='dispatched'?'bg-orange-100 text-orange-800':'bg-gray-100'}">${a.status}</span></div>`).join('')}</div></div>`;
                 }
             }
         }
@@ -468,9 +480,9 @@
         var allMyATLs = [];
 
         async function loadHistory() {
-            var data = await api('/client/dashboard');
+            const data = await api('/atl/summary');
             if (data.status === 'success') {
-                allMyATLs = data.data.recentATLs || [];
+                allMyATLs = data.data.recent || [];
                 filterMyATLs();
             }
         }
@@ -548,21 +560,69 @@
             if (start) params.append('startDate', start);
             if (end) params.append('endDate', end);
             if (status) params.append('status', status);
-            const data = await api('/client/dashboard?' + params.toString());
+            
+            const data = await api('/atl/summary?' + params.toString());
             if (data.status === 'success') {
-                allClientATLs = data.data.recentATLs;
-                let filtered = allClientATLs;
+                let allATLs = data.data.recent || [];
+                
+                // Apply client-side filters
+                let filtered = allATLs;
                 if (status) filtered = filtered.filter(a => a.status === status);
                 if (start) filtered = filtered.filter(a => new Date(a.scheduled_date) >= new Date(start));
                 if (end) filtered = filtered.filter(a => new Date(a.scheduled_date) <= new Date(end));
-                const totalVol = filtered.reduce((s,a) => s + (Number(a.volume)||0), 0);
+                
+                // Calculate summary
+                const totalVol = filtered.reduce((s, a) => s + (Number(a.volume) || 0), 0);
+                const completedCount = filtered.filter(a => a.status === 'completed' || a.status === 'dispatched').length;
+                const failedCount = filtered.filter(a => a.status === 'cancelled' || a.status === 'rejected').length;
+                const pendingCount = filtered.filter(a => a.status === 'pending').length;
+                
+                // Update summary cards
                 document.getElementById('reportSummaryCards').innerHTML = `
-                    <div class="bg-white rounded-xl shadow p-4 text-center"><p class="text-2xl font-bold">${filtered.length}</p><p class="text-xs">Records</p></div>
-                    <div class="bg-green-50 rounded-xl shadow p-4 text-center"><p class="text-2xl font-bold text-green-700">${filtered.filter(a=>a.status==='completed'||a.status==='dispatched').length}</p><p class="text-xs">Dispatched</p></div>
-                    <div class="bg-red-50 rounded-xl shadow p-4 text-center"><p class="text-2xl font-bold text-red-700">${filtered.filter(a=>a.status==='cancelled'||a.status==='rejected').length}</p><p class="text-xs">Failed</p></div>
-                    <div class="bg-yellow-50 rounded-xl shadow p-4 text-center"><p class="text-2xl font-bold text-yellow-700">${filtered.filter(a=>a.status==='pending').length}</p><p class="text-xs">Pending</p></div>
-                    <div class="bg-blue-50 rounded-xl shadow p-4 text-center"><p class="text-2xl font-bold text-blue-700">${totalVol.toLocaleString()}L</p><p class="text-xs">Total Volume</p></div>`;
-                document.getElementById('reportTableBody').innerHTML = filtered.map(a => `<tr class="border-b"><td class="py-2 px-3 font-mono text-xs font-bold text-blue-900">${a.atl_code||'-'}</td><td class="py-2 px-3 text-xs">${a.so_number||'-'}</td><td class="py-2 px-3">${a.company||"-"}</td></td><td class="py-2 px-3">${a.plate_no}</td><td class="py-2 px-3">${a.driver_name||'-'}</td><td class="py-2 px-3 text-right">${a.volume?Number(a.volume).toLocaleString():'-'}</td><td class="py-2 px-3 text-center">${a.has_si==1?'With SI':'No SI'}</td><td class="py-2 px-3 text-center"><span class="px-2 py-1 rounded text-xs ${a.status==='completed'?'bg-green-100 text-green-800':a.status==='cancelled'?'bg-red-100 text-red-800':'bg-yellow-100 text-yellow-800'}">${a.status}</span></td><td class="py-2 px-3 text-xs">${new Date(a.scheduled_date).toLocaleDateString()}</td><td class="py-2 px-3 text-center font-mono text-xs">${a.printed_wc||"-"}</td></tr>`).join('') || '<tr><td colspan="10" class="text-center py-8 text-gray-500">No records</td></tr>';
+                    <div class="bg-white rounded-xl shadow p-4 text-center">
+                        <p class="text-2xl font-bold">${filtered.length}</p>
+                        <p class="text-xs">Records</p>
+                    </div>
+                    <div class="bg-green-50 rounded-xl shadow p-4 text-center">
+                        <p class="text-2xl font-bold text-green-700">${completedCount}</p>
+                        <p class="text-xs">Dispatched</p>
+                    </div>
+                    <div class="bg-red-50 rounded-xl shadow p-4 text-center">
+                        <p class="text-2xl font-bold text-red-700">${failedCount}</p>
+                        <p class="text-xs">Failed</p>
+                    </div>
+                    <div class="bg-yellow-50 rounded-xl shadow p-4 text-center">
+                        <p class="text-2xl font-bold text-yellow-700">${pendingCount}</p>
+                        <p class="text-xs">Pending</p>
+                    </div>
+                    <div class="bg-blue-50 rounded-xl shadow p-4 text-center">
+                        <p class="text-2xl font-bold text-blue-700">${totalVol.toLocaleString()}L</p>
+                        <p class="text-xs">Total Volume</p>
+                    </div>
+                `;
+                
+                // Update table body
+                document.getElementById('reportTableBody').innerHTML = filtered.map(a => `
+                    <tr class="border-b hover:bg-gray-50">
+                        <td class="py-2 px-3 font-mono text-xs font-bold text-blue-900">${a.atl_code || '-'}</td>
+                        <td class="py-2 px-3 text-xs">${a.so_number || '-'}</td>
+                        <td class="py-2 px-3">${a.company || "-"}</td>
+                        <td class="py-2 px-3">${a.plate_no}</td>
+                        <td class="py-2 px-3">${a.driver_name || '-'}</td>
+                        <td class="py-2 px-3 text-right">${a.volume ? Number(a.volume).toLocaleString() : '-'}</td>
+                        <td class="py-2 px-3 text-center">${a.has_si == 1 ? 'With SI' : 'No SI'}</td>
+                        <td class="py-2 px-3 text-center">
+                            <span class="px-2 py-1 rounded text-xs ${
+                                a.status === 'completed' ? 'bg-green-100 text-green-800' : 
+                                a.status === 'dispatched' ? 'bg-orange-100 text-orange-800' :
+                                a.status === 'cancelled' ? 'bg-red-100 text-red-800' : 
+                                'bg-yellow-100 text-yellow-800'
+                            }">${a.status}</span>
+                        </td>
+                        <td class="py-2 px-3 text-xs">${new Date(a.scheduled_date).toLocaleDateString()}</td>
+                        <td class="py-2 px-3 text-center font-mono text-xs">${a.printed_wc || "-"}</td>
+                    </tr>
+                `).join('') || '<tr><td colspan="10" class="text-center py-8 text-gray-500">No records found</td></tr>';
             }
         }
 
