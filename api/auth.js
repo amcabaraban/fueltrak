@@ -12,7 +12,7 @@ const path = require('path');
 const app = express();
 const otpCache = new NodeCache({ stdTTL: 600 });
 const tokenBlacklist = new Set();
-setInterval(() => { tokenBlacklist.forEach(t => { try { jwt.verify(t, process.env.JWT_SECRET || 'secret'); } catch(e) { tokenBlacklist.delete(t); } }); }, 3600000);
+setInterval(() => { tokenBlacklist.forEach(t => { try { jwt.verify(t, process.env.JWT_SECRET ); } catch(e) { tokenBlacklist.delete(t); } }); }, 3600000);
 
 app.set('trust proxy', 1);
 app.use(express.json({ limit: "10kb" }));
@@ -91,7 +91,7 @@ const authenticate = async (req, res, next) => {
     const token = req.header('Authorization')?.replace('Bearer ', '');
     if (!token) return res.status(401).json({ error: 'Please authenticate' });
     if (tokenBlacklist.has(token)) return res.status(401).json({ error: 'Token revoked. Please login again.' });
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET );
     const [rows] = await pool.execute('SELECT id, email, role, mobile, company_name, is_active FROM users WHERE id = ?', [decoded.id]);
     if (!rows.length || !rows[0].is_active) return res.status(401).json({ error: 'Invalid token' });
     req.user = rows[0];
@@ -189,9 +189,9 @@ app.post('/api/auth/login', async (req, res) => {
     if (!user.is_active) return res.status(403).json({ error: 'Account deactivated' });
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(401).json({ error: 'Invalid credentials' });
-    const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET || 'secret', { expiresIn: '24h' });
+    const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET , { expiresIn: '24h' });
     if (user.current_token) {
-      try { jwt.verify(user.current_token, process.env.JWT_SECRET || 'secret'); return res.json({ status: 'existing_session', message: 'Already logged in on another device.', user: { id: user.id, email: user.email, role: user.role } }); } catch(e) {}
+      try { jwt.verify(user.current_token, process.env.JWT_SECRET ); return res.json({ status: 'existing_session', message: 'Already logged in on another device.', user: { id: user.id, email: user.email, role: user.role } }); } catch(e) {}
     }
     await pool.execute('UPDATE users SET current_token = ?, last_login = NOW() WHERE id = ?', [token, user.id]);
     await logAudit(user.id, "LOGIN", "users", user.id, {email: user.email});
@@ -209,7 +209,7 @@ app.post('/api/auth/force-login', async (req, res) => {
     const user = users[0];
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(401).json({ error: 'Invalid credentials' });
-    const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET || 'secret', { expiresIn: '24h' });
+    const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET , { expiresIn: '24h' });
     await pool.execute('UPDATE users SET current_token = ?, last_login = NOW() WHERE id = ?', [token, user.id]);
     await logAudit(user.id, "LOGIN", "users", user.id, {email: user.email});
     res.json({ status: 'success', token, user: { id: user.id, email: user.email, role: user.role, mobile: user.mobile, company_name: user.company_name } });
@@ -236,7 +236,7 @@ app.post('/api/auth/verify-reset-otp', async (req, res) => {
     const storedOTP = otpCache.get('reset_' + email);
     if (!storedOTP || storedOTP !== otp) return res.status(400).json({ error: 'Invalid or expired OTP' });
     otpCache.del('reset_' + email);
-    const resetToken = jwt.sign({ email, purpose: 'reset' }, process.env.JWT_SECRET || 'secret', { expiresIn: '15m' });
+    const resetToken = jwt.sign({ email, purpose: 'reset' }, process.env.JWT_SECRET , { expiresIn: '15m' });
     res.json({ status: 'success', message: 'OTP verified.', resetToken });
   } catch (error) { res.status(400).json({ error: error.message }); }
 });
@@ -245,7 +245,7 @@ app.post('/api/auth/reset-password', async (req, res) => {
   try {
     const { resetToken, newPassword } = req.body;
     if (!newPassword || newPassword.length < 8) return res.status(400).json({ error: 'Password must be at least 8 characters' });
-    const decoded = jwt.verify(resetToken, process.env.JWT_SECRET || 'secret');
+    const decoded = jwt.verify(resetToken, process.env.JWT_SECRET );
     if (decoded.purpose !== 'reset') return res.status(400).json({ error: 'Invalid reset token' });
     const hashedPassword = await bcrypt.hash(newPassword, 12);
     await pool.execute('UPDATE users SET password = ? WHERE email = ?', [hashedPassword, decoded.email]);
