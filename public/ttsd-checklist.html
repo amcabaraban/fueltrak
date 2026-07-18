@@ -84,10 +84,16 @@
         .signature-box { inline-size: 180px !important; }
         textarea { font-size: 10px !important; }
     }
-    #sidebar{transition:transform 0.3s}@media(max-width:767px){#sidebar{transform:translateX(-100%)}#sidebar.open{transform:translateX(0)}body.sidebar-open{overflow:hidden}}@media(min-width:768px){body{padding-left:0}@media(min-width:768px){body{padding-left:176px}}}
+    #sidebar{transition:transform 0.3s}@media(max-width:767px){#sidebar{transform:translateX(-100%)}#sidebar.open{transform:translateX(0)}body.sidebar-open{overflow:hidden}}@media(min-width:768px){body{padding-left:176px}}
 </style>
 </head>
 <body>
+    <nav class="bg-gradient-to-r from-blue-900 to-blue-800 text-white shadow-xl sticky top-0 z-20 no-print" style="margin-left:-20px;margin-right:-20px;margin-top:-20px;">
+        <div class="hidden md:flex max-w-7xl mx-auto px-4 py-3 justify-between items-center">
+            <div class="flex items-center space-x-3"><div class="bg-white/20 p-2 rounded-lg"><i class="fas fa-clipboard-check text-2xl text-yellow-400"></i></div><div><span class="font-bold text-xl">TTSD Checklist</span></div></div>
+            <div class="flex items-center space-x-3"><span id="userInfo" class="text-sm bg-white/10 px-3 py-1 rounded-full"></span><a href="/dashboard" class="bg-white/20 px-3 py-1 rounded text-sm hover:bg-white/30"><i class="fas fa-chart-pie mr-1"></i>Dashboard</a><button onclick="logout()" class="bg-red-500/80 hover:bg-red-500 px-4 py-2 rounded text-sm"><i class="fas fa-sign-out-alt mr-1"></i>Logout</button></div>
+        </div>
+    </nav>
 <div class="container" id="printable">
 
     <!-- Sidebar Navigation -->
@@ -272,6 +278,9 @@
     </div>
 </div>
 <script>
+    const user=JSON.parse(localStorage.getItem('fueltrak_user')||'{}');
+    document.getElementById('userInfo').textContent=user.email?user.email.split('@')[0].substring(0,3)+'***@'+user.email.split('@')[1]+' ('+user.role+')':'';
+    
     const token = localStorage.getItem('fueltrak_token');
     if (!token) window.location.href = '/';
     
