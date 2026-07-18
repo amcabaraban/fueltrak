@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -311,7 +311,7 @@
 
         // ============ DASHBOARD ============
         async function loadDashboard() {
-            const data = await api('/client/dashboard');
+            const data = await api('/atl/summary');
             if (data.status === 'success') {
                 const s = data.data.stats;
                 document.getElementById('atlStats').innerHTML = `
