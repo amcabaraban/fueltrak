@@ -601,7 +601,6 @@ app.get('/client.html', (req, res) => res.sendFile(path.join(__dirname, '..', 'p
 app.get('/docs-report', (req, res) => res.sendFile(require('path').join(__dirname, '..', 'public', 'docs-report.html')));
 app.get('/reports', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'reports.html')));
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'index.html')));
-app.get('/api/health', (req, res) => res.json({ status: 'OK', db: process.env.DB_NAME }));
 
 
 // ============ CLIENT ATL ROUTES ============
@@ -737,11 +736,6 @@ app.get('/api/reports/export', authenticate, authorize('dispatcher', 'management
     res.send(csv);
   } catch (error) { res.status(500).json({ error: error.message }); }
 });
-
-app.get('/client.html', (req, res) => res.sendFile(require('path').join(__dirname, '..', 'public', 'client.html')));
-app.get('/dashboard.html', (req, res) => res.sendFile(require('path').join(__dirname, '..', 'public', 'dashboard.html')));
-app.get('/reports.html', (req, res) => res.sendFile(require('path').join(__dirname, '..', 'public', 'reports.html')));
-app.get('/atl.html', (req, res) => res.sendFile(require('path').join(__dirname, '..', 'public', 'atl.html')));
 
 app.put('/api/dispatch/update-si/:id', authenticate, authorize('dispatcher', 'management'), async (req, res) => {
   try {
