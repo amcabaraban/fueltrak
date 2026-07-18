@@ -319,6 +319,21 @@
             }).join('') || '<p class="text-gray-500 text-center py-8">No pending ATLs found</p>';
         }
 
+        async function loadPending() {
+            var data = await api('/dispatch/pending');
+            if (data.status === 'success') {
+                allPendingATLs = data.data;
+                filterPending();
+            }
+        }
+
+        async function handleCancel(id, action) {
+            if (!confirm(action === 'approve_cancel' ? 'Approve cancellation?' : 'Reject cancellation?')) return;
+            await api('/dispatch/handle-cancellation/' + id, 'POST', { action: action });
+            loadPending();
+            loadDashboard();
+        }
+
         async function verifyATL(id, action) { 
             var msg = action === 'approve' ? 'Approve this ATL?' : 'Reject this ATL?';
             if (!confirm(msg)) return;
