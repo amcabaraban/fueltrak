@@ -233,10 +233,14 @@
             var tabEl = document.getElementById(tabId);
             if (tabEl) tabEl.classList.remove('hidden');
             
-            if (tab === 'verify' && typeof loadPending === 'function') loadPending();
-            if (tab === 'loading' && typeof loadApproved === 'function') loadApproved();
-            if (tab === 'trucks' && typeof loadTrucks === 'function') loadTrucks();
-            if (tab === 'clients' && typeof loadClients === 'function') loadClients();
+            try {
+                if (tab === 'verify') loadPending();
+                if (tab === 'loading') loadApproved();
+                if (tab === 'trucks') loadTrucks();
+                if (tab === 'clients') loadClients();
+            } catch(e) {
+                console.error('Error loading tab:', tab, e);
+            }
         }
 
         async function loadDashboard() {
