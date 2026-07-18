@@ -34,7 +34,7 @@
             </div>
         </div>
         <p class="text-sm text-gray-500 mb-2" id="recordCount"></p>
-        <div class="bg-white rounded-xl shadow-lg overflow-hidden"><div class="table-wrap"><table class="w-full text-sm"><thead class="bg-gray-50 border-b"><tr><th class="py-3 px-3 text-left">Make</th><th class="py-3 px-3 text-left">Plate No</th><th class="py-3 px-3 text-left">Driver</th><th class="py-3 px-3 text-left">Hauler/Customer</th><th class="py-3 px-3 text-center">COTs</th><th class="py-3 px-3 text-right">Capacity (L)</th><th class="py-3 px-3 text-center">TPS Count</th></tr></thead><tbody id="truckBody"><tr><td colspan="7" class="text-center py-8 text-gray-500">Loading...</td></tr></tbody></table></div></div>
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden"><div class="table-wrap"><table class="w-full text-sm"><thead class="bg-gray-50 border-b"><tr><th class="py-3 px-3 text-left">Make</th><th class="py-3 px-3 text-left">Plate No</th><th class="py-3 px-3 text-left">Driver</th><th class="py-3 px-3 text-left">Hauler/Customer</th><th class="py-3 px-3 text-center">COTs</th><th class="py-3 px-3 text-right">Capacity (KL)</th><th class="py-3 px-3 text-center">TPS Count</th></tr></thead><tbody id="truckBody"><tr><td colspan="7" class="text-center py-8 text-gray-500">Loading...</td></tr></tbody></table></div></div>
         <div class="px-4 py-3 border-t flex justify-between items-center bg-white rounded-b-xl">
             <div class="text-sm text-gray-500" id="pageInfo"></div>
             <div class="flex items-center space-x-2" id="pagination"></div>
@@ -75,7 +75,7 @@
                 var capKL=totalCap>0?Math.round(totalCap/1000):0;
                 return'<tr class="border-b hover:bg-gray-50"><td class="py-2 px-3">'+(t.truck_make||'-')+'</td><td class="py-2 px-3 font-semibold">'+t.plate_no+'</td><td class="py-2 px-3">'+(t.driver_name||'-').replace(/"/g,'')+'</td><td class="py-2 px-3">'+(t.hauler_name||'-')+'</td><td class="py-2 px-3 text-center">'+cots.length+'</td><td class="py-2 px-3 text-right font-bold">'+capKL.toLocaleString()+' KL</td><td class="py-2 px-3 text-center">'+(t.tps_count||0)+'</td></tr>';
             }).join('')||'<tr><td colspan="7" class="text-center py-8 text-gray-500">No trucks found</td></tr>';            
-            
+
             // Pagination
             var pagHTML='';
             pagHTML+='<button onclick="changePage('+(currentPage-1)+')" class="px-2 py-1 border rounded text-xs '+(currentPage===1?'text-gray-300 cursor-not-allowed':'hover:bg-gray-100')+'" '+(currentPage===1?'disabled':'')+'><i class="fas fa-chevron-left"></i></button>';
