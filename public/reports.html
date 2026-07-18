@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -11,8 +11,8 @@
         @media print { body{background:white!important} nav,.no-print,#sidebar,#sidebarOverlay{display:none!important} #printArea{display:block!important;padding:20px} #printArea table{inline-size:100%;border-collapse:collapse;font-size:9px} #printArea th,#printArea td{border:1px solid #ddd;padding:2px 4px;text-align:start} #printArea th{background:#f0f0f0!important} body{padding-inline-start:0!important} }
         .print-only{display:none} @media print{.print-only{display:block}}
         th{cursor:pointer;user-select:none;white-space:nowrap;font-size:11px}
-        th.sort-asc::after{content:' ▲';font-size:9px}
-        th.sort-desc::after{content:' ▼';font-size:9px}
+        th.sort-asc::after{content:' ?';font-size:9px}
+        th.sort-desc::after{content:' ?';font-size:9px}
         #sidebar{transition:transform 0.3s}
         @media(max-inline-size:767px){#sidebar{transform:translateX(-100%)}#sidebar.open{transform:translateX(0)}body.sidebar-open{overflow:hidden}}
         @media(min-inline-size:768px){body{padding-inline-start:176px}}
@@ -24,7 +24,7 @@
 <body class="bg-gray-50 min-h-screen">
 <div class="main-content">
     <!-- Sidebar Navigation -->
-    <div class="fixed left-0 top-0 h-full w-14 md:w-48 bg-blue-900 text-white z-40 pt-16 overflow-y-auto no-print" id="sidebar">
+    <div class="fixed left-0 top-0 h-full w-14 md:w-48 bg-blue-900 text-white z-40 pt-16 overflow-y-auto no-print" id="sidebar" class="flex flex-col">
         <a href="/dashboard" class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap" title="Dashboard">
             <i class="fas fa-tachometer-alt w-6 text-center"></i><span class="hidden md:inline ml-2">Dashboard</span>
         </a>
@@ -55,7 +55,7 @@
     <nav class="bg-gradient-to-r from-blue-900 to-blue-800 text-white shadow-xl sticky top-0 z-20 no-print">
         <div class="hidden md:flex max-w-7xl mx-auto px-4 py-3 justify-between items-center">
             <div class="flex items-center space-x-3"><div class="bg-white/20 p-2 rounded-lg"><i class="fas fa-chart-bar text-2xl text-yellow-400"></i></div><div><span class="font-bold text-xl">FuelTrak Reports</span></div></div>
-            <div class="flex items-center space-x-3"><span id="userInfo" class="text-sm bg-white/10 px-3 py-1 rounded-full"></span><a href="/dashboard" class="bg-white/20 px-3 py-1 rounded text-sm hover:bg-white/30"><i class="fas fa-chart-pie mr-1"></i>Dashboard</a><button onclick="logout()" class="bg-red-500/80 hover:bg-red-500 px-4 py-2 rounded text-sm"><i class="fas fa-sign-out-alt mr-1"></i>Logout</button></div>
+            <div class="flex items-center space-x-3"><span id="userInfo" class="text-sm bg-white/10 px-3 py-1 rounded-full"></span><div class="flex-1 overflow-y-auto"><a href="/dashboard" class="bg-white/20 px-3 py-1 rounded text-sm hover:bg-white/30"><i class="fas fa-chart-pie mr-1"></i>Dashboard</a><button onclick="logout()" class="bg-red-500/80 hover:bg-red-500 px-4 py-2 rounded text-sm"><i class="fas fa-sign-out-alt mr-1"></i>Logout</button></div>
         </div>
     </nav>
 
