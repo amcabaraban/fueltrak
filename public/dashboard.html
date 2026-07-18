@@ -18,12 +18,12 @@
         th { cursor: pointer; user-select: none; }
         th.sort-asc::after { content: ' ?'; font-size: 10px; }
         th.sort-desc::after { content: ' ?'; font-size: 10px; }
-        #sidebar{transition:transform 0.3s}@media(max-width:767px){#sidebar{transform:translateX(-100%)}#sidebar.open{transform:translateX(0)}body.sidebar-open{overflow:hidden}}@media(min-width:768px){body{padding-left:176px}}
+        #sidebar{transition:transform 0.3s}@media(max-width:767px){#sidebar{transform:translateX(-100%)}#sidebar.open{transform:translateX(0)}body.sidebar-open{overflow:hidden}}@media(min-width:768px){body{padding-left:0}@media(min-width:768px){body{padding-left:176px}}}
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen pb-20 md:pb-0">
     <div class="main-content">
-    <nav class="bg-gradient-to-r from-blue-900 to-blue-800 text-white shadow-xl sticky top-0 z-50">
+    <nav class="bg-gradient-to-r from-blue-900 to-blue-800 text-white shadow-xl sticky top-0 z-20">
         <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
             <div class="flex items-center space-x-1 sm:space-x-3">
                 <div class="bg-white/20 p-2 rounded-lg"><i class="fas fa-gas-pump text-2xl text-yellow-400"></i></div>
