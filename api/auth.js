@@ -545,7 +545,7 @@ app.get('/api/reports/filters', authenticate, authorize('dispatcher', 'managemen
 
 app.get('/api/reports/summary', authenticate, authorize('dispatcher', 'management'), async (req, res) => {
   try {
-    const { startDate, endDate, status, clientId, truckId } = req.query;
+    const { startDate, endDate } = req.query;
     let query = "SELECT * FROM authority_to_load WHERE status IN ('completed','cancelled','dispatched')";
     const params = [];
     if (startDate) { query += ' AND DATE(createdAt) >= ?'; params.push(startDate); }
@@ -553,14 +553,20 @@ app.get('/api/reports/summary', authenticate, authorize('dispatcher', 'managemen
     query += ' ORDER BY createdAt DESC';
     const [atls] = await pool.execute(query, params);
     const result = [];
-    let totalVolume = 0;
+    let totalVolume = 0, totalActualVolume = 0, completedCount = 0, cancelledCount = 0, dispatchedCount = 0;
     for (const atl of atls) {
       const [trucks] = await pool.execute('SELECT plate_no, make, total_capacity FROM trucks WHERE id = ?', [atl.truck_id]);
       const [clients] = await pool.execute('SELECT email, company_name FROM users WHERE id = ?', [atl.client_id]);
-      totalVolume += parseFloat(atl.volume) || 0;
+      const vol = parseFloat(atl.volume) || 0;
+      const actualVol = parseFloat(atl.actual_volume) || vol;
+      totalVolume += vol;
+      totalActualVolume += actualVol;
+      if (atl.status === 'completed') completedCount++;
+      if (atl.status === 'cancelled') cancelledCount++;
+      if (atl.status === 'dispatched') dispatchedCount++;
       result.push({ ...atl, truck: trucks[0] || null, client: clients[0] || null });
     }
-    res.json({ status: 'success', data: { records: result, summary: { total_records: result.length, total_volume: totalVolume } } });
+    res.json({ status: 'success', data: { records: result, summary: { total_records: result.length, completed: completedCount, cancelled: cancelledCount, dispatched: dispatchedCount, total_volume: totalVolume, total_actual_volume: totalActualVolume } } });
   } catch (error) { res.status(500).json({ error: error.message }); }
 });
 
