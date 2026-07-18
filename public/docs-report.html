@@ -237,54 +237,54 @@
         }
 
         async function loadReport() {
-            var data = await api('/trucks/all');
+            document.getElementById('reportBody').innerHTML = '<tr><td colspan="8" class="text-center py-8 text-gray-500">Loading...</td></tr>';
+            
+            var data = await api('/docs-report/summary');
             if (data.status !== 'success') return;
-            var trucks = data.data;
+            
+            var d = data.data;
+            var records = d.records;
             var docFilter = document.getElementById('docTypeFilter').value;
             var statusFilter = document.getElementById('statusFilter').value;
             var rows = [];
             var totalDocs = 0, expiredDocs = 0, missingDocs = 0, validDocs = 0;
-
-            trucks.forEach(function(t) {
-                var docs = t.documents || [];
+            var today = new Date();
+            
+            records.forEach(function(r) {
                 ['lto_registration','fire_permit','dost_calibration'].forEach(function(type) {
                     if (docFilter !== 'all' && type !== docFilter) return;
-                    var doc = docs.find(function(d) { return d.document_type === type; });
                     var typeLabel = type === 'lto_registration' ? 'LTO Registration' : type === 'fire_permit' ? 'Fire Permit' : 'DOST Calibration';
-                    var expiry = doc ? new Date(doc.expiry_date) : null;
-                    var daysLeft = expiry ? Math.ceil((expiry - new Date()) / (1000 * 60 * 60 * 24)) : null;
-                    var status = !doc ? 'Missing' : daysLeft < 0 ? 'Expired' : 'Valid';
-                    var statusColor = status === 'Valid' ? 'bg-green-100 text-green-800' : status === 'Expired' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800';
-
+                    var expiryKey = type === 'lto_registration' ? 'lto_expiry' : type === 'fire_permit' ? 'fire_expiry' : 'dost_expiry';
+                    var expiry = r[expiryKey] ? new Date(r[expiryKey]) : null;
+                    var daysLeft = expiry ? Math.ceil((expiry - today) / (1000 * 60 * 60 * 24)) : null;
+                    var status = !expiry ? 'Missing' : daysLeft < 0 ? 'Expired' : 'Valid';
+                    
                     if (statusFilter !== 'all' && statusFilter !== status.toLowerCase()) return;
-
+                    
                     totalDocs++;
                     if (status === 'Expired') expiredDocs++;
                     else if (status === 'Missing') missingDocs++;
                     else validDocs++;
-
+                    
                     rows.push({
-                        plate_no: t.plate_no, make: t.make, driver: t.driver_name,
-                        hauler: t.hauler_name, type: typeLabel, expiry: expiry,
-                        daysLeft: daysLeft, status: status, statusColor: statusColor
+                        plate_no: r.plate_no, make: r.make, driver: r.driver_name,
+                        hauler: r.hauler_name, type: typeLabel, expiry: expiry,
+                        daysLeft: daysLeft, status: status
                     });
                 });
             });
-
-            // Summary
+            
             document.getElementById('summaryCards').innerHTML = [
                 { label:'Total Docs',value:totalDocs,color:'text-blue-700',bg:'bg-blue-50' },
                 { label:'Valid',value:validDocs,color:'text-green-700',bg:'bg-green-50' },
                 { label:'Expired',value:expiredDocs,color:'text-red-700',bg:'bg-red-50' },
                 { label:'Missing',value:missingDocs,color:'text-yellow-700',bg:'bg-yellow-50' },
-                { label:'Trucks',value:trucks.length,color:'text-purple-700',bg:'bg-purple-50' }
+                { label:'Trucks',value:records.length,color:'text-purple-700',bg:'bg-purple-50' }
             ].map(function(c) { return '<div class="'+c.bg+' rounded-xl shadow p-4 text-center"><p class="text-2xl font-bold '+c.color+'">'+c.value+'</p><p class="text-xs text-gray-500">'+c.label+'</p></div>'; }).join('');
-
+            
             allDocRecords = rows;
             currentPage = 1;
             paginateDocs();
-            
-            
         }
 
         function showView(view) {
@@ -294,6 +294,7 @@
             if (view === 'history') loadHistory();
             if (view === 'reports') loadClientReports();
         }
+        
         function toggleSidebar(){document.getElementById("sidebar").classList.toggle("open");document.getElementById("sidebarOverlay").classList.toggle("hidden");document.body.classList.toggle("sidebar-open");}
         document.getElementById('userInfoMob').textContent = document.getElementById('userInfo').textContent;
         

@@ -691,6 +691,34 @@ app.get("/api/audit-logs", authenticate, authorize("dispatcher", "management"), 
   } catch (error) { res.status(500).json({ error: error.message }); }
 });
 
+// ============ FAST DOC REPORT ============
+app.get('/api/docs-report/summary', authenticate, authorize('dispatcher', 'management'), async (req, res) => {
+  try {
+    const [stats] = await pool.execute(`
+      SELECT 
+        COUNT(DISTINCT t.id) as totalTrucks,
+        COUNT(DISTINCT CASE WHEN td.expiry_date >= NOW() THEN t.id END) as validDocs,
+        COUNT(DISTINCT CASE WHEN td.expiry_date < NOW() THEN t.id END) as expiredDocs,
+        COUNT(DISTINCT CASE WHEN td.id IS NULL THEN t.id END) as missingDocs
+      FROM trucks t
+      LEFT JOIN truck_documents td ON t.id = td.truck_id
+    `);
+    
+    const [records] = await pool.execute(`
+      SELECT t.plate_no, t.make, t.driver_name, t.hauler_name,
+        MAX(CASE WHEN td.document_type = 'lto_registration' THEN td.expiry_date END) as lto_expiry,
+        MAX(CASE WHEN td.document_type = 'fire_permit' THEN td.expiry_date END) as fire_expiry,
+        MAX(CASE WHEN td.document_type = 'dost_calibration' THEN td.expiry_date END) as dost_expiry
+      FROM trucks t
+      LEFT JOIN truck_documents td ON t.id = td.truck_id
+      GROUP BY t.id
+      ORDER BY t.plate_no
+    `);
+    
+    res.json({ status: 'success', data: { stats: stats[0], records } });
+  } catch (error) { res.status(500).json({ error: error.message }); }
+});
+
 // ============ PAGE ROUTES ============
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'index.html')));
 app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'dashboard.html')));
