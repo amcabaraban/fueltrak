@@ -151,67 +151,66 @@
     </div>
 </div>
 
-<script>
-const token=localStorage.getItem('fueltrak_token');
-if(!token)window.location.href='/';
-const user=JSON.parse(localStorage.getItem('fueltrak_user')||'{}');
-document.getElementById('userInfo').textContent=user.email?user.email.split('@')[0].substring(0,3)+'***@'+user.email.split('@')[1]+' ('+user.role+')':'';
-var truckData={};
+    <script>
+        const token=localStorage.getItem('fueltrak_token');
+        if(!token)window.location.href='/';
+        const user=JSON.parse(localStorage.getItem('fueltrak_user')||'{}');
+        document.getElementById('userInfo').textContent=user.email?user.email.split('@')[0].substring(0,3)+'***@'+user.email.split('@')[1]+' ('+user.role+')':'';
+        var truckData={};
 
-var items=['Receiver is authorized','Customer name/address are correct','Receiving tank has enough ullage','Seals complete and intact','Receiver removed the seals','Product levels touch gauge marker','Fire extinguisher and wheel chocks deployed','All UGT covers properly labeled','Receiver instructed discharge points','Product ID placed near UGT cover','Samples taken and compared','Discharge valves free of water/sediments','UGTs free of water/sediments','Correct water finding paste used','Witnessed draining of hose','TT compartments empty after discharging','Dealer/Receiver issued check payment'];
+        var items=['Receiver is authorized','Customer name/address are correct','Receiving tank has enough ullage','Seals complete and intact','Receiver removed the seals','Product levels touch gauge marker','Fire extinguisher and wheel chocks deployed','All UGT covers properly labeled','Receiver instructed discharge points','Product ID placed near UGT cover','Samples taken and compared','Discharge valves free of water/sediments','UGTs free of water/sediments','Correct water finding paste used','Witnessed draining of hose','TT compartments empty after discharging','Dealer/Receiver issued check payment'];
 
-document.getElementById('checklistBody').innerHTML=items.map((item,i)=>`<tr><td class="center">${i+1}</td><td>${item}</td><td><input type="text" class="checklist-input"></td>${i<4?'<td class="center" style="background:#f7f7f7;">n.a</td>':'<td><input type="text" class="checklist-input"></td>'}</tr>`).join('');
+        document.getElementById('checklistBody').innerHTML=items.map((item,i)=>`<tr><td class="center">${i+1}</td><td>${item}</td><td><input type="text" class="checklist-input"></td>${i<4?'<td class="center" style="background:#f7f7f7;">n.a</td>':'<td><input type="text" class="checklist-input"></td>'}</tr>`).join('');
 
-function buildCompTable(){
-    var labels=['Include?','Customer','DHC Seal','Product','Cap (KL)','DV Seal','Valve Box','Total KL'];
-    var h='';
-    for(var r=0;r<8;r++){
-        h+='<tr><td>'+labels[r]+'</td>';
-        for(var c=1;c<=12;c++){
-            if(r===0)h+='<td><input type="checkbox" class="active-chk" checked></td>';
-            else if(r===1)h+='<td><input type="text" class="comp-customer"></td>';
-            else if(r===2)h+='<td><input type="text" class="dhc-seal"></td>';
-            else if(r===3)h+='<td><select class="prod"><option value="">-</option><option>ADO</option><option>UNLEADED</option><option>PREMIUM</option></select></td>';
-            else if(r===4)h+='<td><input type="text" class="capacity" id="cap_cot'+c+'"></td>';
-            else if(r===5)h+='<td><input type="text" class="dv-seal"></td>';
-            else if(r===6)h+=c<=3?'<td><input type="text" class="vbox"></td>':'<td></td>';
-            else if(r===7)h+=c===1?'<td colspan="12"><input type="text" id="tableTotalVol" class="vol-highlight" style="inline-size:100%;text-align:center;border:none;background:transparent;" readonly></td>':'';
+        function buildCompTable(){
+            var labels=['Include?','Customer','DHC Seal','Product','Cap (KL)','DV Seal','Valve Box','Total KL'];
+            var h='';
+            for(var r=0;r<8;r++){
+                h+='<tr><td>'+labels[r]+'</td>';
+                for(var c=1;c<=12;c++){
+                    if(r===0)h+='<td><input type="checkbox" class="active-chk" checked></td>';
+                    else if(r===1)h+='<td><input type="text" class="comp-customer"></td>';
+                    else if(r===2)h+='<td><input type="text" class="dhc-seal"></td>';
+                    else if(r===3)h+='<td><select class="prod"><option value="">-</option><option>ADO</option><option>UNLEADED</option><option>PREMIUM</option></select></td>';
+                    else if(r===4)h+='<td><input type="text" class="capacity" id="cap_cot'+c+'"></td>';
+                    else if(r===5)h+='<td><input type="text" class="dv-seal"></td>';
+                    else if(r===6)h+=c<=3?'<td><input type="text" class="vbox"></td>':'<td></td>';
+                    else if(r===7)h+=c===1?'<td colspan="12"><input type="text" id="tableTotalVol" class="vol-highlight" style="inline-size:100%;text-align:center;border:none;background:transparent;" readonly></td>':'';
+                }
+                h+='</tr>';
+            }
+            document.getElementById('compBody').innerHTML=h;
+            bindEvents();
         }
-        h+='</tr>';
-    }
-    document.getElementById('compBody').innerHTML=h;
-    bindEvents();
-}
 
-function bindEvents(){
-    document.querySelectorAll('.active-chk').forEach((chk,i)=>{chk.addEventListener('change',function(){if(!this.checked){document.querySelectorAll('.comp-customer')[i].value='EMPTY / LOADED';document.querySelectorAll('.dhc-seal')[i].value='EMPTY / LOADED';document.querySelectorAll('.prod')[i].value='EMPTY / LOADED';document.getElementById('cap_cot'+(i+1)).value='EMPTY / LOADED';document.querySelectorAll('.dv-seal')[i].value='EMPTY / LOADED'}else{var cv=document.getElementById('customerName').value;document.querySelectorAll('.comp-customer')[i].value=cv;var plate=document.getElementById('plateNo').value.trim().toUpperCase();var m=truckData[plate];document.getElementById('cap_cot'+(i+1)).value=(m&&m.capacities[i])?Math.round(m.capacities[i]/100)/10:'';document.querySelectorAll('.dhc-seal')[i].value='';document.querySelectorAll('.prod')[i].value='';document.querySelectorAll('.dv-seal')[i].value=''}autoFillSeals();calculateVolume()})});
-    document.getElementById('customerName').addEventListener('input',function(){var v=this.value;document.querySelectorAll('.active-chk').forEach(function(chk,i){if(chk.checked)document.querySelectorAll('.comp-customer')[i].value=v})});
-    document.getElementById('tpsStart').addEventListener('input',autoFillSeals);
-}
+        function bindEvents(){
+            document.querySelectorAll('.active-chk').forEach((chk,i)=>{chk.addEventListener('change',function(){if(!this.checked){document.querySelectorAll('.comp-customer')[i].value='EMPTY / LOADED';document.querySelectorAll('.dhc-seal')[i].value='EMPTY / LOADED';document.querySelectorAll('.prod')[i].value='EMPTY / LOADED';document.getElementById('cap_cot'+(i+1)).value='EMPTY / LOADED';document.querySelectorAll('.dv-seal')[i].value='EMPTY / LOADED'}else{var cv=document.getElementById('customerName').value;document.querySelectorAll('.comp-customer')[i].value=cv;var plate=document.getElementById('plateNo').value.trim().toUpperCase();var m=truckData[plate];document.getElementById('cap_cot'+(i+1)).value=(m&&m.capacities[i])?Math.round(m.capacities[i]/100)/10:'';document.querySelectorAll('.dhc-seal')[i].value='';document.querySelectorAll('.prod')[i].value='';document.querySelectorAll('.dv-seal')[i].value=''}autoFillSeals();calculateVolume()})});
+            document.getElementById('customerName').addEventListener('input',function(){var v=this.value;document.querySelectorAll('.active-chk').forEach(function(chk,i){if(chk.checked)document.querySelectorAll('.comp-customer')[i].value=v})});
+            document.getElementById('tpsStart').addEventListener('input',autoFillSeals);
+        }
 
-async function loadPlateList(){
-    try{var r=await fetch('/api/truck-masterlist',{headers:{'Authorization':'Bearer '+token}});var d=await r.json();if(d.status==='success'){var dl=document.getElementById('plateList'),dl2=document.getElementById('plateListTop');d.data.forEach(t=>{var o=document.createElement('option');o.value=t.plate_no;dl.appendChild(o);dl2.appendChild(o.cloneNode(true))})}}catch(e){}
-}
+        async function loadPlateList(){
+            try{var r=await fetch('/api/truck-masterlist',{headers:{'Authorization':'Bearer '+token}});var d=await r.json();if(d.status==='success'){var dl=document.getElementById('plateList'),dl2=document.getElementById('plateListTop');d.data.forEach(t=>{var o=document.createElement('option');o.value=t.plate_no;dl.appendChild(o);dl2.appendChild(o.cloneNode(true))})}}catch(e){}
+        }
 
-document.getElementById('plateNo').addEventListener('input',async function(){await fillTruck(this.value)});
-document.getElementById('plateNoTop').addEventListener('input',async function(){document.getElementById('plateNo').value=this.value.trim().toUpperCase();await fillTruck(this.value)});
+        document.getElementById('plateNo').addEventListener('input',async function(){await fillTruck(this.value)});
+        document.getElementById('plateNoTop').addEventListener('input',async function(){document.getElementById('plateNo').value=this.value.trim().toUpperCase();await fillTruck(this.value)});
 
-async function fillTruck(plate){plate=plate.trim().toUpperCase();if(plate.length<3)return;
-    try{var r=await fetch('/api/truck-masterlist/'+encodeURIComponent(plate),{headers:{'Authorization':'Bearer '+token}});var d=await r.json();var cv=document.getElementById('customerName').value;
-    if(d.status==='success'&&d.data){var t=d.data;truckData[plate]={driver:(t.driver_name||'').replace(/"/g,''),capacities:[t.cot1,t.cot2,t.cot3,t.cot4,t.cot5,t.cot6,t.cot7,t.cot8,t.cot9,t.cot10].filter(v=>parseFloat(v)>0),comps:[t.cot1,t.cot2,t.cot3,t.cot4,t.cot5,t.cot6,t.cot7,t.cot8,t.cot9,t.cot10].filter(v=>parseFloat(v)>0).length};
-    var m=truckData[plate];
-    for(var i=0;i<12;i++){var chk=document.querySelectorAll('.active-chk')[i];if(m&&i<m.comps){chk.checked=true;chk.disabled=false;
-        document.getElementById('cap_cot'+(i+1)).value=m.capacities[i]?Math.round(parseFloat(m.capacities[i])/1000):'';document.querySelectorAll('.comp-customer')[i].value=cv}else{chk.checked=false;chk.disabled=true;document.querySelectorAll('.comp-customer')[i].value='N/A';document.querySelectorAll('.dhc-seal')[i].value='N/A';document.querySelectorAll('.prod')[i].value='N/A';document.getElementById('cap_cot'+(i+1)).value='N/A';document.querySelectorAll('.dv-seal')[i].value='N/A'}}
-    document.getElementById('driverName').value=m.driver;autoFillSeals();calculateVolume()}}catch(e){}}
+        async function fillTruck(plate){plate=plate.trim().toUpperCase();if(plate.length<3)return;
+            try{var r=await fetch('/api/truck-masterlist/'+encodeURIComponent(plate),{headers:{'Authorization':'Bearer '+token}});var d=await r.json();var cv=document.getElementById('customerName').value;
+            if(d.status==='success'&&d.data){var t=d.data;truckData[plate]={driver:(t.driver_name||'').replace(/"/g,''),capacities:[t.cot1,t.cot2,t.cot3,t.cot4,t.cot5,t.cot6,t.cot7,t.cot8,t.cot9,t.cot10].filter(v=>parseFloat(v)>0),comps:[t.cot1,t.cot2,t.cot3,t.cot4,t.cot5,t.cot6,t.cot7,t.cot8,t.cot9,t.cot10].filter(v=>parseFloat(v)>0).length};
+            var m=truckData[plate];
+            for(var i=0;i<12;i++){var chk=document.querySelectorAll('.active-chk')[i];if(m&&i<m.comps){chk.checked=true;chk.disabled=false;
+                document.getElementById('cap_cot'+(i+1)).value=m.capacities[i]?Math.round(parseFloat(m.capacities[i])/1000):'';document.querySelectorAll('.comp-customer')[i].value=cv}else{chk.checked=false;chk.disabled=true;document.querySelectorAll('.comp-customer')[i].value='N/A';document.querySelectorAll('.dhc-seal')[i].value='N/A';document.querySelectorAll('.prod')[i].value='N/A';document.getElementById('cap_cot'+(i+1)).value='N/A';document.querySelectorAll('.dv-seal')[i].value='N/A'}}
+            document.getElementById('driverName').value=m.driver;autoFillSeals();calculateVolume()}}catch(e){}}
 
-function calculateVolume(){var t=0;document.querySelectorAll('.active-chk').forEach((chk,i)=>{if(chk.checked){var v=parseFloat(document.getElementById('cap_cot'+(i+1)).value);if(!isNaN(v)&&v>0)t+=v}});document.getElementById('totalVol').value=Math.round(t)+' KL';document.getElementById('tableTotalVol').value=Math.round(t)+' KL';
+        function calculateVolume(){var t=0;document.querySelectorAll('.active-chk').forEach((chk,i)=>{if(chk.checked){var v=parseFloat(document.getElementById('cap_cot'+(i+1)).value);if(!isNaN(v)&&v>0)t+=v}});document.getElementById('totalVol').value=Math.round(t)+' KL';document.getElementById('tableTotalVol').value=Math.round(t)+' KL';
 
-function autoFillSeals(){var s=parseInt(document.getElementById('tpsStart').value);if(isNaN(s))return;var ac=document.querySelectorAll('.active-chk'),caps=document.querySelectorAll('.capacity'),dv=document.querySelectorAll('.dv-seal'),dhc=document.querySelectorAll('.dhc-seal'),vb=document.querySelectorAll('.vbox');var cdv=s,ldv=s-1;for(var i=0;i<12;i++){if(ac[i].checked&&!isNaN(parseFloat(caps[i].value))&&caps[i].value!=='N/A'){dv[i].value=String(cdv).padStart(3,'0');ldv=cdv;cdv++}else dv[i].value=''}var cdhc=ldv+1;for(var i=0;i<12;i++){if(ac[i].checked&&!isNaN(parseFloat(caps[i].value))&&caps[i].value!=='N/A'){dhc[i].value=String(cdhc).padStart(3,'0');cdhc++}else dhc[i].value=''}var cvb=cdhc;var plate=document.getElementById('plateNo').value.trim().toUpperCase();var m=truckData[plate];for(var i=0;i<3;i++){if(m&&i<m.comps&&vb[i]){vb[i].value=String(cvb).padStart(3,'0');cvb++}else if(vb[i])vb[i].value=''}}
+        function autoFillSeals(){var s=parseInt(document.getElementById('tpsStart').value);if(isNaN(s))return;var ac=document.querySelectorAll('.active-chk'),caps=document.querySelectorAll('.capacity'),dv=document.querySelectorAll('.dv-seal'),dhc=document.querySelectorAll('.dhc-seal'),vb=document.querySelectorAll('.vbox');var cdv=s,ldv=s-1;for(var i=0;i<12;i++){if(ac[i].checked&&!isNaN(parseFloat(caps[i].value))&&caps[i].value!=='N/A'){dv[i].value=String(cdv).padStart(3,'0');ldv=cdv;cdv++}else dv[i].value=''}var cdhc=ldv+1;for(var i=0;i<12;i++){if(ac[i].checked&&!isNaN(parseFloat(caps[i].value))&&caps[i].value!=='N/A'){dhc[i].value=String(cdhc).padStart(3,'0');cdhc++}else dhc[i].value=''}var cvb=cdhc;var plate=document.getElementById('plateNo').value.trim().toUpperCase();var m=truckData[plate];for(var i=0;i<3;i++){if(m&&i<m.comps&&vb[i]){vb[i].value=String(cvb).padStart(3,'0');cvb++}else if(vb[i])vb[i].value=''}}
 
-function toggleSidebar(){document.getElementById("sidebar").classList.toggle("open");document.getElementById("sidebarOverlay").classList.toggle("hidden");document.body.classList.toggle("sidebar-open")}
-function logout(){localStorage.clear();window.location.href='/'}
-buildCompTable();loadPlateList();
-</script>
+        function toggleSidebar(){document.getElementById("sidebar").classList.toggle("open");document.getElementById("sidebarOverlay").classList.toggle("hidden");document.body.classList.toggle("sidebar-open")}
+        function logout(){localStorage.clear();window.location.href='/'}
+        buildCompTable();loadPlateList();
+    </script>
 </body>
 </html>
-
