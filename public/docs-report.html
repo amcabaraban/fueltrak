@@ -47,23 +47,23 @@
 
     <!-- Sidebar Navigation -->
     <div class="fixed left-0 top-0 h-full w-14 md:w-48 bg-blue-900 text-white z-40 pt-16 overflow-y-auto no-print" id="sidebar">
-        <a href="/dashboard" class="flex items-center px-2 md:px-4 py-3 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap" title="Dashboard">
+        <a href="/dashboard" class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap" title="Dashboard">
             <i class="fas fa-tachometer-alt w-6 text-center"></i><span class="hidden md:inline ml-2">Dashboard</span>
         </a>
-        <a href="/reports" class="flex items-center px-2 md:px-4 py-3 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap" title="Reports">
+        <a href="/reports" class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap" title="Reports">
             <i class="fas fa-chart-bar w-6 text-center"></i><span class="hidden md:inline ml-2">Reports</span>
         </a>
-        <a href="/trucks" class="flex items-center px-2 md:px-4 py-3 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap" title="Truck Masterlist">
+        <a href="/trucks" class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap" title="Truck Masterlist">
             <i class="fas fa-truck w-6 text-center"></i><span class="hidden md:inline ml-2">Truck Masterlist</span>
         </a>
-        <a href="/docs-report" class="flex items-center px-2 md:px-4 py-3 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap" title="Doc Report">
+        <a href="/docs-report" class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap" title="Doc Report">
             <i class="fas fa-file-alt w-6 text-center"></i><span class="hidden md:inline ml-2">Doc Report</span>
         </a>
-        <a href="/ttsd-checklist" class="flex items-center px-2 md:px-4 py-3 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap" title="TTSD Checklist">
+        <a href="/ttsd-checklist" class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap" title="TTSD Checklist">
             <i class="fas fa-clipboard-check w-6 text-center"></i><span class="hidden md:inline ml-2">TTSD Checklist</span>
         </a>
-        <a href="/audit-logs" class="flex items-center px-2 md:px-4 py-3 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap" title="Audit Logs">
-            <i class="fas fa-file-alt w-6 text-center"></i><span class="hidden md:inline ml-2">Audit Logs</span>
+        <a href="/audit-logs" class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap" title="Audit Logs">
+            <i class="fas fa-history w-6 text-center"></i><span class="hidden md:inline ml-2">Audit Logs</span>
         </a>
         
         <div class="border-t border-blue-700 mt-2 pt-2">
@@ -294,7 +294,7 @@
             if (view === 'history') loadHistory();
             if (view === 'reports') loadClientReports();
         }
-        
+
         function toggleSidebar(){document.getElementById("sidebar").classList.toggle("open");document.getElementById("sidebarOverlay").classList.toggle("hidden");document.body.classList.toggle("sidebar-open");}
         document.getElementById('userInfoMob').textContent = document.getElementById('userInfo').textContent;
         
