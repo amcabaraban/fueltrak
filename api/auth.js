@@ -650,9 +650,9 @@ app.post('/api/client/submit-atl', authenticate, authorize('client'), async (req
       (atl_code, client_id, truck_id, volume, driver_name, hauler, remarks, status, createdAt) 
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
       [
-        atl_code, 
-        req.user.id, 
-        truck_id, 
+        atl_code || null, 
+        req.user.id || null, 
+        truck_id || null,     // Fix: explicitly converted undefined to null
         volume || 0, 
         driver_name || null, 
         hauler_name || null, 
@@ -675,7 +675,6 @@ app.post('/api/client/submit-atl', authenticate, authorize('client'), async (req
     res.status(500).json({ error: 'Failed to submit ATL: ' + error.message });
   }
 });
-
 app.post('/api/client/cancel-atl/:id', authenticate, authorize('client'), async (req, res) => {
   try {
     await pool.execute("UPDATE authority_to_load SET status = 'cancelled', remarks = ? WHERE id = ? AND client_id = ?", ['Cancellation: ' + (req.body.reason || ''), req.params.id, req.user.id]);
