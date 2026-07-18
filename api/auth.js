@@ -196,14 +196,21 @@ app.post('/api/sync-masterlist', authenticate, authorize('dispatcher', 'manageme
   try {
     const [masterlist] = await pool.execute(`SELECT tm.* FROM truck_masterlist tm WHERE tm.plate_no NOT IN (SELECT plate_no FROM trucks)`);
     let count = 0;
+    let errors = [];
     for (const m of masterlist) {
-      await pool.execute(
-        'INSERT INTO trucks (plate_no, make, driver_name, hauler_name, total_capacity, is_active, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, 1, NOW(), NOW())',
-        [m.plate_no, m.truck_make || 'Unknown', (m.driver_name || '').replace(/"/g, ''), m.hauler_name || '', m.total_capacity || 0]
-      );
-      count++;
+      try {
+        // Trim plate_no to 20 chars max
+        const plateNo = (m.plate_no || '').substring(0, 20).toUpperCase();
+        await pool.execute(
+          'INSERT INTO trucks (plate_no, make, driver_name, hauler_name, total_capacity, is_active, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, 1, NOW(), NOW())',
+          [plateNo, (m.truck_make || 'Unknown').substring(0, 50), (m.driver_name || '').replace(/"/g, '').substring(0, 100), (m.hauler_name || '').substring(0, 100), parseFloat(m.total_capacity) || 0]
+        );
+        count++;
+      } catch (e) {
+        errors.push(m.plate_no + ': ' + e.message);
+      }
     }
-    res.json({ status: 'success', message: `Synced ${count} trucks from masterlist`, count });
+    res.json({ status: 'success', message: `Synced ${count} trucks from masterlist`, count, errors: errors.slice(0, 5) });
   } catch (error) { res.status(400).json({ error: error.message }); }
 });
 
