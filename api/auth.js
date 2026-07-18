@@ -586,10 +586,10 @@ app.get('/api/reports/export', authenticate, authorize('dispatcher', 'management
 app.post('/api/sync-all-documents', authenticate, authorize('dispatcher', 'management'), async (req, res) => {
   try {
     const { batch = 0 } = req.body;
-    const batchSize = 50;
+    const batchSize = 30;
     const offset = batch * batchSize;
     
-    const [trucks] = await pool.execute('SELECT id FROM trucks ORDER BY id LIMIT ? OFFSET ?', [batchSize.toString(), offset.toString()]);
+    const [trucks] = await pool.execute('SELECT id FROM trucks ORDER BY id LIMIT ? OFFSET ?', [String(batchSize), String(offset)]);
     
     if (trucks.length === 0) {
       return res.json({ status: 'success', message: 'All done!', count: 0, done: true });
@@ -602,17 +602,16 @@ app.post('/api/sync-all-documents', authenticate, authorize('dispatcher', 'manag
     for (const truck of trucks) {
       for (const type of types) {
         try {
-          const shortType = type === 'lto_registration' ? 'LTO' : type === 'fire_permit' ? 'BFP' : 'DOST';
           await pool.execute(
-            'INSERT IGNORE INTO truck_documents (truck_id, document_type, document_number, issue_date, expiry_date, status, createdAt) VALUES (?, ?, ?, NOW(), ?, ?, NOW())',
-            [truck.id, type, shortType, farFuture, 'valid']
+            'INSERT IGNORE INTO truck_documents (truck_id, document_type, expiry_date, status, createdAt) VALUES (?, ?, ?, ?, NOW())',
+            [truck.id, type, farFuture, 'valid']
           );
           count++;
-        } catch (e) {}
+        } catch (e) { /* skip */ }
       }
     }
     
-    res.json({ status: 'success', message: `Batch ${batch + 1}: ${count} docs`, count, done: false, nextBatch: batch + 1 });
+    res.json({ status: 'success', message: `Batch ${batch + 1}: ${count} docs created`, count, done: false, nextBatch: batch + 1 });
   } catch (error) { res.status(400).json({ error: error.message }); }
 });
 
