@@ -527,6 +527,54 @@ app.get('/api/demo-credentials', async (req, res) => {
   } catch (error) { res.status(500).json({ error: error.message }); }
 });
 
+// ============ REPORTS ============
+app.get('/api/reports/filters', authenticate, authorize('dispatcher', 'management'), async (req, res) => {
+  try {
+    const [clients] = await pool.execute("SELECT id, email, company_name FROM users WHERE role = 'client'");
+    const [trucks] = await pool.execute('SELECT id, plate_no, make FROM trucks');
+    res.json({ status: 'success', data: { clients: clients.map(c => ({ id: c.id, label: (c.company_name || c.email) + ' (' + c.email + ')' })), trucks: trucks.map(t => ({ id: t.id, label: t.plate_no + ' - ' + t.make })) } });
+  } catch (error) { res.status(500).json({ error: error.message }); }
+});
+
+app.get('/api/reports/summary', authenticate, authorize('dispatcher', 'management'), async (req, res) => {
+  try {
+    const { startDate, endDate, status, clientId, truckId } = req.query;
+    let query = "SELECT * FROM authority_to_load WHERE status IN ('completed','cancelled','dispatched')";
+    const params = [];
+    if (startDate) { query += ' AND DATE(createdAt) >= ?'; params.push(startDate); }
+    if (endDate) { query += ' AND DATE(createdAt) <= ?'; params.push(endDate); }
+    query += ' ORDER BY createdAt DESC';
+    const [atls] = await pool.execute(query, params);
+    const result = [];
+    let totalVolume = 0;
+    for (const atl of atls) {
+      const [trucks] = await pool.execute('SELECT plate_no, make, total_capacity FROM trucks WHERE id = ?', [atl.truck_id]);
+      const [clients] = await pool.execute('SELECT email, company_name FROM users WHERE id = ?', [atl.client_id]);
+      totalVolume += parseFloat(atl.volume) || 0;
+      result.push({ ...atl, truck: trucks[0] || null, client: clients[0] || null });
+    }
+    res.json({ status: 'success', data: { records: result, summary: { total_records: result.length, total_volume: totalVolume } } });
+  } catch (error) { res.status(500).json({ error: error.message }); }
+});
+
+app.get('/api/reports/export', authenticate, authorize('dispatcher', 'management'), async (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+    let query = "SELECT * FROM authority_to_load WHERE status IN ('completed','cancelled','dispatched')";
+    const params = [];
+    if (startDate) { query += ' AND DATE(createdAt) >= ?'; params.push(startDate); }
+    if (endDate) { query += ' AND DATE(createdAt) <= ?'; params.push(endDate); }
+    const [atls] = await pool.execute(query, params);
+    let csv = 'ATL Code,Plate No,Driver,Volume,Status,Scheduled Date,Completed Date\n';
+    for (const a of atls) {
+      csv += `"${a.atl_code||''}","${a.plate_no||''}","${a.driver_name||''}","${a.volume||0}","${a.status}","${a.scheduled_date||''}","${a.completed_date||''}"\n`;
+    }
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename=report.csv');
+    res.send(csv);
+  } catch (error) { res.status(500).json({ error: error.message }); }
+});
+
 // ============ PAGE ROUTES ============
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'index.html')));
 app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'dashboard.html')));
