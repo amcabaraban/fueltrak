@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -10,8 +10,7 @@
 <style>
     #sidebar{transition:transform 0.3s}@media(max-width:767px){#sidebar{transform:translateX(-100%)}#sidebar.open{transform:translateX(0)}body.sidebar-open{overflow:hidden}}@media(min-width:768px){body{padding-left:176px}}
 </style>
-<body class="bg-gray-100 min-h-screen">
-    <div class="main-content"></div>
+<body class="bg-gray-100 min-h-screen"><div class="main-content">
     <nav class="bg-blue-900 text-white shadow-lg sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
             <div class="flex items-center space-x-3">
@@ -31,7 +30,7 @@
         </div>
     </nav>
 
-    <!-- Sidebar Navigation -->
+    <div id="sidebarOverlay" class="hidden fixed inset-0 bg-black bg-opacity-50 z-30 md:hidden" onclick="toggleSidebar()"></div><button onclick="toggleSidebar()" class="fixed top-2 left-2 z-50 md:hidden bg-blue-900 text-white p-2 rounded"><i class="fas fa-bars"></i></button><!-- Sidebar Navigation -->
     <div class="fixed left-0 top-0 h-full w-14 md:w-48 bg-blue-900 text-white z-40 pt-16 overflow-y-auto no-print" id="sidebar">
         <a href="/dashboard" class="flex items-center px-2 md:px-4 py-3 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap" title="Dashboard">
             <i class="fas fa-tachometer-alt w-6 text-center"></i><span class="hidden md:inline ml-2">Dashboard</span>
@@ -370,7 +369,7 @@
                 document.getElementById('statsCards').innerHTML = `
                     <!-- ATL Stats Row -->
                     <div class="col-span-full mb-2">
-                        <h2 class="text-lg font-semibold text-gray-700">ðŸ“‹ ATL Statistics</h2>
+                        <h2 class="text-lg font-semibold text-gray-700">📋 ATL Statistics</h2>
                     </div>
                     <div class="bg-white rounded-xl shadow p-6 border-l-4 border-yellow-500">
                         <p class="text-gray-500 text-sm">Pending ATL</p>
@@ -399,7 +398,7 @@
 
                     <!-- Truck Stats Row -->
                     <div class="col-span-full mb-2 mt-4">
-                        <h2 class="text-lg font-semibold text-gray-700">ðŸš› Tank Truck Fleet</h2>
+                        <h2 class="text-lg font-semibold text-gray-700">🚛 Tank Truck Fleet</h2>
                     </div>
                     <div class="bg-white rounded-xl shadow p-6 border-l-4 border-green-500">
                         <p class="text-gray-500 text-sm">Total Trucks</p>
@@ -428,37 +427,37 @@
 
                     <!-- Document Breakdown -->
                     <div class="col-span-full mb-2 mt-4">
-                        <h2 class="text-lg font-semibold text-gray-700">ðŸ“„ Document Status</h2>
+                        <h2 class="text-lg font-semibold text-gray-700">📄 Document Status</h2>
                     </div>
                     <div class="bg-white rounded-xl shadow p-6 border-l-4 border-blue-400">
                         <p class="text-gray-500 text-sm">LTO Registration</p>
                         <div class="flex space-x-3 mt-2">
-                            <span class="text-green-600">âœ… ${t.documentBreakdown.lto.valid} valid</span>
-                            <span class="text-red-600">âŒ ${t.documentBreakdown.lto.expired} expired</span>
-                            <span class="text-gray-400">âž– ${t.documentBreakdown.lto.missing} missing</span>
+                            <span class="text-green-600">✅ ${t.documentBreakdown.lto.valid} valid</span>
+                            <span class="text-red-600">❌ ${t.documentBreakdown.lto.expired} expired</span>
+                            <span class="text-gray-400">➖ ${t.documentBreakdown.lto.missing} missing</span>
                         </div>
                     </div>
                     <div class="bg-white rounded-xl shadow p-6 border-l-4 border-orange-400">
                         <p class="text-gray-500 text-sm">Fire Permit</p>
                         <div class="flex space-x-3 mt-2">
-                            <span class="text-green-600">âœ… ${t.documentBreakdown.fire.valid} valid</span>
-                            <span class="text-red-600">âŒ ${t.documentBreakdown.fire.expired} expired</span>
-                            <span class="text-gray-400">âž– ${t.documentBreakdown.fire.missing} missing</span>
+                            <span class="text-green-600">✅ ${t.documentBreakdown.fire.valid} valid</span>
+                            <span class="text-red-600">❌ ${t.documentBreakdown.fire.expired} expired</span>
+                            <span class="text-gray-400">➖ ${t.documentBreakdown.fire.missing} missing</span>
                         </div>
                     </div>
                     <div class="bg-white rounded-xl shadow p-6 border-l-4 border-purple-400">
                         <p class="text-gray-500 text-sm">DOST Calibration</p>
                         <div class="flex space-x-3 mt-2">
-                            <span class="text-green-600">âœ… ${t.documentBreakdown.dost.valid} valid</span>
-                            <span class="text-red-600">âŒ ${t.documentBreakdown.dost.expired} expired</span>
-                            <span class="text-gray-400">âž– ${t.documentBreakdown.dost.missing} missing</span>
+                            <span class="text-green-600">✅ ${t.documentBreakdown.dost.valid} valid</span>
+                            <span class="text-red-600">❌ ${t.documentBreakdown.dost.expired} expired</span>
+                            <span class="text-gray-400">➖ ${t.documentBreakdown.dost.missing} missing</span>
                         </div>
                     </div>
 
                     <!-- Trucks Needing Attention -->
                     ${t.trucksNeedingAttention.length > 0 ? `
                         <div class="col-span-full mt-4">
-                            <h2 class="text-lg font-semibold text-red-700 mb-3">âš ï¸ Trucks Needing Attention (${t.trucksNeedingAttention.length})</h2>
+                            <h2 class="text-lg font-semibold text-red-700 mb-3">⚠️ Trucks Needing Attention (${t.trucksNeedingAttention.length})</h2>
                             <div class="bg-white rounded-xl shadow p-4">
                                 <table class="w-full text-sm">
                                     <thead class="bg-red-50">
@@ -508,7 +507,7 @@
                 
                 // ALERT FOR CANCELLATION REQUESTS
                 if (cancellationRequests.length > 0) {
-                    alert(`âš ï¸ ATTENTION: ${cancellationRequests.length} cancellation request(s) pending!\n\nPlease review and approve/reject the cancellation requests.`);
+                    alert(`⚠️ ATTENTION: ${cancellationRequests.length} cancellation request(s) pending!\n\nPlease review and approve/reject the cancellation requests.`);
                 }
 
                 let html = '';
@@ -519,7 +518,7 @@
                         <div class="bg-red-50 border-2 border-red-500 rounded-lg p-4 mb-6">
                             <div class="flex items-center mb-3">
                                 <i class="fas fa-exclamation-triangle text-red-600 text-2xl mr-2"></i>
-                                <h2 class="text-xl font-bold text-red-800">âš ï¸ Cancellation Requests (${cancellationRequests.length})</h2>
+                                <h2 class="text-xl font-bold text-red-800">⚠️ Cancellation Requests (${cancellationRequests.length})</h2>
                             </div>
                             ${cancellationRequests.map(a => `
                                 <div class="bg-white rounded-lg shadow p-4 mb-3 border-l-4 border-red-500">
@@ -607,7 +606,7 @@
                             <p class="text-xs text-gray-500">${a.remarks||''}</p>
                             <p class="text-xs text-gray-500">${a.dispatch_date ? new Date(a.dispatch_date).toLocaleString() : ''}</p>
                         </div>
-                        ${a.status === 'dispatched' ? `<button onclick="completeLoading(${a.id})" class="bg-green-500 text-white px-3 py-1 rounded text-sm">Complete Loading</button>` : '<span class="text-green-600 font-semibold">âœ… Completed</span>'}
+                        ${a.status === 'dispatched' ? `<button onclick="completeLoading(${a.id})" class="bg-green-500 text-white px-3 py-1 rounded text-sm">Complete Loading</button>` : '<span class="text-green-600 font-semibold">✅ Completed</span>'}
                     </div>
                 `).join('') || '<p class="text-gray-500 text-center py-8">No loading history</p>';
             }
@@ -650,11 +649,11 @@
                 const data = await res.json();
                 
                 if (data.status === 'success') {
-                    alert(`âœ… ${data.message}`);
+                    alert(`✅ ${data.message}`);
                     loadPending();
                     loadDashboard();
                 } else {
-                    alert(`âŒ ${data.error || 'Error'}`);
+                    alert(`❌ ${data.error || 'Error'}`);
                 }
             } catch (e) {
                 alert('Error processing cancellation');
@@ -763,8 +762,8 @@
                     if (!doc) return '<span class="text-gray-400" title="Missing">-</span>';
                     const valid = new Date(doc.expiry_date) >= new Date();
                     return valid ? 
-                        `<span class="text-green-600" title="Valid">âœ…</span>` : 
-                        `<span class="text-red-600" title="Expired: ${doc.expiry_date}">âŒ</span>`;
+                        `<span class="text-green-600" title="Valid">✅</span>` : 
+                        `<span class="text-red-600" title="Expired: ${doc.expiry_date}">❌</span>`;
                 };
 
                 return `
@@ -970,7 +969,7 @@
                         <td class="py-2 px-4">${c.email}</td>
                         <td class="py-2 px-4">${c.mobile}</td>
                         <td class="py-2 px-4 text-center">
-                            ${c.is_verified ? '<span class="text-green-600">âœ…</span>' : '<span class="text-yellow-600">âš ï¸</span>'}
+                            ${c.is_verified ? '<span class="text-green-600">✅</span>' : '<span class="text-yellow-600">⚠️</span>'}
                         </td>
                         <td class="py-2 px-4 text-center">
                             <span class="px-2 py-1 rounded text-xs ${c.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
@@ -1133,5 +1132,6 @@
         loadDashboard();
     </script>
     </div>
-</body>
+</div></body>
 </html>
+
