@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -379,7 +379,6 @@
         }
 
         async function loadReports() {
-            // Set default to today if not already set
             if (!document.getElementById('startDate').value && !document.getElementById('endDate').value) {
                 document.getElementById('startDate').value = new Date().toISOString().split('T')[0];
                 document.getElementById('endDate').value = new Date().toISOString().split('T')[0];
@@ -406,41 +405,40 @@
                 const d = data.data;
                 
                 document.getElementById('summaryCards').innerHTML = `
-                    <div class="bg-white rounded-xl shadow p-4 text-center"><p class="text-2xl font-bold">${d.summary.total_records}</p><p class="text-xs text-gray-500">Total Records</p></div>
-                    <div class="bg-green-50 rounded-xl shadow p-4 text-center"><p class="text-2xl font-bold text-green-700">${d.summary.completed}</p><p class="text-xs text-gray-500">Completed</p></div>
-                    <div class="bg-red-50 rounded-xl shadow p-4 text-center"><p class="text-2xl font-bold text-red-700">${d.summary.cancelled}</p><p class="text-xs text-gray-500">Cancelled</p></div>
-                    <div class="bg-orange-50 rounded-xl shadow p-4 text-center"><p class="text-2xl font-bold text-orange-700">${d.summary.total_volume.toLocaleString()}L</p><p class="text-xs text-gray-500">Total Volume</p></div>
-                    <div class="bg-blue-50 rounded-xl shadow p-4 text-center"><p class="text-2xl font-bold text-blue-700">${d.summary.total_actual_volume.toLocaleString()}L</p><p class="text-xs text-gray-500">Actual Volume</p></div>
+                    <div class="bg-white rounded-xl shadow p-4 text-center"><p class="text-2xl font-bold">${d.summary.total_records||0}</p><p class="text-xs text-gray-500">Total Records</p></div>
+                    <div class="bg-green-50 rounded-xl shadow p-4 text-center"><p class="text-2xl font-bold text-green-700">${d.summary.completed||0}</p><p class="text-xs text-gray-500">Completed</p></div>
+                    <div class="bg-red-50 rounded-xl shadow p-4 text-center"><p class="text-2xl font-bold text-red-700">${d.summary.cancelled||0}</p><p class="text-xs text-gray-500">Cancelled</p></div>
+                    <div class="bg-orange-50 rounded-xl shadow p-4 text-center"><p class="text-2xl font-bold text-orange-700">${(d.summary.total_volume||0).toLocaleString()}L</p><p class="text-xs text-gray-500">Total Volume</p></div>
+                    <div class="bg-blue-50 rounded-xl shadow p-4 text-center"><p class="text-2xl font-bold text-blue-700">${(d.summary.total_actual_volume||0).toLocaleString()}L</p><p class="text-xs text-gray-500">Actual Volume</p></div>
                 `;
 
-                // Store all records and paginate - ONLY ONCE
-                allRecords = d.records;
+                allRecords = d.records || [];
                 currentPage = 1;
                 paginateData();
-            }
 
-            // Populate backload section
-            var backloadRecords = d.records.filter(function(r) { return r.backload_count > 0; });
-            if (backloadRecords.length > 0) {
-                document.getElementById('backloadSection').classList.remove('hidden');
-                document.getElementById('backloadTableBody').innerHTML = backloadRecords.map(function(r) {
-                    return '<tr class="border-b hover:bg-gray-50">' +
-                        '<td class="py-2 px-3 text-xs">' + (r.scheduled_date ? new Date(r.scheduled_date).toLocaleDateString() : '-') + '</td>' +
-                        '<td class="py-2 px-3 text-xs font-semibold">' + (r.so_number || '-') + '</td>' +
-                        '<td class="py-2 px-3 font-mono text-xs font-bold text-blue-900">' + (r.atl_code || '-') + '</td>' +
-                        '<td class="py-2 px-3 font-semibold">' + r.plate_no + '</td>' +
-                        '<td class="py-2 px-3">' + (r.company || '-') + '</td>' +
-                        '<td class="py-2 px-3">' + (r.driver_name || '-') + '</td>' +
-                        '<td class="py-2 px-3 text-right">' + Math.round(r.volume || 0).toLocaleString() + '</td>' +
-                        '<td class="py-2 px-3 text-right font-semibold text-red-600">' + Math.round(r.backload_volume || 0).toLocaleString() + '</td>' +
-                        '<td class="py-2 px-3 text-center"><span class="bg-orange-100 text-orange-800 px-2 py-1 rounded text-xs font-bold">' + r.backload_count + '</span></td>' +
-                        '<td class="py-2 px-3"><span class="px-2 py-1 rounded text-xs ' + (r.status==='completed'?'bg-green-100 text-green-800':'bg-orange-100 text-orange-800') + '">' + r.status + '</span></td>' +
-                        '</tr>';
-                }).join('');
-            } else {
-                document.getElementById('backloadSection').classList.add('hidden');
+                // Populate backload section - MOVED INSIDE if block
+                var backloadRecords = allRecords.filter(function(r) { return r.backload_count > 0; });
+                if (backloadRecords.length > 0) {
+                    document.getElementById('backloadSection').classList.remove('hidden');
+                    document.getElementById('backloadTableBody').innerHTML = backloadRecords.map(function(r) {
+                        return '<tr class="border-b hover:bg-gray-50">' +
+                            '<td class="py-2 px-3 text-xs">' + (r.scheduled_date ? new Date(r.scheduled_date).toLocaleDateString() : '-') + '</td>' +
+                            '<td class="py-2 px-3 text-xs font-semibold">' + (r.so_number || '-') + '</td>' +
+                            '<td class="py-2 px-3 font-mono text-xs font-bold text-blue-900">' + (r.atl_code || '-') + '</td>' +
+                            '<td class="py-2 px-3 font-semibold">' + r.plate_no + '</td>' +
+                            '<td class="py-2 px-3">' + (r.company || '-') + '</td>' +
+                            '<td class="py-2 px-3">' + (r.driver_name || '-') + '</td>' +
+                            '<td class="py-2 px-3 text-right">' + Math.round(r.volume || 0).toLocaleString() + '</td>' +
+                            '<td class="py-2 px-3 text-right font-semibold text-red-600">' + Math.round(r.backload_volume || 0).toLocaleString() + '</td>' +
+                            '<td class="py-2 px-3 text-center"><span class="bg-orange-100 text-orange-800 px-2 py-1 rounded text-xs font-bold">' + r.backload_count + '</span></td>' +
+                            '<td class="py-2 px-3"><span class="px-2 py-1 rounded text-xs ' + (r.status==='completed'?'bg-green-100 text-green-800':'bg-orange-100 text-orange-800') + '">' + r.status + '</span></td>' +
+                            '</tr>';
+                    }).join('');
+                } else {
+                    document.getElementById('backloadSection').classList.add('hidden');
+                }
             }
-        }        
+        }
 
         async function viewDetails(id) {
             try {
