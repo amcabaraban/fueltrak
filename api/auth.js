@@ -537,6 +537,13 @@ app.get('/api/truck-masterlist', authenticate, async (req, res) => {
   } catch (error) { res.status(500).json({ error: error.message }); }
 });
 
+app.get('/api/truck-masterlist/:plateNo', authenticate, async (req, res) => {
+  try {
+    const [rows] = await pool.execute('SELECT * FROM truck_masterlist WHERE plate_no = ?', [req.params.plateNo.toUpperCase()]);
+    if (rows.length) { res.json({ status: 'success', data: rows[0] }); }
+    else { res.json({ status: 'error', message: 'Truck not found' }); }
+  } catch (error) { res.status(500).json({ error: error.message }); }
+});
 app.get('/api/truck-masterlist-all', authenticate, async (req, res) => {
   try {
     const [rows] = await pool.execute('SELECT * FROM truck_masterlist ORDER BY plate_no ASC');
@@ -735,3 +742,4 @@ app.get('/tutorial', (req, res) => res.sendFile(path.join(__dirname, '..', 'publ
 app.get('/audit-logs', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'audit-logs.html')));
 
 module.exports = app;
+
