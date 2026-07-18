@@ -802,6 +802,51 @@ app.delete('/api/clients/:id', authenticate, authorize('management'), async (req
   } catch (error) { res.status(400).json({ error: error.message }); }
 });
 
+// ============ DATABASE MIGRATION ============
+app.post('/api/migrate', authenticate, authorize('management'), async (req, res) => {
+  const indexes = [
+    { name: 'idx_atl_status', sql: 'CREATE INDEX idx_atl_status ON authority_to_load(status)' },
+    { name: 'idx_atl_client_id', sql: 'CREATE INDEX idx_atl_client_id ON authority_to_load(client_id)' },
+    { name: 'idx_atl_truck_id', sql: 'CREATE INDEX idx_atl_truck_id ON authority_to_load(truck_id)' },
+    { name: 'idx_atl_created', sql: 'CREATE INDEX idx_atl_created ON authority_to_load(createdAt)' },
+    { name: 'idx_atl_plate', sql: 'CREATE INDEX idx_atl_plate ON authority_to_load(plate_no)' },
+    { name: 'idx_trucks_plate', sql: 'CREATE INDEX idx_trucks_plate ON trucks(plate_no)' },
+    { name: 'idx_trucks_active', sql: 'CREATE INDEX idx_trucks_active ON trucks(is_active)' },
+    { name: 'idx_docs_truck', sql: 'CREATE INDEX idx_docs_truck ON truck_documents(truck_id)' },
+    { name: 'idx_docs_type', sql: 'CREATE INDEX idx_docs_type ON truck_documents(document_type)' },
+    { name: 'idx_docs_expiry', sql: 'CREATE INDEX idx_docs_expiry ON truck_documents(expiry_date)' },
+    { name: 'idx_users_email', sql: 'CREATE INDEX idx_users_email ON users(email)' },
+    { name: 'idx_users_role', sql: 'CREATE INDEX idx_users_role ON users(role)' },
+    { name: 'idx_master_plate', sql: 'CREATE INDEX idx_master_plate ON truck_masterlist(plate_no)' },
+    { name: 'idx_audit_user', sql: 'CREATE INDEX idx_audit_user ON audit_logs(user_id)' },
+    { name: 'idx_audit_created', sql: 'CREATE INDEX idx_audit_created ON audit_logs(created_at)' },
+    { name: 'idx_chat_users', sql: 'CREATE INDEX idx_chat_users ON chat_messages(sender_id, receiver_id)' },
+    { name: 'idx_chat_created', sql: 'CREATE INDEX idx_chat_created ON chat_messages(created_at)' },
+    { name: 'idx_backload_atl', sql: 'CREATE INDEX idx_backload_atl ON backloads(atl_id)' },
+  ];
+
+  let created = 0, skipped = 0, failed = 0;
+  const results = [];
+
+  for (const idx of indexes) {
+    try {
+      await pool.execute(idx.sql);
+      created++;
+      results.push({ name: idx.name, status: 'created' });
+    } catch (e) {
+      if (e.code === 'ER_DUP_KEYNAME') {
+        skipped++;
+        results.push({ name: idx.name, status: 'exists' });
+      } else {
+        failed++;
+        results.push({ name: idx.name, status: 'error', error: e.message });
+      }
+    }
+  }
+
+  res.json({ status: 'success', message: `Created: ${created}, Skipped: ${skipped}, Failed: ${failed}`, results });
+});
+
 // ============ PAGE ROUTES ============
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'index.html')));
 app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'dashboard.html')));
