@@ -21,12 +21,12 @@
   }
   .print-only { display: none; }
   @media print { .print-only { display: block; } }
-  #sidebar{transition:transform 0.3s}@media(max-width:767px){@media(max-width:767px){#sidebar{transform:translateX(-100%)}#sidebar.open{transform:translateX(0)}body.sidebar-open{overflow:hidden}}}@media(min-width:768px){body{padding-left:176px}}
+  #sidebar{transition:transform 0.3s}@media(max-width:767px){.main-content{padding-left:0!important}}@media(max-width:767px){@media(max-width:767px){.main-content{padding-left:0!important}}@media(max-width:767px){#sidebar{transform:translateX(-100%)}#sidebar.open{transform:translateX(0)}body.sidebar-open{overflow:hidden}}}@media(min-width:768px){body{padding-left:176px}}
  </style>
 
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 </head>
-<body class="bg-gray-50 min-h-screen"><div class="main-content">
+<body class="bg-gray-50 min-h-screen"><div class="main-content" style="padding-left:176px">
  <!-- Navigation -->
  <nav class="bg-gradient-to-r from-blue-900 to-blue-800 text-white shadow-xl sticky top-0 z-50 no-print">
   <!-- Desktop Header -->
@@ -785,6 +785,7 @@
  </div>
 </div></body>
 </html>
+
 
 
 
