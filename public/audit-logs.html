@@ -7,9 +7,13 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-    <style>.table-wrap{overflow-x:auto}@media print{nav,.no-print{display:none!important}}</style>
+    <style>
+        .table-wrap{overflow-x:auto}@media print{nav,.no-print{display:none!important}}
+        #sidebar{transition:transform 0.3s}@media(max-width:767px){#sidebar{transform:translateX(-100%)}#sidebar.open{transform:translateX(0)}body.sidebar-open{overflow:hidden}}@media(min-width:768px){body{padding-left:176px}}  
+    </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
+    <div class="main-content">
     <nav class="bg-gradient-to-r from-blue-900 to-blue-800 text-white shadow-xl sticky top-0 z-50 no-print">
         <!-- Desktop -->
         <div class="hidden md:flex max-w-7xl mx-auto px-4 py-3 justify-between items-center">
@@ -52,11 +56,12 @@
             if (view === 'history') loadHistory();
             if (view === 'reports') loadClientReports();
         }
-
+        function toggleSidebar(){document.getElementById("sidebar").classList.toggle("open");document.getElementById("sidebarOverlay").classList.toggle("hidden");document.body.classList.toggle("sidebar-open");}
         document.getElementById('userInfoMob').textContent = document.getElementById('userInfo').textContent;
 
         function logout(){localStorage.clear();window.location.href='/'}
         loadLogs();
     </script>
+    </div>
 </body>
 </html>
