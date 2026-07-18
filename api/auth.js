@@ -636,18 +636,44 @@ app.get('/api/client/verify-truck/:plateNo', authenticate, authorize('client'), 
   } catch (error) { res.status(500).json({ error: error.message }); }
 });
 
+// ============ CLIENT ATL SUBMISSION ============
 app.post('/api/client/submit-atl', authenticate, authorize('client'), async (req, res) => {
   try {
-    const { plate_no, scheduled_date, company, so_number, volume, hauler, driver_name, contact_number, has_si } = req.body;
-    const [trucks] = await pool.execute('SELECT * FROM trucks WHERE plate_no = ? AND is_active = 1', [plate_no.toUpperCase()]);
-    if (!trucks.length) return res.status(404).json({ error: 'Truck not found' });
-    const truck = trucks[0];
-    const [existing] = await pool.execute("SELECT id FROM authority_to_load WHERE client_id = ? AND truck_id = ? AND status IN ('pending','approved')", [req.user.id, truck.id]);
-    if (existing.length) return res.status(400).json({ error: 'You already have a pending ATL' });
-    const atlCode = await generateATLCode(company || req.user.company_name);
-    await pool.execute('INSERT INTO authority_to_load (client_id, truck_id, atl_code, company, so_number, volume, hauler, plate_no, driver_name, contact_number, has_si, scheduled_date, status, createdAt) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,NOW())', [req.user.id, truck.id, atlCode, company || req.user.company_name, so_number || null, volume || null, hauler || truck.hauler_name, truck.plate_no, driver_name || truck.driver_name, contact_number || req.user.mobile, has_si || false, scheduled_date, 'pending']);
-    res.status(201).json({ status: 'success', message: 'ATL ' + atlCode + ' Submitted!', atl_code: atlCode });
-  } catch (error) { res.status(400).json({ error: error.message }); }
+    const { truck_id, volume, driver_name, hauler_name, remarks } = req.body;
+    
+    // Generate the formatted ATL code using your existing helper
+    const atl_code = await generateATLCode(req.user.company_name);
+
+    // Insert the new ATL into the database with a 'pending' status
+    const [result] = await pool.execute(
+      `INSERT INTO authority_to_load 
+      (atl_code, client_id, truck_id, volume, driver_name, hauler, remarks, status, createdAt) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
+      [
+        atl_code, 
+        req.user.id, 
+        truck_id, 
+        volume || 0, 
+        driver_name || null, 
+        hauler_name || null, 
+        remarks || null, 
+        'pending'
+      ]
+    );
+
+    // Optional: Log this action using your audit helper
+    await logAudit(req.user.id, 'SUBMIT_ATL', 'authority_to_load', result.insertId, { atl_code, volume });
+
+    res.status(201).json({ 
+      status: 'success', 
+      message: 'Authority to Load submitted successfully',
+      data: { id: result.insertId, atl_code }
+    });
+
+  } catch (error) {
+    console.error("Error submitting ATL:", error);
+    res.status(500).json({ error: 'Failed to submit ATL: ' + error.message });
+  }
 });
 
 app.post('/api/client/cancel-atl/:id', authenticate, authorize('client'), async (req, res) => {
@@ -897,12 +923,3 @@ app.put('/api/update-truck-masterlist/:id', authenticate, authorize('dispatcher'
 });
 
 module.exports = app;
-
-
-
-
-
-
-
-
-
