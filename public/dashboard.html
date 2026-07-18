@@ -18,7 +18,18 @@
         th { cursor: pointer; user-select: none; }
         th.sort-asc::after { content: ' ?'; font-size: 10px; }
         th.sort-desc::after { content: ' ?'; font-size: 10px; }
-        #sidebar{transition:transform 0.3s}@media(max-width:767px){#sidebar{transform:translateX(-100%)}#sidebar.open{transform:translateX(0)}body.sidebar-open{overflow:hidden}}@media(min-width:768px){body{padding-left:0}@media(min-width:768px){body{padding-left:176px}}}
+        #sidebar{transition:transform 0.3s}
+        @media(max-width:767px){
+            #sidebar{transform:translateX(-100%)}
+            #sidebar.open{transform:translateX(0)}
+            body.sidebar-open{overflow:hidden}
+        }
+        @media(min-width:768px){
+            body{padding-left:0}
+            @media(min-width:768px){
+                body{padding-left:176px}
+            }
+        }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen pb-20 md:pb-0">
@@ -38,22 +49,22 @@
     </nav>
     <!-- Sidebar Navigation -->
     <div class="fixed left-0 top-0 h-full w-14 md:w-48 bg-blue-900 text-white z-40 pt-16 overflow-y-auto no-print" id="sidebar">
-        <a href="/dashboard" class="flex items-center px-2 md:px-4 py-3 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap" title="Dashboard">
+        <a href="/dashboard" class="flex items-center px-2 md:px-8 py-3 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap" title="Dashboard">
             <i class="fas fa-tachometer-alt w-6 text-center"></i><span class="hidden md:inline ml-2">Dashboard</span>
         </a>
-        <a href="/reports" class="flex items-center px-2 md:px-4 py-3 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap" title="Reports">
+        <a href="/reports" class="flex items-center px-2 md:px-8 py-3 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap" title="Reports">
             <i class="fas fa-chart-bar w-6 text-center"></i><span class="hidden md:inline ml-2">Reports</span>
         </a>
-        <a href="/trucks" class="flex items-center px-2 md:px-4 py-3 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap" title="Truck Masterlist">
+        <a href="/trucks" class="flex items-center px-2 md:px-8 py-3 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap" title="Truck Masterlist">
             <i class="fas fa-truck w-6 text-center"></i><span class="hidden md:inline ml-2">Truck Masterlist</span>
         </a>
-        <a href="/docs-report" class="flex items-center px-2 md:px-4 py-3 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap" title="Doc Report">
+        <a href="/docs-report" class="flex items-center px-2 md:px-8 py-3 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap" title="Doc Report">
             <i class="fas fa-file-alt w-6 text-center"></i><span class="hidden md:inline ml-2">Doc Report</span>
         </a>
-        <a href="/ttsd-checklist" class="flex items-center px-2 md:px-4 py-3 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap" title="TTSD Checklist">
+        <a href="/ttsd-checklist" class="flex items-center px-2 md:px-8 py-3 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap" title="TTSD Checklist">
             <i class="fas fa-clipboard-check w-6 text-center"></i><span class="hidden md:inline ml-2">TTSD Checklist</span>
         </a>
-        <a href="/audit-logs" class="flex items-center px-2 md:px-4 py-3 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap" title="Audit Logs">
+        <a href="/audit-logs" class="flex items-center px-2 md:px-8 py-3 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap" title="Audit Logs">
             <i class="fas fa-history w-6 text-center"></i><span class="hidden md:inline ml-2">Audit Logs</span>
         </a>
         
