@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -19,15 +19,15 @@
         th.sort-asc::after { content: ' ?'; font-size: 10px; }
         th.sort-desc::after { content: ' ?'; font-size: 10px; }
         #sidebar{transition:transform 0.3s}
-        @media(max-width:767px){
+        @media(max-inline-size:767px){
             #sidebar{transform:translateX(-100%)}
             #sidebar.open{transform:translateX(0)}
             body.sidebar-open{overflow:hidden}
         }
-        @media(min-width:768px){
-            body{padding-left:0}
-            @media(min-width:768px){
-                body{padding-left:176px}
+        @media(min-inline-size:768px){
+            body{padding-inline-start:0}
+            @media(min-inline-size:768px){
+                body{padding-inline-start:176px}
             }
         }
     </style>
