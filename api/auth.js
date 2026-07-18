@@ -586,13 +586,13 @@ app.get('/api/reports/export', authenticate, authorize('dispatcher', 'management
 app.post('/api/sync-all-documents', authenticate, authorize('dispatcher', 'management'), async (req, res) => {
   try {
     const { batch = 0 } = req.body;
-    const batchSize = 100;
+    const batchSize = 50;
     const offset = batch * batchSize;
     
-    const [trucks] = await pool.execute('SELECT id FROM trucks ORDER BY id LIMIT ? OFFSET ?', [batchSize, offset]);
+    const [trucks] = await pool.execute('SELECT id FROM trucks ORDER BY id LIMIT ? OFFSET ?', [batchSize.toString(), offset.toString()]);
     
     if (trucks.length === 0) {
-      return res.json({ status: 'success', message: 'All done! No more trucks to process.', count: 0, done: true });
+      return res.json({ status: 'success', message: 'All done!', count: 0, done: true });
     }
     
     const types = ['lto_registration', 'fire_permit', 'dost_calibration'];
@@ -601,16 +601,18 @@ app.post('/api/sync-all-documents', authenticate, authorize('dispatcher', 'manag
     
     for (const truck of trucks) {
       for (const type of types) {
-        const [existing] = await pool.execute('SELECT id FROM truck_documents WHERE truck_id = ? AND document_type = ?', [truck.id, type]);
-        if (!existing.length) {
-          await pool.execute('INSERT INTO truck_documents (truck_id, document_type, document_number, issue_date, expiry_date, status, createdAt) VALUES (?, ?, ?, NOW(), ?, ?, NOW())',
-            [truck.id, type, 'AUTO-' + type, farFuture, 'valid']);
+        try {
+          const shortType = type === 'lto_registration' ? 'LTO' : type === 'fire_permit' ? 'BFP' : 'DOST';
+          await pool.execute(
+            'INSERT IGNORE INTO truck_documents (truck_id, document_type, document_number, issue_date, expiry_date, status, createdAt) VALUES (?, ?, ?, NOW(), ?, ?, NOW())',
+            [truck.id, type, shortType, farFuture, 'valid']
+          );
           count++;
-        }
+        } catch (e) {}
       }
     }
     
-    res.json({ status: 'success', message: `Batch ${batch + 1}: Created ${count} documents.`, count, done: false, nextBatch: batch + 1 });
+    res.json({ status: 'success', message: `Batch ${batch + 1}: ${count} docs`, count, done: false, nextBatch: batch + 1 });
   } catch (error) { res.status(400).json({ error: error.message }); }
 });
 
