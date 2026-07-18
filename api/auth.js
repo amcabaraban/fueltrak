@@ -610,8 +610,8 @@ app.get('/api/reports/summary', authenticate, authorize('dispatcher', 'managemen
     const { startDate, endDate } = req.query;
     let query = "SELECT * FROM authority_to_load WHERE status IN ('completed','cancelled','dispatched')";
     const params = [];
-    if (startDate) { query += ' AND DATE(createdAt) >= ?'; params.push(startDate); }
-    if (endDate) { query += ' AND DATE(createdAt) <= ?'; params.push(endDate); }
+    if (startDate) { query += ' AND (DATE(completed_date) >= ? OR DATE(createdAt) >= ?)'; params.push(startDate, startDate); }
+    if (endDate) { query += ' AND (DATE(completed_date) <= ? OR DATE(createdAt) <= ?)'; params.push(endDate, endDate); }
     query += ' ORDER BY createdAt DESC';
     const [atls] = await pool.execute(query, params);
     const result = [];
