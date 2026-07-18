@@ -124,7 +124,7 @@
     }
 
     function printReport(){window.print()}
-    function logout(){localStorage.clear();window.location.href='/'}
+    async function logout(){try{await fetch('/api/auth/logout',{method:'POST',headers:{'Authorization':'Bearer '+localStorage.getItem('fueltrak_token')}})}catch(e){}localStorage.clear();window.location.href='/'}
     loadReport();
 </script>
 </body>

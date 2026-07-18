@@ -202,8 +202,9 @@ async function loadTrucks(){var d=await api('/truck-masterlist-all');if(d.status
 async function loadClients(){var d=await api('/clients');if(d.status==='success'){document.getElementById('clientList').innerHTML='<div class="table-wrap"><table class="w-full text-sm bg-white rounded-lg shadow"><thead class="bg-gray-50"><tr><th class="py-2 px-3">Company</th><th class="py-2 px-3">Email</th><th class="py-2 px-3">Mobile</th></tr></thead><tbody>'+d.data.map(c=>`<tr class="border-b"><td class="py-2 px-3 font-semibold">${c.company_name||'-'}</td><td class="py-2 px-3">${c.email}</td><td class="py-2 px-3">${c.mobile}</td></tr>`).join('')+'</tbody></table></div>'}}
 
 function toggleSidebar(){var s=document.getElementById("sidebar");s.classList.toggle("open");document.getElementById("sidebarOverlay").classList.toggle("hidden")}
-function logout(){localStorage.clear();window.location.href='/'}
+async function logout(){try{await fetch('/api/auth/logout',{method:'POST',headers:{'Authorization':'Bearer '+localStorage.getItem('fueltrak_token')}})}catch(e){}localStorage.clear();window.location.href='/'}
 loadDashboard();
 </script>
 </body>
 </html>
+

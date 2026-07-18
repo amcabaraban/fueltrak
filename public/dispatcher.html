@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -161,7 +161,7 @@
     function editTruck(id){alert('Edit truck '+id)}
     function editClient(id){alert('Edit client '+id)}
     function searchTrucks(){loadTrucks()}
-    function logout(){localStorage.clear();window.location.href='/'}
+    async function logout(){try{await fetch('/api/auth/logout',{method:'POST',headers:{'Authorization':'Bearer '+localStorage.getItem('fueltrak_token')}})}catch(e){}localStorage.clear();window.location.href='/'}
     loadDashboard();
 </script>
 </body>

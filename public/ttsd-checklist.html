@@ -147,7 +147,7 @@ function calculateVolume(){var t=0;document.querySelectorAll('.active-chk').forE
 
 function autoFillSeals(){var s=parseInt(document.getElementById('tpsStart').value);if(isNaN(s))return;var ac=document.querySelectorAll('.active-chk'),caps=document.querySelectorAll('.capacity'),dv=document.querySelectorAll('.dv-seal'),dhc=document.querySelectorAll('.dhc-seal'),vb=document.querySelectorAll('.vbox');var cdv=s,ldv=s-1;for(var i=0;i<12;i++){if(ac[i].checked&&!isNaN(parseFloat(caps[i].value))&&caps[i].value!=='N/A'){dv[i].value=String(cdv).padStart(3,'0');ldv=cdv;cdv++}else dv[i].value=''}var cdhc=ldv+1;for(var i=0;i<12;i++){if(ac[i].checked&&!isNaN(parseFloat(caps[i].value))&&caps[i].value!=='N/A'){dhc[i].value=String(cdhc).padStart(3,'0');cdhc++}else dhc[i].value=''}var cvb=cdhc;var plate=document.getElementById('plateNo').value.trim().toUpperCase();var m=truckData[plate];for(var i=0;i<3;i++){if(m&&i<m.comps&&vb[i]){vb[i].value=String(cvb).padStart(3,'0');cvb++}else if(vb[i])vb[i].value=''}}
 
-function logout(){localStorage.clear();window.location.href='/'}
+async function logout(){try{await fetch('/api/auth/logout',{method:'POST',headers:{'Authorization':'Bearer '+localStorage.getItem('fueltrak_token')}})}catch(e){}localStorage.clear();window.location.href='/'}
 buildCompTable();loadPlateList();
 </script>
 </body>

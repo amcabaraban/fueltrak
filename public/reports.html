@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -11,8 +11,8 @@
         @media print{body{background:white!important}nav,.no-print,#sidebar,#sidebarOverlay{display:none!important}#printArea{display:block!important;padding:20px}#printArea table{width:100%;border-collapse:collapse;font-size:9px}#printArea th,#printArea td{border:1px solid #ddd;padding:2px 4px}#printArea th{background:#f0f0f0!important}body{padding-left:0!important}}
         .print-only{display:none}@media print{.print-only{display:block}}
         th{cursor:pointer;user-select:none;white-space:nowrap;font-size:11px}
-        th.sort-asc::after{content:' ▲';font-size:9px}
-        th.sort-desc::after{content:' ▼';font-size:9px}
+        th.sort-asc::after{content:' ?';font-size:9px}
+        th.sort-desc::after{content:' ?';font-size:9px}
         #sidebar{transition:transform 0.3s}
         @media(max-width:767px){#sidebar{display:none!important}#sidebarOverlay{display:none!important}body{padding-left:0!important;padding-bottom:70px}}
         @media(min-width:768px){body{padding-left:176px}.mobile-bottom-nav{display:none!important}}
@@ -104,7 +104,7 @@
     function openBackload(id){document.getElementById('backloadAtlId').value=id;const row=event.target.closest('tr');document.getElementById('backloadAtlCode').value=row?row.cells[1].textContent.trim():'N/A';document.getElementById('backloadVolume').value='';document.getElementById('backloadReason').value='';document.getElementById('backloadModal').classList.remove('hidden')}
     async function submitBackload(e){e.preventDefault();const id=document.getElementById('backloadAtlId').value,v=document.getElementById('backloadVolume').value,rs=document.getElementById('backloadReason').value;if(!confirm('Record backload of '+Number(v).toLocaleString()+' L?\n\nReason: '+rs))return;const r=await fetch('/api/backloads',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({atl_id:id,volume:v,reason:rs})});const d=await r.json();if(d.status==='success'){alert('Backload recorded!');document.getElementById('backloadModal').classList.add('hidden');loadReports()}else alert(d.error||'Error')}
     function sortTable(tid,ci){const tb=document.getElementById(tid);if(!tb)return;const rows=Array.from(tb.querySelectorAll('tr'));if(!rows.length)return;const th=tb.closest('table').querySelectorAll('th')[ci];if(!th)return;const ia=th.classList.contains('sort-asc');tb.closest('table').querySelectorAll('th').forEach(t=>t.classList.remove('sort-asc','sort-desc'));rows.sort((a,b)=>{const av=(a.cells[ci]?.textContent||'').trim().replace(/[,%$]/g,''),bv=(b.cells[ci]?.textContent||'').trim().replace(/[,%$]/g,''),an=parseFloat(av),bn=parseFloat(bv);if(!isNaN(an)&&!isNaN(bn))return ia?bn-an:an-bn;return ia?bv.localeCompare(av):av.localeCompare(bv)});th.classList.add(ia?'sort-desc':'sort-asc');rows.forEach(r=>tb.appendChild(r))}
-    function logout(){localStorage.clear();window.location.href='/'}
+    async function logout(){try{await fetch('/api/auth/logout',{method:'POST',headers:{'Authorization':'Bearer '+localStorage.getItem('fueltrak_token')}})}catch(e){}localStorage.clear();window.location.href='/'}
     loadFilters();loadReports();
 </script>
 </body>

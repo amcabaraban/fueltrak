@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -148,7 +148,7 @@
         else{alert(data.error||'Error updating');}
     }
 
-    function logout(){localStorage.clear();window.location.href='/'}
+    async function logout(){try{await fetch('/api/auth/logout',{method:'POST',headers:{'Authorization':'Bearer '+localStorage.getItem('fueltrak_token')}})}catch(e){}localStorage.clear();window.location.href='/'}
     loadTrucks();
 </script>
 </body>
