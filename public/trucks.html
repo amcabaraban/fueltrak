@@ -21,9 +21,15 @@
 <body class="bg-gray-50 min-h-screen">
 <div class="main-content">
     <nav class="bg-gradient-to-r from-blue-900 to-blue-800 text-white shadow-xl sticky top-0 z-20 no-print">
-        <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
-            <div class="flex items-center space-x-3"><div class="bg-white/20 p-2 rounded-lg"><i class="fas fa-truck text-2xl text-yellow-400"></i></div><div><span class="font-bold text-lg">Truck Masterlist</span></div></div>
+        <div class="hidden md:flex max-w-7xl mx-auto px-4 py-3 justify-between items-center">
+            <div class="flex items-center space-x-3"><div class="bg-white/20 p-2 rounded-lg"><i class="fas fa-truck text-2xl text-yellow-400"></i></div><div><span class="font-bold text-xl">Truck Masterlist</span></div></div>
             <div class="flex items-center space-x-3"><span id="userInfo" class="text-sm bg-white/10 px-3 py-1 rounded-full"></span></div>
+        </div>
+        <div class="flex md:hidden px-2 py-2 items-center space-x-1">
+            <div class="flex items-center space-x-1 flex-shrink-0"><div class="bg-white/20 p-1 rounded"><i class="fas fa-truck text-sm text-yellow-400"></i></div><span class="font-bold text-xs whitespace-nowrap">Trucks</span></div>
+            <div class="flex-1 overflow-x-auto flex items-center space-x-1" style="-webkit-overflow-scrolling:touch;scrollbar-width:none">
+                <span id="userInfoMob" class="text-[9px] bg-white/10 px-1.5 py-0.5 rounded-full flex-shrink-0 max-w-[80px] truncate"></span>
+            </div>
         </div>
     </nav>
 
@@ -40,9 +46,9 @@
         </div>
     </div>
 
-    <div class="max-w-7xl mx-auto px-4 py-8">
+    <div class="max-w-7xl mx-auto px-4 py-8 w-full">
         <div class="flex flex-wrap justify-between items-center mb-6 gap-2">
-            <h1 class="text-2xl font-bold">Truck Masterlist</h1>
+            <h1 class="text-3xl font-bold">Truck Masterlist</h1>
             <div class="flex gap-2">
                 <input type="text" id="searchInput" placeholder="Search plate, driver, hauler..." class="px-3 py-2 border rounded text-sm w-64" oninput="currentPage=1;loadTrucks()">
                 <button onclick="window.print()" class="bg-blue-600 text-white px-4 py-2 rounded text-sm no-print"><i class="fas fa-print mr-1"></i>Print</button>
@@ -50,16 +56,11 @@
         </div>
         <p class="text-sm text-gray-500 mb-2" id="recordCount"></p>
         <div class="bg-white rounded-xl shadow-lg overflow-hidden">
-            <div class="overflow-x-auto">
-                <table class="w-full text-sm">
-                    <thead class="bg-gray-50 border-b"><tr><th class="py-3 px-3 text-left">Make</th><th class="py-3 px-3 text-left">Plate No</th><th class="py-3 px-3 text-left">Driver</th><th class="py-3 px-3 text-left">Hauler/Customer</th><th class="py-3 px-3 text-center">COTs</th><th class="py-3 px-3 text-right">Capacity (KL)</th><th class="py-3 px-3 text-center">TPS Count</th></tr></thead>
-                    <tbody id="truckBody"><tr><td colspan="7" class="text-center py-8 text-gray-500">Loading...</td></tr></tbody>
-                </table>
-            </div>
-            <div class="px-4 py-3 border-t flex justify-between items-center bg-white rounded-b-xl">
-                <div class="text-sm text-gray-500" id="pageInfo"></div>
-                <div class="flex items-center space-x-2" id="pagination"></div>
-            </div>
+            <div class="table-wrap"><table class="w-full text-sm"><thead class="bg-gray-50 border-b"><tr><th class="py-3 px-3 text-left">Make</th><th class="py-3 px-3 text-left">Plate No</th><th class="py-3 px-3 text-left">Driver</th><th class="py-3 px-3 text-left">Hauler/Customer</th><th class="py-3 px-3 text-center">COTs</th><th class="py-3 px-3 text-right">Capacity (KL)</th><th class="py-3 px-3 text-center">TPS Count</th></tr></thead><tbody id="truckBody"><tr><td colspan="7" class="text-center py-8 text-gray-500">Loading...</td></tr></tbody></table></div>
+        </div>
+        <div class="px-4 py-3 border-t flex justify-between items-center bg-white rounded-b-xl">
+            <div class="text-sm text-gray-500" id="pageInfo"></div>
+            <div class="flex items-center space-x-2" id="pagination"></div>
         </div>
     </div>
 </div>
@@ -77,9 +78,10 @@
     const token=localStorage.getItem('fueltrak_token');const user=JSON.parse(localStorage.getItem('fueltrak_user')||'{}');
     if(!token)window.location.replace('/');
     document.getElementById('userInfo').textContent=user.email.split('@')[0].substring(0,3)+'***@'+user.email.split('@')[1]+' ('+user.role+')';
-    
+    document.getElementById('userInfoMob').textContent=user.email.split('@')[0].substring(0,3)+'***@'+user.email.split('@')[1];
+
     var allTrucks=[],currentPage=1,perPage=20;
-    
+
     async function loadTrucks(){
         var res=await fetch('/api/truck-masterlist-all',{headers:{'Authorization':'Bearer '+token}});
         var data=await res.json();
@@ -90,16 +92,16 @@
             renderPage();
         }
     }
-    
+
     function renderPage(){
         var totalPages=Math.ceil(allTrucks.length/perPage);
         if(currentPage>totalPages)currentPage=totalPages||1;
         var start=(currentPage-1)*perPage;
         var pageData=allTrucks.slice(start,start+perPage);
-        
+
         document.getElementById('recordCount').textContent='Total: '+allTrucks.length+' trucks';
         document.getElementById('pageInfo').textContent='Showing '+(start+1)+'-'+Math.min(start+perPage,allTrucks.length)+' of '+allTrucks.length;
-        
+
         document.getElementById('truckBody').innerHTML=pageData.map(function(t){
             var cots=[t.cot1,t.cot2,t.cot3,t.cot4,t.cot5,t.cot6,t.cot7,t.cot8,t.cot9,t.cot10].filter(function(v){return parseFloat(v)>0;});
             var totalCap=cots.reduce(function(s,v){return s+parseFloat(v);},0);
@@ -127,30 +129,23 @@
         pagHTML+='<button onclick="changePage('+(currentPage+1)+')" class="px-2 py-1 border rounded text-xs '+(currentPage===totalPages?'text-gray-300 cursor-not-allowed':'hover:bg-gray-100')+'" '+(currentPage===totalPages?'disabled':'')+'><i class="fas fa-chevron-right"></i></button>';
         document.getElementById('pagination').innerHTML=pagHTML;
     }
-    
+
     function changePage(page){
         var totalPages=Math.ceil(allTrucks.length/perPage);
         if(page<1||page>totalPages)return;
-        currentPage=page;
-        renderPage();
+        currentPage=page;renderPage();
     }
-    
+
     async function editTruck(id, field, cell){
         var current=cell.textContent.trim();
         if(field==='tps_count') current=parseInt(current)||0;
         var newVal=prompt('Edit '+field.replace(/_/g,' ')+':', current);
         if(newVal===null) return;
-        var body={};
-        body[field]=field==='tps_count'?parseInt(newVal):newVal;
-        var res=await fetch('/api/update-truck-masterlist/'+id,{
-            method:'PUT',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify(body)
-        });
+        var body={};body[field]=field==='tps_count'?parseInt(newVal):newVal;
+        var res=await fetch('/api/update-truck-masterlist/'+id,{method:'PUT',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify(body)});
         var data=await res.json();
-        if(data.status==='success'){
-            cell.textContent=field==='tps_count'?parseInt(newVal):newVal;
-            cell.classList.add('bg-green-100');
-            setTimeout(function(){cell.classList.remove('bg-green-100');},1000);
-        }else{alert(data.error||'Error updating');}
+        if(data.status==='success'){cell.textContent=field==='tps_count'?parseInt(newVal):newVal;cell.classList.add('bg-green-100');setTimeout(function(){cell.classList.remove('bg-green-100');},1000);}
+        else{alert(data.error||'Error updating');}
     }
 
     function logout(){localStorage.clear();window.location.href='/'}

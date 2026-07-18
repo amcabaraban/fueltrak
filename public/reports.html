@@ -1,233 +1,111 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
- <meta charset="UTF-8">
- <meta name="viewport" content="width=device-width, initial-scale=1.0">
- <title>FuelTrak - Reports</title>
- <script src="https://cdn.tailwindcss.com"></script>
- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
- <link rel="icon" href="/favicon.svg" type="image/svg+xml">
- <style>
-  @media print { body{background:white!important} nav,.no-print,#sidebar,#sidebarOverlay{display:none!important} #printArea{display:block!important;padding:20px} #printArea table{inline-size:100%;border-collapse:collapse;font-size:9px} #printArea th,#printArea td{border:1px solid #ddd;padding:2px 4px;text-align:start} #printArea th{background:#f0f0f0!important} body{padding-inline-start:0!important} }
-  .print-only{display:none} @media print{.print-only{display:block}}
-  th{cursor:pointer;user-select:none;white-space:nowrap;font-size:11px}
-  th.sort-asc::after{content:' ?';font-size:9px}
-  th.sort-desc::after{content:' ?';font-size:9px}
-  
-  @media(max-inline-size:767px){@media(max-inline-size:767px){#sidebar{transform:translateX(-100%)}}}
-  @media(min-inline-size:768px){body{padding-inline-start:176px}}
-  .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
-  table{min-inline-size:1600px;font-size:11px}
-  td{white-space:nowrap;padding:4px 3px}
- #sidebar{transition:transform 0.3s}@media(max-width:767px){#sidebar{display:none!important}#sidebarOverlay{display:none!important}body{padding-left:0!important;padding-bottom:70px}}@media(min-width:768px){body{padding-left:176px}.mobile-bottom-nav{display:none!important}}.mobile-bottom-nav{display:flex;position:fixed;bottom:0;left:0;right:0;background:#1e3a5f;color:white;z-index:50;justify-content:space-around;padding:6px 0;box-shadow:0 -2px 10px rgba(0,0,0,0.3)}.mobile-bottom-nav a,.mobile-bottom-nav button{display:flex;flex-direction:column;align-items:center;color:#93a3bc;font-size:10px;text-decoration:none;padding:4px;background:none;border:none;cursor:pointer}.mobile-bottom-nav a i,.mobile-bottom-nav button i{font-size:18px;margin-bottom:2px}.mobile-bottom-nav a.active,.mobile-bottom-nav button.active{color:#fbbf24}</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FuelTrak - Reports</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <style>
+        @media print{body{background:white!important}nav,.no-print,#sidebar,#sidebarOverlay{display:none!important}#printArea{display:block!important;padding:20px}#printArea table{width:100%;border-collapse:collapse;font-size:9px}#printArea th,#printArea td{border:1px solid #ddd;padding:2px 4px}#printArea th{background:#f0f0f0!important}body{padding-left:0!important}}
+        .print-only{display:none}@media print{.print-only{display:block}}
+        th{cursor:pointer;user-select:none;white-space:nowrap;font-size:11px}
+        th.sort-asc::after{content:' ▲';font-size:9px}
+        th.sort-desc::after{content:' ▼';font-size:9px}
+        #sidebar{transition:transform 0.3s}
+        @media(max-width:767px){#sidebar{display:none!important}#sidebarOverlay{display:none!important}body{padding-left:0!important;padding-bottom:70px}}
+        @media(min-width:768px){body{padding-left:176px}.mobile-bottom-nav{display:none!important}}
+        .mobile-bottom-nav{display:flex;position:fixed;bottom:0;left:0;right:0;background:#1e3a5f;color:white;z-index:50;justify-content:space-around;padding:6px 0;box-shadow:0 -2px 10px rgba(0,0,0,0.3)}
+        .mobile-bottom-nav a,.mobile-bottom-nav button{display:flex;flex-direction:column;align-items:center;color:#93a3bc;font-size:10px;text-decoration:none;padding:4px;background:none;border:none;cursor:pointer}
+        .mobile-bottom-nav a i,.mobile-bottom-nav button i{font-size:18px;margin-bottom:2px}
+        .mobile-bottom-nav a.active,.mobile-bottom-nav button.active{color:#fbbf24}
+        .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+        table{min-width:1400px;font-size:11px;width:100%}
+        td{white-space:nowrap;padding:4px 3px}
+    </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
-<div class="main-content" style="padding-inline-start:176px">
- <!-- Sidebar Navigation -->
- <div class="fixed left-0 top-0 h-full w-14 md:w-48 bg-blue-900 text-white z-40 pt-16 overflow-y-auto no-print" id="sidebar" class="flex flex-col">
-  <a href="/dashboard" class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap" title="Dashboard">
-   <i class="fas fa-tachometer-alt w-6 text-center"></i><span class="hidden md:inline ml-2">Dashboard</span>
-  </a>
-  <a href="/reports" class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap" title="Reports">
-   <i class="fas fa-chart-bar w-6 text-center"></i><span class="hidden md:inline ml-2">Reports</span>
-  </a>
-  <a href="/trucks" class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap" title="Truck Masterlist">
-   <i class="fas fa-truck w-6 text-center"></i><span class="hidden md:inline ml-2">Truck Masterlist</span>
-  </a>
-  <a href="/docs-report" class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap" title="Doc Report">
-   <i class="fas fa-file-alt w-6 text-center"></i><span class="hidden md:inline ml-2">Doc Report</span>
-  </a>
-  <a href="/ttsd-checklist" class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap" title="TTSD Checklist">
-   <i class="fas fa-clipboard-check w-6 text-center"></i><span class="hidden md:inline ml-2">TTSD Checklist</span>
-  </a>
-  <a href="/audit-logs" class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap" title="Audit Logs">
-   <i class="fas fa-history w-6 text-center"></i><span class="hidden md:inline ml-2">Audit Logs</span>
-  </a><div class="border-t border-blue-700 mt-2 pt-2" >
-   <button onclick="logout()" class="flex items-center px-2 md:px-4 py-3 hover:bg-red-700 text-xs md:text-sm w-full text-left whitespace-nowrap">
-    <i class="fas fa-sign-out-alt w-6 text-center"></i><span class="hidden md:inline ml-2">Logout</span>
-   </button>
-  </div>
- </div>
- <div id="sidebarOverlay" class="hidden fixed inset-0 bg-black bg-opacity-50 z-30 md:hidden" onclick="toggleSidebar()"></div>
- <button onclick="toggleSidebar()" class="fixed top-2 left-2 z-50 md:hidden bg-blue-900 text-white p-2 rounded no-print"><i class="fas fa-bars"></i></button>
+<div class="main-content">
+    <!-- Desktop Sidebar -->
+    <div class="fixed left-0 top-0 h-full w-14 md:w-48 bg-blue-900 text-white z-40 pt-16 overflow-y-auto no-print" id="sidebar">
+        <a href="/dashboard" class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap"><i class="fas fa-tachometer-alt w-6 text-center"></i><span class="hidden md:inline ml-2">Dashboard</span></a>
+        <a href="/reports" class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap"><i class="fas fa-chart-bar w-6 text-center"></i><span class="hidden md:inline ml-2">Reports</span></a>
+        <a href="/trucks" class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap"><i class="fas fa-truck w-6 text-center"></i><span class="hidden md:inline ml-2">Truck Masterlist</span></a>
+        <a href="/docs-report" class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap"><i class="fas fa-file-alt w-6 text-center"></i><span class="hidden md:inline ml-2">Doc Report</span></a>
+        <a href="/ttsd-checklist" class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap"><i class="fas fa-clipboard-check w-6 text-center"></i><span class="hidden md:inline ml-2">TTSD Checklist</span></a>
+        <a href="/audit-logs" class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap"><i class="fas fa-history w-6 text-center"></i><span class="hidden md:inline ml-2">Audit Logs</span></a>
+        <div class="border-t border-blue-700 p-2 mt-2">
+            <button onclick="logout()" class="flex items-center px-2 py-3 hover:bg-red-700 text-xs md:text-sm w-full text-left whitespace-nowrap"><i class="fas fa-sign-out-alt w-6 text-center"></i><span class="hidden md:inline ml-2">Logout</span></button>
+        </div>
+    </div>
 
- <nav class="bg-gradient-to-r from-blue-900 to-blue-800 text-white shadow-xl sticky top-0 z-20 no-print">
-  <div class="hidden md:flex max-w-7xl mx-auto px-4 py-3 justify-between items-center">
-   <div class="flex items-center space-x-3"><div class="bg-white/20 p-2 rounded-lg"><i class="fas fa-chart-bar text-2xl text-yellow-400"></i></div><div><span class="font-bold text-xl">FuelTrak Reports</span></div></div>
-   <div class="flex items-center space-x-3"><span id="userInfo" class="text-sm bg-white/10 px-3 py-1 rounded-full"></span></div>
-  </div>
- </nav>
+    <nav class="bg-gradient-to-r from-blue-900 to-blue-800 text-white shadow-xl sticky top-0 z-20 no-print">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-3"><div class="bg-white/20 p-2 rounded-lg"><i class="fas fa-chart-bar text-2xl text-yellow-400"></i></div><div><span class="font-bold text-lg">FuelTrak Reports</span></div></div>
+            <div class="flex items-center space-x-3"><span id="userInfo" class="text-sm bg-white/10 px-3 py-1 rounded-full"></span></div>
+        </div>
+    </nav>
 
- <div class="max-w-7xl mx-auto px-4 py-8 w-full">
-  <h1 class="text-2xl font-bold mb-4">Reports & Analytics</h1>
-
-  <div class="bg-white rounded-xl shadow-lg p-4 mb-4 no-print">
-   <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
-    <div><label class="text-xs font-semibold">Start</label><input type="date" id="startDate" class="w-full px-2 py-1.5 border rounded text-xs" onchange="loadReports()"></div>
-    <div><label class="text-xs font-semibold">End</label><input type="date" id="endDate" class="w-full px-2 py-1.5 border rounded text-xs" onchange="loadReports()"></div>
-    <div><label class="text-xs font-semibold">Status</label><select id="statusFilter" class="w-full px-2 py-1.5 border rounded text-xs" onchange="loadReports()"><option value="completed,cancelled,dispatched">All</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option><option value="dispatched">Ongoing</option></select></div>
-    <div><label class="text-xs font-semibold">Client</label><select id="clientFilter" class="w-full px-2 py-1.5 border rounded text-xs" onchange="loadReports()"><option value="">All</option></select></div>
-    <div><label class="text-xs font-semibold">Truck</label><select id="truckFilter" class="w-full px-2 py-1.5 border rounded text-xs" onchange="loadReports()"><option value="">All</option></select></div>
-    <div class="flex items-end gap-2"><button onclick="clearFilters()" class="text-blue-600 text-xs">Clear</button><button onclick="printReport()" class="bg-blue-600 text-white px-3 py-1.5 rounded text-xs">Print</button><button onclick="exportCSV()" class="bg-green-600 text-white px-3 py-1.5 rounded text-xs">Export</button></div>
-   </div>
-  </div>
-
-  <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-4" id="summaryCards"></div>
-
-  <div class="bg-white rounded-xl shadow-lg overflow-hidden">
-   <div class="overflow-x-auto w-full">
-    <table class="w-full">
-     <thead class="bg-gray-50 border-b sticky top-0">
-      <tr>
-       <th onclick="sortTable('reportTableBody',0)">Date</th>
-       <th onclick="sortTable('reportTableBody',1)">ATL Code</th>
-       <th onclick="sortTable('reportTableBody',2)">SO #</th>
-       <th onclick="sortTable('reportTableBody',3)">Company</th>
-       <th onclick="sortTable('reportTableBody',4)">Plate</th>
-       <th onclick="sortTable('reportTableBody',5)">Driver</th>
-       <th onclick="sortTable('reportTableBody',6)">Hauler</th>
-       <th onclick="sortTable('reportTableBody',7)">Contact</th>
-       <th class="text-right" onclick="sortTable('reportTableBody',8)">Volume</th>
-       <th class="text-right" onclick="sortTable('reportTableBody',9)">Actual</th>
-       <th class="text-center" onclick="sortTable('reportTableBody',10)">SI</th>
-       <th class="text-center" onclick="sortTable('reportTableBody',11)">Status</th>
-       <th class="text-center" onclick="sortTable('reportTableBody',12)">WC</th>
-       <th class="text-center" onclick="sortTable('reportTableBody',13)">TPS From</th>
-       <th class="text-center" onclick="sortTable('reportTableBody',14)">TPS To</th>
-       <th class="text-center" onclick="sortTable('reportTableBody',15)">Rev</th>
-       <th class="text-center">Backload</th>
-       <th class="text-center">Actions</th>
-      </tr>
-     </thead>
-     <tbody id="reportTableBody"><tr><td colspan="18" class="text-center py-8 text-gray-500">Loading...</td></tr></tbody>
-    </table>
-   </div>
-   <div class="px-4 py-2 border-t flex justify-between items-center text-xs"><span id="reportCount"></span><span id="pagination"></span></div>
-  </div>
- </div>
-
- <div id="detailModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-  <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[80vh] overflow-y-auto p-6">
-   <div class="flex justify-between mb-4"><h3 class="text-lg font-bold">ATL Details</h3><button onclick="document.getElementById('detailModal').classList.add('hidden')" class="text-2xl">&times;</button></div>
-   <div id="detailContent"></div>
-  </div>
- </div>
-
- <div id="backloadModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-  <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
-   <div class="flex justify-between mb-4"><h3 class="text-lg font-bold"><i class="fas fa-undo mr-2 text-orange-600"></i>Record Backload</h3><button onclick="document.getElementById('backloadModal').classList.add('hidden')" class="text-2xl">&times;</button></div>
-   <form onsubmit="submitBackload(event)" class="space-y-4">
-    <input type="hidden" id="backloadAtlId">
-    <div><label class="block text-xs font-semibold mb-1">ATL Code</label><input type="text" id="backloadAtlCode" class="w-full px-3 py-2 border rounded bg-gray-50" readonly></div>
-    <div><label class="block text-xs font-semibold mb-1">Volume (Liters) *</label><input type="number" id="backloadVolume" class="w-full px-3 py-2 border rounded" required min="1"></div>
-    <div><label class="block text-xs font-semibold mb-1">Reason *</label><textarea id="backloadReason" class="w-full px-3 py-2 border rounded" rows="3" required></textarea></div>
-    <button type="submit" class="w-full bg-orange-600 text-white py-2 rounded font-semibold">Record Backload</button>
-   </form>
-  </div>
- </div>
-
- <script>
-  const API='/api';const token=localStorage.getItem('fueltrak_token');const user=JSON.parse(localStorage.getItem('fueltrak_user')||'{}');
-  if(!token||!['dispatcher','management'].includes(user.role))window.location.replace('/');
-  document.getElementById('userInfo').textContent=user.email.split('@')[0].substring(0,3)+'***@'+user.email.split('@')[1]+' ('+user.role+')';
-
-  async function api(url,method='GET'){const r=await fetch(API+url,{method,headers:{'Authorization':'Bearer '+token}});return await r.json()}
-
-  async function loadFilters(){
-   const d=await api('/reports/filters');
-   if(d.status==='success'){
-    document.getElementById('clientFilter').innerHTML='<option value="">All</option>'+d.data.clients.map(c=>`<option value="${c.id}">${c.label}</option>`).join('');
-    document.getElementById('truckFilter').innerHTML='<option value="">All</option>'+d.data.trucks.map(t=>`<option value="${t.id}">${t.label}</option>`).join('');
-   }
-   document.getElementById('startDate').value=new Date().toISOString().split('T')[0];
-   document.getElementById('endDate').value=new Date().toISOString().split('T')[0];
-  }
-
-  var currentPage=1,recordsPerPage=15,allRecords=[];
-
-  function paginateData(){
-   var tp=Math.ceil(allRecords.length/recordsPerPage);if(currentPage>tp)currentPage=tp||1;
-   var s=(currentPage-1)*recordsPerPage,pd=allRecords.slice(s,s+recordsPerPage);renderTableRows(pd);
-   var h='<button onclick="changePage('+(currentPage-1)+')" class="px-2 py-1 border rounded '+(currentPage===1?'text-gray-300':'hover:bg-gray-100')+'" '+(currentPage===1?'disabled':'')+'><i class="fas fa-chevron-left"></i></button>';
-   for(var i=1;i<=tp;i++){if(i===1||i===tp||(i>=currentPage-2&&i<=currentPage+2))h+='<button onclick="changePage('+i+')" class="px-2 py-1 border rounded '+(i===currentPage?'bg-blue-900 text-white':'hover:bg-gray-100')+'">'+i+'</button>';else if(i===currentPage-3||i===currentPage+3)h+='<span class="px-1">...</span>'}
-   h+='<button onclick="changePage('+(currentPage+1)+')" class="px-2 py-1 border rounded '+(currentPage===tp?'text-gray-300':'hover:bg-gray-100')+'" '+(currentPage===tp?'disabled':'')+'><i class="fas fa-chevron-right"></i></button>';
-   document.getElementById('pagination').innerHTML=h;
-  }
-  function changePage(p){if(p<1||p>Math.ceil(allRecords.length/recordsPerPage))return;currentPage=p;paginateData()}
-
-  function renderTableRows(records){
-   document.getElementById('reportTableBody').innerHTML=records.map(r=>`
-    <tr class="border-b hover:bg-gray-50">
-     <td>${r.completed_date?new Date(r.completed_date).toLocaleDateString():r.dispatch_date?new Date(r.dispatch_date).toLocaleDateString():'-'}</td>
-     <td class="font-mono font-bold text-blue-900">${r.atl_code||'-'}</td>
-     <td>${r.so_number||'-'}</td>
-     <td>${r.company||'-'}</td>
-     <td class="font-semibold">${r.plate_no}</td>
-     <td>${r.driver_name||'-'}</td>
-     <td>${r.hauler||'-'}</td>
-     <td>${r.contact_number||'-'}</td>
-     <td class="text-right">${r.volume?Math.round(r.volume).toLocaleString():'0'}</td>
-     <td class="text-right">${r.actual_volume?Math.round(r.actual_volume).toLocaleString():'-'}</td>
-     <td class="text-center cursor-pointer hover:bg-blue-50" onclick="toggleSI(${r.id},this)">${r.has_si==1?'Yes':'No'}</td>
-     <td class="text-center"><span class="px-1 py-0.5 rounded ${r.status==='completed'?'bg-green-100 text-green-800':r.status==='cancelled'?'bg-red-100 text-red-800':'bg-orange-100 text-orange-800'}">${r.status}</span></td>
-     <td class="text-center cursor-pointer hover:bg-yellow-50 font-mono" onclick="editWC(${r.id},this)">${r.printed_wc||'-'}</td>
-     <td class="text-center font-mono"><input value="${r.tps_start||''}" onchange="updateTPS(${r.id},'start',this.value)" class="w-16 border rounded px-1 text-xs"></td>
-     <td class="text-center font-mono"><input value="${r.tps_end||''}" onchange="updateTPS(${r.id},'end',this.value)" class="w-16 border rounded px-1 text-xs"></td>
-     <td class="text-center">${r.revision_count||'0'}</td>
-     <td class="text-center">${r.backload_count>0?`<span class="bg-orange-100 text-orange-800 px-1 rounded" title="${r.backload_volume||0}L">${r.backload_count}</span>`:'0'}</td>
-     <td class="text-center">
-      <button onclick="openBackload(${r.id})" class="text-orange-600 mr-1"><i class="fas fa-undo"></i></button>
-     </td>
-    </tr>`).join('')||'<tr><td colspan="18" class="text-center py-8 text-gray-500">No records found</td></tr>';
-   document.getElementById('reportCount').textContent='Showing '+records.length+' of '+allRecords.length;
-  }
-
-  async function loadReports(){
-   if(!document.getElementById('startDate').value)document.getElementById('startDate').value=new Date().toISOString().split('T')[0];
-   if(!document.getElementById('endDate').value)document.getElementById('endDate').value=new Date().toISOString().split('T')[0];
-   const p=new URLSearchParams();
-   ['startDate','endDate'].forEach(id=>{const v=document.getElementById(id).value;if(v)p.append(id,v)});
-   const st=document.getElementById('statusFilter').value;if(st)p.append('status',st);
-   const cl=document.getElementById('clientFilter').value;if(cl)p.append('clientId',cl);
-   const tr=document.getElementById('truckFilter').value;if(tr)p.append('truckId',tr);
-   const d=await api('/reports/summary?'+p.toString());
-   if(d.status==='success'){
-    const s=d.data.summary;
-    document.getElementById('summaryCards').innerHTML=`
-     <div class="bg-white rounded-xl shadow p-3 text-center"><p class="text-xl font-bold">${s.total_records||0}</p><p class="text-xs text-gray-500">Records</p></div>
-     <div class="bg-green-50 rounded-xl shadow p-3 text-center"><p class="text-xl font-bold text-green-700">${s.completed||0}</p><p class="text-xs text-gray-500">Completed</p></div>
-     <div class="bg-red-50 rounded-xl shadow p-3 text-center"><p class="text-xl font-bold text-red-700">${s.cancelled||0}</p><p class="text-xs text-gray-500">Cancelled</p></div>
-     <div class="bg-orange-50 rounded-xl shadow p-3 text-center"><p class="text-xl font-bold text-orange-700">${((s.total_volume||0)/1000).toFixed(1)}kL</p><p class="text-xs text-gray-500">Total Vol</p></div>
-     <div class="bg-blue-50 rounded-xl shadow p-3 text-center"><p class="text-xl font-bold text-blue-700">${((s.total_actual_volume||0)/1000).toFixed(1)}kL</p><p class="text-xs text-gray-500">Actual</p></div>`;
-    allRecords=d.data.records||[];currentPage=1;paginateData();
-   }
-  }
-
-  async function updateTPS(id,field,val){await fetch('/api/dispatch/update-tps/'+id,{method:'PUT',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify(field==='start'?{tps_start:val}:{tps_end:val})})}
-
-  function clearFilters(){['startDate','endDate','clientFilter','truckFilter'].forEach(id=>document.getElementById(id).value='');document.getElementById('startDate').value=new Date().toISOString().split('T')[0];document.getElementById('endDate').value=new Date().toISOString().split('T')[0];document.getElementById('statusFilter').value='completed,cancelled,dispatched';loadReports()}
-  function printReport(){window.print()}
-  async function exportCSV(){const p=new URLSearchParams();['startDate','endDate'].forEach(id=>{const v=document.getElementById(id).value;if(v)p.append(id,v)});const st=document.getElementById('statusFilter').value;if(st)p.append('status',st);const r=await fetch(API+'/reports/export?'+p.toString(),{headers:{'Authorization':'Bearer '+token}});if(!r.ok)return alert('Export failed');const b=await r.blob();const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='report-'+new Date().toISOString().split('T')[0]+'.csv';a.click()}
-  async function editWC(id,cell){const w=prompt('Printed WC:',cell.textContent.trim()==='-'?'':cell.textContent.trim());if(w===null)return;const c=w.replace(/\D/g,'').substring(0,12);const r=await fetch('/api/dispatch/update-wc/'+id,{method:'PUT',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({printed_wc:c||null})});if((await r.json()).status==='success'){cell.textContent=c||'-';cell.classList.add('bg-green-100');setTimeout(()=>cell.classList.remove('bg-green-100'),1000)}}
-  async function toggleSI(id,cell){const n=cell.textContent.trim()!=='Yes';const r=await fetch('/api/dispatch/update-si/'+id,{method:'PUT',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({has_si:n?1:0})});if((await r.json()).status==='success'){cell.textContent=n?'Yes':'No';cell.classList.add('bg-green-100');setTimeout(()=>cell.classList.remove('bg-green-100'),1000)}}
-  function openBackload(id){document.getElementById('backloadAtlId').value=id;const row=event.target.closest('tr');document.getElementById('backloadAtlCode').value=row?row.cells[1].textContent.trim():'N/A';document.getElementById('backloadVolume').value='';document.getElementById('backloadReason').value='';document.getElementById('backloadModal').classList.remove('hidden')}
-  async function submitBackload(e){e.preventDefault();const id=document.getElementById('backloadAtlId').value,v=document.getElementById('backloadVolume').value,rs=document.getElementById('backloadReason').value;if(!confirm('Record backload of '+Number(v).toLocaleString()+' L?\n\nReason: '+rs))return;const r=await fetch('/api/backloads',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({atl_id:id,volume:v,reason:rs})});const d=await r.json();if(d.status==='success'){alert('Backload recorded!');document.getElementById('backloadModal').classList.add('hidden');loadReports()}else alert(d.error||'Error')}
-  function sortTable(tid,ci){const tb=document.getElementById(tid);if(!tb)return;const rows=Array.from(tb.querySelectorAll('tr'));if(!rows.length)return;const th=tb.closest('table').querySelectorAll('th')[ci];if(!th)return;const ia=th.classList.contains('sort-asc');tb.closest('table').querySelectorAll('th').forEach(t=>t.classList.remove('sort-asc','sort-desc'));rows.sort((a,b)=>{const av=(a.cells[ci]?.textContent||'').trim().replace(/[,%$]/g,''),bv=(b.cells[ci]?.textContent||'').trim().replace(/[,%$]/g,''),an=parseFloat(av),bn=parseFloat(bv);if(!isNaN(an)&&!isNaN(bn))return ia?bn-an:an-bn;return ia?bv.localeCompare(av):av.localeCompare(bv)});th.classList.add(ia?'sort-desc':'sort-asc');rows.forEach(r=>tb.appendChild(r))}
-  function toggleSidebar(){document.getElementById("sidebar").classList.toggle("open");document.getElementById("sidebarOverlay").classList.toggle("hidden");document.body.classList.toggle("sidebar-open")}
-  function logout(){localStorage.clear();window.location.href='/'}
-  loadFilters();loadReports();
- </script>
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        <h1 class="text-2xl font-bold mb-4">Reports & Analytics</h1>
+        <div class="bg-white rounded-xl shadow-lg p-4 mb-4 no-print">
+            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                <div><label class="text-xs font-semibold">Start</label><input type="date" id="startDate" class="w-full px-2 py-1.5 border rounded text-xs" onchange="loadReports()"></div>
+                <div><label class="text-xs font-semibold">End</label><input type="date" id="endDate" class="w-full px-2 py-1.5 border rounded text-xs" onchange="loadReports()"></div>
+                <div><label class="text-xs font-semibold">Status</label><select id="statusFilter" class="w-full px-2 py-1.5 border rounded text-xs" onchange="loadReports()"><option value="completed,cancelled,dispatched">All</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option><option value="dispatched">Ongoing</option></select></div>
+                <div><label class="text-xs font-semibold">Client</label><select id="clientFilter" class="w-full px-2 py-1.5 border rounded text-xs" onchange="loadReports()"><option value="">All</option></select></div>
+                <div><label class="text-xs font-semibold">Truck</label><select id="truckFilter" class="w-full px-2 py-1.5 border rounded text-xs" onchange="loadReports()"><option value="">All</option></select></div>
+                <div class="flex items-end gap-2"><button onclick="clearFilters()" class="text-blue-600 text-xs">Clear</button><button onclick="printReport()" class="bg-blue-600 text-white px-3 py-1.5 rounded text-xs">Print</button><button onclick="exportCSV()" class="bg-green-600 text-white px-3 py-1.5 rounded text-xs">Export</button></div>
+            </div>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-4" id="summaryCards"></div>
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+            <div class="overflow-x-auto">
+                <table>
+                    <thead class="bg-gray-50 border-b sticky top-0"><tr><th onclick="sortTable('reportTableBody',0)">Date</th><th onclick="sortTable('reportTableBody',1)">ATL Code</th><th onclick="sortTable('reportTableBody',2)">SO #</th><th onclick="sortTable('reportTableBody',3)">Company</th><th onclick="sortTable('reportTableBody',4)">Plate</th><th onclick="sortTable('reportTableBody',5)">Driver</th><th onclick="sortTable('reportTableBody',6)">Hauler</th><th onclick="sortTable('reportTableBody',7)">Contact</th><th class="text-right" onclick="sortTable('reportTableBody',8)">Volume</th><th class="text-right" onclick="sortTable('reportTableBody',9)">Actual</th><th class="text-center" onclick="sortTable('reportTableBody',10)">SI</th><th class="text-center" onclick="sortTable('reportTableBody',11)">Status</th><th class="text-center" onclick="sortTable('reportTableBody',12)">WC</th><th class="text-center" onclick="sortTable('reportTableBody',13)">TPS From</th><th class="text-center" onclick="sortTable('reportTableBody',14)">TPS To</th><th class="text-center">Backload</th><th class="text-center">Act</th></tr></thead>
+                    <tbody id="reportTableBody"><tr><td colspan="17" class="text-center py-8 text-gray-500">Loading...</td></tr></tbody>
+                </table>
+            </div>
+            <div class="px-4 py-2 border-t flex justify-between items-center text-xs"><span id="reportCount"></span><span id="pagination"></span></div>
+        </div>
+    </div>
 </div>
-<!-- Mobile Bottom Navigation --><div class="mobile-bottom-nav"><a href="/dashboard"><i class="fas fa-tachometer-alt"></i><span>Home</span></a><a href="/reports"><i class="fas fa-chart-bar"></i><span>Reports</span></a><a href="/trucks"><i class="fas fa-truck"></i><span>Trucks</span></a><a href="/docs-report"><i class="fas fa-file-alt"></i><span>Docs</span></a><button onclick="logout()"><i class="fas fa-sign-out-alt"></i><span>Logout</span></button></div></body>
+
+<!-- Mobile Bottom Navigation -->
+<div class="mobile-bottom-nav">
+    <a href="/dashboard"><i class="fas fa-tachometer-alt"></i><span>Home</span></a>
+    <a href="/reports" class="active"><i class="fas fa-chart-bar"></i><span>Reports</span></a>
+    <a href="/trucks"><i class="fas fa-truck"></i><span>Trucks</span></a>
+    <a href="/docs-report"><i class="fas fa-file-alt"></i><span>Docs</span></a>
+    <button onclick="logout()"><i class="fas fa-sign-out-alt"></i><span>Logout</span></button>
+</div>
+
+<div id="detailModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"><div class="bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[80vh] overflow-y-auto p-6"><div class="flex justify-between mb-4"><h3 class="text-lg font-bold">ATL Details</h3><button onclick="document.getElementById('detailModal').classList.add('hidden')" class="text-2xl">&times;</button></div><div id="detailContent"></div></div></div>
+<div id="backloadModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"><div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6"><div class="flex justify-between mb-4"><h3 class="text-lg font-bold"><i class="fas fa-undo mr-2 text-orange-600"></i>Record Backload</h3><button onclick="document.getElementById('backloadModal').classList.add('hidden')" class="text-2xl">&times;</button></div><form onsubmit="submitBackload(event)" class="space-y-4"><input type="hidden" id="backloadAtlId"><div><label class="block text-xs font-semibold mb-1">ATL Code</label><input type="text" id="backloadAtlCode" class="w-full px-3 py-2 border rounded bg-gray-50" readonly></div><div><label class="block text-xs font-semibold mb-1">Volume (Liters) *</label><input type="number" id="backloadVolume" class="w-full px-3 py-2 border rounded" required min="1"></div><div><label class="block text-xs font-semibold mb-1">Reason *</label><textarea id="backloadReason" class="w-full px-3 py-2 border rounded" rows="3" required></textarea></div><button type="submit" class="w-full bg-orange-600 text-white py-2 rounded font-semibold">Record Backload</button></form></div></div>
+
+<script>
+    const API='/api';const token=localStorage.getItem('fueltrak_token');const user=JSON.parse(localStorage.getItem('fueltrak_user')||'{}');
+    if(!token||!['dispatcher','management'].includes(user.role))window.location.replace('/');
+    document.getElementById('userInfo').textContent=user.email.split('@')[0].substring(0,3)+'***@'+user.email.split('@')[1]+' ('+user.role+')';
+    async function api(url,method='GET'){const r=await fetch(API+url,{method,headers:{'Authorization':'Bearer '+token}});return await r.json()}
+    async function loadFilters(){const d=await api('/reports/filters');if(d.status==='success'){document.getElementById('clientFilter').innerHTML='<option value="">All</option>'+d.data.clients.map(c=>`<option value="${c.id}">${c.label}</option>`).join('');document.getElementById('truckFilter').innerHTML='<option value="">All</option>'+d.data.trucks.map(t=>`<option value="${t.id}">${t.label}</option>`).join('')}document.getElementById('startDate').value=new Date().toISOString().split('T')[0];document.getElementById('endDate').value=new Date().toISOString().split('T')[0]}
+    var currentPage=1,recordsPerPage=15,allRecords=[];
+    function paginateData(){var tp=Math.ceil(allRecords.length/recordsPerPage);if(currentPage>tp)currentPage=tp||1;var s=(currentPage-1)*recordsPerPage,pd=allRecords.slice(s,s+recordsPerPage);renderTableRows(pd);var h='<button onclick="changePage('+(currentPage-1)+')" class="px-2 py-1 border rounded '+(currentPage===1?'text-gray-300':'hover:bg-gray-100')+'" '+(currentPage===1?'disabled':'')+'><i class="fas fa-chevron-left"></i></button>';for(var i=1;i<=tp;i++){if(i===1||i===tp||(i>=currentPage-2&&i<=currentPage+2))h+='<button onclick="changePage('+i+')" class="px-2 py-1 border rounded '+(i===currentPage?'bg-blue-900 text-white':'hover:bg-gray-100')+'">'+i+'</button>';else if(i===currentPage-3||i===currentPage+3)h+='<span class="px-1">...</span>'}h+='<button onclick="changePage('+(currentPage+1)+')" class="px-2 py-1 border rounded '+(currentPage===tp?'text-gray-300':'hover:bg-gray-100')+'" '+(currentPage===tp?'disabled':'')+'><i class="fas fa-chevron-right"></i></button>';document.getElementById('pagination').innerHTML=h}
+    function changePage(p){if(p<1||p>Math.ceil(allRecords.length/recordsPerPage))return;currentPage=p;paginateData()}
+    function renderTableRows(records){document.getElementById('reportTableBody').innerHTML=records.map(r=>`<tr class="border-b hover:bg-gray-50"><td>${r.completed_date?new Date(r.completed_date).toLocaleDateString():r.dispatch_date?new Date(r.dispatch_date).toLocaleDateString():'-'}</td><td class="font-mono font-bold text-blue-900">${r.atl_code||'-'}</td><td>${r.so_number||'-'}</td><td>${r.company||'-'}</td><td class="font-semibold">${r.plate_no}</td><td>${r.driver_name||'-'}</td><td>${r.hauler||'-'}</td><td>${r.contact_number||'-'}</td><td class="text-right">${r.volume?Math.round(r.volume).toLocaleString():'0'}</td><td class="text-right">${r.actual_volume?Math.round(r.actual_volume).toLocaleString():'-'}</td><td class="text-center cursor-pointer hover:bg-blue-50" onclick="toggleSI(${r.id},this)">${r.has_si==1?'Yes':'No'}</td><td class="text-center"><span class="px-1 py-0.5 rounded ${r.status==='completed'?'bg-green-100 text-green-800':r.status==='cancelled'?'bg-red-100 text-red-800':'bg-orange-100 text-orange-800'}">${r.status}</span></td><td class="text-center cursor-pointer hover:bg-yellow-50 font-mono" onclick="editWC(${r.id},this)">${r.printed_wc||'-'}</td><td class="text-center font-mono"><input value="${r.tps_start||''}" onchange="updateTPS(${r.id},'start',this.value)" class="w-16 border rounded px-1 text-xs"></td><td class="text-center font-mono"><input value="${r.tps_end||''}" onchange="updateTPS(${r.id},'end',this.value)" class="w-16 border rounded px-1 text-xs"></td><td class="text-center">${r.backload_count>0?`<span class="bg-orange-100 text-orange-800 px-1 rounded" title="${r.backload_volume||0}L">${r.backload_count}</span>`:'0'}</td><td class="text-center"><button onclick="openBackload(${r.id})" class="text-orange-600"><i class="fas fa-undo"></i></button></td></tr>`).join('')||'<tr><td colspan="17" class="text-center py-8 text-gray-500">No records found</td></tr>';document.getElementById('reportCount').textContent='Showing '+records.length+' of '+allRecords.length}
+    async function loadReports(){if(!document.getElementById('startDate').value)document.getElementById('startDate').value=new Date().toISOString().split('T')[0];if(!document.getElementById('endDate').value)document.getElementById('endDate').value=new Date().toISOString().split('T')[0];const p=new URLSearchParams();['startDate','endDate'].forEach(id=>{const v=document.getElementById(id).value;if(v)p.append(id,v)});const st=document.getElementById('statusFilter').value;if(st)p.append('status',st);const cl=document.getElementById('clientFilter').value;if(cl)p.append('clientId',cl);const tr=document.getElementById('truckFilter').value;if(tr)p.append('truckId',tr);const d=await api('/reports/summary?'+p.toString());if(d.status==='success'){const s=d.data.summary;document.getElementById('summaryCards').innerHTML=`<div class="bg-white rounded-xl shadow p-3 text-center"><p class="text-xl font-bold">${s.total_records||0}</p><p class="text-xs text-gray-500">Records</p></div><div class="bg-green-50 rounded-xl shadow p-3 text-center"><p class="text-xl font-bold text-green-700">${s.completed||0}</p><p class="text-xs text-gray-500">Completed</p></div><div class="bg-red-50 rounded-xl shadow p-3 text-center"><p class="text-xl font-bold text-red-700">${s.cancelled||0}</p><p class="text-xs text-gray-500">Cancelled</p></div><div class="bg-orange-50 rounded-xl shadow p-3 text-center"><p class="text-xl font-bold text-orange-700">${((s.total_volume||0)/1000).toFixed(1)}kL</p><p class="text-xs text-gray-500">Total Vol</p></div><div class="bg-blue-50 rounded-xl shadow p-3 text-center"><p class="text-xl font-bold text-blue-700">${((s.total_actual_volume||0)/1000).toFixed(1)}kL</p><p class="text-xs text-gray-500">Actual</p></div>`;allRecords=d.data.records||[];currentPage=1;paginateData()}}
+    async function updateTPS(id,field,val){await fetch('/api/dispatch/update-tps/'+id,{method:'PUT',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify(field==='start'?{tps_start:val}:{tps_end:val})})}
+    function clearFilters(){['startDate','endDate','clientFilter','truckFilter'].forEach(id=>document.getElementById(id).value='');document.getElementById('startDate').value=new Date().toISOString().split('T')[0];document.getElementById('endDate').value=new Date().toISOString().split('T')[0];document.getElementById('statusFilter').value='completed,cancelled,dispatched';loadReports()}
+    function printReport(){window.print()}
+    async function exportCSV(){const p=new URLSearchParams();['startDate','endDate'].forEach(id=>{const v=document.getElementById(id).value;if(v)p.append(id,v)});const st=document.getElementById('statusFilter').value;if(st)p.append('status',st);const r=await fetch(API+'/reports/export?'+p.toString(),{headers:{'Authorization':'Bearer '+token}});if(!r.ok)return alert('Export failed');const b=await r.blob();const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='report-'+new Date().toISOString().split('T')[0]+'.csv';a.click()}
+    async function editWC(id,cell){const w=prompt('Printed WC:',cell.textContent.trim()==='-'?'':cell.textContent.trim());if(w===null)return;const c=w.replace(/\D/g,'').substring(0,12);const r=await fetch('/api/dispatch/update-wc/'+id,{method:'PUT',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({printed_wc:c||null})});if((await r.json()).status==='success'){cell.textContent=c||'-';cell.classList.add('bg-green-100');setTimeout(()=>cell.classList.remove('bg-green-100'),1000)}}
+    async function toggleSI(id,cell){const n=cell.textContent.trim()!=='Yes';const r=await fetch('/api/dispatch/update-si/'+id,{method:'PUT',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({has_si:n?1:0})});if((await r.json()).status==='success'){cell.textContent=n?'Yes':'No';cell.classList.add('bg-green-100');setTimeout(()=>cell.classList.remove('bg-green-100'),1000)}}
+    function openBackload(id){document.getElementById('backloadAtlId').value=id;const row=event.target.closest('tr');document.getElementById('backloadAtlCode').value=row?row.cells[1].textContent.trim():'N/A';document.getElementById('backloadVolume').value='';document.getElementById('backloadReason').value='';document.getElementById('backloadModal').classList.remove('hidden')}
+    async function submitBackload(e){e.preventDefault();const id=document.getElementById('backloadAtlId').value,v=document.getElementById('backloadVolume').value,rs=document.getElementById('backloadReason').value;if(!confirm('Record backload of '+Number(v).toLocaleString()+' L?\n\nReason: '+rs))return;const r=await fetch('/api/backloads',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({atl_id:id,volume:v,reason:rs})});const d=await r.json();if(d.status==='success'){alert('Backload recorded!');document.getElementById('backloadModal').classList.add('hidden');loadReports()}else alert(d.error||'Error')}
+    function sortTable(tid,ci){const tb=document.getElementById(tid);if(!tb)return;const rows=Array.from(tb.querySelectorAll('tr'));if(!rows.length)return;const th=tb.closest('table').querySelectorAll('th')[ci];if(!th)return;const ia=th.classList.contains('sort-asc');tb.closest('table').querySelectorAll('th').forEach(t=>t.classList.remove('sort-asc','sort-desc'));rows.sort((a,b)=>{const av=(a.cells[ci]?.textContent||'').trim().replace(/[,%$]/g,''),bv=(b.cells[ci]?.textContent||'').trim().replace(/[,%$]/g,''),an=parseFloat(av),bn=parseFloat(bv);if(!isNaN(an)&&!isNaN(bn))return ia?bn-an:an-bn;return ia?bv.localeCompare(av):av.localeCompare(bv)});th.classList.add(ia?'sort-desc':'sort-asc');rows.forEach(r=>tb.appendChild(r))}
+    function logout(){localStorage.clear();window.location.href='/'}
+    loadFilters();loadReports();
+</script>
+</body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
