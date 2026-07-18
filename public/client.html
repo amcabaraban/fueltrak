@@ -349,7 +349,8 @@
             
             if (!plate) { 
                 statusDiv.classList.add('hidden'); 
-                submitBtn.disabled = true; 
+                submitBtn.disabled = true;
+                currentTruckId = null;
                 return; 
             }
             
@@ -360,6 +361,25 @@
                     var truck = data.data.truck;
                     var canProceed = data.data.can_proceed;
                     var documents = data.data.documents || {};
+                    
+                    // Check if truck has an ID (exists in trucks table)
+                    if (!truck.id && truck.masterlist) {
+                        truckVerified = false;
+                        currentTruckId = null;
+                        submitBtn.disabled = true;
+                        statusDiv.innerHTML = '<span class="text-red-600">❌ Truck not registered in system. Please use a registered truck or contact admin.</span>';
+                        statusDiv.classList.remove('hidden');
+                        return;
+                    }
+                    
+                    if (!truck.id) {
+                        truckVerified = false;
+                        currentTruckId = null;
+                        submitBtn.disabled = true;
+                        statusDiv.innerHTML = '<span class="text-red-600">❌ Truck not found</span>';
+                        statusDiv.classList.remove('hidden');
+                        return;
+                    }
                     
                     // Check for expired documents
                     var expiredDocs = [];
@@ -372,27 +392,33 @@
                     }
                     
                     truckVerified = canProceed;
+                    currentTruckId = truck.id;
                     submitBtn.disabled = !canProceed;
                     
                     if (canProceed) {
-                        statusDiv.innerHTML = '<span class="text-green-600">✓ Truck verified</span>';
-                        currentTruckId = truck.id; // <-- WE ADDED THIS LINE
+                        statusDiv.innerHTML = '<span class="text-green-600">✓ Truck verified - ID: ' + truck.id + '</span>';
                     } else {
-                        statusDiv.innerHTML = '<span class="text-red-600">? Documents expired</span>';
+                        statusDiv.innerHTML = '<span class="text-red-600">⚠ Documents expired</span>';
                     }
                     statusDiv.classList.remove('hidden');
                     
                     if (truck && truck.driver_name) document.getElementById('driverName').value = truck.driver_name;
-                    if (truck && truck.hauler_name) document.getElementById('hauler').value = truck.hauler_name;
+                    if (truck && truck.hauler_name) document.getElementById('hauler').value = truck.hauler_name || '';
+                    if (truck && truck.total_capacity) {
+                        document.getElementById('capacityHint').textContent = 'Max capacity: ' + Number(truck.total_capacity).toLocaleString() + ' L';
+                        document.getElementById('volume').max = truck.total_capacity;
+                    }
                 } else {
-                    truckVerified = false; msg.classList.add('hidden');
+                    truckVerified = false;
+                    currentTruckId = null;
                     submitBtn.disabled = true;
-                    statusDiv.innerHTML = '<span class="text-red-600">? Truck not found</span>';
+                    statusDiv.innerHTML = '<span class="text-red-600">❌ Truck not found</span>';
                     statusDiv.classList.remove('hidden');
                 }
             } catch (e) {
                 console.error('Verify truck error:', e);
                 truckVerified = false;
+                currentTruckId = null;
                 submitBtn.disabled = true;
             }
         }
