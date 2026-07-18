@@ -7,10 +7,12 @@ const mysql = require('mysql2/promise');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const NodeCache = require('node-cache');
+const path = require('path');
 
 const app = express();
 const otpCache = new NodeCache({ stdTTL: 600 });
 
+app.set('trust proxy', 1);
 app.use(express.json({ limit: "10kb" }));
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(compression());
@@ -19,7 +21,11 @@ app.use(cors({ origin: ['https://fueltrak-seven.vercel.app', 'http://localhost:3
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
-  message: { error: "Too many requests" }
+  message: { error: "Too many requests" },
+  keyGenerator: (req) => {
+    return req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+  },
+  validate: { xForwardedForHeader: false }
 });
 app.use("/api/", limiter);
 
@@ -132,19 +138,15 @@ app.post('/api/auth/login', async (req, res) => {
     await pool.execute('UPDATE users SET last_login = NOW() WHERE id = ?', [user.id]);
     const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET || 'secret', { expiresIn: '24h' });
 
-    // Check if already logged in on another device
     if (user.current_token) {
         try {
             jwt.verify(user.current_token, process.env.JWT_SECRET || 'secret');
-            // Old token still valid - return special response asking to logout
             return res.json({ 
                 status: 'existing_session', 
                 message: 'Already logged in on another device. Do you want to logout the other device and continue here?',
                 user: { id: user.id, email: user.email, role: user.role }
             });
-        } catch(e) {
-            // Old token expired, proceed
-        }
+        } catch(e) {}
     }
 
     await pool.execute('UPDATE users SET current_token = ?, last_login = NOW() WHERE id = ?', [token, user.id]);
@@ -154,7 +156,6 @@ app.post('/api/auth/login', async (req, res) => {
         token,
         user: { id: user.id, email: user.email, role: user.role, mobile: user.mobile, company_name: user.company_name }
     });
-  
   } catch (error) {
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -578,8 +579,6 @@ app.delete('/api/clients/:id', authenticate, authorize('management'), async (req
   } catch (error) { res.status(400).json({ error: error.message }); }
 });
 
-
-
 // ============ UPDATE WC ============
 app.put("/api/dispatch/update-wc/:id", authenticate, authorize("dispatcher", "management"), async (req, res) => {
   try {
@@ -588,20 +587,23 @@ app.put("/api/dispatch/update-wc/:id", authenticate, authorize("dispatcher", "ma
     res.json({ status: "success", message: "WC updated" });
   } catch (error) { res.status(400).json({ error: error.message }); }
 });
+
+app.put('/api/dispatch/update-si/:id', authenticate, authorize('dispatcher', 'management'), async (req, res) => {
+  try {
+    await pool.execute('UPDATE authority_to_load SET has_si = ? WHERE id = ?', [req.body.has_si, req.params.id]);
+    res.json({ status: 'success' });
+  } catch (error) { res.status(400).json({ error: error.message }); }
+});
+
+app.put('/api/dispatch/update-tps/:id', authenticate, authorize('dispatcher', 'management'), async (req, res) => {
+  try {
+    await pool.execute('UPDATE authority_to_load SET tps_start = ?, tps_end = ? WHERE id = ?', [req.body.tps_start, req.body.tps_end, req.params.id]);
+    res.json({ status: 'success' });
+  } catch (error) { res.status(400).json({ error: error.message }); }
+});
+
 // ============ HEALTH ============
 app.get('/api/health', (req, res) => res.json({ status: 'OK', db: process.env.DB_NAME }));
-
-const path = require('path');
-
-app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'dashboard.html')));
-app.get('/dashboard.html', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'dashboard.html')));
-app.get('/client', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'client.html')));
-app.get('/client.html', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'client.html')));
-
-app.get('/docs-report', (req, res) => res.sendFile(require('path').join(__dirname, '..', 'public', 'docs-report.html')));
-app.get('/reports', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'reports.html')));
-app.get('/', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'index.html')));
-
 
 // ============ CLIENT ATL ROUTES ============
 app.get('/api/client/dashboard', authenticate, authorize('client'), async (req, res) => {
@@ -621,12 +623,12 @@ app.get('/api/client/verify-truck/:plateNo', authenticate, authorize('client'), 
   try {
     const [trucks] = await pool.execute('SELECT * FROM trucks WHERE plate_no = ? AND is_active = 1', [req.params.plateNo.toUpperCase()]);
     if (!trucks.length) {
-    var [master] = await pool.execute('SELECT * FROM truck_masterlist WHERE plate_no = ?', [req.params.plateNo.toUpperCase()]);
-    if (master.length) {
-      return res.json({ status: 'success', data: { truck: { plate_no: master[0].plate_no, driver_name: master[0].driver_name, total_capacity: master[0].total_capacity, masterlist: master[0] }, documents: {}, can_proceed: true } });
+      var [master] = await pool.execute('SELECT * FROM truck_masterlist WHERE plate_no = ?', [req.params.plateNo.toUpperCase()]);
+      if (master.length) {
+        return res.json({ status: 'success', data: { truck: { plate_no: master[0].plate_no, driver_name: master[0].driver_name, total_capacity: master[0].total_capacity, masterlist: master[0] }, documents: {}, can_proceed: true } });
+      }
+      return res.status(404).json({ error: 'Truck not found', can_proceed: false });
     }
-    return res.status(404).json({ error: 'Truck not found', can_proceed: false });
-  }
     const truck = trucks[0];
     const [docs] = await pool.execute('SELECT * FROM truck_documents WHERE truck_id = ?', [truck.id]);
     const docStatus = {}; let allValid = true;
@@ -657,6 +659,13 @@ app.post('/api/client/cancel-atl/:id', authenticate, authorize('client'), async 
   } catch (error) { res.status(400).json({ error: error.message }); }
 });
 
+app.get("/api/client/atl/:id", authenticate, authorize("client"), async (req, res) => {
+  try {
+    var [atls] = await pool.execute("SELECT * FROM authority_to_load WHERE id = ? AND client_id = ?", [req.params.id, req.user.id]);
+    if (!atls.length) return res.status(404).json({ error: "ATL not found" });
+    res.json({ status: "success", data: atls[0] });
+  } catch (error) { res.status(500).json({ error: error.message }); }
+});
 
 // ============ ATL PAGE ROUTES ============
 app.get('/api/atl/summary', authenticate, async (req, res) => {
@@ -683,7 +692,6 @@ app.post('/api/atl/submit', authenticate, async (req, res) => {
     res.status(201).json({ status: 'success', message: 'ATL ' + atlCode + ' Submitted!', atl_code: atlCode });
   } catch (error) { res.status(400).json({ error: error.message }); }
 });
-
 
 // ============ REPORTS ============
 app.get('/api/reports/filters', authenticate, authorize('dispatcher', 'management'), async (req, res) => {
@@ -737,22 +745,7 @@ app.get('/api/reports/export', authenticate, authorize('dispatcher', 'management
   } catch (error) { res.status(500).json({ error: error.message }); }
 });
 
-app.put('/api/dispatch/update-si/:id', authenticate, authorize('dispatcher', 'management'), async (req, res) => {
-  try {
-    await pool.execute('UPDATE authority_to_load SET has_si = ? WHERE id = ?', [req.body.has_si, req.params.id]);
-    res.json({ status: 'success' });
-  } catch (error) { res.status(400).json({ error: error.message }); }
-});
-
-app.put('/api/dispatch/update-tps/:id', authenticate, authorize('dispatcher', 'management'), async (req, res) => {
-  try {
-    await pool.execute('UPDATE authority_to_load SET tps_start = ?, tps_end = ? WHERE id = ?', [req.body.tps_start, req.body.tps_end, req.params.id]);
-    res.json({ status: 'success' });
-  } catch (error) { res.status(400).json({ error: error.message }); }
-});
-
 // ============ CHAT ROUTES ============
-// Get chat messages between current user and a specific client
 app.get('/api/chat/:clientId', authenticate, async (req, res) => {
   try {
     var [messages] = await pool.execute(
@@ -763,7 +756,6 @@ app.get('/api/chat/:clientId', authenticate, async (req, res) => {
   } catch (error) { res.status(500).json({ error: error.message }); }
 });
 
-// Send message to a client
 app.post('/api/chat', authenticate, async (req, res) => {
   try {
     var { receiver_id, message } = req.body;
@@ -773,29 +765,17 @@ app.post('/api/chat', authenticate, async (req, res) => {
   } catch (error) { res.status(400).json({ error: error.message }); }
 });
 
-// Get chat list (clients for admin, admin for clients)
 app.get('/api/chat-list', authenticate, async (req, res) => {
   try {
     if (req.user.role === 'client') {
-      // Client sees admin/dispatcher
       var [users] = await pool.execute("SELECT id, email FROM users WHERE role IN ('dispatcher','management') LIMIT 5");
     } else {
-      // Admin sees clients who have chatted
       var [users] = await pool.execute("SELECT DISTINCT u.id, u.email FROM users u JOIN chat_messages cm ON (cm.sender_id = u.id OR cm.receiver_id = u.id) WHERE u.role = 'client' AND (cm.sender_id = ? OR cm.receiver_id = ?) LIMIT 20", [req.user.id, req.user.id]);
       if (users.length === 0) {
         var [users] = await pool.execute("SELECT id, email FROM users WHERE role = 'client' LIMIT 10");
       }
     }
     res.json({ status: 'success', data: users });
-  } catch (error) { res.status(500).json({ error: error.message }); }
-});
-
-
-app.get("/api/client/atl/:id", authenticate, authorize("client"), async (req, res) => {
-  try {
-    var [atls] = await pool.execute("SELECT * FROM authority_to_load WHERE id = ? AND client_id = ?", [req.params.id, req.user.id]);
-    if (!atls.length) return res.status(404).json({ error: "ATL not found" });
-    res.json({ status: "success", data: atls[0] });
   } catch (error) { res.status(500).json({ error: error.message }); }
 });
 
@@ -837,9 +817,7 @@ app.get('/api/backloads/:atlId', authenticate, async (req, res) => {
   } catch (error) { res.status(500).json({ error: error.message }); }
 });
 
-app.get('/ttsd-checklist', (req, res) => res.sendFile(require('path').join(__dirname, '..', 'public', 'ttsd-checklist.html')));
-app.get('/tutorial', (req, res) => res.sendFile(require('path').join(__dirname, '..', 'public', 'tutorial.html')));
-
+// ============ AUDIT LOGS ============
 app.get("/api/audit-logs", authenticate, authorize("dispatcher", "management"), async (req, res) => {
   try {
     var [logs] = await pool.execute("SELECT al.*, u.email FROM audit_logs al JOIN users u ON al.user_id = u.id ORDER BY al.created_at DESC LIMIT 100");
@@ -847,9 +825,7 @@ app.get("/api/audit-logs", authenticate, authorize("dispatcher", "management"), 
   } catch (error) { res.status(500).json({ error: error.message }); }
 });
 
-app.get('/audit-logs', (req, res) => res.sendFile(require('path').join(__dirname, '..', 'public', 'audit-logs.html')));
-
-
+// ============ TRUCK MASTERLIST ============
 app.get('/api/truck-masterlist', authenticate, async (req, res) => {
   try {
     var [rows] = await pool.execute('SELECT plate_no FROM truck_masterlist ORDER BY plate_no ASC');
@@ -868,15 +844,12 @@ app.get('/api/truck-masterlist/:plateNo', authenticate, async (req, res) => {
   } catch (error) { res.status(500).json({ error: error.message }); }
 });
 
-
 app.get('/api/truck-masterlist-all', authenticate, async (req, res) => {
   try {
     var [rows] = await pool.execute('SELECT * FROM truck_masterlist ORDER BY plate_no ASC');
     res.json({ status: 'success', data: rows });
   } catch (error) { res.status(500).json({ error: error.message }); }
 });
-app.get('/trucks', (req, res) => res.sendFile(require('path').join(__dirname, '..', 'public', 'trucks.html')));
-
 
 app.put('/api/update-truck-masterlist/:id', authenticate, authorize('dispatcher', 'management'), async (req, res) => {
   try {
@@ -896,13 +869,19 @@ app.put('/api/update-truck-masterlist/:id', authenticate, authorize('dispatcher'
   } catch (error) { res.status(400).json({ error: error.message }); }
 });
 
+// ============ PAGE ROUTES (must be last) ============
+app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'dashboard.html')));
+app.get('/dashboard.html', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'dashboard.html')));
+app.get('/client', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'client.html')));
+app.get('/client.html', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'client.html')));
+app.get('/docs-report', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'docs-report.html')));
+app.get('/reports', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'reports.html')));
+app.get('/reports.html', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'reports.html')));
+app.get('/atl.html', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'atl.html')));
+app.get('/ttsd-checklist', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'ttsd-checklist.html')));
+app.get('/tutorial', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'tutorial.html')));
+app.get('/audit-logs', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'audit-logs.html')));
+app.get('/trucks', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'trucks.html')));
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'index.html')));
+
 module.exports = app;
-
-
-
-
-
-
-
-
-
