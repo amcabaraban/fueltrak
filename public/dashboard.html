@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -239,59 +239,51 @@
         async function loadDashboard() {
             var atlData = await api('/dispatch/enhanced-stats');
             var truckData = await api('/dispatch/truck-stats');
-            if (atlData.status !== 'success' || truckData.status !== 'success') return;
-            var s = atlData.data, t = truckData.data;
-            document.getElementById('atlStats').innerHTML = [
-                { label:'Pending',value:s.pending,gradient:'from-yellow-400 to-yellow-500' },
-                { label:'Approved',value:s.approved,gradient:'from-blue-400 to-blue-500' },
-                { label:'Loading',value:s.loading,gradient:'from-orange-400 to-orange-500' },
-                { label:'Completed',value:s.completed,gradient:'from-green-400 to-green-500' },
-                { label:'Loaded Today',value:s.loadedToday,gradient:'from-indigo-400 to-indigo-500' },
-                { label:'Total Vol',value:(s.totalVolume/1000).toFixed(1)+'k L',gradient:'from-purple-400 to-purple-500' }
-            ].map(function(c) { return '<div class="stat-card bg-gradient-to-br '+c.gradient+' rounded-xl shadow-lg p-3 md:p-5 text-white"><p class="text-xs md:text-sm opacity-90">'+c.label+'</p><p class="text-xl md:text-3xl font-bold mt-1">'+c.value+'</p></div>'; }).join('');
-                            document.getElementById('fleetStats').innerHTML = [
-                { label:'Total Trucks',value:t.total,sub:t.active+' active, '+t.inactive+' inactive',border:'border-blue-500' },
-                { label:'Valid Docs',value:t.withValidDocs,sub:'Click to view',border:'border-green-500',click:'validDocs' },
-                { label:'Expired Docs',value:t.withExpiredDocs,sub:'Click to view',border:'border-red-500',click:'expiredDocs' },
-                { label:'Backloads',value:(s.totalBackload ? (s.totalBackload/1000).toFixed(1)+'k L' : '0 L'),sub:'Click to view details',border:'border-orange-500',click:'backloads' },
-                { label:'Capacity',value:(t.totalCapacity/1000).toFixed(1)+'k L',sub:'Total fleet',border:'border-purple-500' }                        
-            ].map(function(c) { return '<div class="stat-card bg-white rounded-xl shadow-lg p-2 md:p-3 border-l-4 '+c.border+'"'+(c.click?' onclick="showTruckDocs(\''+c.click+'\')" style="cursor:pointer"':'')+'><p class="text-gray-500 text-[10px] md:text-xs">'+c.label+'</p><p class="text-lg md:text-xl font-bold">'+c.value+'</p><p class="text-[9px] text-gray-400 truncate">'+c.sub+'</p></div>'; }).join('');
-            var docTypes = [{key:'lto',label:'LTO'},{key:'fire',label:'Fire'},{key:'dost',label:'DOST'}];
-            document.getElementById('docStats').innerHTML = docTypes.map(function(d) {
-                var data = t.documentBreakdown[d.key];
-                var total = data.valid + data.expired + data.missing;
-                var pct = total > 0 ? Math.round((data.valid/total)*100) : 0;
-                return '<div class="stat-card bg-white rounded-xl shadow-lg p-3 md:p-5"><div class="flex justify-between mb-2"><span class="font-semibold text-xs md:text-sm">'+d.label+'</span><span class="text-xs font-bold px-2 py-1 rounded-full '+(pct>=80?'bg-green-100 text-green-700':pct>=50?'bg-yellow-100 text-yellow-700':'bg-red-100 text-red-700')+'">'+pct+'%</span></div><div class="w-full bg-gray-200 rounded-full h-2 md:h-3 mb-2"><div class="progress-bar h-2 md:h-3 rounded-full '+(pct>=80?'bg-green-500':pct>=50?'bg-yellow-500':'bg-red-500')+'" style="inline-size:'+pct+'%"></div></div><div class="flex justify-between text-xs text-gray-500"><span>Valid: '+data.valid+'</span><span>Expired: '+data.expired+'</span><span>Missing: '+data.missing+'</span></div></div>';
-            }).join('');
-            // Update badges
-            var pendingCount = s.pending || 0;
-            var loadingCount = s.loading || 0;
-
-            var pendingBadge = document.getElementById('pendingBadge');
-            var loadingBadge = document.getElementById('loadingBadge');
-
-            if (pendingCount > 0) {
-                pendingBadge.textContent = pendingCount > 99 ? '99+' : pendingCount;
-                pendingBadge.classList.remove('hidden');
+            
+            // ATL Stats - always show if available
+            if (atlData.status === 'success') {
+                var s = atlData.data;
+                document.getElementById('atlStats').innerHTML = [
+                    { label:'Pending',value:s.pending,gradient:'from-yellow-400 to-yellow-500' },
+                    { label:'Approved',value:s.approved,gradient:'from-blue-400 to-blue-500' },
+                    { label:'Loading',value:s.loading,gradient:'from-orange-400 to-orange-500' },
+                    { label:'Completed',value:s.completed,gradient:'from-green-400 to-green-500' },
+                    { label:'Loaded Today',value:s.loadedToday,gradient:'from-indigo-400 to-indigo-500' },
+                    { label:'Total Vol',value:((s.totalVolume||0)/1000).toFixed(1)+'k L',gradient:'from-purple-400 to-purple-500' }
+                ].map(function(c) { return '<div class="stat-card bg-gradient-to-br '+c.gradient+' rounded-xl shadow-lg p-3 md:p-5 text-white"><p class="text-xs md:text-sm opacity-90">'+c.label+'</p><p class="text-xl md:text-3xl font-bold mt-1">'+c.value+'</p></div>'; }).join('');
+                
+                // Update badges
+                var pendingBadge = document.getElementById('pendingBadge');
+                var loadingBadge = document.getElementById('loadingBadge');
+                if (s.pending > 0) { pendingBadge.textContent = s.pending > 99 ? '99+' : s.pending; pendingBadge.classList.remove('hidden'); }
+                else { pendingBadge.classList.add('hidden'); }
+                if (s.loading > 0) { loadingBadge.textContent = s.loading > 99 ? '99+' : s.loading; loadingBadge.classList.remove('hidden'); }
+                else { loadingBadge.classList.add('hidden'); }
             } else {
-                pendingBadge.classList.add('hidden');
+                document.getElementById('atlStats').innerHTML = '<p class="text-gray-500 col-span-full text-center py-4">Unable to load stats</p>';
             }
-
-            if (loadingCount > 0) {
-                loadingBadge.textContent = loadingCount > 99 ? '99+' : loadingCount;
-                loadingBadge.classList.remove('hidden');
+            
+            // Fleet & Document Stats - show if truck data available
+            if (truckData.status === 'success') {
+                var t = truckData.data;
+                document.getElementById('fleetStats').innerHTML = [
+                    { label:'Total Trucks',value:t.total,sub:(t.active||0)+' active, '+(t.inactive||0)+' inactive',border:'border-blue-500' },
+                    { label:'Valid Docs',value:t.withValidDocs,sub:'Click to view',border:'border-green-500',click:'validDocs' },
+                    { label:'Expired Docs',value:t.withExpiredDocs,sub:'Click to view',border:'border-red-500',click:'expiredDocs' },
+                    { label:'Backloads',value:'0 L',sub:'Click to view details',border:'border-orange-500',click:'backloads' },
+                    { label:'Capacity',value:((t.totalCapacity||0)/1000).toFixed(1)+'k L',sub:'Total fleet',border:'border-purple-500' }
+                ].map(function(c) { return '<div class="stat-card bg-white rounded-xl shadow-lg p-2 md:p-3 border-l-4 '+c.border+'"'+(c.click?' onclick="showTruckDocs(\''+c.click+'\')" style="cursor:pointer"':'')+'><p class="text-gray-500 text-[10px] md:text-xs">'+c.label+'</p><p class="text-lg md:text-xl font-bold">'+c.value+'</p><p class="text-[9px] text-gray-400 truncate">'+c.sub+'</p></div>'; }).join('');
+                
+                var docTypes = [{key:'lto',label:'LTO'},{key:'fire',label:'Fire'},{key:'dost',label:'DOST'}];
+                document.getElementById('docStats').innerHTML = docTypes.map(function(d) {
+                    var data = t.documentBreakdown[d.key] || {valid:0,expired:0,missing:0};
+                    var total = data.valid + data.expired + data.missing;
+                    var pct = total > 0 ? Math.round((data.valid/total)*100) : 0;
+                    return '<div class="stat-card bg-white rounded-xl shadow-lg p-3 md:p-5"><div class="flex justify-between mb-2"><span class="font-semibold text-xs md:text-sm">'+d.label+'</span><span class="text-xs font-bold px-2 py-1 rounded-full '+(pct>=80?'bg-green-100 text-green-700':pct>=50?'bg-yellow-100 text-yellow-700':'bg-red-100 text-red-700')+'">'+pct+'%</span></div><div class="w-full bg-gray-200 rounded-full h-2 md:h-3 mb-2"><div class="progress-bar h-2 md:h-3 rounded-full '+(pct>=80?'bg-green-500':pct>=50?'bg-yellow-500':'bg-red-500')+'" style="inline-size:'+pct+'%"></div></div><div class="flex justify-between text-xs text-gray-500"><span>Valid: '+data.valid+'</span><span>Expired: '+data.expired+'</span><span>Missing: '+data.missing+'</span></div></div>';
+                }).join('');
             } else {
-                loadingBadge.classList.add('hidden');
-            }
-        }
-
-        var allPendingATLs = [];
-
-        async function loadPending() {
-            var data = await api('/dispatch/pending');
-            if (data.status === 'success') {
-                allPendingATLs = data.data;
-                filterPending();
+                document.getElementById('fleetStats').innerHTML = '<p class="text-gray-500 col-span-full text-center py-4">Unable to load fleet stats</p>';
+                document.getElementById('docStats').innerHTML = '<p class="text-gray-500 col-span-full text-center py-4">Unable to load document stats</p>';
             }
         }
 
