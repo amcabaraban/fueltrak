@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -70,10 +70,11 @@
             document.getElementById('pageInfo').textContent='Showing '+(start+1)+'-'+Math.min(start+perPage,allTrucks.length)+' of '+allTrucks.length;
             
             document.getElementById('truckBody').innerHTML=pageData.map(function(t){
-                var cots=[t.cot1,t.cot2,t.cot3,t.cot4,t.cot5,t.cot6,t.cot7,t.cot8,t.cot9,t.cot10].filter(function(v){return v>0;});
-                var totalCap=cots.reduce(function(s,v){return s+v;},0);
-                return'<tr class="border-b hover:bg-gray-50"><td class="py-2 px-3">'+(t.truck_make||'-')+'</td><td class="py-2 px-3 font-semibold">'+t.plate_no+'</td><td class="py-2 px-3">'+(t.driver_name||'-')+'</td><td class="py-2 px-3">'+(t.hauler_name||'-')+'</td><td class="py-2 px-3 text-center">'+cots.length+'</td><td class="py-2 px-3 text-right">'+totalCap.toLocaleString()+'</td><td class="py-2 px-3 text-center">'+(t.tps_count||0)+'</td></tr>';
-            }).join('')||'<tr><td colspan="7" class="text-center py-8 text-gray-500">No trucks found</td></tr>';
+                var cots=[t.cot1,t.cot2,t.cot3,t.cot4,t.cot5,t.cot6,t.cot7,t.cot8,t.cot9,t.cot10].filter(function(v){return parseFloat(v)>0;});
+                var totalCap=cots.reduce(function(s,v){return s+parseFloat(v);},0);
+                var capKL=totalCap>0?Math.round(totalCap/1000):0;
+                return'<tr class="border-b hover:bg-gray-50"><td class="py-2 px-3">'+(t.truck_make||'-')+'</td><td class="py-2 px-3 font-semibold">'+t.plate_no+'</td><td class="py-2 px-3">'+(t.driver_name||'-').replace(/"/g,'')+'</td><td class="py-2 px-3">'+(t.hauler_name||'-')+'</td><td class="py-2 px-3 text-center">'+cots.length+'</td><td class="py-2 px-3 text-right font-bold">'+capKL.toLocaleString()+' KL</td><td class="py-2 px-3 text-center">'+(t.tps_count||0)+'</td></tr>';
+            }).join('')||'<tr><td colspan="7" class="text-center py-8 text-gray-500">No trucks found</td></tr>';            
             
             // Pagination
             var pagHTML='';
