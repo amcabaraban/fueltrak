@@ -130,6 +130,7 @@ app.post('/api/auth/login', async (req, res) => {
       try { jwt.verify(user.current_token, process.env.JWT_SECRET || 'secret'); return res.json({ status: 'existing_session', message: 'Already logged in on another device.', user: { id: user.id, email: user.email, role: user.role } }); } catch(e) {}
     }
     await pool.execute('UPDATE users SET current_token = ?, last_login = NOW() WHERE id = ?', [token, user.id]);
+    await logAudit(user.id, "LOGIN", "users", user.id, {email: user.email});
     res.json({ status: 'success', token, user: { id: user.id, email: user.email, role: user.role, mobile: user.mobile, company_name: user.company_name } });
   } catch (error) { res.status(500).json({ error: 'Internal server error' }); }
 });
@@ -146,6 +147,7 @@ app.post('/api/auth/force-login', async (req, res) => {
     if (!isMatch) return res.status(401).json({ error: 'Invalid credentials' });
     const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET || 'secret', { expiresIn: '24h' });
     await pool.execute('UPDATE users SET current_token = ?, last_login = NOW() WHERE id = ?', [token, user.id]);
+    await logAudit(user.id, "LOGIN", "users", user.id, {email: user.email});
     res.json({ status: 'success', token, user: { id: user.id, email: user.email, role: user.role, mobile: user.mobile, company_name: user.company_name } });
   } catch (error) { res.status(500).json({ error: error.message }); }
 });
@@ -482,6 +484,7 @@ app.post('/api/client/submit-atl', authenticate, authorize('client'), async (req
 app.post('/api/client/cancel-atl/:id', authenticate, authorize('client'), async (req, res) => {
   try {
     await pool.execute("UPDATE authority_to_load SET status = 'cancelled', remarks = ? WHERE id = ? AND client_id = ?", ['Cancellation: ' + (req.body.reason || ''), req.params.id, req.user.id]);
+    await logAudit(req.user.id, "CANCEL_ATL", "authority_to_load", req.params.id, {reason: req.body.reason});
     res.json({ status: 'success', message: 'Cancellation requested' });
   } catch (error) { res.status(400).json({ error: error.message }); }
 });
@@ -742,4 +745,5 @@ app.get('/tutorial', (req, res) => res.sendFile(path.join(__dirname, '..', 'publ
 app.get('/audit-logs', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'audit-logs.html')));
 
 module.exports = app;
+
 
