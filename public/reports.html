@@ -14,7 +14,7 @@
   th.sort-asc::after{content:' ?';font-size:9px}
   th.sort-desc::after{content:' ?';font-size:9px}
   #sidebar{transition:transform 0.3s}
-  @media(max-inline-size:767px){#sidebar{transform:translateX(-100%)}#sidebar.open{transform:translateX(0)}body.sidebar-open{overflow:hidden}}
+  @media(max-inline-size:767px){@media(max-width:767px){#sidebar{transform:translateX(-100%)}#sidebar.open{transform:translateX(0)}body.sidebar-open{overflow:hidden}}}
   @media(min-width:768px){body{padding-left:176px}}
   .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
   table{min-inline-size:1600px;font-size:11px}
@@ -54,7 +54,7 @@
  <nav class="bg-gradient-to-r from-blue-900 to-blue-800 text-white shadow-xl sticky top-0 z-20 no-print">
   <div class="hidden md:flex max-w-7xl mx-auto px-4 py-3 justify-between items-center">
    <div class="flex items-center space-x-3"><div class="bg-white/20 p-2 rounded-lg"><i class="fas fa-chart-bar text-2xl text-yellow-400"></i></div><div><span class="font-bold text-xl">FuelTrak Reports</span></div></div>
-   <div class="flex items-center space-x-3"><span id="userInfo" class="text-sm bg-white/10 px-3 py-1 rounded-full"></span><div class="flex-1 overflow-y-auto"></div>
+   <div class="flex items-center space-x-3"><span id="userInfo" class="text-sm bg-white/10 px-3 py-1 rounded-full"></span></div>
   </div>
  </nav>
 
@@ -220,6 +220,7 @@
 </div>
 </body>
 </html>
+
 
 
 
