@@ -1,822 +1,823 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FuelTrak - Dashboard</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-  <style>
-    .stat-card { transition: all 0.3s ease; }
-    .stat-card:hover { transform: translateY(-3px); box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
-    .progress-bar { transition: width 0.5s ease; }
-    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
-    .pulse { animation: pulse 2s infinite; }
-    .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; max-inline-size: 100%; }
-    @media (max-inline-size: 640px) { .stat-card h3 { font-size: .875rem; } table { font-size: .75rem; } table th, table td { padding: .5rem .25rem; } }
-    th { cursor: pointer; user-select: none; }
-    th.sort-asc::after { content: ' ?'; font-size: 10px; }
-    th.sort-desc::after { content: ' ?'; font-size: 10px; }
-    #sidebar{transition:transform 0.3s}@media(min-width:768px){body{padding-left:176px}}
-    @media(max-inline-size:767px){
-      #sidebar{transform:translateX(-100%)}
-      #sidebar.open{transform:translateX(0)}
-      body.sidebar-open{overflow:hidden}
-    }
-    @media(min-inline-size:768px){
-      body{padding-inline-start:0}
-      @media(min-inline-size:768px){
-        body{padding-inline-start:176px}
-      }
-    }
-  </style>
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ <title>FuelTrak - Dashboard</title>
+ <script src="https://cdn.tailwindcss.com"></script>
+ <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+ <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+ <style>
+  .stat-card { transition: all 0.3s ease; }
+  .stat-card:hover { transform: translateY(-3px); box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
+  .progress-bar { transition: width 0.5s ease; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+  .pulse { animation: pulse 2s infinite; }
+  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; max-inline-size: 100%; }
+  @media (max-inline-size: 640px) { .stat-card h3 { font-size: .875rem; } table { font-size: .75rem; } table th, table td { padding: .5rem .25rem; } }
+  th { cursor: pointer; user-select: none; }
+  th.sort-asc::after { content: ' ?'; font-size: 10px; }
+  th.sort-desc::after { content: ' ?'; font-size: 10px; }
+  #sidebar{transition:transform 0.3s}@media(min-width:768px){body{padding-left:176px}}
+  @media(max-inline-size:767px){
+   #sidebar{transform:translateX(-100%)}
+   #sidebar.open{transform:translateX(0)}
+   body.sidebar-open{overflow:hidden}
+  }
+  @media(min-inline-size:768px){
+   body{padding-inline-start:0}
+   @media(min-inline-size:768px){
+    body{padding-inline-start:176px}
+   }
+  }
+ </style>
 </head>
 <body class="bg-gray-50 min-h-screen pb-20 md:pb-0">
-  <div class="main-content">
-  <nav class="bg-gradient-to-r from-blue-900 to-blue-800 text-white shadow-xl sticky top-0 z-20">
-    <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
-      <div class="flex items-center space-x-1 sm:space-x-3">
-        <div class="bg-white/20 p-2 rounded-lg"><i class="fas fa-gas-pump text-2xl text-yellow-400"></i></div>
-        <div><span class="font-bold text-sm sm:text-lg md:text-xl">FuelTrak</span><p class="text-[10px] sm:text-xs text-blue-300 hidden sm:block">Logistics Management</p></div>
-      </div>
-      <div class="flex items-center space-x-3">
-        <span id="userInfo" class="text-[10px] sm:text-sm bg-white/10 px-1 sm:px-3 py-1 rounded-full max-w-[100px] sm:max-w-none truncate"></span>
-        <button onclick="showDashboard()" class="bg-white/20 px-1 sm:px-3 py-1 rounded text-[10px] sm:text-sm hover:bg-white/30"><i class="fas fa-chart-pie mr-1"></i><span class="hidden sm:inline">Dashboard</span></button>
-        <button onclick="logout()" class="bg-red-500/80 hover:bg-red-500 px-2 sm:px-4 py-1 sm:py-2 rounded text-[10px] sm:text-sm"><i class="fas fa-sign-out-alt mr-1"></i><span class="hidden sm:inline">Logout</span></button>
-      </div>
-    </div>
-  </nav>
-  <!-- Sidebar Navigation -->
-  <div class="fixed left-0 top-0 h-full w-14 md:w-48 bg-blue-900 text-white z-40 pt-16 overflow-y-auto no-print" id="sidebar"  class="flex flex-col">
-    <a href="/dashboard" class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap" title="Dashboard">
-      <i class="fas fa-tachometer-alt w-6 text-center"></i><span class="hidden md:inline ml-2">Dashboard</span>
+ <div class="main-content">
+ <nav class="bg-gradient-to-r from-blue-900 to-blue-800 text-white shadow-xl sticky top-0 z-20">
+  <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+   <div class="flex items-center space-x-1 sm:space-x-3">
+    <div class="bg-white/20 p-2 rounded-lg"><i class="fas fa-gas-pump text-2xl text-yellow-400"></i></div>
+    <div><span class="font-bold text-sm sm:text-lg md:text-xl">FuelTrak</span><p class="text-[10px] sm:text-xs text-blue-300 hidden sm:block">Logistics Management</p></div>
+   </div>
+   <div class="flex items-center space-x-3">
+    <span id="userInfo" class="text-[10px] sm:text-sm bg-white/10 px-1 sm:px-3 py-1 rounded-full max-w-[100px] sm:max-w-none truncate"></span>
+    <button onclick="showDashboard()" class="bg-white/20 px-1 sm:px-3 py-1 rounded text-[10px] sm:text-sm hover:bg-white/30"><i class="fas fa-chart-pie mr-1"></i><span class="hidden sm:inline">Dashboard</span></button>
+    <button onclick="logout()" class="bg-red-500/80 hover:bg-red-500 px-2 sm:px-4 py-1 sm:py-2 rounded text-[10px] sm:text-sm"><i class="fas fa-sign-out-alt mr-1"></i><span class="hidden sm:inline">Logout</span></button>
+   </div>
+  </div>
+ </nav>
+ <!-- Sidebar Navigation -->
+ <div class="fixed left-0 top-0 h-full w-14 md:w-48 bg-blue-900 text-white z-40 pt-16 overflow-y-auto no-print" id="sidebar" class="flex flex-col">
+  <a href="/dashboard" class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap" title="Dashboard">
+   <i class="fas fa-tachometer-alt w-6 text-center"></i><span class="hidden md:inline ml-2">Dashboard</span>
+  </a>
+  <a href="/reports" class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap" title="Reports">
+   <i class="fas fa-chart-bar w-6 text-center"></i><span class="hidden md:inline ml-2">Reports</span>
+  </a>
+  <a href="/trucks" class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap" title="Truck Masterlist">
+   <i class="fas fa-truck w-6 text-center"></i><span class="hidden md:inline ml-2">Truck Masterlist</span>
+  </a>
+  <a href="/docs-report" class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap" title="Doc Report">
+   <i class="fas fa-file-alt w-6 text-center"></i><span class="hidden md:inline ml-2">Doc Report</span>
+  </a>
+  <a href="/ttsd-checklist" class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap" title="TTSD Checklist">
+   <i class="fas fa-clipboard-check w-6 text-center"></i><span class="hidden md:inline ml-2">TTSD Checklist</span>
+  </a>
+  <a href="/audit-logs" class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap" title="Audit Logs">
+   <i class="fas fa-history w-6 text-center"></i><span class="hidden md:inline ml-2">Audit Logs</span>
+  </a><div class="border-t border-blue-700 p-2" >
+   <button onclick="logout()" class="flex items-center px-2 py-3 hover:bg-red-700 text-xs md:text-sm w-full text-left whitespace-nowrap">
+    <i class="fas fa-sign-out-alt w-6 text-center"></i><span class="hidden md:inline ml-2">Logout</span>
+   </button>
+  </div>
+ </div>
+
+ <!-- Overlay for mobile sidebar -->
+ <div id="sidebarOverlay" class="hidden fixed inset-0 bg-black bg-opacity-50 z-30 md:hidden" onclick="toggleSidebar()"></div>
+
+ <!-- Mobile hamburger -->
+ <button onclick="toggleSidebar()" class="fixed top-2 left-2 z-50 md:hidden bg-blue-900 text-white p-2 rounded">
+  <i class="fas fa-bars"></i>
+ </button>
+ <div class="max-w-7xl mx-auto px-4 py-8">
+  <div id="dashboardView">
+   <div class="bg-gradient-to-r from-blue-900 via-blue-700 to-blue-500 rounded-2xl shadow-2xl p-8 mb-8 text-white">
+    <p class="text-blue-200 text-sm" id="welcomeDate"></p>
+    <h1 class="text-3xl font-bold mt-1">Dispatch Dashboard</h1>
+    <p class="text-blue-100 mt-2">Real-time overview of all operations</p>
+   </div>
+   <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-8" id="atlStats"></div>
+   <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 mb-8" id="fleetStats"></div>
+   <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-8" id="docStats"></div>
+   <h2 class="text-xl font-bold text-gray-800 mb-4">Quick Actions</h2>
+   <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-2">
+    <button onclick="openTab('verify')" class="stat-card bg-gradient-to-br from-yellow-400 to-yellow-500 text-white rounded-xl shadow-lg p-4 md:p-6 text-left w-full relative">
+     <i class="fas fa-clipboard-check text-2xl md:text-3xl mb-2"></i><h3 class="font-bold text-sm md:text-lg">Verify ATL</h3><p class="text-xs opacity-90 hidden sm:block">Review pending</p>
+     <span id="pendingBadge" class="absolute top-2 right-2 bg-red-500 text-white text-xs w-6 h-6 rounded-full flex items-center justify-center font-bold hidden">0</span>
+    </button>
+    <button onclick="openTab('loading')" class="stat-card bg-gradient-to-br from-blue-400 to-blue-500 text-white rounded-xl shadow-lg p-4 md:p-6 text-left w-full relative">
+     <i class="fas fa-truck-loading text-2xl md:text-3xl mb-2"></i><h3 class="font-bold text-sm md:text-lg">Loading</h3><p class="text-xs opacity-90 hidden sm:block">Manage loading</p>
+     <span id="loadingBadge" class="absolute top-2 right-2 bg-orange-500 text-white text-xs w-6 h-6 rounded-full flex items-center justify-center font-bold hidden">0</span>
+    </button>
+    <a href="/trucks" class="stat-card bg-gradient-to-br from-green-400 to-green-500 text-white rounded-xl shadow-lg p-4 md:p-6 text-left block">
+     <i class="fas fa-truck text-2xl md:text-3xl mb-2"></i>
+     <h3 class="font-bold text-sm md:text-lg">Truck Masterlist</h3>
+     <p class="text-xs opacity-90 hidden sm:block">659 trucks</p>
     </a>
-    <a href="/reports" class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap" title="Reports">
-      <i class="fas fa-chart-bar w-6 text-center"></i><span class="hidden md:inline ml-2">Reports</span>
+    <button onclick="openTab('clients')" class="stat-card bg-gradient-to-br from-purple-400 to-purple-500 text-white rounded-xl shadow-lg p-4 md:p-6 text-left w-full">
+     <i class="fas fa-users text-2xl md:text-3xl mb-2"></i><h3 class="font-bold text-sm md:text-lg">Clients</h3><p class="text-xs opacity-90 hidden sm:block">Accounts</p>
+    </button>
+    <a href="/ttsd-checklist" class="stat-card bg-gradient-to-br from-cyan-400 to-cyan-500 text-white rounded-xl shadow-lg p-4 md:p-6 text-left block">
+     <i class="fas fa-clipboard-check text-2xl md:text-3xl mb-2"></i>
+     <h3 class="font-bold text-sm md:text-lg">TTD Checklist</h3>
+     <p class="text-xs opacity-90 hidden sm:block">Sealing Plan</p>
     </a>
-    <a href="/trucks" class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap" title="Truck Masterlist">
-      <i class="fas fa-truck w-6 text-center"></i><span class="hidden md:inline ml-2">Truck Masterlist</span>
+    <a href="/reports" class="stat-card bg-gradient-to-br from-teal-400 to-teal-500 text-white rounded-xl shadow-lg p-4 md:p-6 text-left block">
+     <i class="fas fa-chart-bar text-2xl md:text-3xl mb-2"></i><h3 class="font-bold text-sm md:text-lg">Reports</h3><p class="text-xs opacity-90 hidden sm:block">Analytics</p>
     </a>
-    <a href="/docs-report" class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap" title="Doc Report">
-      <i class="fas fa-file-alt w-6 text-center"></i><span class="hidden md:inline ml-2">Doc Report</span>
+    <a href="/docs-report" class="stat-card bg-gradient-to-br from-orange-400 to-orange-500 text-white rounded-xl shadow-lg p-4 md:p-6 text-left block">
+     <i class="fas fa-file-alt text-2xl md:text-3xl mb-2"></i><h3 class="font-bold text-sm md:text-lg">Doc Report</h3><p class="text-xs opacity-90 hidden sm:block">Documents</p>
     </a>
-    <a href="/ttsd-checklist" class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap" title="TTSD Checklist">
-      <i class="fas fa-clipboard-check w-6 text-center"></i><span class="hidden md:inline ml-2">TTSD Checklist</span>
+    <a href="/audit-logs" class="stat-card bg-gradient-to-br from-gray-600 to-gray-700 text-white rounded-xl shadow-lg p-4 md:p-6 text-left block">
+     <i class="fas fa-history text-2xl md:text-3xl mb-2"></i><h3 class="font-bold text-sm md:text-lg">Audit Logs</h3><p class="text-xs opacity-90 hidden sm:block">Transactions</p>
     </a>
-    <a href="/audit-logs" class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap" title="Audit Logs">
-      <i class="fas fa-history w-6 text-center"></i><span class="hidden md:inline ml-2">Audit Logs</span>
-    </a></div><div class="border-t border-blue-700 p-2" >
-      <button onclick="logout()" class="flex items-center px-2 py-3 hover:bg-red-700 text-xs md:text-sm w-full text-left whitespace-nowrap">
-        <i class="fas fa-sign-out-alt w-6 text-center"></i><span class="hidden md:inline ml-2">Logout</span>
-      </button>
-    </div>
+   </div>
   </div>
 
-  <!-- Overlay for mobile sidebar -->
-  <div id="sidebarOverlay" class="hidden fixed inset-0 bg-black bg-opacity-50 z-30 md:hidden" onclick="toggleSidebar()"></div>
-
-  <!-- Mobile hamburger -->
-  <button onclick="toggleSidebar()" class="fixed top-2 left-2 z-50 md:hidden bg-blue-900 text-white p-2 rounded">
-    <i class="fas fa-bars"></i>
-  </button>
-  <div class="max-w-7xl mx-auto px-4 py-8">
-    <div id="dashboardView">
-      <div class="bg-gradient-to-r from-blue-900 via-blue-700 to-blue-500 rounded-2xl shadow-2xl p-8 mb-8 text-white">
-        <p class="text-blue-200 text-sm" id="welcomeDate"></p>
-        <h1 class="text-3xl font-bold mt-1">Dispatch Dashboard</h1>
-        <p class="text-blue-100 mt-2">Real-time overview of all operations</p>
-      </div>
-      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-8" id="atlStats"></div>
-      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 mb-8" id="fleetStats"></div>
-      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-8" id="docStats"></div>
-      <h2 class="text-xl font-bold text-gray-800 mb-4">Quick Actions</h2>
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-2">
-        <button onclick="openTab('verify')" class="stat-card bg-gradient-to-br from-yellow-400 to-yellow-500 text-white rounded-xl shadow-lg p-4 md:p-6 text-left w-full relative">
-          <i class="fas fa-clipboard-check text-2xl md:text-3xl mb-2"></i><h3 class="font-bold text-sm md:text-lg">Verify ATL</h3><p class="text-xs opacity-90 hidden sm:block">Review pending</p>
-          <span id="pendingBadge" class="absolute top-2 right-2 bg-red-500 text-white text-xs w-6 h-6 rounded-full flex items-center justify-center font-bold hidden">0</span>
-        </button>
-        <button onclick="openTab('loading')" class="stat-card bg-gradient-to-br from-blue-400 to-blue-500 text-white rounded-xl shadow-lg p-4 md:p-6 text-left w-full relative">
-          <i class="fas fa-truck-loading text-2xl md:text-3xl mb-2"></i><h3 class="font-bold text-sm md:text-lg">Loading</h3><p class="text-xs opacity-90 hidden sm:block">Manage loading</p>
-          <span id="loadingBadge" class="absolute top-2 right-2 bg-orange-500 text-white text-xs w-6 h-6 rounded-full flex items-center justify-center font-bold hidden">0</span>
-        </button>
-        <a href="/trucks" class="stat-card bg-gradient-to-br from-green-400 to-green-500 text-white rounded-xl shadow-lg p-4 md:p-6 text-left block">
-          <i class="fas fa-truck text-2xl md:text-3xl mb-2"></i>
-          <h3 class="font-bold text-sm md:text-lg">Truck Masterlist</h3>
-          <p class="text-xs opacity-90 hidden sm:block">659 trucks</p>
-        </a>
-        <button onclick="openTab('clients')" class="stat-card bg-gradient-to-br from-purple-400 to-purple-500 text-white rounded-xl shadow-lg p-4 md:p-6 text-left w-full">
-          <i class="fas fa-users text-2xl md:text-3xl mb-2"></i><h3 class="font-bold text-sm md:text-lg">Clients</h3><p class="text-xs opacity-90 hidden sm:block">Accounts</p>
-        </button>
-        <a href="/ttsd-checklist" class="stat-card bg-gradient-to-br from-cyan-400 to-cyan-500 text-white rounded-xl shadow-lg p-4 md:p-6 text-left block">
-          <i class="fas fa-clipboard-check text-2xl md:text-3xl mb-2"></i>
-          <h3 class="font-bold text-sm md:text-lg">TTD Checklist</h3>
-          <p class="text-xs opacity-90 hidden sm:block">Sealing Plan</p>
-        </a>
-        <a href="/reports" class="stat-card bg-gradient-to-br from-teal-400 to-teal-500 text-white rounded-xl shadow-lg p-4 md:p-6 text-left block">
-          <i class="fas fa-chart-bar text-2xl md:text-3xl mb-2"></i><h3 class="font-bold text-sm md:text-lg">Reports</h3><p class="text-xs opacity-90 hidden sm:block">Analytics</p>
-        </a>
-        <a href="/docs-report" class="stat-card bg-gradient-to-br from-orange-400 to-orange-500 text-white rounded-xl shadow-lg p-4 md:p-6 text-left block">
-          <i class="fas fa-file-alt text-2xl md:text-3xl mb-2"></i><h3 class="font-bold text-sm md:text-lg">Doc Report</h3><p class="text-xs opacity-90 hidden sm:block">Documents</p>
-        </a>
-        <a href="/audit-logs" class="stat-card bg-gradient-to-br from-gray-600 to-gray-700 text-white rounded-xl shadow-lg p-4 md:p-6 text-left block">
-          <i class="fas fa-history text-2xl md:text-3xl mb-2"></i><h3 class="font-bold text-sm md:text-lg">Audit Logs</h3><p class="text-xs opacity-90 hidden sm:block">Transactions</p>
-        </a>
-      </div>
+  <div id="tabVerify" class="hidden">
+   <div class="flex items-center mb-4"><button onclick="showDashboard()" class="text-gray-500 hover:text-gray-700 mr-3">
+    <i class="fas fa-arrow-left text-xl"></i></button>
+    <h2 class="text-xl font-bold">Pending ATL Verifications</h2>
+   </div>
+   <div class="bg-white rounded-lg shadow p-3 mb-4">
+    <div class="flex flex-wrap gap-2">
+     <input type="text" id="pendingSearch" placeholder="Search plate, company, ATL code..." class="flex-1 px-3 py-2 border rounded text-sm" oninput="filterPending()">
+     <select id="pendingFilter" class="px-3 py-2 border rounded text-sm" onchange="filterPending()">
+      <option value="all">All</option>
+      <option value="cancellation">Cancellation Requests</option>
+     </select>
     </div>
-
-    <div id="tabVerify" class="hidden">
-      <div class="flex items-center mb-4"><button onclick="showDashboard()" class="text-gray-500 hover:text-gray-700 mr-3">
-        <i class="fas fa-arrow-left text-xl"></i></button>
-        <h2 class="text-xl font-bold">Pending ATL Verifications</h2>
-      </div>
-      <div class="bg-white rounded-lg shadow p-3 mb-4">
-        <div class="flex flex-wrap gap-2">
-          <input type="text" id="pendingSearch" placeholder="Search plate, company, ATL code..." class="flex-1 px-3 py-2 border rounded text-sm" oninput="filterPending()">
-          <select id="pendingFilter" class="px-3 py-2 border rounded text-sm" onchange="filterPending()">
-            <option value="all">All</option>
-            <option value="cancellation">Cancellation Requests</option>
-          </select>
-        </div>
-      </div>
-      <div id="pendingATLs" class="space-y-3"></div>
-    </div>
-
-    <div id="tabLoading" class="hidden">
-      <div class="flex items-center mb-4"><button onclick="showDashboard()" class="text-gray-500 hover:text-gray-700 mr-3"><i class="fas fa-arrow-left text-xl"></i></button><h2 class="text-xl font-bold">Loading Management</h2></div>
-      <div class="mb-8"><h3 class="text-lg font-semibold text-orange-700 mb-3"><i class="fas fa-spinner fa-spin mr-2"></i>Ongoing Loading</h3><div id="ongoingLoading" class="space-y-3"></div></div>
-      <div><h3 class="text-lg font-semibold text-blue-700 mb-3"><i class="fas fa-clock mr-2"></i>Approved - Waiting</h3><div id="approvedForLoading" class="space-y-3"></div></div>
-    </div>
-
-    <div id="tabTrucks" class="hidden">
-      <div class="flex items-center justify-between mb-4"><div class="flex items-center"><button onclick="showDashboard()" class="text-gray-500 hover:text-gray-700 mr-3"><i class="fas fa-arrow-left text-xl"></i></button><h2 class="text-xl font-bold">Truck Management</h2></div><button onclick="showAddTruck()" class="bg-green-600 text-white px-4 py-2 rounded text-sm">+ Add Truck</button></div>
-      <div class="bg-white rounded-lg shadow p-4 mb-4"><div class="flex gap-3"><input type="text" id="truckSearch" placeholder="Search trucks..." class="flex-1 px-3 py-2 border rounded-lg" oninput="searchTrucks()"><select id="truckStatusFilter" class="px-3 py-2 border rounded-lg" onchange="searchTrucks()"><option value="all">All</option><option value="active">Active</option><option value="inactive">Inactive</option></select></div></div>
-      <div id="truckList"></div>
-      <p class="text-xs text-gray-500 mt-1" id="truckSearchResults"></p>
-      <div id="addTruckForm" class="hidden mt-6 bg-white rounded-xl shadow-lg p-6"><div class="flex justify-between mb-4"><h3 class="text-lg font-bold" id="formTitle">Add Truck</h3><button onclick="closeTruckForm()" class="text-2xl">&times;</button></div><form onsubmit="saveTruck(event)"><input type="hidden" id="editTruckId"><div class="grid grid-cols-2 gap-3"><input type="text" id="newPlate" placeholder="Plate No *" class="px-3 py-2 border rounded" required><input type="text" id="newMake" placeholder="Make *" class="px-3 py-2 border rounded" required><input type="text" id="newDriver" placeholder="Driver" class="px-3 py-2 border rounded"><input type="text" id="newHauler" placeholder="Hauler" class="px-3 py-2 border rounded"><input type="number" id="newCapacity" placeholder="Capacity (L) *" class="px-3 py-2 border rounded" required><input type="number" id="newTps" placeholder="TPS" class="px-3 py-2 border rounded" value="0"></div><div class="border-t pt-3 mt-3"><p class="font-semibold text-sm mb-2">Documents</p><div class="grid grid-cols-3 gap-3"><div><label class="text-xs">LTO Expiry</label><input type="date" id="docLTO" class="w-full px-2 py-1 border rounded"></div><div><label class="text-xs">Fire Expiry</label><input type="date" id="docFire" class="w-full px-2 py-1 border rounded"></div><div><label class="text-xs">DOST Expiry</label><input type="date" id="docDOST" class="w-full px-2 py-1 border rounded"></div></div></div><button type="submit" class="w-full bg-blue-900 text-white py-2 rounded mt-3 font-semibold">Save Truck</button></form></div>
-    </div>
-
-    <div id="tabClients" class="hidden">
-      <div class="flex items-center justify-between mb-4"><div class="flex items-center"><button onclick="showDashboard()" class="text-gray-500 hover:text-gray-700 mr-3"><i class="fas fa-arrow-left text-xl"></i></button><h2 class="text-xl font-bold">Client Management</h2></div><button onclick="showAddClient()" class="bg-green-600 text-white px-4 py-2 rounded text-sm">+ Add Client</button></div>
-      <div class="bg-white rounded-lg shadow p-4 mb-4"><div class="flex gap-3"><input type="text" id="clientSearch" placeholder="Search clients..." class="flex-1 px-3 py-2 border rounded-lg" oninput="searchClients()"><select id="clientStatusFilter" class="px-3 py-2 border rounded-lg" onchange="searchClients()"><option value="all">All</option><option value="active">Active</option><option value="inactive">Inactive</option></select></div></div>
-      <div id="clientList"></div>
-    </div>
-
-    <div id="clientModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"><div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6"><div class="flex justify-between mb-4"><h3 class="text-lg font-bold" id="clientModalTitle">Add Client</h3><button onclick="document.getElementById('clientModal').classList.add('hidden')" class="text-2xl">&times;</button></div><form onsubmit="saveClient(event)"><input type="hidden" id="editClientId"><input type="email" id="clientEmail" placeholder="Email *" class="w-full px-3 py-2 border rounded mb-3" required><input type="text" id="clientMobile" placeholder="Mobile *" class="w-full px-3 py-2 border rounded mb-3" required><input type="text" id="clientCompany" placeholder="Company" class="w-full px-3 py-2 border rounded mb-3"><input type="password" id="clientPassword" placeholder="Password (min 8 chars)" class="w-full px-3 py-2 border rounded mb-3" minlength="8"><button type="submit" class="w-full bg-blue-900 text-white py-2 rounded font-semibold">Save Client</button></form></div></div>
-
-    <div id="editLoadingModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"><div class="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 p-4 sm:p-6"><div class="flex justify-between mb-4"><h3 class="text-lg font-bold">Edit Loading</h3><button onclick="document.getElementById('editLoadingModal').classList.add('hidden')" class="text-2xl">&times;</button></div><form onsubmit="saveLoadingEdit(event)" class="space-y-3"><input type="hidden" id="editLoadingId"><div><label class="text-xs font-semibold">Volume (L)</label><input type="number" id="editVolume" class="w-full px-3 py-2 border rounded"></div><div><label class="text-xs font-semibold">Actual (L)</label><input type="number" id="editActualVolume" class="w-full px-3 py-2 border rounded"></div><div><label class="text-xs font-semibold">Driver</label><input type="text" id="editDriver" class="w-full px-3 py-2 border rounded"></div><div><label class="text-xs font-semibold">Hauler</label><input type="text" id="editHauler" class="w-full px-3 py-2 border rounded"></div><div><label class="text-xs font-semibold">Remarks</label><textarea id="editRemarks" class="w-full px-3 py-2 border rounded" rows="2"></textarea></div><button type="submit" class="w-full bg-blue-900 text-white py-2 rounded font-semibold">Save</button></form></div></div>
+   </div>
+   <div id="pendingATLs" class="space-y-3"></div>
   </div>
 
-  <div id="chatWidget" class="hidden fixed bottom-4 right-4 z-50 w-80 bg-white rounded-xl shadow-2xl border">
-    <div class="bg-blue-900 text-white p-3 rounded-t-xl flex justify-between items-center">
-      <span><i class="fas fa-comments mr-2"></i><span id="chatTitle">Chat</span></span>
-      <div>
-        <button onclick="showContactList()" class="text-white mr-2 text-sm"><i class="fas fa-users"></i></button>
-        <button onclick="closeChat()" class="text-white">&times;</button>
-      </div>
-    </div>
-    <div id="contactList" class="h-64 overflow-y-auto">
-      <div class="p-3 text-center text-gray-400 text-sm">Loading contacts...</div>
-    </div>
-    <div id="chatBody" class="hidden h-64 overflow-y-auto p-3 space-y-2"></div>
-    <div id="chatInputArea" class="hidden p-2 border-t flex gap-2">
-      <input type="text" id="chatInput" placeholder="Type message..." class="flex-1 px-2 py-1 border rounded text-sm" onkeypress="if(event.key==='Enter')sendChat()">
-      <button onclick="sendChat()" class="bg-blue-900 text-white px-3 py-1 rounded text-sm"><i class="fas fa-paper-plane"></i></button>
-    </div>
+  <div id="tabLoading" class="hidden">
+   <div class="flex items-center mb-4"><button onclick="showDashboard()" class="text-gray-500 hover:text-gray-700 mr-3"><i class="fas fa-arrow-left text-xl"></i></button><h2 class="text-xl font-bold">Loading Management</h2></div>
+   <div class="mb-8"><h3 class="text-lg font-semibold text-orange-700 mb-3"><i class="fas fa-spinner fa-spin mr-2"></i>Ongoing Loading</h3><div id="ongoingLoading" class="space-y-3"></div></div>
+   <div><h3 class="text-lg font-semibold text-blue-700 mb-3"><i class="fas fa-clock mr-2"></i>Approved - Waiting</h3><div id="approvedForLoading" class="space-y-3"></div></div>
   </div>
-  <button onclick="openChat()" class="fixed bottom-4 right-4 z-50 bg-blue-900 text-white p-3 rounded-full shadow-lg hover:bg-blue-800" id="chatButton">
-    <i class="fas fa-comments"></i>
-    <span id="unreadBadge" class="hidden absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">0</span>
-  </button>
 
-  <script>
-    const API = '/api';
-    const token = localStorage.getItem('fueltrak_token');
-    const user = JSON.parse(localStorage.getItem('fueltrak_user') || '{}');
-    if (!token || !['dispatcher','management'].includes(user.role)) {
+  <div id="tabTrucks" class="hidden">
+   <div class="flex items-center justify-between mb-4"><div class="flex items-center"><button onclick="showDashboard()" class="text-gray-500 hover:text-gray-700 mr-3"><i class="fas fa-arrow-left text-xl"></i></button><h2 class="text-xl font-bold">Truck Management</h2></div><button onclick="showAddTruck()" class="bg-green-600 text-white px-4 py-2 rounded text-sm">+ Add Truck</button></div>
+   <div class="bg-white rounded-lg shadow p-4 mb-4"><div class="flex gap-3"><input type="text" id="truckSearch" placeholder="Search trucks..." class="flex-1 px-3 py-2 border rounded-lg" oninput="searchTrucks()"><select id="truckStatusFilter" class="px-3 py-2 border rounded-lg" onchange="searchTrucks()"><option value="all">All</option><option value="active">Active</option><option value="inactive">Inactive</option></select></div></div>
+   <div id="truckList"></div>
+   <p class="text-xs text-gray-500 mt-1" id="truckSearchResults"></p>
+   <div id="addTruckForm" class="hidden mt-6 bg-white rounded-xl shadow-lg p-6"><div class="flex justify-between mb-4"><h3 class="text-lg font-bold" id="formTitle">Add Truck</h3><button onclick="closeTruckForm()" class="text-2xl">&times;</button></div><form onsubmit="saveTruck(event)"><input type="hidden" id="editTruckId"><div class="grid grid-cols-2 gap-3"><input type="text" id="newPlate" placeholder="Plate No *" class="px-3 py-2 border rounded" required><input type="text" id="newMake" placeholder="Make *" class="px-3 py-2 border rounded" required><input type="text" id="newDriver" placeholder="Driver" class="px-3 py-2 border rounded"><input type="text" id="newHauler" placeholder="Hauler" class="px-3 py-2 border rounded"><input type="number" id="newCapacity" placeholder="Capacity (L) *" class="px-3 py-2 border rounded" required><input type="number" id="newTps" placeholder="TPS" class="px-3 py-2 border rounded" value="0"><div class="border-t pt-3 mt-3"><p class="font-semibold text-sm mb-2">Documents</p><div class="grid grid-cols-3 gap-3"><div><label class="text-xs">LTO Expiry</label><input type="date" id="docLTO" class="w-full px-2 py-1 border rounded"></div><div><label class="text-xs">Fire Expiry</label><input type="date" id="docFire" class="w-full px-2 py-1 border rounded"></div><div><label class="text-xs">DOST Expiry</label><input type="date" id="docDOST" class="w-full px-2 py-1 border rounded"></div></div></div><button type="submit" class="w-full bg-blue-900 text-white py-2 rounded mt-3 font-semibold">Save Truck</button></form></div>
+  </div>
+
+  <div id="tabClients" class="hidden">
+   <div class="flex items-center justify-between mb-4"><div class="flex items-center"><button onclick="showDashboard()" class="text-gray-500 hover:text-gray-700 mr-3"><i class="fas fa-arrow-left text-xl"></i></button><h2 class="text-xl font-bold">Client Management</h2></div><button onclick="showAddClient()" class="bg-green-600 text-white px-4 py-2 rounded text-sm">+ Add Client</button></div>
+   <div class="bg-white rounded-lg shadow p-4 mb-4"><div class="flex gap-3"><input type="text" id="clientSearch" placeholder="Search clients..." class="flex-1 px-3 py-2 border rounded-lg" oninput="searchClients()"><select id="clientStatusFilter" class="px-3 py-2 border rounded-lg" onchange="searchClients()"><option value="all">All</option><option value="active">Active</option><option value="inactive">Inactive</option></select></div></div>
+   <div id="clientList"></div>
+  </div>
+
+  <div id="clientModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"><div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6"><div class="flex justify-between mb-4"><h3 class="text-lg font-bold" id="clientModalTitle">Add Client</h3><button onclick="document.getElementById('clientModal').classList.add('hidden')" class="text-2xl">&times;</button></div><form onsubmit="saveClient(event)"><input type="hidden" id="editClientId"><input type="email" id="clientEmail" placeholder="Email *" class="w-full px-3 py-2 border rounded mb-3" required><input type="text" id="clientMobile" placeholder="Mobile *" class="w-full px-3 py-2 border rounded mb-3" required><input type="text" id="clientCompany" placeholder="Company" class="w-full px-3 py-2 border rounded mb-3"><input type="password" id="clientPassword" placeholder="Password (min 8 chars)" class="w-full px-3 py-2 border rounded mb-3" minlength="8"><button type="submit" class="w-full bg-blue-900 text-white py-2 rounded font-semibold">Save Client</button></form></div></div>
+
+  <div id="editLoadingModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"><div class="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 p-4 sm:p-6"><div class="flex justify-between mb-4"><h3 class="text-lg font-bold">Edit Loading</h3><button onclick="document.getElementById('editLoadingModal').classList.add('hidden')" class="text-2xl">&times;</button></div><form onsubmit="saveLoadingEdit(event)" class="space-y-3"><input type="hidden" id="editLoadingId"><div><label class="text-xs font-semibold">Volume (L)</label><input type="number" id="editVolume" class="w-full px-3 py-2 border rounded"></div><div><label class="text-xs font-semibold">Actual (L)</label><input type="number" id="editActualVolume" class="w-full px-3 py-2 border rounded"></div><div><label class="text-xs font-semibold">Driver</label><input type="text" id="editDriver" class="w-full px-3 py-2 border rounded"></div><div><label class="text-xs font-semibold">Hauler</label><input type="text" id="editHauler" class="w-full px-3 py-2 border rounded"></div><div><label class="text-xs font-semibold">Remarks</label><textarea id="editRemarks" class="w-full px-3 py-2 border rounded" rows="2"></textarea></div><button type="submit" class="w-full bg-blue-900 text-white py-2 rounded font-semibold">Save</button></form></div></div>
+ </div>
+
+ <div id="chatWidget" class="hidden fixed bottom-4 right-4 z-50 w-80 bg-white rounded-xl shadow-2xl border">
+  <div class="bg-blue-900 text-white p-3 rounded-t-xl flex justify-between items-center">
+   <span><i class="fas fa-comments mr-2"></i><span id="chatTitle">Chat</span></span>
+   <div>
+    <button onclick="showContactList()" class="text-white mr-2 text-sm"><i class="fas fa-users"></i></button>
+    <button onclick="closeChat()" class="text-white">&times;</button>
+   </div>
+  </div>
+  <div id="contactList" class="h-64 overflow-y-auto">
+   <div class="p-3 text-center text-gray-400 text-sm">Loading contacts...</div>
+  </div>
+  <div id="chatBody" class="hidden h-64 overflow-y-auto p-3 space-y-2"></div>
+  <div id="chatInputArea" class="hidden p-2 border-t flex gap-2">
+   <input type="text" id="chatInput" placeholder="Type message..." class="flex-1 px-2 py-1 border rounded text-sm" onkeypress="if(event.key==='Enter')sendChat()">
+   <button onclick="sendChat()" class="bg-blue-900 text-white px-3 py-1 rounded text-sm"><i class="fas fa-paper-plane"></i></button>
+  </div>
+ </div>
+ <button onclick="openChat()" class="fixed bottom-4 right-4 z-50 bg-blue-900 text-white p-3 rounded-full shadow-lg hover:bg-blue-800" id="chatButton">
+  <i class="fas fa-comments"></i>
+  <span id="unreadBadge" class="hidden absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">0</span>
+ </button>
+
+ <script>
+  const API = '/api';
+  const token = localStorage.getItem('fueltrak_token');
+  const user = JSON.parse(localStorage.getItem('fueltrak_user') || '{}');
+  if (!token || !['dispatcher','management'].includes(user.role)) {
+   window.location.replace('/');
+  } else {
+   // Verify token is still valid
+   fetch('/api/auth/profile', { headers: { 'Authorization': 'Bearer ' + token } })
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+     if (data.status !== 'success') {
+      localStorage.clear();
       window.location.replace('/');
-    } else {
-      // Verify token is still valid
-      fetch('/api/auth/profile', { headers: { 'Authorization': 'Bearer ' + token } })
-        .then(function(res) { return res.json(); })
-        .then(function(data) {
-          if (data.status !== 'success') {
-            localStorage.clear();
-            window.location.replace('/');
-          }
-        })
-        .catch(function() {
-          // API might be down, stay on page
-        });
-    }
-    var maskedEmail = user.email.split('@')[0].substring(0, 3) + '***@' + user.email.split('@')[1];
-    document.getElementById('userInfo').textContent = maskedEmail + ' (' + user.role + ')';
-    document.getElementById('welcomeDate').textContent = new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+     }
+    })
+    .catch(function() {
+     // API might be down, stay on page
+    });
+  }
+  var maskedEmail = user.email.split('@')[0].substring(0, 3) + '***@' + user.email.split('@')[1];
+  document.getElementById('userInfo').textContent = maskedEmail + ' (' + user.role + ')';
+  document.getElementById('welcomeDate').textContent = new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
 
-    let allTrucks = [], allClients = [];
+  let allTrucks = [], allClients = [];
 
-    async function api(url, method, body) {
-      method = method || 'GET';
-      var opts = { method: method, headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' } };
-      if (body) opts.body = JSON.stringify(body);
-      var res = await fetch(API + url, opts);
-      return await res.json();
-    }
+  async function api(url, method, body) {
+   method = method || 'GET';
+   var opts = { method: method, headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' } };
+   if (body) opts.body = JSON.stringify(body);
+   var res = await fetch(API + url, opts);
+   return await res.json();
+  }
 
-    function showDashboard() {
-      document.getElementById('tabVerify').classList.add('hidden');
-      document.getElementById('tabLoading').classList.add('hidden');
-      document.getElementById('tabTrucks').classList.add('hidden');
-      document.getElementById('tabClients').classList.add('hidden');
-      document.getElementById('dashboardView').classList.remove('hidden');
-      loadDashboard();
-    }
+  function showDashboard() {
+   document.getElementById('tabVerify').classList.add('hidden');
+   document.getElementById('tabLoading').classList.add('hidden');
+   document.getElementById('tabTrucks').classList.add('hidden');
+   document.getElementById('tabClients').classList.add('hidden');
+   document.getElementById('dashboardView').classList.remove('hidden');
+   loadDashboard();
+  }
 
-    function openTab(tab) {
-      document.getElementById('dashboardView').classList.add('hidden');
-      document.getElementById('tabVerify').classList.add('hidden');
-      document.getElementById('tabLoading').classList.add('hidden');
-      document.getElementById('tabTrucks').classList.add('hidden');
-      document.getElementById('tabClients').classList.add('hidden');
-      var tabId = 'tab' + tab.charAt(0).toUpperCase() + tab.slice(1);
-      var tabEl = document.getElementById(tabId);
-      if (tabEl) tabEl.classList.remove('hidden');
-      
-      try {
-        if (tab === 'verify') loadPending();
-        if (tab === 'loading') loadApproved();
-        if (tab === 'trucks') loadTrucks();
-        if (tab === 'clients') loadClients();
-      } catch(e) {
-        console.error('Error loading tab:', tab, e);
-      }
-    }
+  function openTab(tab) {
+   document.getElementById('dashboardView').classList.add('hidden');
+   document.getElementById('tabVerify').classList.add('hidden');
+   document.getElementById('tabLoading').classList.add('hidden');
+   document.getElementById('tabTrucks').classList.add('hidden');
+   document.getElementById('tabClients').classList.add('hidden');
+   var tabId = 'tab' + tab.charAt(0).toUpperCase() + tab.slice(1);
+   var tabEl = document.getElementById(tabId);
+   if (tabEl) tabEl.classList.remove('hidden');
+   
+   try {
+    if (tab === 'verify') loadPending();
+    if (tab === 'loading') loadApproved();
+    if (tab === 'trucks') loadTrucks();
+    if (tab === 'clients') loadClients();
+   } catch(e) {
+    console.error('Error loading tab:', tab, e);
+   }
+  }
 
-    async function loadDashboard() {
-      var atlData = await api('/dispatch/enhanced-stats');
-      var truckData = await api('/dispatch/truck-stats');
-      
-      // ATL Stats - always show if available
-      if (atlData.status === 'success') {
-        var s = atlData.data;
-        document.getElementById('atlStats').innerHTML = [
-          { label:'Pending',value:s.pending,gradient:'from-yellow-400 to-yellow-500' },
-          { label:'Approved',value:s.approved,gradient:'from-blue-400 to-blue-500' },
-          { label:'Loading',value:s.loading,gradient:'from-orange-400 to-orange-500' },
-          { label:'Completed',value:s.completed,gradient:'from-green-400 to-green-500' },
-          { label:'Loaded Today',value:s.loadedToday,gradient:'from-indigo-400 to-indigo-500' },
-          { label:'Total Vol',value:((s.totalVolume||0)/1000).toFixed(1)+'k L',gradient:'from-purple-400 to-purple-500' }
-        ].map(function(c) { return '<div class="stat-card bg-gradient-to-br '+c.gradient+' rounded-xl shadow-lg p-3 md:p-5 text-white"><p class="text-xs md:text-sm opacity-90">'+c.label+'</p><p class="text-xl md:text-3xl font-bold mt-1">'+c.value+'</p></div>'; }).join('');
-        
-        // Update badges
-        var pendingBadge = document.getElementById('pendingBadge');
-        var loadingBadge = document.getElementById('loadingBadge');
-        if (s.pending > 0) { pendingBadge.textContent = s.pending > 99 ? '99+' : s.pending; pendingBadge.classList.remove('hidden'); }
-        else { pendingBadge.classList.add('hidden'); }
-        if (s.loading > 0) { loadingBadge.textContent = s.loading > 99 ? '99+' : s.loading; loadingBadge.classList.remove('hidden'); }
-        else { loadingBadge.classList.add('hidden'); }
-      } else {
-        document.getElementById('atlStats').innerHTML = '<p class="text-gray-500 col-span-full text-center py-4">Unable to load stats</p>';
-      }
-      
-      // Fleet & Document Stats - show if truck data available
-      if (truckData.status === 'success') {
-        var t = truckData.data;
-        document.getElementById('fleetStats').innerHTML = [
-          { label:'Total Trucks',value:t.total,sub:(t.active||0)+' active, '+(t.inactive||0)+' inactive',border:'border-blue-500' },
-          { label:'Valid Docs',value:t.withValidDocs,sub:'Click to view',border:'border-green-500',click:'validDocs' },
-          { label:'Expired Docs',value:t.withExpiredDocs,sub:'Click to view',border:'border-red-500',click:'expiredDocs' },
-          { label:'Backloads',value:'0 L',sub:'Click to view details',border:'border-orange-500',click:'backloads' },
-          { label:'Capacity',value:((t.totalCapacity||0)/1000).toFixed(1)+'k L',sub:'Total fleet',border:'border-purple-500' }
-        ].map(function(c) { return '<div class="stat-card bg-white rounded-xl shadow-lg p-2 md:p-3 border-l-4 '+c.border+'"'+(c.click?' onclick="showTruckDocs(\''+c.click+'\')" style="cursor:pointer"':'')+'><p class="text-gray-500 text-[10px] md:text-xs">'+c.label+'</p><p class="text-lg md:text-xl font-bold">'+c.value+'</p><p class="text-[9px] text-gray-400 truncate">'+c.sub+'</p></div>'; }).join('');
-        
-        var docTypes = [{key:'lto',label:'LTO'},{key:'fire',label:'Fire'},{key:'dost',label:'DOST'}];
-        document.getElementById('docStats').innerHTML = docTypes.map(function(d) {
-          var data = t.documentBreakdown[d.key] || {valid:0,expired:0,missing:0};
-          var total = data.valid + data.expired + data.missing;
-          var pct = total > 0 ? Math.round((data.valid/total)*100) : 0;
-          return '<div class="stat-card bg-white rounded-xl shadow-lg p-3 md:p-5"><div class="flex justify-between mb-2"><span class="font-semibold text-xs md:text-sm">'+d.label+'</span><span class="text-xs font-bold px-2 py-1 rounded-full '+(pct>=80?'bg-green-100 text-green-700':pct>=50?'bg-yellow-100 text-yellow-700':'bg-red-100 text-red-700')+'">'+pct+'%</span></div><div class="w-full bg-gray-200 rounded-full h-2 md:h-3 mb-2"><div class="progress-bar h-2 md:h-3 rounded-full '+(pct>=80?'bg-green-500':pct>=50?'bg-yellow-500':'bg-red-500')+'" style="inline-size:'+pct+'%"></div></div><div class="flex justify-between text-xs text-gray-500"><span>Valid: '+data.valid+'</span><span>Expired: '+data.expired+'</span><span>Missing: '+data.missing+'</span></div></div>';
-        }).join('');
-      } else {
-        document.getElementById('fleetStats').innerHTML = '<p class="text-gray-500 col-span-full text-center py-4">Unable to load fleet stats</p>';
-        document.getElementById('docStats').innerHTML = '<p class="text-gray-500 col-span-full text-center py-4">Unable to load document stats</p>';
-      }
-    }
-
-    var allPendingATLs = [];
-
-    function filterPending() {
-      var search = (document.getElementById('pendingSearch') ? document.getElementById('pendingSearch').value : '').toLowerCase();
-      var filter = document.getElementById('pendingFilter') ? document.getElementById('pendingFilter').value : 'all';
-      var filtered = allPendingATLs;
-      
-      if (search) {
-        filtered = filtered.filter(function(a) {
-          return (a.plate_no||'').toLowerCase().indexOf(search) >= 0 ||
-            (a.company||'').toLowerCase().indexOf(search) >= 0 ||
-            (a.atl_code||'').toLowerCase().indexOf(search) >= 0 ||
-            (a.driver_name||'').toLowerCase().indexOf(search) >= 0;
-        });
-      }
-      if (filter === 'cancellation') {
-        filtered = filtered.filter(function(a) { return a.remarks && a.remarks.indexOf('CANCELLATION') >= 0; });
-      }
-      
-      document.getElementById('pendingATLs').innerHTML = filtered.map(function(a) {
-        var isCancellation = a.remarks && a.remarks.indexOf('CANCELLATION') >= 0;
-        return '<div class="bg-white rounded-lg shadow p-3 md:p-4 flex flex-col sm:flex-row justify-between gap-2"><div><p class="font-bold text-sm">' + new Date(a.scheduled_date).toLocaleDateString() + ' - ' + (a.atl_code||'N/A') + ' - ' + a.plate_no + '</p><p class="text-xs md:text-sm">'+(a.company||'')+' | SO: '+(a.so_number||'N/A')+' | Vol: '+(a.volume||'N/A')+'L | '+a.driver_name+'</p>'+(isCancellation?'<p class="text-red-600 text-xs">Cancellation Requested</p>':'')+'</div><div class="flex space-x-2 self-end sm:self-center">'+(isCancellation?'<button onclick="handleCancel('+a.id+',\''+'approve_cancel'+'\')" class="bg-red-500 text-white px-2 py-1 rounded text-xs">Approve Cancel</button><button onclick="handleCancel('+a.id+',\''+'reject_cancel'+'\')" class="bg-green-500 text-white px-2 py-1 rounded text-xs">Reject Cancel</button>':'<button onclick="verifyATL('+a.id+',\''+'approve'+'\')" class="bg-green-500 text-white px-2 py-1 rounded text-xs">Approve</button><button onclick="verifyATL('+a.id+',\''+'reject'+'\')" class="bg-red-500 text-white px-2 py-1 rounded text-xs">Reject</button>')+'</div></div>';
-      }).join('') || '<p class="text-gray-500 text-center py-8">No pending ATLs found</p>';
-    }
-
-    async function loadPending() {
-      var data = await api('/dispatch/pending');
-      if (data.status === 'success') {
-        allPendingATLs = data.data;
-        filterPending();
-      }
-    }
-
-    async function handleCancel(id, action) {
-      if (!confirm(action === 'approve_cancel' ? 'Approve cancellation?' : 'Reject cancellation?')) return;
-      await api('/dispatch/handle-cancellation/' + id, 'POST', { action: action });
-      loadPending();
-      loadDashboard();
-    }
-
-    async function verifyATL(id, action) { 
-      var msg = action === 'approve' ? 'Approve this ATL?' : 'Reject this ATL?';
-      if (!confirm(msg)) return;
-      await api('/dispatch/verify/'+id, 'POST', {action: action, remarks: prompt('Remarks (optional):')}); 
-      loadPending(); 
-      loadDashboard(); 
-    }
-
-    async function loadApproved() {
-      var ongoingData = await api('/dispatch/ongoing-loading');
-      if (ongoingData.status === 'success') {
-        document.getElementById('ongoingLoading').innerHTML = ongoingData.data.map(function(a) {
-          return '<div class="bg-orange-50 border-l-4 border-orange-500 rounded-lg shadow p-3 md:p-4"><div class="flex flex-col sm:flex-row justify-between items-start gap-2"><div><p class="font-bold text-sm">'+a.atl_code+' - '+a.plate_no+'</p><p class="text-xs md:text-sm">'+a.company+' | Vol: '+(a.volume?Number(a.volume).toLocaleString()+'L':'N/A')+'</p><p class="text-xs">Driver: '+a.driver_name+'</p></div><div class="flex space-x-1 self-end sm:self-center"><button onclick="editLoading('+a.id+')" class="bg-blue-500 text-white px-2 py-1 rounded text-xs">Edit</button><button onclick="cancelLoading('+a.id+')" class="bg-red-500 text-white px-2 py-1 rounded text-xs">Cancel</button><button onclick="completeLoading('+a.id+')" class="bg-green-500 text-white px-2 py-1 rounded text-xs">Done</button></div></div></div>';
-        }).join('') || '<p class="text-gray-500 text-center py-4">No ongoing loading</p>';
-      }
-      var data = await api('/dispatch/approved-for-loading');
-      document.getElementById('approvedForLoading').innerHTML = data.status === 'success' ? data.data.map(function(a) {
-        return '<div class="bg-white rounded-lg shadow p-3 md:p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2"><div><p class="font-bold text-sm">'+a.atl_code+' - '+a.plate_no+'</p><p class="text-xs md:text-sm">'+a.company+' | Vol: '+(a.volume?Number(a.volume).toLocaleString()+'L':'N/A')+' | '+a.driver_name+'</p></div><button onclick="startLoading('+a.id+')" class="bg-orange-500 text-white px-3 py-1 rounded text-xs self-end sm:self-center">Start Loading</button></div>';
-      }).join('') || '<p class="text-gray-500 text-center py-4">No approved ATLs waiting</p>' : '';
-    }
-
-    async function startLoading(id) { 
-      if (!confirm('Start loading for this ATL? Make sure all details are correct.')) return;
-      await api('/dispatch/start-loading/'+id, 'POST'); 
-      loadApproved(); 
-      loadDashboard(); 
-    }
-
-    async function cancelLoading(id) { 
-      if (!confirm('Cancel this loading? ATL will go back to pending verification.')) return;
-      var reason = prompt('Reason for cancellation:'); 
-      if (!reason) return; 
-      await api('/dispatch/cancel-loading/'+id, 'POST', { reason: reason }); 
-      loadApproved(); 
-      loadDashboard(); 
-    }
+  async function loadDashboard() {
+   var atlData = await api('/dispatch/enhanced-stats');
+   var truckData = await api('/dispatch/truck-stats');
+   
+   // ATL Stats - always show if available
+   if (atlData.status === 'success') {
+    var s = atlData.data;
+    document.getElementById('atlStats').innerHTML = [
+     { label:'Pending',value:s.pending,gradient:'from-yellow-400 to-yellow-500' },
+     { label:'Approved',value:s.approved,gradient:'from-blue-400 to-blue-500' },
+     { label:'Loading',value:s.loading,gradient:'from-orange-400 to-orange-500' },
+     { label:'Completed',value:s.completed,gradient:'from-green-400 to-green-500' },
+     { label:'Loaded Today',value:s.loadedToday,gradient:'from-indigo-400 to-indigo-500' },
+     { label:'Total Vol',value:((s.totalVolume||0)/1000).toFixed(1)+'k L',gradient:'from-purple-400 to-purple-500' }
+    ].map(function(c) { return '<div class="stat-card bg-gradient-to-br '+c.gradient+' rounded-xl shadow-lg p-3 md:p-5 text-white"><p class="text-xs md:text-sm opacity-90">'+c.label+'</p><p class="text-xl md:text-3xl font-bold mt-1">'+c.value+'</p></div>'; }).join('');
     
-    async function completeLoading(id) { 
-      if (!confirm('Complete this loading? This will finalize the ATL.')) return;
-      var vol = prompt('Actual volume (L):'); 
-      if (!vol) return; 
-      if (!confirm('Confirm volume: ' + Number(vol).toLocaleString() + ' L?')) return;
-      var wc = prompt('Printed WC (12 digits, blank if none):'); 
-      var wcClean = wc ? wc.replace(/\\D/g,'').substring(0,12) : null; 
-      var tps = prompt('TPS Series (e.g., 001-050):');
-      if (!confirm('Submit completed ATL?\nVolume: ' + vol + ' L\nWC: ' + (wcClean || 'N/A') + '\nTPS: ' + (tps || 'N/A'))) return;
-      await api('/dispatch/complete-loading/'+id, 'POST', { actual_volume: vol, printed_wc: wcClean, tps_series: tps }); 
-      loadApproved(); 
-      loadDashboard(); 
-    }
-
-    async function editLoading(id) {
-      var ongoingData = await api('/dispatch/ongoing-loading');
-      if (ongoingData.status === 'success') {
-        var atl = ongoingData.data.find(function(a) { return a.id === id; });
-        if (atl) {
-          document.getElementById('editLoadingId').value = atl.id;
-          document.getElementById('editVolume').value = atl.volume || '';
-          document.getElementById('editActualVolume').value = atl.actual_volume || '';
-          document.getElementById('editDriver').value = atl.driver_name || '';
-          document.getElementById('editHauler').value = atl.hauler || '';
-          document.getElementById('editRemarks').value = '';
-          document.getElementById('editLoadingModal').classList.remove('hidden');
-        }
-      }
-    }
-
-    async function saveLoadingEdit(e) {
-      e.preventDefault();
-      var id = document.getElementById('editLoadingId').value;
-      var body = { volume: document.getElementById('editVolume').value, actual_volume: document.getElementById('editActualVolume').value, driver_name: document.getElementById('editDriver').value, hauler: document.getElementById('editHauler').value, remarks: document.getElementById('editRemarks').value };
-      var data = await api('/dispatch/update-loading/'+id, 'PUT', body);
-      if (data.status === 'success') { document.getElementById('editLoadingModal').classList.add('hidden'); loadApproved(); loadDashboard(); }
-    }
-
-    async function loadTrucks() { 
-      var data = await api('/truck-masterlist-all');
-      if (data.status === 'success') { 
-        allTruckRecords = data.data;
-        allTrucks = data.data;
-        currentTruckPage = 1;
-        paginateTrucks(); 
-      } 
-    }
-
-    function searchTrucks() {
-      currentTruckPage = 1;
-      paginateTrucks();
-    }
-
-    function showAddTruck() { document.getElementById('editTruckId').value=''; document.getElementById('formTitle').textContent='Add Truck'; document.getElementById('addTruckForm').classList.remove('hidden'); ['newPlate','newMake','newDriver','newHauler','newCapacity','newTps','docLTO','docFire','docDOST'].forEach(function(id) { document.getElementById(id).value=''; }); }
-    function closeTruckForm() { document.getElementById('addTruckForm').classList.add('hidden'); }
-
-    async function editTruck(id) { var data = await api('/trucks/'+id); if (data.status === 'success') { var t = data.data; document.getElementById('editTruckId').value = t.id; document.getElementById('formTitle').textContent = 'Edit Truck: ' + t.plate_no; document.getElementById('newPlate').value = t.plate_no; document.getElementById('newMake').value = t.make; document.getElementById('newDriver').value = t.driver_name || ''; document.getElementById('newHauler').value = t.hauler_name || ''; document.getElementById('newCapacity').value = t.total_capacity; document.getElementById('newTps').value = t.num_tps || 0; var docs = t.documents || []; var lto = docs.find(function(d) { return d.document_type === 'lto_registration'; }); var fire = docs.find(function(d) { return d.document_type === 'fire_permit'; }); var dost = docs.find(function(d) { return d.document_type === 'dost_calibration'; }); document.getElementById('docLTO').value = lto && lto.expiry_date ? lto.expiry_date.split('T')[0] : ''; document.getElementById('docFire').value = fire && fire.expiry_date ? fire.expiry_date.split('T')[0] : ''; document.getElementById('docDOST').value = dost && dost.expiry_date ? dost.expiry_date.split('T')[0] : ''; document.getElementById('addTruckForm').classList.remove('hidden'); } }
-
-    async function saveTruck(e) { 
-      e.preventDefault(); 
-      var id = document.getElementById('editTruckId').value;
-      var plate = document.getElementById('newPlate').value;
-      var make = document.getElementById('newMake').value;
-      var driver = document.getElementById('newDriver').value;
-      var capacity = document.getElementById('newCapacity').value;
-      
-      var summary = 'Plate: ' + plate + '\nMake: ' + make + '\nDriver: ' + (driver || 'N/A') + '\nCapacity: ' + capacity + ' L';
-      if (!confirm('Save this truck?\n\n' + summary)) return;
-
-      var docs = []; 
-      if (document.getElementById('docLTO').value) docs.push({type:'lto_registration',expiry_date:document.getElementById('docLTO').value}); 
-      if (document.getElementById('docFire').value) docs.push({type:'fire_permit',expiry_date:document.getElementById('docFire').value});
-      if (document.getElementById('docDOST').value) docs.push({type:'dost_calibration',expiry_date:document.getElementById('docDOST').value}); 
-      
-      var body = {plate_no:document.getElementById('newPlate').value,make:document.getElementById('newMake').value,driver_name:document.getElementById('newDriver').value,hauler_name:document.getElementById('newHauler').value,total_capacity:document.getElementById('newCapacity').value,num_tps:document.getElementById('newTps').value,documents:docs}; 
-      var url = id ? '/trucks/'+id : '/trucks'; 
-      var method = id ? 'PUT' : 'POST'; 
-      var data = await api(url, method, body); 
-      if (data.status === 'success') { 
-        closeTruckForm(); 
-        loadTrucks(); 
-        loadDashboard(); 
-      } 
-      else { 
-        alert(data.error || 'Error'); 
-      } 
-    }
-
-    async function deleteTruck(id, plate) { 
-      if (!confirm('WARNING: This will deactivate truck ' + plate + '.\n\nAre you sure?')) return;
-      if (!confirm('Confirm deactivation of ' + plate + '?')) return;
-      await api('/trucks/'+id, 'DELETE'); 
-      loadTrucks(); 
-    }
-    async function restoreTruck(id) { await api('/trucks/'+id+'/restore', 'PATCH'); loadTrucks(); }
-
-    async function loadClients() { var data = await api('/clients'); if (data.status === 'success') { allClients = data.data; searchClients(); } }
-
-    function searchClients() { var s = document.getElementById('clientSearch').value.toLowerCase(); var f = document.getElementById('clientStatusFilter').value; var filtered = allClients.filter(function(c) { if (s && ![c.company_name,c.email,c.mobile].some(function(v) { return (v||'').toLowerCase().indexOf(s) >= 0; })) return false; if (f === 'active' && !c.is_active) return false; if (f === 'inactive' && c.is_active) return false; return true; }); document.getElementById('clientList').innerHTML = '<div class="overflow-x-auto"><table class="w-full text-sm bg-white rounded-lg shadow" style="min-width:800px"><thead class="bg-gray-50"><tr><th class="py-3 px-4">Company</th><th class="py-3 px-4">Email</th><th class="py-3 px-4">Mobile</th><th class="py-3 px-4">ATLs</th><th class="py-3 px-4">Actions</th></tr></thead><tbody>'+filtered.map(function(c) { return '<tr class="border-b '+(c.is_active?'':'opacity-50')+'"><td class="py-2 px-4 font-semibold">'+(c.company_name||'-')+'</td><td class="py-2 px-4">'+c.email.split('@')[0].substring(0, 3)+'***@'+c.email.split('@')[1]+'</td><td class="py-2 px-4">'+c.mobile+'</td><td class="py-2 px-4 text-center">'+c.total_atls+'</td><td class="py-2 px-4"><div class="flex space-x-2 justify-center"><button onclick="editClient('+c.id+')" class="text-green-600"><i class="fas fa-edit"></i></button>'+(c.is_active?'<button onclick="toggleClient('+c.id+')" class="text-orange-600"><i class="fas fa-ban"></i></button>':'<button onclick="toggleClient('+c.id+')" class="text-green-600"><i class="fas fa-check"></i></button>')+'<button onclick="deleteClient('+c.id+',\''+c.email+'\')" class="text-red-600"><i class="fas fa-trash"></i></button></div></td></tr>'; }).join('')+'</tbody></table></div>'; }
-
-    function showAddClient() { document.getElementById('editClientId').value=''; document.getElementById('clientModalTitle').textContent='Add Client'; ['clientEmail','clientMobile','clientCompany','clientPassword'].forEach(function(id) { document.getElementById(id).value=''; }); document.getElementById('clientModal').classList.remove('hidden'); }
-    async function editClient(id) { var data = await api('/clients/'+id); if (data.status === 'success') { var c = data.data; document.getElementById('editClientId').value = c.id; document.getElementById('clientModalTitle').textContent = 'Edit Client'; document.getElementById('clientEmail').value = c.email; document.getElementById('clientMobile').value = c.mobile; document.getElementById('clientCompany').value = c.company_name || ''; document.getElementById('clientPassword').value = ''; document.getElementById('clientModal').classList.remove('hidden'); } }
+    // Update badges
+    var pendingBadge = document.getElementById('pendingBadge');
+    var loadingBadge = document.getElementById('loadingBadge');
+    if (s.pending > 0) { pendingBadge.textContent = s.pending > 99 ? '99+' : s.pending; pendingBadge.classList.remove('hidden'); }
+    else { pendingBadge.classList.add('hidden'); }
+    if (s.loading > 0) { loadingBadge.textContent = s.loading > 99 ? '99+' : s.loading; loadingBadge.classList.remove('hidden'); }
+    else { loadingBadge.classList.add('hidden'); }
+   } else {
+    document.getElementById('atlStats').innerHTML = '<p class="text-gray-500 col-span-full text-center py-4">Unable to load stats</p>';
+   }
+   
+   // Fleet & Document Stats - show if truck data available
+   if (truckData.status === 'success') {
+    var t = truckData.data;
+    document.getElementById('fleetStats').innerHTML = [
+     { label:'Total Trucks',value:t.total,sub:(t.active||0)+' active, '+(t.inactive||0)+' inactive',border:'border-blue-500' },
+     { label:'Valid Docs',value:t.withValidDocs,sub:'Click to view',border:'border-green-500',click:'validDocs' },
+     { label:'Expired Docs',value:t.withExpiredDocs,sub:'Click to view',border:'border-red-500',click:'expiredDocs' },
+     { label:'Backloads',value:'0 L',sub:'Click to view details',border:'border-orange-500',click:'backloads' },
+     { label:'Capacity',value:((t.totalCapacity||0)/1000).toFixed(1)+'k L',sub:'Total fleet',border:'border-purple-500' }
+    ].map(function(c) { return '<div class="stat-card bg-white rounded-xl shadow-lg p-2 md:p-3 border-l-4 '+c.border+'"'+(c.click?' onclick="showTruckDocs(\''+c.click+'\')" style="cursor:pointer"':'')+'><p class="text-gray-500 text-[10px] md:text-xs">'+c.label+'</p><p class="text-lg md:text-xl font-bold">'+c.value+'</p><p class="text-[9px] text-gray-400 truncate">'+c.sub+'</p></div>'; }).join('');
     
-    async function saveClient(e) { 
-      e.preventDefault(); 
-      var id = document.getElementById('editClientId').value; 
-      var body = {email:document.getElementById('clientEmail').value,mobile:document.getElementById('clientMobile').value,company_name:document.getElementById('clientCompany').value}; 
-      var pw = document.getElementById('clientPassword').value; if (pw) body.password = pw; 
-      var url = id ? '/clients/'+id : '/clients'; 
-      var method = id ? 'PUT' : 'POST'; 
-      var data = await api(url, method, body); if (data.status === 'success') { 
-        document.getElementById('clientModal').classList.add('hidden'); loadClients(); 
-      } 
-      else { alert(data.error || 'Error'); 
+    var docTypes = [{key:'lto',label:'LTO'},{key:'fire',label:'Fire'},{key:'dost',label:'DOST'}];
+    document.getElementById('docStats').innerHTML = docTypes.map(function(d) {
+     var data = t.documentBreakdown[d.key] || {valid:0,expired:0,missing:0};
+     var total = data.valid + data.expired + data.missing;
+     var pct = total > 0 ? Math.round((data.valid/total)*100) : 0;
+     return '<div class="stat-card bg-white rounded-xl shadow-lg p-3 md:p-5"><div class="flex justify-between mb-2"><span class="font-semibold text-xs md:text-sm">'+d.label+'</span><span class="text-xs font-bold px-2 py-1 rounded-full '+(pct>=80?'bg-green-100 text-green-700':pct>=50?'bg-yellow-100 text-yellow-700':'bg-red-100 text-red-700')+'">'+pct+'%</span></div><div class="w-full bg-gray-200 rounded-full h-2 md:h-3 mb-2"><div class="progress-bar h-2 md:h-3 rounded-full '+(pct>=80?'bg-green-500':pct>=50?'bg-yellow-500':'bg-red-500')+'" style="inline-size:'+pct+'%"></div></div><div class="flex justify-between text-xs text-gray-500"><span>Valid: '+data.valid+'</span><span>Expired: '+data.expired+'</span><span>Missing: '+data.missing+'</span></div></div>';
+    }).join('');
+   } else {
+    document.getElementById('fleetStats').innerHTML = '<p class="text-gray-500 col-span-full text-center py-4">Unable to load fleet stats</p>';
+    document.getElementById('docStats').innerHTML = '<p class="text-gray-500 col-span-full text-center py-4">Unable to load document stats</p>';
+   }
+  }
 
-      } 
+  var allPendingATLs = [];
+
+  function filterPending() {
+   var search = (document.getElementById('pendingSearch') ? document.getElementById('pendingSearch').value : '').toLowerCase();
+   var filter = document.getElementById('pendingFilter') ? document.getElementById('pendingFilter').value : 'all';
+   var filtered = allPendingATLs;
+   
+   if (search) {
+    filtered = filtered.filter(function(a) {
+     return (a.plate_no||'').toLowerCase().indexOf(search) >= 0 ||
+      (a.company||'').toLowerCase().indexOf(search) >= 0 ||
+      (a.atl_code||'').toLowerCase().indexOf(search) >= 0 ||
+      (a.driver_name||'').toLowerCase().indexOf(search) >= 0;
+    });
+   }
+   if (filter === 'cancellation') {
+    filtered = filtered.filter(function(a) { return a.remarks && a.remarks.indexOf('CANCELLATION') >= 0; });
+   }
+   
+   document.getElementById('pendingATLs').innerHTML = filtered.map(function(a) {
+    var isCancellation = a.remarks && a.remarks.indexOf('CANCELLATION') >= 0;
+    return '<div class="bg-white rounded-lg shadow p-3 md:p-4 flex flex-col sm:flex-row justify-between gap-2"><div><p class="font-bold text-sm">' + new Date(a.scheduled_date).toLocaleDateString() + ' - ' + (a.atl_code||'N/A') + ' - ' + a.plate_no + '</p><p class="text-xs md:text-sm">'+(a.company||'')+' | SO: '+(a.so_number||'N/A')+' | Vol: '+(a.volume||'N/A')+'L | '+a.driver_name+'</p>'+(isCancellation?'<p class="text-red-600 text-xs">Cancellation Requested</p>':'')+'</div><div class="flex space-x-2 self-end sm:self-center">'+(isCancellation?'<button onclick="handleCancel('+a.id+',\''+'approve_cancel'+'\')" class="bg-red-500 text-white px-2 py-1 rounded text-xs">Approve Cancel</button><button onclick="handleCancel('+a.id+',\''+'reject_cancel'+'\')" class="bg-green-500 text-white px-2 py-1 rounded text-xs">Reject Cancel</button>':'<button onclick="verifyATL('+a.id+',\''+'approve'+'\')" class="bg-green-500 text-white px-2 py-1 rounded text-xs">Approve</button><button onclick="verifyATL('+a.id+',\''+'reject'+'\')" class="bg-red-500 text-white px-2 py-1 rounded text-xs">Reject</button>')+'</div></div>';
+   }).join('') || '<p class="text-gray-500 text-center py-8">No pending ATLs found</p>';
+  }
+
+  async function loadPending() {
+   var data = await api('/dispatch/pending');
+   if (data.status === 'success') {
+    allPendingATLs = data.data;
+    filterPending();
+   }
+  }
+
+  async function handleCancel(id, action) {
+   if (!confirm(action === 'approve_cancel' ? 'Approve cancellation?' : 'Reject cancellation?')) return;
+   await api('/dispatch/handle-cancellation/' + id, 'POST', { action: action });
+   loadPending();
+   loadDashboard();
+  }
+
+  async function verifyATL(id, action) { 
+   var msg = action === 'approve' ? 'Approve this ATL?' : 'Reject this ATL?';
+   if (!confirm(msg)) return;
+   await api('/dispatch/verify/'+id, 'POST', {action: action, remarks: prompt('Remarks (optional):')}); 
+   loadPending(); 
+   loadDashboard(); 
+  }
+
+  async function loadApproved() {
+   var ongoingData = await api('/dispatch/ongoing-loading');
+   if (ongoingData.status === 'success') {
+    document.getElementById('ongoingLoading').innerHTML = ongoingData.data.map(function(a) {
+     return '<div class="bg-orange-50 border-l-4 border-orange-500 rounded-lg shadow p-3 md:p-4"><div class="flex flex-col sm:flex-row justify-between items-start gap-2"><div><p class="font-bold text-sm">'+a.atl_code+' - '+a.plate_no+'</p><p class="text-xs md:text-sm">'+a.company+' | Vol: '+(a.volume?Number(a.volume).toLocaleString()+'L':'N/A')+'</p><p class="text-xs">Driver: '+a.driver_name+'</p></div><div class="flex space-x-1 self-end sm:self-center"><button onclick="editLoading('+a.id+')" class="bg-blue-500 text-white px-2 py-1 rounded text-xs">Edit</button><button onclick="cancelLoading('+a.id+')" class="bg-red-500 text-white px-2 py-1 rounded text-xs">Cancel</button><button onclick="completeLoading('+a.id+')" class="bg-green-500 text-white px-2 py-1 rounded text-xs">Done</button></div></div></div>';
+    }).join('') || '<p class="text-gray-500 text-center py-4">No ongoing loading</p>';
+   }
+   var data = await api('/dispatch/approved-for-loading');
+   document.getElementById('approvedForLoading').innerHTML = data.status === 'success' ? data.data.map(function(a) {
+    return '<div class="bg-white rounded-lg shadow p-3 md:p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2"><div><p class="font-bold text-sm">'+a.atl_code+' - '+a.plate_no+'</p><p class="text-xs md:text-sm">'+a.company+' | Vol: '+(a.volume?Number(a.volume).toLocaleString()+'L':'N/A')+' | '+a.driver_name+'</p></div><button onclick="startLoading('+a.id+')" class="bg-orange-500 text-white px-3 py-1 rounded text-xs self-end sm:self-center">Start Loading</button></div>';
+   }).join('') || '<p class="text-gray-500 text-center py-4">No approved ATLs waiting</p>' : '';
+  }
+
+  async function startLoading(id) { 
+   if (!confirm('Start loading for this ATL? Make sure all details are correct.')) return;
+   await api('/dispatch/start-loading/'+id, 'POST'); 
+   loadApproved(); 
+   loadDashboard(); 
+  }
+
+  async function cancelLoading(id) { 
+   if (!confirm('Cancel this loading? ATL will go back to pending verification.')) return;
+   var reason = prompt('Reason for cancellation:'); 
+   if (!reason) return; 
+   await api('/dispatch/cancel-loading/'+id, 'POST', { reason: reason }); 
+   loadApproved(); 
+   loadDashboard(); 
+  }
+  
+  async function completeLoading(id) { 
+   if (!confirm('Complete this loading? This will finalize the ATL.')) return;
+   var vol = prompt('Actual volume (L):'); 
+   if (!vol) return; 
+   if (!confirm('Confirm volume: ' + Number(vol).toLocaleString() + ' L?')) return;
+   var wc = prompt('Printed WC (12 digits, blank if none):'); 
+   var wcClean = wc ? wc.replace(/\\D/g,'').substring(0,12) : null; 
+   var tps = prompt('TPS Series (e.g., 001-050):');
+   if (!confirm('Submit completed ATL?\nVolume: ' + vol + ' L\nWC: ' + (wcClean || 'N/A') + '\nTPS: ' + (tps || 'N/A'))) return;
+   await api('/dispatch/complete-loading/'+id, 'POST', { actual_volume: vol, printed_wc: wcClean, tps_series: tps }); 
+   loadApproved(); 
+   loadDashboard(); 
+  }
+
+  async function editLoading(id) {
+   var ongoingData = await api('/dispatch/ongoing-loading');
+   if (ongoingData.status === 'success') {
+    var atl = ongoingData.data.find(function(a) { return a.id === id; });
+    if (atl) {
+     document.getElementById('editLoadingId').value = atl.id;
+     document.getElementById('editVolume').value = atl.volume || '';
+     document.getElementById('editActualVolume').value = atl.actual_volume || '';
+     document.getElementById('editDriver').value = atl.driver_name || '';
+     document.getElementById('editHauler').value = atl.hauler || '';
+     document.getElementById('editRemarks').value = '';
+     document.getElementById('editLoadingModal').classList.remove('hidden');
     }
+   }
+  }
 
-    async function toggleClient(id) { await api('/clients/'+id+'/toggle-status', 'PATCH'); loadClients(); }
+  async function saveLoadingEdit(e) {
+   e.preventDefault();
+   var id = document.getElementById('editLoadingId').value;
+   var body = { volume: document.getElementById('editVolume').value, actual_volume: document.getElementById('editActualVolume').value, driver_name: document.getElementById('editDriver').value, hauler: document.getElementById('editHauler').value, remarks: document.getElementById('editRemarks').value };
+   var data = await api('/dispatch/update-loading/'+id, 'PUT', body);
+   if (data.status === 'success') { document.getElementById('editLoadingModal').classList.add('hidden'); loadApproved(); loadDashboard(); }
+  }
 
-    async function deleteClient(id, email) { 
-      if (!confirm('WARNING: Delete client ' + email + '?\n\nThis cannot be undone if they have no active ATLs.')) return;
-      await api('/clients/'+id, 'DELETE'); 
-      loadClients(); 
+  async function loadTrucks() { 
+   var data = await api('/truck-masterlist-all');
+   if (data.status === 'success') { 
+    allTruckRecords = data.data;
+    allTrucks = data.data;
+    currentTruckPage = 1;
+    paginateTrucks(); 
+   } 
+  }
+
+  function searchTrucks() {
+   currentTruckPage = 1;
+   paginateTrucks();
+  }
+
+  function showAddTruck() { document.getElementById('editTruckId').value=''; document.getElementById('formTitle').textContent='Add Truck'; document.getElementById('addTruckForm').classList.remove('hidden'); ['newPlate','newMake','newDriver','newHauler','newCapacity','newTps','docLTO','docFire','docDOST'].forEach(function(id) { document.getElementById(id).value=''; }); }
+  function closeTruckForm() { document.getElementById('addTruckForm').classList.add('hidden'); }
+
+  async function editTruck(id) { var data = await api('/trucks/'+id); if (data.status === 'success') { var t = data.data; document.getElementById('editTruckId').value = t.id; document.getElementById('formTitle').textContent = 'Edit Truck: ' + t.plate_no; document.getElementById('newPlate').value = t.plate_no; document.getElementById('newMake').value = t.make; document.getElementById('newDriver').value = t.driver_name || ''; document.getElementById('newHauler').value = t.hauler_name || ''; document.getElementById('newCapacity').value = t.total_capacity; document.getElementById('newTps').value = t.num_tps || 0; var docs = t.documents || []; var lto = docs.find(function(d) { return d.document_type === 'lto_registration'; }); var fire = docs.find(function(d) { return d.document_type === 'fire_permit'; }); var dost = docs.find(function(d) { return d.document_type === 'dost_calibration'; }); document.getElementById('docLTO').value = lto && lto.expiry_date ? lto.expiry_date.split('T')[0] : ''; document.getElementById('docFire').value = fire && fire.expiry_date ? fire.expiry_date.split('T')[0] : ''; document.getElementById('docDOST').value = dost && dost.expiry_date ? dost.expiry_date.split('T')[0] : ''; document.getElementById('addTruckForm').classList.remove('hidden'); } }
+
+  async function saveTruck(e) { 
+   e.preventDefault(); 
+   var id = document.getElementById('editTruckId').value;
+   var plate = document.getElementById('newPlate').value;
+   var make = document.getElementById('newMake').value;
+   var driver = document.getElementById('newDriver').value;
+   var capacity = document.getElementById('newCapacity').value;
+   
+   var summary = 'Plate: ' + plate + '\nMake: ' + make + '\nDriver: ' + (driver || 'N/A') + '\nCapacity: ' + capacity + ' L';
+   if (!confirm('Save this truck?\n\n' + summary)) return;
+
+   var docs = []; 
+   if (document.getElementById('docLTO').value) docs.push({type:'lto_registration',expiry_date:document.getElementById('docLTO').value}); 
+   if (document.getElementById('docFire').value) docs.push({type:'fire_permit',expiry_date:document.getElementById('docFire').value});
+   if (document.getElementById('docDOST').value) docs.push({type:'dost_calibration',expiry_date:document.getElementById('docDOST').value}); 
+   
+   var body = {plate_no:document.getElementById('newPlate').value,make:document.getElementById('newMake').value,driver_name:document.getElementById('newDriver').value,hauler_name:document.getElementById('newHauler').value,total_capacity:document.getElementById('newCapacity').value,num_tps:document.getElementById('newTps').value,documents:docs}; 
+   var url = id ? '/trucks/'+id : '/trucks'; 
+   var method = id ? 'PUT' : 'POST'; 
+   var data = await api(url, method, body); 
+   if (data.status === 'success') { 
+    closeTruckForm(); 
+    loadTrucks(); 
+    loadDashboard(); 
+   } 
+   else { 
+    alert(data.error || 'Error'); 
+   } 
+  }
+
+  async function deleteTruck(id, plate) { 
+   if (!confirm('WARNING: This will deactivate truck ' + plate + '.\n\nAre you sure?')) return;
+   if (!confirm('Confirm deactivation of ' + plate + '?')) return;
+   await api('/trucks/'+id, 'DELETE'); 
+   loadTrucks(); 
+  }
+  async function restoreTruck(id) { await api('/trucks/'+id+'/restore', 'PATCH'); loadTrucks(); }
+
+  async function loadClients() { var data = await api('/clients'); if (data.status === 'success') { allClients = data.data; searchClients(); } }
+
+  function searchClients() { var s = document.getElementById('clientSearch').value.toLowerCase(); var f = document.getElementById('clientStatusFilter').value; var filtered = allClients.filter(function(c) { if (s && ![c.company_name,c.email,c.mobile].some(function(v) { return (v||'').toLowerCase().indexOf(s) >= 0; })) return false; if (f === 'active' && !c.is_active) return false; if (f === 'inactive' && c.is_active) return false; return true; }); document.getElementById('clientList').innerHTML = '<div class="overflow-x-auto"><table class="w-full text-sm bg-white rounded-lg shadow" style="min-width:800px"><thead class="bg-gray-50"><tr><th class="py-3 px-4">Company</th><th class="py-3 px-4">Email</th><th class="py-3 px-4">Mobile</th><th class="py-3 px-4">ATLs</th><th class="py-3 px-4">Actions</th></tr></thead><tbody>'+filtered.map(function(c) { return '<tr class="border-b '+(c.is_active?'':'opacity-50')+'"><td class="py-2 px-4 font-semibold">'+(c.company_name||'-')+'</td><td class="py-2 px-4">'+c.email.split('@')[0].substring(0, 3)+'***@'+c.email.split('@')[1]+'</td><td class="py-2 px-4">'+c.mobile+'</td><td class="py-2 px-4 text-center">'+c.total_atls+'</td><td class="py-2 px-4"><div class="flex space-x-2 justify-center"><button onclick="editClient('+c.id+')" class="text-green-600"><i class="fas fa-edit"></i></button>'+(c.is_active?'<button onclick="toggleClient('+c.id+')" class="text-orange-600"><i class="fas fa-ban"></i></button>':'<button onclick="toggleClient('+c.id+')" class="text-green-600"><i class="fas fa-check"></i></button>')+'<button onclick="deleteClient('+c.id+',\''+c.email+'\')" class="text-red-600"><i class="fas fa-trash"></i></button></div></td></tr>'; }).join('')+'</tbody></table></div>'; }
+
+  function showAddClient() { document.getElementById('editClientId').value=''; document.getElementById('clientModalTitle').textContent='Add Client'; ['clientEmail','clientMobile','clientCompany','clientPassword'].forEach(function(id) { document.getElementById(id).value=''; }); document.getElementById('clientModal').classList.remove('hidden'); }
+  async function editClient(id) { var data = await api('/clients/'+id); if (data.status === 'success') { var c = data.data; document.getElementById('editClientId').value = c.id; document.getElementById('clientModalTitle').textContent = 'Edit Client'; document.getElementById('clientEmail').value = c.email; document.getElementById('clientMobile').value = c.mobile; document.getElementById('clientCompany').value = c.company_name || ''; document.getElementById('clientPassword').value = ''; document.getElementById('clientModal').classList.remove('hidden'); } }
+  
+  async function saveClient(e) { 
+   e.preventDefault(); 
+   var id = document.getElementById('editClientId').value; 
+   var body = {email:document.getElementById('clientEmail').value,mobile:document.getElementById('clientMobile').value,company_name:document.getElementById('clientCompany').value}; 
+   var pw = document.getElementById('clientPassword').value; if (pw) body.password = pw; 
+   var url = id ? '/clients/'+id : '/clients'; 
+   var method = id ? 'PUT' : 'POST'; 
+   var data = await api(url, method, body); if (data.status === 'success') { 
+    document.getElementById('clientModal').classList.add('hidden'); loadClients(); 
+   } 
+   else { alert(data.error || 'Error'); 
+
+   } 
+  }
+
+  async function toggleClient(id) { await api('/clients/'+id+'/toggle-status', 'PATCH'); loadClients(); }
+
+  async function deleteClient(id, email) { 
+   if (!confirm('WARNING: Delete client ' + email + '?\n\nThis cannot be undone if they have no active ATLs.')) return;
+   await api('/clients/'+id, 'DELETE'); 
+   loadClients(); 
+  }
+
+  async function showTruckDocs(filter) {
+   if (filter === 'backloads') {
+    // Fetch backload data
+    var res = await fetch('/api/reports/summary?hasBackload=1', { headers: { 'Authorization': 'Bearer ' + token } });
+    var data = await res.json();
+    if (data.status !== 'success') return;
+    
+    var records = data.data.records.filter(function(r) { return r.backload_count > 0; });
+    document.getElementById('docModalTitle').textContent = 'Backload Records (' + records.length + ')';
+    
+    var html = '<div class="overflow-x-auto"><table class="w-full text-sm"><thead class="bg-gray-50"><tr><th class="py-2 px-2 text-left">ATL Code</th><th class="py-2 px-2 text-left">Plate</th><th class="py-2 px-2 text-left">Company</th><th class="py-2 px-2 text-right">Volume (L)</th><th class="py-2 px-2 text-right">Backload (L)</th><th class="py-2 px-2 text-center">Count</th></tr></thead><tbody>';
+    
+    records.forEach(function(r) {
+     html += '<tr class="border-b">';
+     html += '<td class="py-2 px-2 font-semibold">' + new Date(r.scheduled_date).toLocaleDateString() + '</td>';
+     html += '<td class="py-2 px-2 font-semibold">' + (r.so_number || 'N/A') + '</td>'; 
+     html += '<td class="py-2 px-2 font-mono text-xs">' + (r.atl_code || 'N/A') + '</td>';
+     html += '<td class="py-2 px-2">' + r.plate_no + '</td>';
+     html += '<td class="py-2 px-2">' + (r.company || '-') + '</td>';
+     html += '<td class="py-2 px-2 text-right">' + (r.volume || 0).toLocaleString() + '</td>';
+     html += '<td class="py-2 px-2 text-right font-semibold text-red-600">' + (r.backload_volume || 0).toLocaleString() + '</td>';
+     html += '<td class="py-2 px-2 text-center">' + (r.backload_count || 0) + '</td>';
+     html += '</tr>';
+    });
+    
+    html += '</tbody></table></div>';
+    document.getElementById('docDetailContent').innerHTML = html;
+    document.getElementById('docDetailModal').classList.remove('hidden');
+    return;
+   }
+   var data = await api('/trucks/all');
+   if (data.status !== 'success') return;
+   var trucks = data.data || data;
+   var title = filter === 'validDocs' ? 'Trucks with ALL Valid Documents' : 'Trucks with Expired/Missing Documents';
+   document.getElementById('docModalTitle').textContent = title;
+   var result = [];
+   trucks.forEach(function(t) {
+    var docs = t.documents || [];
+    var lto = docs.find(function(d){return d.document_type==='lto_registration';});
+    var fire = docs.find(function(d){return d.document_type==='fire_permit';});
+    var dost = docs.find(function(d){return d.document_type==='dost_calibration';});
+    var allValid = lto && fire && dost && new Date(lto.expiry_date) >= new Date() && new Date(fire.expiry_date) >= new Date() && new Date(dost.expiry_date) >= new Date();
+    if ((filter === 'validDocs' && allValid) || (filter === 'expiredDocs' && !allValid)) {
+    result.push({plate_no:t.plate_no,make:t.make,driver:t.driver_name,lto:lto,fire:fire,dost:dost});
     }
+   });
+   var html = '<div class="overflow-x-auto"><table class="w-full text-sm"><thead class="bg-gray-50"><tr><th class="py-2 px-2 text-left">Plate</th><th class="py-2 px-2 text-left">Make</th><th class="py-2 px-2 text-left">Driver</th><th class="py-2 px-2 text-left">LTO</th><th class="py-2 px-2 text-left">Fire</th><th class="py-2 px-2 text-left">DOST</th></tr></thead><tbody>';
+   result.forEach(function(t) {
+    html += '<tr class="border-b">';
+    html += '<td class="py-2 px-2 font-semibold">'+t.plate_no+'</td>';
+    html += '<td class="py-2 px-2">'+t.make+'</td>';
+    html += '<td class="py-2 px-2">'+(t.driver||'-')+'</td>';
+    html += '<td class="py-2 px-2">'+(t.lto?new Date(t.lto.expiry_date).toLocaleDateString()+' ('+(new Date(t.lto.expiry_date)>=new Date()?'Valid':'Expired')+')':'Missing')+'</td>';
+    html += '<td class="py-2 px-2">'+(t.fire?new Date(t.fire.expiry_date).toLocaleDateString()+' ('+(new Date(t.fire.expiry_date)>=new Date()?'Valid':'Expired')+')':'Missing')+'</td>';
+    html += '<td class="py-2 px-2">'+(t.dost?new Date(t.dost.expiry_date).toLocaleDateString()+' ('+(new Date(t.dost.expiry_date)>=new Date()?'Valid':'Expired')+')':'Missing')+'</td>';
+    html += '</tr>';
+   });
+   html += '</tbody></table></div>';
+   if (result.length === 0) html = '<p class="text-center py-8 text-gray-500">No trucks found</p>';
+   document.getElementById('docDetailContent').innerHTML = html;
+   document.getElementById('docDetailModal').classList.remove('hidden');
+  }
 
-    async function showTruckDocs(filter) {
-      if (filter === 'backloads') {
-        // Fetch backload data
-        var res = await fetch('/api/reports/summary?hasBackload=1', { headers: { 'Authorization': 'Bearer ' + token } });
-        var data = await res.json();
-        if (data.status !== 'success') return;
-        
-        var records = data.data.records.filter(function(r) { return r.backload_count > 0; });
-        document.getElementById('docModalTitle').textContent = 'Backload Records (' + records.length + ')';
-        
-        var html = '<div class="overflow-x-auto"><table class="w-full text-sm"><thead class="bg-gray-50"><tr><th class="py-2 px-2 text-left">ATL Code</th><th class="py-2 px-2 text-left">Plate</th><th class="py-2 px-2 text-left">Company</th><th class="py-2 px-2 text-right">Volume (L)</th><th class="py-2 px-2 text-right">Backload (L)</th><th class="py-2 px-2 text-center">Count</th></tr></thead><tbody>';
-        
-        records.forEach(function(r) {
-          html += '<tr class="border-b">';
-          html += '<td class="py-2 px-2 font-semibold">' + new Date(r.scheduled_date).toLocaleDateString() + '</td>';
-          html += '<td class="py-2 px-2 font-semibold">' + (r.so_number || 'N/A') + '</td>';  
-          html += '<td class="py-2 px-2 font-mono text-xs">' + (r.atl_code || 'N/A') + '</td>';
-          html += '<td class="py-2 px-2">' + r.plate_no + '</td>';
-          html += '<td class="py-2 px-2">' + (r.company || '-') + '</td>';
-          html += '<td class="py-2 px-2 text-right">' + (r.volume || 0).toLocaleString() + '</td>';
-          html += '<td class="py-2 px-2 text-right font-semibold text-red-600">' + (r.backload_volume || 0).toLocaleString() + '</td>';
-          html += '<td class="py-2 px-2 text-center">' + (r.backload_count || 0) + '</td>';
-          html += '</tr>';
-        });
-        
-        html += '</tbody></table></div>';
-        document.getElementById('docDetailContent').innerHTML = html;
-        document.getElementById('docDetailModal').classList.remove('hidden');
-        return;
-      }
-      var data = await api('/trucks/all');
-      if (data.status !== 'success') return;
-      var trucks = data.data || data;
-      var title = filter === 'validDocs' ? 'Trucks with ALL Valid Documents' : 'Trucks with Expired/Missing Documents';
-      document.getElementById('docModalTitle').textContent = title;
-      var result = [];
-      trucks.forEach(function(t) {
-        var docs = t.documents || [];
-        var lto = docs.find(function(d){return d.document_type==='lto_registration';});
-        var fire = docs.find(function(d){return d.document_type==='fire_permit';});
-        var dost = docs.find(function(d){return d.document_type==='dost_calibration';});
-        var allValid = lto && fire && dost && new Date(lto.expiry_date) >= new Date() && new Date(fire.expiry_date) >= new Date() && new Date(dost.expiry_date) >= new Date();
-        if ((filter === 'validDocs' && allValid) || (filter === 'expiredDocs' && !allValid)) {
-        result.push({plate_no:t.plate_no,make:t.make,driver:t.driver_name,lto:lto,fire:fire,dost:dost});
-        }
-      });
-      var html = '<div class="overflow-x-auto"><table class="w-full text-sm"><thead class="bg-gray-50"><tr><th class="py-2 px-2 text-left">Plate</th><th class="py-2 px-2 text-left">Make</th><th class="py-2 px-2 text-left">Driver</th><th class="py-2 px-2 text-left">LTO</th><th class="py-2 px-2 text-left">Fire</th><th class="py-2 px-2 text-left">DOST</th></tr></thead><tbody>';
-      result.forEach(function(t) {
-        html += '<tr class="border-b">';
-        html += '<td class="py-2 px-2 font-semibold">'+t.plate_no+'</td>';
-        html += '<td class="py-2 px-2">'+t.make+'</td>';
-        html += '<td class="py-2 px-2">'+(t.driver||'-')+'</td>';
-        html += '<td class="py-2 px-2">'+(t.lto?new Date(t.lto.expiry_date).toLocaleDateString()+' ('+(new Date(t.lto.expiry_date)>=new Date()?'Valid':'Expired')+')':'Missing')+'</td>';
-        html += '<td class="py-2 px-2">'+(t.fire?new Date(t.fire.expiry_date).toLocaleDateString()+' ('+(new Date(t.fire.expiry_date)>=new Date()?'Valid':'Expired')+')':'Missing')+'</td>';
-        html += '<td class="py-2 px-2">'+(t.dost?new Date(t.dost.expiry_date).toLocaleDateString()+' ('+(new Date(t.dost.expiry_date)>=new Date()?'Valid':'Expired')+')':'Missing')+'</td>';
-        html += '</tr>';
-      });
-      html += '</tbody></table></div>';
-      if (result.length === 0) html = '<p class="text-center py-8 text-gray-500">No trucks found</p>';
-      document.getElementById('docDetailContent').innerHTML = html;
-      document.getElementById('docDetailModal').classList.remove('hidden');
+  var currentChatUser = null;
+  var currentChatName = '';
+  var chatInterval = null;
+  var contactList = [];
+
+  async function openChat() {
+   document.getElementById('chatWidget').classList.remove('hidden');
+   document.getElementById('chatButton').classList.add('hidden');
+   loadContactList();
+  }
+
+  function showContactList() {
+   document.getElementById('contactList').classList.remove('hidden');
+   document.getElementById('chatBody').classList.add('hidden');
+   document.getElementById('chatInputArea').classList.add('hidden');
+   document.getElementById('chatTitle').textContent = 'Chat';
+   currentChatUser = null;
+   loadContactList();
+  }
+
+  async function loadContactList() {
+   var res = await fetch('/api/chat-list', { headers: { 'Authorization': 'Bearer ' + token } });
+   var data = await res.json();
+   if (data.status === 'success') {
+    contactList = data.data;
+    var html = '';
+    contactList.forEach(function(c) {
+     html += '<div onclick="startChat(' + c.id + ', \'' + (c.email || c.company_name) + '\')" class="flex items-center p-3 hover:bg-gray-50 cursor-pointer border-b">';
+     html += '<div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">';
+     html += '<i class="fas fa-user text-blue-600 text-sm"></i>';
+     html += '</div>';
+     html += '<div class="flex-1">';
+     html += '<p class="text-sm font-semibold">' + (c.company_name || c.email.split('@')[0].substring(0, 3)+'***@'+c.email.split('@')[1]) + '</p>';
+     html += '<p class="text-xs text-gray-400">' + (c.email ? c.email.split('@')[0].substring(0, 3)+'***@'+c.email.split('@')[1] : '') + '</p>';
+     html += '</div>';
+     html += '<div class="w-2 h-2 bg-green-400 rounded-full" title="Online"></div>';
+     html += '</div>';
+    });
+    document.getElementById('contactList').innerHTML = html || '<p class="p-3 text-center text-gray-400 text-sm">No contacts available</p>';
+   }
+  }
+
+  function startChat(userId, userName) {
+   currentChatUser = userId;
+   currentChatName = userName;
+   document.getElementById('chatTitle').textContent = userName;
+   document.getElementById('contactList').classList.add('hidden');
+   document.getElementById('chatBody').classList.remove('hidden');
+   document.getElementById('chatInputArea').classList.remove('hidden');
+   loadChatMessages();
+   if (chatInterval) clearInterval(chatInterval);
+   chatInterval = setInterval(loadChatMessages, 3000);
+  }
+
+  async function loadChatMessages() {
+   if (!currentChatUser) return;
+   var res = await fetch('/api/chat/' + currentChatUser, { headers: { 'Authorization': 'Bearer ' + token } });
+   var data = await res.json();
+   if (data.status === 'success') {
+    var html = '';
+    data.data.forEach(function(m) {
+     var isMe = m.sender_id == user.id;
+     html += '<div class="' + (isMe ? 'text-right' : 'text-left') + ' mb-2">';
+     html += '<div class="inline-block ' + (isMe ? 'bg-blue-100' : 'bg-gray-100') + ' rounded-lg px-3 py-1.5 text-sm max-w-[80%]">';
+     html += '<p class="text-[10px] text-gray-500">' + (isMe ? 'You' : currentChatName) + '</p>';
+     html += '<p>' + m.message + '</p>';
+     html += '<p class="text-[9px] text-gray-400 text-right">' + new Date(m.created_at).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) + '</p>';
+     html += '</div></div>';
+    });
+    document.getElementById('chatBody').innerHTML = html || '<p class="text-center text-gray-400 text-sm pt-10">Start the conversation!</p>';
+    document.getElementById('chatBody').scrollTop = document.getElementById('chatBody').scrollHeight;
+   }
+  }
+
+  async function sendChat() {
+   var input = document.getElementById('chatInput');
+   var msg = input.value.trim();
+   if (!msg || !currentChatUser) return;
+   input.value = '';
+   await fetch('/api/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+    body: JSON.stringify({ receiver_id: currentChatUser, message: msg })
+   });
+   loadChatMessages();
+  }
+
+  function closeChat() {
+   document.getElementById('chatWidget').classList.add('hidden');
+   document.getElementById('chatButton').classList.remove('hidden');
+   if (chatInterval) clearInterval(chatInterval);
+  }
+
+  function toggleChat() {
+   var body = document.getElementById('chatBody');
+   body.style.display = body.style.display === 'none' ? 'block' : 'none';
+  }
+
+  var currentTruckPage = 1;
+  var trucksPerPage = 10;
+  var allTruckRecords = [];
+
+  function paginateTrucks() {
+   var filtered = allTruckRecords;
+   var s = document.getElementById('truckSearch').value.toLowerCase();
+   var f = document.getElementById('truckStatusFilter').value;
+   
+   if (s) {
+    filtered = filtered.filter(function(t) {
+     return [t.plate_no, t.driver_name, t.hauler_name, t.make].some(function(v) {
+      return (v || '').toLowerCase().indexOf(s) >= 0;
+     });
+    });
+   }
+   if (f === 'active') filtered = filtered.filter(function(t) { return t.is_active; });
+   if (f === 'inactive') filtered = filtered.filter(function(t) { return !t.is_active; });
+   
+   var totalPages = Math.ceil(filtered.length / trucksPerPage);
+   if (currentTruckPage > totalPages) currentTruckPage = totalPages || 1;
+   var start = (currentTruckPage - 1) * trucksPerPage;
+   var end = start + trucksPerPage;
+   var pageData = filtered.slice(start, end);
+   
+   document.getElementById('truckList').innerHTML = '<div class="overflow-x-auto"><table class="w-full text-sm bg-white rounded-lg shadow" style="min-width:800px"><thead class="bg-gray-50"><tr><th class="py-3 px-4 text-left">Plate</th><th class="py-3 px-4 text-left">Make</th><th class="py-3 px-4 text-left">Driver</th><th class="py-3 px-4 text-left">Capacity</th><th class="py-3 px-4 text-center">Docs</th><th class="py-3 px-4 text-center">Actions</th></tr></thead><tbody>' + pageData.map(function(t) {
+    var docs = t.documents || [];
+    var valid = ['lto_registration','fire_permit','dost_calibration'].every(function(type) {
+     return docs.find(function(d) { return d.document_type === type && new Date(d.expiry_date) >= new Date(); });
+    });
+    return '<tr class="border-b ' + (t.is_active ? '' : 'opacity-50') + '"><td class="py-2 px-4 font-semibold">' + t.plate_no + '</td><td class="py-2 px-4">' + t.make + '</td><td class="py-2 px-4">' + (t.driver_name || '-') + '</td><td class="py-2 px-4">' + parseFloat(t.total_capacity).toLocaleString() + 'L</td><td class="py-2 px-4 text-center">' + (valid ? 'Y' : 'N') + '</td><td class="py-2 px-4"><div class="flex space-x-2 justify-center"><button onclick="editTruck(' + t.id + ')" class="text-blue-600"><i class="fas fa-edit"></i></button>' + (t.is_active ? '<button onclick="deleteTruck(' + t.id + ',\'' + t.plate_no + '\')" class="text-red-600"><i class="fas fa-trash"></i></button>' : '<button onclick="restoreTruck(' + t.id + ')" class="text-green-600"><i class="fas fa-undo"></i></button>') + '</div></td></tr>';
+   }).join('') + '</tbody></table></div>';
+   
+   // Pagination controls
+   var pagHTML = '';
+   pagHTML += '<button onclick="changeTruckPage(' + (currentTruckPage - 1) + ')" class="px-2 py-1 border rounded text-xs ' + (currentTruckPage === 1 ? 'text-gray-300 cursor-not-allowed' : 'hover:bg-gray-100') + '" ' + (currentTruckPage === 1 ? 'disabled' : '') + '><i class="fas fa-chevron-left"></i></button>';
+   
+   for (var i = 1; i <= totalPages; i++) {
+    if (i === 1 || i === totalPages || (i >= currentTruckPage - 2 && i <= currentTruckPage + 2)) {
+     pagHTML += '<button onclick="changeTruckPage(' + i + ')" class="px-2 py-1 border rounded text-xs ' + (i === currentTruckPage ? 'bg-blue-900 text-white' : 'hover:bg-gray-100') + '">' + i + '</button>';
+    } else if (i === currentTruckPage - 3 || i === currentTruckPage + 3) {
+     pagHTML += '<span class="px-1 text-xs">...</span>';
     }
+   }
+   
+   pagHTML += '<button onclick="changeTruckPage(' + (currentTruckPage + 1) + ')" class="px-2 py-1 border rounded text-xs ' + (currentTruckPage === totalPages ? 'text-gray-300 cursor-not-allowed' : 'hover:bg-gray-100') + '" ' + (currentTruckPage === totalPages ? 'disabled' : '') + '><i class="fas fa-chevron-right"></i></button>';
+   pagHTML += '<span class="text-xs text-gray-400 ml-2">' + filtered.length + ' total</span>';
+   
+   document.getElementById('truckSearchResults').innerHTML = 'Showing ' + pageData.length + ' of ' + filtered.length + ' trucks <span class="ml-4">' + pagHTML + '</span>';
+  }
 
-    var currentChatUser = null;
-    var currentChatName = '';
-    var chatInterval = null;
-    var contactList = [];
+  function changeTruckPage(page) {
+   var filtered = allTruckRecords;
+   var s = document.getElementById('truckSearch').value.toLowerCase();
+   var f = document.getElementById('truckStatusFilter').value;
+   if (s) filtered = filtered.filter(function(t) { return [t.plate_no, t.driver_name, t.hauler_name, t.make].some(function(v) { return (v || '').toLowerCase().indexOf(s) >= 0; }); });
+   if (f === 'active') filtered = filtered.filter(function(t) { return t.is_active; });
+   if (f === 'inactive') filtered = filtered.filter(function(t) { return !t.is_active; });
+   var totalPages = Math.ceil(filtered.length / trucksPerPage);
+   if (page < 1 || page > totalPages) return;
+   currentTruckPage = page;
+   paginateTrucks();
+  }
 
-    async function openChat() {
-      document.getElementById('chatWidget').classList.remove('hidden');
-      document.getElementById('chatButton').classList.add('hidden');
-      loadContactList();
+  function maskEmail(email) {
+   if (!email) return 'N/A';
+   var parts = email.split('@');
+   return parts[0].substring(0, 3) + '***@' + parts[1];
+  }
+
+  function printDocModal() {
+   window.print();
+  }
+
+  function exportDocModal() {
+   var title = document.getElementById('docModalTitle').textContent;
+   var table = document.querySelector('#docDetailContent table');
+   if (!table) return;
+   
+   var csv = title + '\n';
+   var rows = table.querySelectorAll('tr');
+   rows.forEach(function(row) {
+    var cols = row.querySelectorAll('th, td');
+    var rowData = [];
+    cols.forEach(function(col) { rowData.push('"' + col.textContent.trim() + '"'); });
+    csv += rowData.join(',') + '\n';
+   });
+   
+   var blob = new Blob([csv], { type: 'text/csv' });
+   var url = window.URL.createObjectURL(blob);
+   var a = document.createElement('a');
+   a.href = url;
+   a.download = title.replace(/\s+/g, '_') + '_' + new Date().toISOString().split('T')[0] + '.csv';
+   a.click();
+   window.URL.revokeObjectURL(url);
+  }
+
+  function sortTable(tableId, columnIndex) {
+   var table = document.getElementById(tableId);
+   if (!table) {
+    // Try finding by closest table
+    var container = document.getElementById(tableId);
+    if (container) table = container.querySelector('table');
+   }
+   if (!table) return;
+   
+   var tbody = table.querySelector('tbody');
+   var rows = Array.from(tbody.querySelectorAll('tr'));
+   var header = table.querySelectorAll('th')[columnIndex];
+   var isAsc = header.classList.contains('sort-asc');
+   
+   // Clear all sort indicators
+   table.querySelectorAll('th').forEach(function(th) { th.classList.remove('sort-asc', 'sort-desc'); });
+   
+   rows.sort(function(a, b) {
+    var aVal = (a.cells[columnIndex]?.textContent || '').trim().replace(/[,%]/g, '');
+    var bVal = (b.cells[columnIndex]?.textContent || '').trim().replace(/[,%]/g, '');
+    var aNum = parseFloat(aVal);
+    var bNum = parseFloat(bVal);
+    
+    if (!isNaN(aNum) && !isNaN(bNum)) {
+     return isAsc ? bNum - aNum : aNum - bNum;
     }
+    return isAsc ? bVal.localeCompare(aVal) : aVal.localeCompare(bVal);
+   });
+   
+   header.classList.add(isAsc ? 'sort-desc' : 'sort-asc');
+   rows.forEach(function(row) { tbody.appendChild(row); });
+  }
+  function toggleSidebar(){document.getElementById("sidebar").classList.toggle("open");document.getElementById("sidebarOverlay").classList.toggle("hidden");document.body.classList.toggle("sidebar-open");}
+  function logout() { localStorage.clear(); window.location.href = '/'; }
+  loadDashboard();
+ </script>
 
-    function showContactList() {
-      document.getElementById('contactList').classList.remove('hidden');
-      document.getElementById('chatBody').classList.add('hidden');
-      document.getElementById('chatInputArea').classList.add('hidden');
-      document.getElementById('chatTitle').textContent = 'Chat';
-      currentChatUser = null;
-      loadContactList();
-    }
-
-    async function loadContactList() {
-      var res = await fetch('/api/chat-list', { headers: { 'Authorization': 'Bearer ' + token } });
-      var data = await res.json();
-      if (data.status === 'success') {
-        contactList = data.data;
-        var html = '';
-        contactList.forEach(function(c) {
-          html += '<div onclick="startChat(' + c.id + ', \'' + (c.email || c.company_name) + '\')" class="flex items-center p-3 hover:bg-gray-50 cursor-pointer border-b">';
-          html += '<div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">';
-          html += '<i class="fas fa-user text-blue-600 text-sm"></i>';
-          html += '</div>';
-          html += '<div class="flex-1">';
-          html += '<p class="text-sm font-semibold">' + (c.company_name || c.email.split('@')[0].substring(0, 3)+'***@'+c.email.split('@')[1]) + '</p>';
-          html += '<p class="text-xs text-gray-400">' + (c.email ? c.email.split('@')[0].substring(0, 3)+'***@'+c.email.split('@')[1] : '') + '</p>';
-          html += '</div>';
-          html += '<div class="w-2 h-2 bg-green-400 rounded-full" title="Online"></div>';
-          html += '</div>';
-        });
-        document.getElementById('contactList').innerHTML = html || '<p class="p-3 text-center text-gray-400 text-sm">No contacts available</p>';
-      }
-    }
-
-    function startChat(userId, userName) {
-      currentChatUser = userId;
-      currentChatName = userName;
-      document.getElementById('chatTitle').textContent = userName;
-      document.getElementById('contactList').classList.add('hidden');
-      document.getElementById('chatBody').classList.remove('hidden');
-      document.getElementById('chatInputArea').classList.remove('hidden');
-      loadChatMessages();
-      if (chatInterval) clearInterval(chatInterval);
-      chatInterval = setInterval(loadChatMessages, 3000);
-    }
-
-    async function loadChatMessages() {
-      if (!currentChatUser) return;
-      var res = await fetch('/api/chat/' + currentChatUser, { headers: { 'Authorization': 'Bearer ' + token } });
-      var data = await res.json();
-      if (data.status === 'success') {
-        var html = '';
-        data.data.forEach(function(m) {
-          var isMe = m.sender_id == user.id;
-          html += '<div class="' + (isMe ? 'text-right' : 'text-left') + ' mb-2">';
-          html += '<div class="inline-block ' + (isMe ? 'bg-blue-100' : 'bg-gray-100') + ' rounded-lg px-3 py-1.5 text-sm max-w-[80%]">';
-          html += '<p class="text-[10px] text-gray-500">' + (isMe ? 'You' : currentChatName) + '</p>';
-          html += '<p>' + m.message + '</p>';
-          html += '<p class="text-[9px] text-gray-400 text-right">' + new Date(m.created_at).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) + '</p>';
-          html += '</div></div>';
-        });
-        document.getElementById('chatBody').innerHTML = html || '<p class="text-center text-gray-400 text-sm pt-10">Start the conversation!</p>';
-        document.getElementById('chatBody').scrollTop = document.getElementById('chatBody').scrollHeight;
-      }
-    }
-
-    async function sendChat() {
-      var input = document.getElementById('chatInput');
-      var msg = input.value.trim();
-      if (!msg || !currentChatUser) return;
-      input.value = '';
-      await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-        body: JSON.stringify({ receiver_id: currentChatUser, message: msg })
-      });
-      loadChatMessages();
-    }
-
-    function closeChat() {
-      document.getElementById('chatWidget').classList.add('hidden');
-      document.getElementById('chatButton').classList.remove('hidden');
-      if (chatInterval) clearInterval(chatInterval);
-    }
-
-    function toggleChat() {
-      var body = document.getElementById('chatBody');
-      body.style.display = body.style.display === 'none' ? 'block' : 'none';
-    }
-
-    var currentTruckPage = 1;
-    var trucksPerPage = 10;
-    var allTruckRecords = [];
-
-    function paginateTrucks() {
-      var filtered = allTruckRecords;
-      var s = document.getElementById('truckSearch').value.toLowerCase();
-      var f = document.getElementById('truckStatusFilter').value;
-      
-      if (s) {
-        filtered = filtered.filter(function(t) {
-          return [t.plate_no, t.driver_name, t.hauler_name, t.make].some(function(v) {
-            return (v || '').toLowerCase().indexOf(s) >= 0;
-          });
-        });
-      }
-      if (f === 'active') filtered = filtered.filter(function(t) { return t.is_active; });
-      if (f === 'inactive') filtered = filtered.filter(function(t) { return !t.is_active; });
-      
-      var totalPages = Math.ceil(filtered.length / trucksPerPage);
-      if (currentTruckPage > totalPages) currentTruckPage = totalPages || 1;
-      var start = (currentTruckPage - 1) * trucksPerPage;
-      var end = start + trucksPerPage;
-      var pageData = filtered.slice(start, end);
-      
-      document.getElementById('truckList').innerHTML = '<div class="overflow-x-auto"><table class="w-full text-sm bg-white rounded-lg shadow" style="min-width:800px"><thead class="bg-gray-50"><tr><th class="py-3 px-4 text-left">Plate</th><th class="py-3 px-4 text-left">Make</th><th class="py-3 px-4 text-left">Driver</th><th class="py-3 px-4 text-left">Capacity</th><th class="py-3 px-4 text-center">Docs</th><th class="py-3 px-4 text-center">Actions</th></tr></thead><tbody>' + pageData.map(function(t) {
-        var docs = t.documents || [];
-        var valid = ['lto_registration','fire_permit','dost_calibration'].every(function(type) {
-          return docs.find(function(d) { return d.document_type === type && new Date(d.expiry_date) >= new Date(); });
-        });
-        return '<tr class="border-b ' + (t.is_active ? '' : 'opacity-50') + '"><td class="py-2 px-4 font-semibold">' + t.plate_no + '</td><td class="py-2 px-4">' + t.make + '</td><td class="py-2 px-4">' + (t.driver_name || '-') + '</td><td class="py-2 px-4">' + parseFloat(t.total_capacity).toLocaleString() + 'L</td><td class="py-2 px-4 text-center">' + (valid ? 'Y' : 'N') + '</td><td class="py-2 px-4"><div class="flex space-x-2 justify-center"><button onclick="editTruck(' + t.id + ')" class="text-blue-600"><i class="fas fa-edit"></i></button>' + (t.is_active ? '<button onclick="deleteTruck(' + t.id + ',\'' + t.plate_no + '\')" class="text-red-600"><i class="fas fa-trash"></i></button>' : '<button onclick="restoreTruck(' + t.id + ')" class="text-green-600"><i class="fas fa-undo"></i></button>') + '</div></td></tr>';
-      }).join('') + '</tbody></table></div>';
-      
-      // Pagination controls
-      var pagHTML = '';
-      pagHTML += '<button onclick="changeTruckPage(' + (currentTruckPage - 1) + ')" class="px-2 py-1 border rounded text-xs ' + (currentTruckPage === 1 ? 'text-gray-300 cursor-not-allowed' : 'hover:bg-gray-100') + '" ' + (currentTruckPage === 1 ? 'disabled' : '') + '><i class="fas fa-chevron-left"></i></button>';
-      
-      for (var i = 1; i <= totalPages; i++) {
-        if (i === 1 || i === totalPages || (i >= currentTruckPage - 2 && i <= currentTruckPage + 2)) {
-          pagHTML += '<button onclick="changeTruckPage(' + i + ')" class="px-2 py-1 border rounded text-xs ' + (i === currentTruckPage ? 'bg-blue-900 text-white' : 'hover:bg-gray-100') + '">' + i + '</button>';
-        } else if (i === currentTruckPage - 3 || i === currentTruckPage + 3) {
-          pagHTML += '<span class="px-1 text-xs">...</span>';
-        }
-      }
-      
-      pagHTML += '<button onclick="changeTruckPage(' + (currentTruckPage + 1) + ')" class="px-2 py-1 border rounded text-xs ' + (currentTruckPage === totalPages ? 'text-gray-300 cursor-not-allowed' : 'hover:bg-gray-100') + '" ' + (currentTruckPage === totalPages ? 'disabled' : '') + '><i class="fas fa-chevron-right"></i></button>';
-      pagHTML += '<span class="text-xs text-gray-400 ml-2">' + filtered.length + ' total</span>';
-      
-      document.getElementById('truckSearchResults').innerHTML = 'Showing ' + pageData.length + ' of ' + filtered.length + ' trucks <span class="ml-4">' + pagHTML + '</span>';
-    }
-
-    function changeTruckPage(page) {
-      var filtered = allTruckRecords;
-      var s = document.getElementById('truckSearch').value.toLowerCase();
-      var f = document.getElementById('truckStatusFilter').value;
-      if (s) filtered = filtered.filter(function(t) { return [t.plate_no, t.driver_name, t.hauler_name, t.make].some(function(v) { return (v || '').toLowerCase().indexOf(s) >= 0; }); });
-      if (f === 'active') filtered = filtered.filter(function(t) { return t.is_active; });
-      if (f === 'inactive') filtered = filtered.filter(function(t) { return !t.is_active; });
-      var totalPages = Math.ceil(filtered.length / trucksPerPage);
-      if (page < 1 || page > totalPages) return;
-      currentTruckPage = page;
-      paginateTrucks();
-    }
-
-    function maskEmail(email) {
-      if (!email) return 'N/A';
-      var parts = email.split('@');
-      return parts[0].substring(0, 3) + '***@' + parts[1];
-    }
-
-    function printDocModal() {
-      window.print();
-    }
-
-    function exportDocModal() {
-      var title = document.getElementById('docModalTitle').textContent;
-      var table = document.querySelector('#docDetailContent table');
-      if (!table) return;
-      
-      var csv = title + '\n';
-      var rows = table.querySelectorAll('tr');
-      rows.forEach(function(row) {
-        var cols = row.querySelectorAll('th, td');
-        var rowData = [];
-        cols.forEach(function(col) { rowData.push('"' + col.textContent.trim() + '"'); });
-        csv += rowData.join(',') + '\n';
-      });
-      
-      var blob = new Blob([csv], { type: 'text/csv' });
-      var url = window.URL.createObjectURL(blob);
-      var a = document.createElement('a');
-      a.href = url;
-      a.download = title.replace(/\s+/g, '_') + '_' + new Date().toISOString().split('T')[0] + '.csv';
-      a.click();
-      window.URL.revokeObjectURL(url);
-    }
-
-    function sortTable(tableId, columnIndex) {
-      var table = document.getElementById(tableId);
-      if (!table) {
-        // Try finding by closest table
-        var container = document.getElementById(tableId);
-        if (container) table = container.querySelector('table');
-      }
-      if (!table) return;
-      
-      var tbody = table.querySelector('tbody');
-      var rows = Array.from(tbody.querySelectorAll('tr'));
-      var header = table.querySelectorAll('th')[columnIndex];
-      var isAsc = header.classList.contains('sort-asc');
-      
-      // Clear all sort indicators
-      table.querySelectorAll('th').forEach(function(th) { th.classList.remove('sort-asc', 'sort-desc'); });
-      
-      rows.sort(function(a, b) {
-        var aVal = (a.cells[columnIndex]?.textContent || '').trim().replace(/[,%]/g, '');
-        var bVal = (b.cells[columnIndex]?.textContent || '').trim().replace(/[,%]/g, '');
-        var aNum = parseFloat(aVal);
-        var bNum = parseFloat(bVal);
-        
-        if (!isNaN(aNum) && !isNaN(bNum)) {
-          return isAsc ? bNum - aNum : aNum - bNum;
-        }
-        return isAsc ? bVal.localeCompare(aVal) : aVal.localeCompare(bVal);
-      });
-      
-      header.classList.add(isAsc ? 'sort-desc' : 'sort-asc');
-      rows.forEach(function(row) { tbody.appendChild(row); });
-    }
-    function toggleSidebar(){document.getElementById("sidebar").classList.toggle("open");document.getElementById("sidebarOverlay").classList.toggle("hidden");document.body.classList.toggle("sidebar-open");}
-    function logout() { localStorage.clear(); window.location.href = '/'; }
-    loadDashboard();
-  </script>
-
-  <div id="docDetailModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[80vh] overflow-y-auto p-4 md:p-6">
-      <div class="flex justify-between items-center mb-4 no-print">
-        <h3 class="text-lg font-bold" id="docModalTitle">Truck Documents</h3>
-        <div class="flex space-x-2">
-          <button onclick="printDocModal()" class="bg-blue-600 text-white px-3 py-1 rounded text-xs"><i class="fas fa-print mr-1"></i>Print</button>
-          <button onclick="exportDocModal()" class="bg-green-600 text-white px-3 py-1 rounded text-xs"><i class="fas fa-download mr-1"></i>CSV</button>
-          <button onclick="document.getElementById('docDetailModal').classList.add('hidden')" class="text-2xl">&times;</button>
-        </div>
-      </div>
-      <div id="docDetailContent"></div>
+ <div id="docDetailModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+  <div class="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[80vh] overflow-y-auto p-4 md:p-6">
+   <div class="flex justify-between items-center mb-4 no-print">
+    <h3 class="text-lg font-bold" id="docModalTitle">Truck Documents</h3>
+    <div class="flex space-x-2">
+     <button onclick="printDocModal()" class="bg-blue-600 text-white px-3 py-1 rounded text-xs"><i class="fas fa-print mr-1"></i>Print</button>
+     <button onclick="exportDocModal()" class="bg-green-600 text-white px-3 py-1 rounded text-xs"><i class="fas fa-download mr-1"></i>CSV</button>
+     <button onclick="document.getElementById('docDetailModal').classList.add('hidden')" class="text-2xl">&times;</button>
     </div>
+   </div>
+   <div id="docDetailContent"></div>
   </div>
-  </div>
+ </div>
+ </div>
 </body>
 </html>
+
 
 
 
