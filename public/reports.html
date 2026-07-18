@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -35,8 +35,8 @@
         <!-- Desktop -->
         <div class="hidden md:flex max-w-7xl mx-auto px-4 py-3 justify-between items-center">
             <div class="flex items-center space-x-3">
-                <div class="bg-white/20 p-2 rounded-lg"><i class="fas fa-history text-2xl text-yellow-400"></i></div>
-                <div><span class="font-bold text-xl">Transaction Logs</span></div>
+                <div class="bg-white/20 p-2 rounded-lg"><i class="fas fa-chart-bar text-2xl text-yellow-400"></i></div>
+                <div><span class="font-bold text-xl">FuelTrak Reports</span></div>
             </div>
             <div class="flex items-center space-x-3">
                 <span id="userInfo" class="text-sm bg-white/10 px-3 py-1 rounded-full"></span>
@@ -47,8 +47,8 @@
         <!-- Mobile scrollable -->
         <div class="flex md:hidden px-2 py-2 items-center space-x-1">
             <div class="flex items-center space-x-1 flex-shrink-0">
-                <div class="bg-white/20 p-1 rounded"><i class="fas fa-history text-sm text-yellow-400"></i></div>
-                <span class="font-bold text-xs whitespace-nowrap">Audit Logs</span>
+                <div class="bg-white/20 p-1 rounded"><i class="fas fa-chart-bar text-sm text-yellow-400"></i></div>
+                <span class="font-bold text-xs whitespace-nowrap">Reports</span>
             </div>
             <div class="flex-1 overflow-x-auto flex items-center space-x-1" style="-webkit-overflow-scrolling:touch;scrollbar-width:none">
                 <span id="userInfoMob" class="text-[9px] bg-white/10 px-1.5 py-0.5 rounded-full flex-shrink-0 max-w-[80px] truncate"></span>
@@ -75,8 +75,8 @@
         <a href="/ttsd-checklist" class="flex items-center px-2 md:px-4 py-3 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap" title="TTSD Checklist">
             <i class="fas fa-clipboard-check w-6 text-center"></i><span class="hidden md:inline ml-2">TTSD Checklist</span>
         </a>
-        <a href="/audit-logs" class="flex items-center px-2 md:px-4 py-3 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap" title="Audit Logs">
-            <i class="fas fa-history w-6 text-center"></i><span class="hidden md:inline ml-2">Audit Logs</span>
+        <a href="/audit-logs" class="flex items-center px-2 md:px-4 py-3 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap" title="Reports">
+            <i class="fas fa-chart-bar w-6 text-center"></i><span class="hidden md:inline ml-2">Reports</span>
         </a>
         <a href="/client" class="flex items-center px-2 md:px-4 py-3 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap" title="Client Portal">
             <i class="fas fa-user w-6 text-center"></i><span class="hidden md:inline ml-2">Client Portal</span>
@@ -714,5 +714,6 @@
     </script>
 <div id="chatWidget" class="hidden fixed bottom-4 right-4 z-50 w-80 bg-white rounded-xl shadow-2xl border"><div class="bg-blue-900 text-white p-3 rounded-t-xl flex justify-between items-center cursor-pointer" onclick="toggleChat()"><span><i class="fas fa-comments mr-2"></i><span id="chatTitle">Chat</span></span><button onclick="event.stopPropagation();closeChat()" class="text-white">&times;</button></div><div id="chatBody" class="h-64 overflow-y-auto p-3 space-y-2"></div><div class="p-2 border-t flex gap-2"><input type="text" id="chatInput" placeholder="Type message..." class="flex-1 px-2 py-1 border rounded text-sm" onkeypress="if(event.key==='Enter')sendChat()"><button onclick="sendChat()" class="bg-blue-900 text-white px-3 py-1 rounded text-sm"><i class="fas fa-paper-plane"></i></button></div></div><button onclick="openChat()" class="fixed bottom-4 right-4 z-50 bg-blue-900 text-white p-3 rounded-full shadow-lg hover:bg-blue-800" id="chatButton"><i class="fas fa-comments"></i></button>
 </div>
-</body>
+</div></body>
 </html>
+
