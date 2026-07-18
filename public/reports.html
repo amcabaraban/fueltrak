@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
  <meta charset="UTF-8">
@@ -14,8 +14,8 @@
   th.sort-asc::after{content:' ?';font-size:9px}
   th.sort-desc::after{content:' ?';font-size:9px}
   #sidebar{transition:transform 0.3s}
-  @media(max-inline-size:767px){@media(max-width:767px){#sidebar{transform:translateX(-100%)}#sidebar.open{transform:translateX(0)}body.sidebar-open{overflow:hidden}}}
-  @media(min-width:768px){body{padding-left:176px}}
+  @media(max-inline-size:767px){@media(max-inline-size:767px){#sidebar{transform:translateX(-100%)}#sidebar.open{transform:translateX(0)}body.sidebar-open{overflow:hidden}}}
+  @media(min-inline-size:768px){body{padding-inline-start:176px}}
   .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
   table{min-inline-size:1600px;font-size:11px}
   td{white-space:nowrap;padding:4px 3px}
