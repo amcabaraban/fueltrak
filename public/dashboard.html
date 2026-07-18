@@ -229,11 +229,14 @@
             document.getElementById('tabLoading').classList.add('hidden');
             document.getElementById('tabTrucks').classList.add('hidden');
             document.getElementById('tabClients').classList.add('hidden');
-            document.getElementById('tab' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.remove('hidden');
-            if (tab === 'verify') loadPending();
-            if (tab === 'loading') loadApproved();
-            if (tab === 'trucks') loadTrucks();
-            if (tab === 'clients') loadClients();
+            var tabId = 'tab' + tab.charAt(0).toUpperCase() + tab.slice(1);
+            var tabEl = document.getElementById(tabId);
+            if (tabEl) tabEl.classList.remove('hidden');
+            
+            if (tab === 'verify' && typeof loadPending === 'function') loadPending();
+            if (tab === 'loading' && typeof loadApproved === 'function') loadApproved();
+            if (tab === 'trucks' && typeof loadTrucks === 'function') loadTrucks();
+            if (tab === 'clients' && typeof loadClients === 'function') loadClients();
         }
 
         async function loadDashboard() {
