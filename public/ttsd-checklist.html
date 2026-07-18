@@ -2,13 +2,13 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Tank Truck Delivery Checklist</title>
+<title>FuelTrak - TTSD Checklist</title>
+<script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <style>
-    body { font-family: Arial, sans-serif; font-size: 11px; line-height: 1.4; margin: 0; color: #333; background: #fff; }
-    .container { max-inline-size: 1000px; margin: auto; border: 2px solid #000; padding: 15px; box-sizing: border-box; }
-    h1 { text-align: center; font-size: 16px; margin-block-start: 0; margin-block-end: 5px; text-transform: uppercase; border-block-end: 2px solid #000; padding-block-end: 5px; }
+    .checklist-form { font-family: Arial, sans-serif; font-size: 11px; line-height: 1.4; color: #333; }
+    .checklist-form h1 { text-align: center; font-size: 16px; text-transform: uppercase; border-block-end: 2px solid #000; padding-block-end: 5px; margin: 0 0 5px 0; }
     .depot { text-align: end; font-weight: bold; margin-block-end: 15px; }
     .flex-row { display: flex; justify-content: space-between; margin-block-end: 15px; gap: 15px; }
     .col-half { flex: 1; border: 1px solid #000; padding: 10px; box-sizing: border-box; }
@@ -27,7 +27,6 @@
     .comp-table select { inline-size: 100%; border: none; background: #fcfcfc; border-block-end: 1px dashed #ccc; font-size: 11px; text-align: center; padding: 5px 3px; box-sizing: border-box; }
     .comp-table input[type="checkbox"] { inline-size: 18px; block-size: 18px; }
     .comp-table th { font-size: 11px; padding: 5px 3px; background-color: #f0f0f0; }
-    .comp-table tr { block-size: 36px; }
     .capacity { font-size: 14px !important; font-weight: bold !important; }
     .vol-highlight { font-size: 16px !important; font-weight: bold; color: #000; }
     .signature-row { display: flex; justify-content: space-around; margin-block-start: 30px; margin-block-end: 20px; }
@@ -35,153 +34,136 @@
     .sig-line { border-block-end: 1px solid #000; block-size: 25px; margin-block-end: 2px; }
     .checklist-input { inline-size: 100%; border: none; text-align: center; background: transparent; font-size: 11px; font-weight: bold; }
     .checklist-input:focus { outline: none; border-block-end: 1px solid #000; }
-    
     #sidebar{transition:transform 0.3s}
-    @media(max-inline-size:767px){#sidebar{transform:translateX(-100%)}#sidebar.open{transform:translateX(0)}body.sidebar-open{overflow:hidden}}
-    @media(min-inline-size:768px){body{padding-inline-start:176px}}
-    
+    @media(max-width:767px){#sidebar{transform:translateX(-100%)}#sidebar.open{transform:translateX(0)}body.sidebar-open{overflow:hidden}}
+    @media(min-width:768px){body{padding-left:176px}}
     @media print {
-        .no-print { display: none !important; }
-        body { padding: 0 !important; margin: 0 !important; background: white !important; }
-        .container { max-inline-size: 100% !important; border: 1px solid #000 !important; padding: 8px !important; margin: 0 !important; }
-        @page { size: A4; margin: 5mm; }
+        .no-print{display:none!important}
+        body{padding:0!important;margin:0!important;background:white!important}
+        @page{size:A4;margin:5mm}
     }
 </style>
 </head>
-<body>
+<body class="bg-gray-50 min-h-screen">
+<div class="main-content">
 
-<!-- Sidebar -->
-<div class="fixed left-0 top-0 h-full w-14 md:w-48 bg-blue-900 text-white z-40 pt-16 overflow-y-auto no-print" id="sidebar">
-    <a href="/dashboard" class="flex items-center px-2 md:px-4 py-3 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap"><i class="fas fa-tachometer-alt w-6 text-center"></i><span class="hidden md:inline ml-2">Dashboard</span></a>
-    <a href="/reports" class="flex items-center px-2 md:px-4 py-3 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap"><i class="fas fa-chart-bar w-6 text-center"></i><span class="hidden md:inline ml-2">Reports</span></a>
-    <a href="/trucks" class="flex items-center px-2 md:px-4 py-3 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap"><i class="fas fa-truck w-6 text-center"></i><span class="hidden md:inline ml-2">Trucks</span></a>
-    <a href="/docs-report" class="flex items-center px-2 md:px-4 py-3 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap"><i class="fas fa-file-alt w-6 text-center"></i><span class="hidden md:inline ml-2">Docs</span></a>
-    <a href="/ttsd-checklist" class="flex items-center px-2 md:px-4 py-3 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap"><i class="fas fa-clipboard-check w-6 text-center"></i><span class="hidden md:inline ml-2">TTSD</span></a>
-    <a href="/audit-logs" class="flex items-center px-2 md:px-4 py-3 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap"><i class="fas fa-history w-6 text-center"></i><span class="hidden md:inline ml-2">Audit</span></a>
-    <div class="border-t border-blue-700 mt-2 pt-2"><button onclick="logout()" class="flex items-center px-2 md:px-4 py-3 hover:bg-red-700 text-xs md:text-sm w-full text-left whitespace-nowrap"><i class="fas fa-sign-out-alt w-6 text-center"></i><span class="hidden md:inline ml-2">Logout</span></button></div>
-</div>
-<div id="sidebarOverlay" class="hidden fixed inset-0 bg-black bg-opacity-50 z-30 md:hidden" onclick="toggleSidebar()"></div>
-<button onclick="toggleSidebar()" class="fixed top-2 left-2 z-50 md:hidden bg-blue-900 text-white p-2 rounded no-print"><i class="fas fa-bars"></i></button>
-
-<div class="container" id="printable" style="margin-block-start:20px;">
-    <h1>Tank Truck Delivery Checklist</h1>
-    <div class="depot">Depot/Terminal: DAVAO</div>
-
-    <div class="flex-row">
-        <div class="col-half">
-            <div class="section-title" style="margin-block-start:0;">To be accomplished by the Petron Gate Guard</div>
-            <div class="field-row"><div class="field-label">Customer Name:</div><div class="field-value"><input type="text" id="customerName"></div></div>
-            <div class="field-row"><div class="field-label">Plate #:</div><div class="field-value"><input type="text" id="plateNo" list="plateList" placeholder="Select Plate..."><datalist id="plateList"></datalist></div></div>
-            <div class="field-row"><div class="field-label">Driver:</div><div class="field-value"><input type="text" id="driverName"></div></div>
-            <div class="field-row"><div class="field-label">TPS Series Begin:</div><div class="field-value"><input type="text" id="tpsStart"></div></div>
-            <div class="field-row"><div class="field-label">Date / Time Out:</div><div class="field-value"><input type="datetime-local"></div></div>
-        </div>
-        <div class="col-half">
-            <div class="section-title" style="margin-block-start:0;">To be accomplished by Customer/ Receiver</div>
-            <div class="field-row"><div class="field-label">Arrival Date/Time:</div><div class="field-value"><input type="datetime-local"></div></div>
-            <div class="field-row"><div class="field-label">Total Vol (Loaded):</div><div class="field-value"><input type="text" id="totalVol" class="vol-highlight" readonly></div></div>
-            <div class="field-row"><div class="field-label">Start of Unloading:</div><div class="field-value"><input type="time"></div></div>
-            <div class="field-row"><div class="field-label">End of Unloading:</div><div class="field-value"><input type="time"></div></div>
-        </div>
+    <!-- Sidebar -->
+    <div class="fixed left-0 top-0 h-full w-14 md:w-48 bg-blue-900 text-white z-40 pt-16 overflow-y-auto no-print" id="sidebar">
+        <a href="/dashboard" class="flex items-center px-2 md:px-4 py-3 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap"><i class="fas fa-tachometer-alt w-6 text-center"></i><span class="hidden md:inline ml-2">Dashboard</span></a>
+        <a href="/reports" class="flex items-center px-2 md:px-4 py-3 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap"><i class="fas fa-chart-bar w-6 text-center"></i><span class="hidden md:inline ml-2">Reports</span></a>
+        <a href="/trucks" class="flex items-center px-2 md:px-4 py-3 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap"><i class="fas fa-truck w-6 text-center"></i><span class="hidden md:inline ml-2">Trucks</span></a>
+        <a href="/docs-report" class="flex items-center px-2 md:px-4 py-3 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap"><i class="fas fa-file-alt w-6 text-center"></i><span class="hidden md:inline ml-2">Docs</span></a>
+        <a href="/ttsd-checklist" class="flex items-center px-2 md:px-4 py-3 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap"><i class="fas fa-clipboard-check w-6 text-center"></i><span class="hidden md:inline ml-2">TTSD</span></a>
+        <a href="/audit-logs" class="flex items-center px-2 md:px-4 py-3 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap"><i class="fas fa-history w-6 text-center"></i><span class="hidden md:inline ml-2">Audit</span></a>
+        <div class="border-t border-blue-700 mt-2 pt-2"><button onclick="logout()" class="flex items-center px-2 md:px-4 py-3 hover:bg-red-700 text-xs md:text-sm w-full text-left whitespace-nowrap"><i class="fas fa-sign-out-alt w-6 text-center"></i><span class="hidden md:inline ml-2">Logout</span></button></div>
     </div>
+    <div id="sidebarOverlay" class="hidden fixed inset-0 bg-black bg-opacity-50 z-30 md:hidden" onclick="toggleSidebar()"></div>
+    <button onclick="toggleSidebar()" class="fixed top-2 left-2 z-50 md:hidden bg-blue-900 text-white p-2 rounded no-print"><i class="fas fa-bars"></i></button>
 
-    <div class="section-title">Sealing Plan / Compartmentation</div>
-    <table class="comp-table">
-        <thead><tr><th>Comp No.</th><th>COT 1</th><th>COT 2</th><th>COT 3</th><th>COT 4</th><th>COT 5</th><th>COT 6</th><th>COT 7</th><th>COT 8</th><th>COT 9</th><th>COT 10</th><th>COT 11</th><th>COT 12</th></tr></thead>
-        <tbody>
-            <tr><td>Include?</td><td><input type="checkbox" class="active-chk" checked></td><td><input type="checkbox" class="active-chk" checked></td><td><input type="checkbox" class="active-chk" checked></td><td><input type="checkbox" class="active-chk" checked></td><td><input type="checkbox" class="active-chk" checked></td><td><input type="checkbox" class="active-chk" checked></td><td><input type="checkbox" class="active-chk" checked></td><td><input type="checkbox" class="active-chk" checked></td><td><input type="checkbox" class="active-chk" checked></td><td><input type="checkbox" class="active-chk" checked></td><td><input type="checkbox" class="active-chk" checked></td><td><input type="checkbox" class="active-chk" checked></td></tr>
-            <tr><td>Customer</td><td><input type="text" class="comp-customer"></td><td><input type="text" class="comp-customer"></td><td><input type="text" class="comp-customer"></td><td><input type="text" class="comp-customer"></td><td><input type="text" class="comp-customer"></td><td><input type="text" class="comp-customer"></td><td><input type="text" class="comp-customer"></td><td><input type="text" class="comp-customer"></td><td><input type="text" class="comp-customer"></td><td><input type="text" class="comp-customer"></td><td><input type="text" class="comp-customer"></td><td><input type="text" class="comp-customer"></td></tr>
-            <tr><td>DHC Seal</td><td><input type="text" class="dhc-seal"></td><td><input type="text" class="dhc-seal"></td><td><input type="text" class="dhc-seal"></td><td><input type="text" class="dhc-seal"></td><td><input type="text" class="dhc-seal"></td><td><input type="text" class="dhc-seal"></td><td><input type="text" class="dhc-seal"></td><td><input type="text" class="dhc-seal"></td><td><input type="text" class="dhc-seal"></td><td><input type="text" class="dhc-seal"></td><td><input type="text" class="dhc-seal"></td><td><input type="text" class="dhc-seal"></td></tr>
-            <tr><td>Product</td>
-                <td><select class="prod"><option value="">-</option><option>ADO</option><option>UNLEADED</option><option>PREMIUM</option></select></td>
-                <td><select class="prod"><option value="">-</option><option>ADO</option><option>UNLEADED</option><option>PREMIUM</option></select></td>
-                <td><select class="prod"><option value="">-</option><option>ADO</option><option>UNLEADED</option><option>PREMIUM</option></select></td>
-                <td><select class="prod"><option value="">-</option><option>ADO</option><option>UNLEADED</option><option>PREMIUM</option></select></td>
-                <td><select class="prod"><option value="">-</option><option>ADO</option><option>UNLEADED</option><option>PREMIUM</option></select></td>
-                <td><select class="prod"><option value="">-</option><option>ADO</option><option>UNLEADED</option><option>PREMIUM</option></select></td>
-                <td><select class="prod"><option value="">-</option><option>ADO</option><option>UNLEADED</option><option>PREMIUM</option></select></td>
-                <td><select class="prod"><option value="">-</option><option>ADO</option><option>UNLEADED</option><option>PREMIUM</option></select></td>
-                <td><select class="prod"><option value="">-</option><option>ADO</option><option>UNLEADED</option><option>PREMIUM</option></select></td>
-                <td><select class="prod"><option value="">-</option><option>ADO</option><option>UNLEADED</option><option>PREMIUM</option></select></td>
-                <td><select class="prod"><option value="">-</option><option>ADO</option><option>UNLEADED</option><option>PREMIUM</option></select></td>
-                <td><select class="prod"><option value="">-</option><option>ADO</option><option>UNLEADED</option><option>PREMIUM</option></select></td>
-            </tr>
-            <tr><td>Cap (KL)</td><td><input type="text" class="capacity" id="cap_cot1"></td><td><input type="text" class="capacity" id="cap_cot2"></td><td><input type="text" class="capacity" id="cap_cot3"></td><td><input type="text" class="capacity" id="cap_cot4"></td><td><input type="text" class="capacity" id="cap_cot5"></td><td><input type="text" class="capacity" id="cap_cot6"></td><td><input type="text" class="capacity" id="cap_cot7"></td><td><input type="text" class="capacity" id="cap_cot8"></td><td><input type="text" class="capacity" id="cap_cot9"></td><td><input type="text" class="capacity" id="cap_cot10"></td><td><input type="text" class="capacity" id="cap_cot11"></td><td><input type="text" class="capacity" id="cap_cot12"></td></tr>
-            <tr><td>DV Seal</td><td><input type="text" class="dv-seal"></td><td><input type="text" class="dv-seal"></td><td><input type="text" class="dv-seal"></td><td><input type="text" class="dv-seal"></td><td><input type="text" class="dv-seal"></td><td><input type="text" class="dv-seal"></td><td><input type="text" class="dv-seal"></td><td><input type="text" class="dv-seal"></td><td><input type="text" class="dv-seal"></td><td><input type="text" class="dv-seal"></td><td><input type="text" class="dv-seal"></td><td><input type="text" class="dv-seal"></td></tr>
-            <tr><td>Valve Box</td><td><input type="text" class="vbox"></td><td><input type="text" class="vbox"></td><td><input type="text" class="vbox"></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-            <tr><td>Total KL</td><td colspan="12"><input type="text" id="tableTotalVol" class="vol-highlight" style="inline-size:100%;text-align:center;border:none;background:transparent;" readonly></td></tr>
-        </tbody>
-    </table>
+    <!-- Nav -->
+    <nav class="bg-gradient-to-r from-blue-900 to-blue-800 text-white shadow-xl sticky top-0 z-20 no-print">
+        <div class="hidden md:flex max-w-7xl mx-auto px-4 py-3 justify-between items-center">
+            <div class="flex items-center space-x-3"><div class="bg-white/20 p-2 rounded-lg"><i class="fas fa-clipboard-check text-2xl text-yellow-400"></i></div><div><span class="font-bold text-xl">TTSD Checklist</span></div></div>
+            <div class="flex items-center space-x-3"><span id="userInfo" class="text-sm bg-white/10 px-3 py-1 rounded-full"></span><a href="/dashboard" class="bg-white/20 px-3 py-1 rounded text-sm hover:bg-white/30"><i class="fas fa-chart-pie mr-1"></i>Dashboard</a><button onclick="logout()" class="bg-red-500/80 hover:bg-red-500 px-4 py-2 rounded text-sm"><i class="fas fa-sign-out-alt mr-1"></i>Logout</button></div>
+        </div>
+    </nav>
 
-    <div class="section-title">To be accomplished by authorized Receiver and Driver</div>
-    <table>
-        <thead><tr><th style="inline-size:5%;">No.</th><th>Items to Check / Activities to be done:</th><th style="inline-size:12%;">Receiver</th><th style="inline-size:12%;">Driver</th></tr></thead>
-        <tbody>
-            <tr><td class="center">1</td><td>Receiver is authorized</td><td><input type="text" class="checklist-input"></td><td class="center" style="background:#f7f7f7;">n.a</td></tr>
-            <tr><td class="center">2</td><td>Customer name/address are correct</td><td><input type="text" class="checklist-input"></td><td class="center" style="background:#f7f7f7;">n.a</td></tr>
-            <tr><td class="center">3</td><td>Receiving tank has enough ullage</td><td><input type="text" class="checklist-input"></td><td class="center" style="background:#f7f7f7;">n.a</td></tr>
-            <tr><td class="center">4</td><td>Seals complete and intact</td><td><input type="text" class="checklist-input"></td><td class="center" style="background:#f7f7f7;">n.a</td></tr>
-            <tr><td class="center">5</td><td>Receiver removed the seals</td><td><input type="text" class="checklist-input"></td><td><input type="text" class="checklist-input"></td></tr>
-            <tr><td class="center">6</td><td>Product levels touch gauge marker</td><td><input type="text" class="checklist-input"></td><td><input type="text" class="checklist-input"></td></tr>
-            <tr><td class="center">7</td><td>Fire extinguisher and wheel chocks deployed</td><td><input type="text" class="checklist-input"></td><td><input type="text" class="checklist-input"></td></tr>
-            <tr><td class="center">8</td><td>All UGT covers properly labeled</td><td><input type="text" class="checklist-input"></td><td><input type="text" class="checklist-input"></td></tr>
-            <tr><td class="center">9</td><td>Receiver instructed discharge points</td><td><input type="text" class="checklist-input"></td><td><input type="text" class="checklist-input"></td></tr>
-            <tr><td class="center">10</td><td>Product ID placed near UGT cover</td><td><input type="text" class="checklist-input"></td><td><input type="text" class="checklist-input"></td></tr>
-            <tr><td class="center">11</td><td>Samples taken and compared</td><td><input type="text" class="checklist-input"></td><td><input type="text" class="checklist-input"></td></tr>
-            <tr><td class="center">12</td><td>Discharge valves free of water/sediments</td><td><input type="text" class="checklist-input"></td><td><input type="text" class="checklist-input"></td></tr>
-            <tr><td class="center">13</td><td>UGTs free of water/sediments</td><td><input type="text" class="checklist-input"></td><td><input type="text" class="checklist-input"></td></tr>
-            <tr><td class="center">14</td><td>Correct water finding paste used</td><td><input type="text" class="checklist-input"></td><td><input type="text" class="checklist-input"></td></tr>
-            <tr><td class="center">15</td><td>Witnessed draining of hose</td><td><input type="text" class="checklist-input"></td><td><input type="text" class="checklist-input"></td></tr>
-            <tr><td class="center">16</td><td>TT compartments empty after discharging</td><td><input type="text" class="checklist-input"></td><td><input type="text" class="checklist-input"></td></tr>
-            <tr><td class="center">17</td><td>Dealer/Receiver issued check payment</td><td><input type="text" class="checklist-input"></td><td><input type="text" class="checklist-input"></td></tr>
-        </tbody>
-    </table>
+    <div class="max-w-4xl mx-auto px-4 py-6">
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-4 no-print">
+            <h2 class="text-lg font-bold mb-3"><i class="fas fa-print mr-2"></i>Print Checklist</h2>
+            <p class="text-sm text-gray-600 mb-3">Select a plate number to auto-fill truck details, then print.</p>
+            <div class="flex gap-3 items-end">
+                <div><label class="text-xs font-semibold">Plate #</label><input type="text" id="plateNoTop" list="plateListTop" placeholder="Search plate..." class="px-3 py-2 border rounded text-sm w-64"></div>
+                <datalist id="plateListTop"></datalist>
+                <button onclick="window.print()" class="bg-blue-600 text-white px-6 py-2 rounded text-sm"><i class="fas fa-print mr-1"></i>Print</button>
+            </div>
+        </div>
 
-    <div class="signature-row">
-        <div class="signature-box"><div class="sig-line"></div>Authorized Receiver</div>
-        <div class="signature-box"><div class="sig-line"></div>Driver</div>
-    </div>
+        <!-- Printable Checklist -->
+        <div class="checklist-form" id="printable">
+            <h1>Tank Truck Delivery Checklist</h1>
+            <div class="depot">Depot/Terminal: DAVAO</div>
 
-    <div class="section-title">Feedback / Comments:</div>
-    <div style="border:1px solid #000;padding:5px;min-block-size:40px;margin-block-end:8px;"><textarea style="inline-size:100%;border:none;min-block-size:30px;resize:vertical;font-size:10px;" placeholder="Enter feedback..."></textarea></div>
+            <div class="flex-row">
+                <div class="col-half">
+                    <div class="section-title" style="margin-block-start:0;">To be accomplished by the Petron Gate Guard</div>
+                    <div class="field-row"><div class="field-label">Customer Name:</div><div class="field-value"><input type="text" id="customerName"></div></div>
+                    <div class="field-row"><div class="field-label">Plate #:</div><div class="field-value"><input type="text" id="plateNo" list="plateList"><datalist id="plateList"></datalist></div></div>
+                    <div class="field-row"><div class="field-label">Driver:</div><div class="field-value"><input type="text" id="driverName"></div></div>
+                    <div class="field-row"><div class="field-label">TPS Series Begin:</div><div class="field-value"><input type="text" id="tpsStart"></div></div>
+                    <div class="field-row"><div class="field-label">Date / Time Out:</div><div class="field-value"><input type="datetime-local"></div></div>
+                </div>
+                <div class="col-half">
+                    <div class="section-title" style="margin-block-start:0;">To be accomplished by Customer/ Receiver</div>
+                    <div class="field-row"><div class="field-label">Arrival Date/Time:</div><div class="field-value"><input type="datetime-local"></div></div>
+                    <div class="field-row"><div class="field-label">Total Vol (Loaded):</div><div class="field-value"><input type="text" id="totalVol" class="vol-highlight" readonly></div></div>
+                    <div class="field-row"><div class="field-label">Start of Unloading:</div><div class="field-value"><input type="time"></div></div>
+                    <div class="field-row"><div class="field-label">End of Unloading:</div><div class="field-value"><input type="time"></div></div>
+                </div>
+            </div>
 
-    <div class="buttons no-print" style="margin-block-start:20px;text-align:center;margin-block-end:20px;">
-        <button onclick="window.print()" style="padding:10px 20px;font-size:14px;cursor:pointer;">Print / Save as PDF</button>
-        <button onclick="location.reload()" style="padding:10px 20px;font-size:14px;cursor:pointer;">Reset Form</button>
-        <button onclick="window.open('/dashboard','_self')" style="padding:10px 20px;font-size:14px;cursor:pointer;">Close</button>
+            <div class="section-title">Sealing Plan / Compartmentation</div>
+            <table class="comp-table">
+                <thead><tr><th>Comp No.</th><th>COT 1</th><th>COT 2</th><th>COT 3</th><th>COT 4</th><th>COT 5</th><th>COT 6</th><th>COT 7</th><th>COT 8</th><th>COT 9</th><th>COT 10</th><th>COT 11</th><th>COT 12</th></tr></thead>
+                <tbody id="compBody"></tbody>
+            </table>
+
+            <div class="section-title">To be accomplished by authorized Receiver and Driver</div>
+            <table>
+                <thead><tr><th style="inline-size:5%;">No.</th><th>Items to Check</th><th style="inline-size:12%;">Receiver</th><th style="inline-size:12%;">Driver</th></tr></thead>
+                <tbody id="checklistBody"></tbody>
+            </table>
+
+            <div class="signature-row">
+                <div class="signature-box"><div class="sig-line"></div>Authorized Receiver</div>
+                <div class="signature-box"><div class="sig-line"></div>Driver</div>
+            </div>
+
+            <div class="section-title">Feedback / Comments:</div>
+            <div style="border:1px solid #000;padding:5px;min-block-size:40px;margin-block-end:8px;"><textarea style="inline-size:100%;border:none;min-block-size:30px;resize:vertical;font-size:10px;"></textarea></div>
+        </div>
     </div>
 </div>
 
 <script>
 const token=localStorage.getItem('fueltrak_token');
 if(!token)window.location.href='/';
+const user=JSON.parse(localStorage.getItem('fueltrak_user')||'{}');
+document.getElementById('userInfo').textContent=user.email?user.email.split('@')[0].substring(0,3)+'***@'+user.email.split('@')[1]+' ('+user.role+')':'';
 var truckData={};
 
-async function loadPlateList(){
-    try{var r=await fetch('/api/truck-masterlist',{headers:{'Authorization':'Bearer '+token}});var d=await r.json();if(d.status==='success'){var dl=document.getElementById('plateList');d.data.forEach(t=>{var o=document.createElement('option');o.value=t.plate_no;dl.appendChild(o)})}}catch(e){}
+var items=['Receiver is authorized','Customer name/address are correct','Receiving tank has enough ullage','Seals complete and intact','Receiver removed the seals','Product levels touch gauge marker','Fire extinguisher and wheel chocks deployed','All UGT covers properly labeled','Receiver instructed discharge points','Product ID placed near UGT cover','Samples taken and compared','Discharge valves free of water/sediments','UGTs free of water/sediments','Correct water finding paste used','Witnessed draining of hose','TT compartments empty after discharging','Dealer/Receiver issued check payment'];
+
+document.getElementById('checklistBody').innerHTML=items.map((item,i)=>`<tr><td class="center">${i+1}</td><td>${item}</td><td><input type="text" class="checklist-input"></td>${i<4?'<td class="center" style="background:#f7f7f7;">n.a</td>':'<td><input type="text" class="checklist-input"></td>'}</tr>`).join('');
+
+function buildCompTable(){var h='';for(var r=0;r<8;r++){var labels=['Include?','Customer','DHC Seal','Product','Cap (KL)','DV Seal','Valve Box','Total KL'];h+='<tr><td>'+labels[r]+'</td>';for(var c=1;c<=12;c++){if(r===0)h+='<td><input type="checkbox" class="active-chk" checked></td>';else if(r===1)h+='<td><input type="text" class="comp-customer"></td>';else if(r===2)h+='<td><input type="text" class="dhc-seal"></td>';else if(r===3)h+='<td><select class="prod"><option value="">-</option><option>ADO</option><option>UNLEADED</option><option>PREMIUM</option></select></td>';else if(r===4)h+='<td><input type="text" class="capacity" id="cap_cot'+c+'"></td>';else if(r===5)h+='<td><input type="text" class="dv-seal"></td>';else if(r===6)h+=c<=3?'<td><input type="text" class="vbox"></td>':'<td></td>';else if(r===7)h+=c===1?'<td colspan="12"><input type="text" id="tableTotalVol" class="vol-highlight" style="inline-size:100%;text-align:center;border:none;background:transparent;" readonly></td>':''}h+='</tr>'}document.getElementById('compBody').innerHTML=h;bindEvents()}
+function bindEvents(){
+    document.querySelectorAll('.active-chk').forEach((chk,i)=>{chk.addEventListener('change',function(){var row=document.querySelectorAll('.comp-customer');if(!this.checked){row[i].value='EMPTY';document.querySelectorAll('.dhc-seal')[i].value='EMPTY';document.querySelectorAll('.prod')[i].value='EMPTY';document.getElementById('cap_cot'+(i+1)).value='EMPTY';document.querySelectorAll('.dv-seal')[i].value='EMPTY'}else{row[i].value=document.getElementById('customerName').value;var plate=document.getElementById('plateNo').value.trim().toUpperCase();var m=truckData[plate];document.getElementById('cap_cot'+(i+1)).value=(m&&m.capacities[i])?Math.round(m.capacities[i]/100)/10:'';document.querySelectorAll('.dhc-seal')[i].value='';document.querySelectorAll('.prod')[i].value='';document.querySelectorAll('.dv-seal')[i].value=''}autoFillSeals();calculateVolume()})});
+    document.getElementById('customerName').addEventListener('input',function(){var v=this.value;document.querySelectorAll('.active-chk').forEach(function(chk,i){if(chk.checked)document.querySelectorAll('.comp-customer')[i].value=v})});
+    document.getElementById('tpsStart').addEventListener('input',autoFillSeals);
 }
 
-document.getElementById('plateNo').addEventListener('input',async function(){
-    var plate=this.value.trim().toUpperCase();if(plate.length<3)return;
+async function loadPlateList(){
+    try{var r=await fetch('/api/truck-masterlist',{headers:{'Authorization':'Bearer '+token}});var d=await r.json();if(d.status==='success'){var dl=document.getElementById('plateList'),dl2=document.getElementById('plateListTop');d.data.forEach(t=>{var o=document.createElement('option');o.value=t.plate_no;dl.appendChild(o);dl2.appendChild(o.cloneNode(true))})}}catch(e){}
+}
+
+document.getElementById('plateNo').addEventListener('input',async function(){await fillTruck(this.value)});
+document.getElementById('plateNoTop').addEventListener('input',async function(){document.getElementById('plateNo').value=this.value.trim().toUpperCase();await fillTruck(this.value)});
+
+async function fillTruck(plate){plate=plate.trim().toUpperCase();if(plate.length<3)return;
     try{var r=await fetch('/api/truck-masterlist/'+encodeURIComponent(plate),{headers:{'Authorization':'Bearer '+token}});var d=await r.json();var cv=document.getElementById('customerName').value;
     if(d.status==='success'&&d.data){var t=d.data;truckData[plate]={driver:t.driver_name||'',capacities:[t.cot1,t.cot2,t.cot3,t.cot4,t.cot5,t.cot6,t.cot7,t.cot8,t.cot9,t.cot10].filter(v=>v>0),comps:[t.cot1,t.cot2,t.cot3,t.cot4,t.cot5,t.cot6,t.cot7,t.cot8,t.cot9,t.cot10].filter(v=>v>0).length};
     var m=truckData[plate];
     for(var i=0;i<12;i++){var chk=document.querySelectorAll('.active-chk')[i];if(m&&i<m.comps){chk.checked=true;chk.disabled=false;document.getElementById('cap_cot'+(i+1)).value=m.capacities[i]?Math.round(m.capacities[i]/100)/10:'';document.querySelectorAll('.comp-customer')[i].value=cv}else{chk.checked=false;chk.disabled=true;document.querySelectorAll('.comp-customer')[i].value='N/A';document.querySelectorAll('.dhc-seal')[i].value='N/A';document.querySelectorAll('.prod')[i].value='N/A';document.getElementById('cap_cot'+(i+1)).value='N/A';document.querySelectorAll('.dv-seal')[i].value='N/A'}}
-    document.getElementById('driverName').value=m.driver;autoFillSeals();calculateVolume()}}catch(e){}
-});
-
-document.querySelectorAll('.active-chk').forEach((chk,i)=>{chk.addEventListener('change',function(){if(!this.checked){document.querySelectorAll('.comp-customer')[i].value='EMPTY';document.querySelectorAll('.dhc-seal')[i].value='EMPTY';document.querySelectorAll('.prod')[i].value='EMPTY';document.getElementById('cap_cot'+(i+1)).value='EMPTY';document.querySelectorAll('.dv-seal')[i].value='EMPTY'}else{document.querySelectorAll('.comp-customer')[i].value=document.getElementById('customerName').value;var plate=document.getElementById('plateNo').value.trim().toUpperCase();var m=truckData[plate];document.getElementById('cap_cot'+(i+1)).value=(m&&m.capacities[i])?m.capacities[i]:'';document.querySelectorAll('.dhc-seal')[i].value='';document.querySelectorAll('.prod')[i].value='';document.querySelectorAll('.dv-seal')[i].value=''}autoFillSeals();calculateVolume()})});
-
-document.getElementById('customerName').addEventListener('input',function(){var v=this.value;document.querySelectorAll('.active-chk').forEach(function(chk,i){if(chk.checked)document.querySelectorAll('.comp-customer')[i].value=v})});
+    document.getElementById('driverName').value=m.driver;autoFillSeals();calculateVolume()}}catch(e){}}
 
 function calculateVolume(){var t=0;document.querySelectorAll('.active-chk').forEach((chk,i)=>{if(chk.checked){var v=parseFloat(document.getElementById('cap_cot'+(i+1)).value);if(!isNaN(v)&&v>0)t+=v}});document.getElementById('totalVol').value=t.toFixed(2)+' KL';document.getElementById('tableTotalVol').value=t.toFixed(2)+' KL'}
 
-function autoFillSeals(){var s=parseInt(document.getElementById('tpsStart').value);if(isNaN(s))return;var ac=document.querySelectorAll('.active-chk'),caps=document.querySelectorAll('.capacity'),dv=document.querySelectorAll('.dv-seal'),dhc=document.querySelectorAll('.dhc-seal'),vb=document.querySelectorAll('.vbox');var cdv=s,ldv=s-1;for(var i=0;i<12;i++){if(ac[i].checked&&!isNaN(parseFloat(caps[i].value))){dv[i].value=cdv;ldv=cdv;cdv++}else dv[i].value=''}var cdhc=ldv+1,ldhc=cdhc-1;for(var i=0;i<12;i++){if(ac[i].checked&&!isNaN(parseFloat(caps[i].value))){dhc[i].value=cdhc;ldhc=cdhc;cdhc++}else dhc[i].value=''}var cvb=ldhc+1;var plate=document.getElementById('plateNo').value.trim().toUpperCase();var m=truckData[plate];for(var i=0;i<3;i++){if(m&&i<m.comps){if(vb[i])vb[i].value=cvb;cvb++}else{if(vb[i])vb[i].value=''}}}
+function autoFillSeals(){var s=parseInt(document.getElementById('tpsStart').value);if(isNaN(s))return;var ac=document.querySelectorAll('.active-chk'),caps=document.querySelectorAll('.capacity'),dv=document.querySelectorAll('.dv-seal'),dhc=document.querySelectorAll('.dhc-seal'),vb=document.querySelectorAll('.vbox');var cdv=s,ldv=s-1;for(var i=0;i<12;i++){if(ac[i].checked&&!isNaN(parseFloat(caps[i].value))){dv[i].value=cdv;ldv=cdv;cdv++}else dv[i].value=''}var cdhc=ldv+1;for(var i=0;i<12;i++){if(ac[i].checked&&!isNaN(parseFloat(caps[i].value))){dhc[i].value=cdhc;cdhc++}else dhc[i].value=''}var cvb=cdhc;var plate=document.getElementById('plateNo').value.trim().toUpperCase();var m=truckData[plate];for(var i=0;i<3;i++){if(m&&i<m.comps){if(vb[i])vb[i].value=cvb;cvb++}else{if(vb[i])vb[i].value=''}}}
 
-document.getElementById('tpsStart').addEventListener('input',autoFillSeals);
 function toggleSidebar(){document.getElementById("sidebar").classList.toggle("open");document.getElementById("sidebarOverlay").classList.toggle("hidden");document.body.classList.toggle("sidebar-open")}
 function logout(){localStorage.clear();window.location.href='/'}
-loadPlateList();
+buildCompTable();loadPlateList();
 </script>
 </body>
 </html>
