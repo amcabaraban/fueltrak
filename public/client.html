@@ -428,7 +428,7 @@
             if (!confirm(summary + '\n\nSubmit this ATL?')) return;
             
             try {
-                const res = await api('/client/submit-atl', 'POST', {
+                const res = await api('/atl/submit', 'POST', {
                     company: company,
                     so_number: soNumber,
                     volume: volume,
