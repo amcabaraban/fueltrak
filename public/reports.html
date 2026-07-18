@@ -8,16 +8,17 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
     <style>
-        @media print { body{background:white!important} nav,.no-print,#sidebar,#sidebarOverlay{display:none!important} #printArea{display:block!important;padding:20px} #printArea table{width:100%;border-collapse:collapse;font-size:10px} #printArea th,#printArea td{border:1px solid #ddd;padding:3px 5px;text-align:left} #printArea th{background:#f0f0f0!important} body{padding-left:0!important} }
+        @media print { body{background:white!important} nav,.no-print,#sidebar,#sidebarOverlay{display:none!important} #printArea{display:block!important;padding:20px} #printArea table{width:100%;border-collapse:collapse;font-size:9px} #printArea th,#printArea td{border:1px solid #ddd;padding:2px 4px;text-align:left} #printArea th{background:#f0f0f0!important} body{padding-left:0!important} }
         .print-only{display:none} @media print{.print-only{display:block}}
-        th{cursor:pointer;user-select:none;white-space:nowrap}
+        th{cursor:pointer;user-select:none;white-space:nowrap;font-size:11px}
         th.sort-asc::after{content:' ▲';font-size:9px}
         th.sort-desc::after{content:' ▼';font-size:9px}
         #sidebar{transition:transform 0.3s}
         @media(max-width:767px){#sidebar{transform:translateX(-100%)}#sidebar.open{transform:translateX(0)}body.sidebar-open{overflow:hidden}}
         @media(min-width:768px){body{padding-left:176px}}
         .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
-        table{min-width:1100px}
+        table{min-width:1600px;font-size:11px}
+        td{white-space:nowrap;padding:4px 3px}
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
@@ -60,24 +61,30 @@
 
         <div class="bg-white rounded-xl shadow-lg overflow-hidden">
             <div class="table-wrap">
-                <table class="w-full text-xs">
+                <table>
                     <thead class="bg-gray-50 border-b sticky top-0">
                         <tr>
-                            <th class="py-2 px-1 text-left" onclick="sortTable('reportTableBody',0)">Date</th>
-                            <th class="py-2 px-1 text-left" onclick="sortTable('reportTableBody',1)">ATL Code</th>
-                            <th class="py-2 px-1 text-left" onclick="sortTable('reportTableBody',2)">SO #</th>
-                            <th class="py-2 px-1 text-left" onclick="sortTable('reportTableBody',3)">Company</th>
-                            <th class="py-2 px-1 text-left" onclick="sortTable('reportTableBody',4)">Plate</th>
-                            <th class="py-2 px-1 text-left" onclick="sortTable('reportTableBody',5)">Driver</th>
-                            <th class="py-2 px-1 text-right" onclick="sortTable('reportTableBody',6)">Vol</th>
-                            <th class="py-2 px-1 text-right" onclick="sortTable('reportTableBody',7)">Actual</th>
-                            <th class="py-2 px-1 text-center" onclick="sortTable('reportTableBody',8)">SI</th>
-                            <th class="py-2 px-1 text-center" onclick="sortTable('reportTableBody',9)">Status</th>
-                            <th class="py-2 px-1 text-center" onclick="sortTable('reportTableBody',10)">WC</th>
-                            <th class="py-2 px-1 text-center">Act</th>
+                            <th onclick="sortTable('reportTableBody',0)">Date</th>
+                            <th onclick="sortTable('reportTableBody',1)">ATL Code</th>
+                            <th onclick="sortTable('reportTableBody',2)">SO #</th>
+                            <th onclick="sortTable('reportTableBody',3)">Company</th>
+                            <th onclick="sortTable('reportTableBody',4)">Plate</th>
+                            <th onclick="sortTable('reportTableBody',5)">Driver</th>
+                            <th onclick="sortTable('reportTableBody',6)">Hauler</th>
+                            <th onclick="sortTable('reportTableBody',7)">Contact</th>
+                            <th class="text-right" onclick="sortTable('reportTableBody',8)">Volume</th>
+                            <th class="text-right" onclick="sortTable('reportTableBody',9)">Actual</th>
+                            <th class="text-center" onclick="sortTable('reportTableBody',10)">SI</th>
+                            <th class="text-center" onclick="sortTable('reportTableBody',11)">Status</th>
+                            <th class="text-center" onclick="sortTable('reportTableBody',12)">WC</th>
+                            <th class="text-center" onclick="sortTable('reportTableBody',13)">TPS From</th>
+                            <th class="text-center" onclick="sortTable('reportTableBody',14)">TPS To</th>
+                            <th class="text-center" onclick="sortTable('reportTableBody',15)">Rev</th>
+                            <th class="text-center">Backload</th>
+                            <th class="text-center">Actions</th>
                         </tr>
                     </thead>
-                    <tbody id="reportTableBody"><tr><td colspan="12" class="text-center py-8 text-gray-500">Loading...</td></tr></tbody>
+                    <tbody id="reportTableBody"><tr><td colspan="18" class="text-center py-8 text-gray-500">Loading...</td></tr></tbody>
                 </table>
             </div>
             <div class="px-4 py-2 border-t flex justify-between items-center text-xs"><span id="reportCount"></span><span id="pagination"></span></div>
@@ -136,22 +143,27 @@
         function renderTableRows(records){
             document.getElementById('reportTableBody').innerHTML=records.map(r=>`
                 <tr class="border-b hover:bg-gray-50">
-                    <td class="py-1 px-1">${r.completed_date?new Date(r.completed_date).toLocaleDateString():r.dispatch_date?new Date(r.dispatch_date).toLocaleDateString():'-'}</td>
-                    <td class="py-1 px-1 font-mono font-bold text-blue-900">${r.atl_code||'-'}</td>
-                    <td class="py-1 px-1">${r.so_number||'-'}</td>
-                    <td class="py-1 px-1">${r.company||'-'}</td>
-                    <td class="py-1 px-1 font-semibold">${r.plate_no}</td>
-                    <td class="py-1 px-1">${r.driver_name||'-'}</td>
-                    <td class="py-1 px-1 text-right">${r.volume?Math.round(r.volume).toLocaleString():'0'}</td>
-                    <td class="py-1 px-1 text-right">${r.actual_volume?Math.round(r.actual_volume).toLocaleString():'-'}</td>
-                    <td class="py-1 px-1 text-center cursor-pointer hover:bg-blue-50" onclick="toggleSI(${r.id},this)">${r.has_si==1?'Yes':'No'}</td>
-                    <td class="py-1 px-1 text-center"><span class="px-1 py-0.5 rounded ${r.status==='completed'?'bg-green-100 text-green-800':r.status==='cancelled'?'bg-red-100 text-red-800':'bg-orange-100 text-orange-800'}">${r.status}</span></td>
-                    <td class="py-1 px-1 text-center cursor-pointer hover:bg-yellow-50" onclick="editWC(${r.id},this)">${r.printed_wc||'-'}</td>
-                    <td class="py-1 px-1 text-center">
-                        <button onclick="viewDetails(${r.id})" class="text-blue-600 mr-1"><i class="fas fa-eye"></i></button>
-                        <button onclick="openBackload(${r.id})" class="text-orange-600"><i class="fas fa-undo"></i></button>
+                    <td>${r.completed_date?new Date(r.completed_date).toLocaleDateString():r.dispatch_date?new Date(r.dispatch_date).toLocaleDateString():'-'}</td>
+                    <td class="font-mono font-bold text-blue-900">${r.atl_code||'-'}</td>
+                    <td>${r.so_number||'-'}</td>
+                    <td>${r.company||'-'}</td>
+                    <td class="font-semibold">${r.plate_no}</td>
+                    <td>${r.driver_name||'-'}</td>
+                    <td>${r.hauler||'-'}</td>
+                    <td>${r.contact_number||'-'}</td>
+                    <td class="text-right">${r.volume?Math.round(r.volume).toLocaleString():'0'}</td>
+                    <td class="text-right">${r.actual_volume?Math.round(r.actual_volume).toLocaleString():'-'}</td>
+                    <td class="text-center cursor-pointer hover:bg-blue-50" onclick="toggleSI(${r.id},this)">${r.has_si==1?'Yes':'No'}</td>
+                    <td class="text-center"><span class="px-1 py-0.5 rounded ${r.status==='completed'?'bg-green-100 text-green-800':r.status==='cancelled'?'bg-red-100 text-red-800':'bg-orange-100 text-orange-800'}">${r.status}</span></td>
+                    <td class="text-center cursor-pointer hover:bg-yellow-50 font-mono" onclick="editWC(${r.id},this)">${r.printed_wc||'-'}</td>
+                    <td class="text-center font-mono"><input value="${r.tps_start||''}" onchange="updateTPS(${r.id},'start',this.value)" class="w-16 border rounded px-1 text-xs"></td>
+                    <td class="text-center font-mono"><input value="${r.tps_end||''}" onchange="updateTPS(${r.id},'end',this.value)" class="w-16 border rounded px-1 text-xs"></td>
+                    <td class="text-center">${r.revision_count||'0'}</td>
+                    <td class="text-center">${r.backload_count>0?`<span class="bg-orange-100 text-orange-800 px-1 rounded" title="${r.backload_volume||0}L">${r.backload_count}</span>`:'0'}</td>
+                    <td class="text-center">
+                        <button onclick="openBackload(${r.id})" class="text-orange-600 mr-1"><i class="fas fa-undo"></i></button>
                     </td>
-                </tr>`).join('')||'<tr><td colspan="12" class="text-center py-8 text-gray-500">No records found</td></tr>';
+                </tr>`).join('')||'<tr><td colspan="18" class="text-center py-8 text-gray-500">No records found</td></tr>';
             document.getElementById('reportCount').textContent='Showing '+records.length+' of '+allRecords.length;
         }
 
@@ -176,32 +188,7 @@
             }
         }
 
-        async function viewDetails(id){
-            const r=await fetch(API+'/reports/summary?status=completed,cancelled,dispatched,pending,approved,rejected',{headers:{'Authorization':'Bearer '+token}});
-            const d=await r.json();
-            if(d.status==='success'){const a=d.data.records.find(r=>r.id===id);if(a){
-                document.getElementById('detailContent').innerHTML=`
-                    <div class="text-center mb-3"><p class="text-xl font-mono font-bold text-blue-900">${a.atl_code||'N/A'}</p></div>
-                    <div class="grid grid-cols-2 gap-2 text-sm">
-                        <div><p class="text-xs text-gray-500">Company</p><p class="font-semibold">${a.company||'-'}</p></div>
-                        <div><p class="text-xs text-gray-500">SO Number</p><p>${a.so_number||'-'}</p></div>
-                        <div><p class="text-xs text-gray-500">Plate</p><p class="font-semibold">${a.plate_no}</p></div>
-                        <div><p class="text-xs text-gray-500">Driver</p><p>${a.driver_name||'-'}</p></div>
-                        <div><p class="text-xs text-gray-500">Hauler</p><p>${a.hauler||'-'}</p></div>
-                        <div><p class="text-xs text-gray-500">Contact</p><p>${a.contact_number||'-'}</p></div>
-                        <div><p class="text-xs text-gray-500">Volume</p><p>${a.volume?Number(a.volume).toLocaleString()+' L':'-'}</p></div>
-                        <div><p class="text-xs text-gray-500">Actual</p><p>${a.actual_volume?Number(a.actual_volume).toLocaleString()+' L':'-'}</p></div>
-                        <div><p class="text-xs text-gray-500">Status</p><span class="px-2 py-0.5 rounded text-xs ${a.status==='completed'?'bg-green-100 text-green-800':'bg-orange-100 text-orange-800'}">${a.status}</span></div>
-                        <div><p class="text-xs text-gray-500">SI</p><p>${a.has_si==1?'With SI':'No SI'}</p></div>
-                        <div><p class="text-xs text-gray-500">WC</p><p>${a.printed_wc||'-'}</p></div>
-                        <div><p class="text-xs text-gray-500">TPS</p><p>${a.tps_start||'-'} - ${a.tps_end||'-'}</p></div>
-                        <div><p class="text-xs text-gray-500">Scheduled</p><p>${a.scheduled_date||'-'}</p></div>
-                        <div><p class="text-xs text-gray-500">Completed</p><p>${a.completed_date?new Date(a.completed_date).toLocaleString():'-'}</p></div>
-                        <div><p class="text-xs text-gray-500">Remarks</p><p>${a.remarks||'None'}</p></div>
-                    </div>`;
-                document.getElementById('detailModal').classList.remove('hidden');
-            }}
-        }
+        async function updateTPS(id,field,val){await fetch('/api/dispatch/update-tps/'+id,{method:'PUT',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify(field==='start'?{tps_start:val}:{tps_end:val})})}
 
         function clearFilters(){['startDate','endDate','clientFilter','truckFilter'].forEach(id=>document.getElementById(id).value='');document.getElementById('startDate').value=new Date().toISOString().split('T')[0];document.getElementById('endDate').value=new Date().toISOString().split('T')[0];document.getElementById('statusFilter').value='completed,cancelled,dispatched';loadReports()}
         function printReport(){window.print()}
