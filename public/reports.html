@@ -6,33 +6,30 @@
     <title>FuelTrak - Reports</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-<link rel="stylesheet" href="/mobile.css">
-<link rel="icon" href="/favicon.svg" type="image/svg+xml">
-</head>
-<style>
-    @media print {
-        body { background: white !important; }
-        nav, .no-print { display: none !important; }
-        #printArea { display: block !important; padding: 20px; }
-        #printArea table { inline-size: 100%; border-collapse: collapse; font-size: 11px; }
-        #printArea th, #printArea td { border: 1px solid #ddd; padding: 6px 8px; text-align: start; }
-        #printArea th { background: #f0f0f0 !important; font-weight: bold; }
-        #printArea .summary-card { display: inline-block; inline-size: 18%; margin: 10px 1%; padding: 10px; border: 1px solid #ddd; text-align: center; border-radius: 8px; }
-        @page { margin: 1cm; }
-    }
-    .print-only { display: none; }
-    @media print { .print-only { display: block; } }
-
-    th { cursor: pointer; user-select: none; }
-    th.sort-asc::after { content: ' ?'; font-size: 10px; }
-    th.sort-desc::after { content: ' ?'; font-size: 10px; }
-    th { cursor: pointer; user-select: none; } th.sort-asc::after { content: " ?"; font-size: 10px; } th.sort-desc::after { content: " ?"; font-size: 10px; }
-    #sidebar{transition:transform 0.3s}@media(max-width:767px){#sidebar{transform:translateX(-100%)}#sidebar.open{transform:translateX(0)}body.sidebar-open{overflow:hidden}}@media(min-width:768px){body{padding-left:0}@media(min-width:768px){body{padding-left:176px}}}    
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <style>
+        @media print {
+            body { background: white !important; }
+            nav, .no-print, #sidebar, #sidebarOverlay { display: none !important; }
+            #printArea { display: block !important; padding: 20px; }
+            #printArea table { width: 100%; border-collapse: collapse; font-size: 11px; }
+            #printArea th, #printArea td { border: 1px solid #ddd; padding: 4px 6px; text-align: left; }
+            #printArea th { background: #f0f0f0 !important; }
+        }
+        .print-only { display: none; }
+        @media print { .print-only { display: block; } body { padding-left: 0 !important; } }
+        th { cursor: pointer; user-select: none; white-space: nowrap; }
+        th.sort-asc::after { content: ' ▲'; font-size: 10px; }
+        th.sort-desc::after { content: ' ▼'; font-size: 10px; }
+        #sidebar{transition:transform 0.3s}
+        @media(max-width:767px){#sidebar{transform:translateX(-100%)}#sidebar.open{transform:translateX(0)}body.sidebar-open{overflow:hidden}}
+        @media(min-width:768px){body{padding-left:176px}}
+        .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
     </style>
+</head>
 <body class="bg-gray-50 min-h-screen">
 <div class="main-content">
     <nav class="bg-gradient-to-r from-blue-900 to-blue-800 text-white shadow-xl sticky top-0 z-20 no-print">
-        <!-- Desktop -->
         <div class="hidden md:flex max-w-7xl mx-auto px-4 py-3 justify-between items-center">
             <div class="flex items-center space-x-3">
                 <div class="bg-white/20 p-2 rounded-lg"><i class="fas fa-chart-bar text-2xl text-yellow-400"></i></div>
@@ -44,202 +41,64 @@
                 <button onclick="logout()" class="bg-red-500/80 hover:bg-red-500 px-4 py-2 rounded text-sm"><i class="fas fa-sign-out-alt mr-1"></i>Logout</button>
             </div>
         </div>
-        <!-- Mobile scrollable -->
-        <div class="flex md:hidden px-2 py-2 items-center space-x-1">
-            <div class="flex items-center space-x-1 flex-shrink-0">
-                <div class="bg-white/20 p-1 rounded"><i class="fas fa-chart-bar text-sm text-yellow-400"></i></div>
-                <span class="font-bold text-xs whitespace-nowrap">Reports</span>
-            </div>
-            <div class="flex-1 overflow-x-auto flex items-center space-x-1" style="-webkit-overflow-scrolling:touch;scrollbar-width:none">
-                <span id="userInfoMob" class="text-[9px] bg-white/10 px-1.5 py-0.5 rounded-full flex-shrink-0 max-w-[80px] truncate"></span>
-                <a href="/dashboard" class="bg-white/20 px-1.5 py-0.5 rounded text-[9px] hover:bg-white/30 flex-shrink-0 whitespace-nowrap"><i class="fas fa-chart-pie text-[10px] mr-0.5"></i>Dashboard</a>
-                <button onclick="logout()" class="bg-red-500/80 hover:bg-red-500 px-1.5 py-0.5 rounded text-[9px] flex-shrink-0 whitespace-nowrap"><i class="fas fa-sign-out-alt text-[10px]"></i>Logout</button>
-            </div>
-        </div>
     </nav>
 
-    <!-- Sidebar Navigation -->
-    <div class="fixed left-0 top-0 h-full w-14 md:w-48 bg-blue-900 text-white z-40 pt-16 overflow-y-auto no-print" id="sidebar">
-        <a href="/dashboard" class="flex items-center px-2 md:px-4 py-3 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap" title="Dashboard">
-            <i class="fas fa-tachometer-alt w-6 text-center"></i><span class="hidden md:inline ml-2">Dashboard</span>
-        </a>
-        <a href="/reports" class="flex items-center px-2 md:px-4 py-3 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap" title="Reports">
-            <i class="fas fa-chart-bar w-6 text-center"></i><span class="hidden md:inline ml-2">Reports</span>
-        </a>
-        <a href="/trucks" class="flex items-center px-2 md:px-4 py-3 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap" title="Truck Masterlist">
-            <i class="fas fa-truck w-6 text-center"></i><span class="hidden md:inline ml-2">Truck Masterlist</span>
-        </a>
-        <a href="/docs-report" class="flex items-center px-2 md:px-4 py-3 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap" title="Doc Report">
-            <i class="fas fa-file-alt w-6 text-center"></i><span class="hidden md:inline ml-2">Doc Report</span>
-        </a>
-        <a href="/ttsd-checklist" class="flex items-center px-2 md:px-4 py-3 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap" title="TTSD Checklist">
-            <i class="fas fa-clipboard-check w-6 text-center"></i><span class="hidden md:inline ml-2">TTSD Checklist</span>
-        </a>
-        <a href="/audit-logs" class="flex items-center px-2 md:px-4 py-3 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap" title="Reports">
-            <i class="fas fa-chart-bar w-6 text-center"></i><span class="hidden md:inline ml-2">Reports</span>
-        </a>
-        
-        <div class="border-t border-blue-700 mt-2 pt-2">
-            <button onclick="logout()" class="flex items-center px-2 md:px-4 py-3 hover:bg-red-700 text-xs md:text-sm w-full text-left whitespace-nowrap">
-                <i class="fas fa-sign-out-alt w-6 text-center"></i><span class="hidden md:inline ml-2">Logout</span>
-            </button>
-        </div>
-    </div>
-
-    <!-- Overlay for mobile sidebar -->
-    <div id="sidebarOverlay" class="hidden fixed inset-0 bg-black bg-opacity-50 z-30 md:hidden" onclick="toggleSidebar()"></div>
-
-    <!-- Mobile hamburger -->
-    <button onclick="toggleSidebar()" class="fixed top-2 left-2 z-50 md:hidden bg-blue-900 text-white p-2 rounded">
-        <i class="fas fa-bars"></i>
-    </button>
-
-    <div class="max-w-7xl mx-auto px-2 sm:px-4 md:px-6 py-8">
-        <h1 class="text-3xl font-bold mb-6">Reports & Analytics</h1>
+    <div class="max-w-7xl mx-auto px-2 sm:px-4 py-8">
+        <h1 class="text-2xl font-bold mb-4">Reports & Analytics</h1>
 
         <!-- Filters -->
-        <div class="bg-white rounded-xl shadow-lg p-6 mb-6 no-print">
-            <h2 class="text-lg font-semibold mb-4"><i class="fas fa-filter mr-2"></i>Filters</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-                <div>
-                    <label class="text-xs font-semibold">Start Date</label>
-                    <input type="date" id="startDate" class="w-full px-3 py-2 border rounded" onchange="loadReports()">
-                </div>
-                <div>
-                    <label class="text-xs font-semibold">End Date</label>
-                    <input type="date" id="endDate" class="w-full px-3 py-2 border rounded" onchange="loadReports()">
-                </div>
-                <div>
-                    <label class="text-xs font-semibold">Status</label>
-                    <select id="statusFilter" class="w-full px-3 py-2 border rounded" onchange="loadReports()">
-                        <option value="completed,cancelled,dispatched">All</option>
-                        <option value="completed">Completed</option>
-                        <option value="cancelled">Cancelled</option>
-                        <option value="dispatched">Ongoing</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="text-xs font-semibold">Client</label>
-                    <select id="clientFilter" class="w-full px-3 py-2 border rounded" onchange="loadReports()">
-                        <option value="">All Clients</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="text-xs font-semibold">Truck</label>
-                    <select id="truckFilter" class="w-full px-3 py-2 border rounded" onchange="loadReports()">
-                        <option value="">All Trucks</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="flex items-center text-xs cursor-pointer">
-                        <input type="checkbox" id="backloadFilter" onchange="loadReports()" class="mr-1"> Has Backload
-                    </label>
-                </div>
-            </div>
-            <div class="flex justify-end gap-4 mt-4">
-                <button onclick="clearFilters()" class="text-blue-600 hover:underline text-sm"><i class="fas fa-times mr-1"></i>Clear Filters</button>
-                <button onclick="printReport()" class="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700"><i class="fas fa-print mr-1"></i>Print</button>
-                <button onclick="exportCSV()" class="bg-green-600 text-white px-4 py-2 rounded text-sm hover:bg-green-700"><i class="fas fa-download mr-1"></i>Export CSV</button>
-            </div>
-            <!-- Print Area (hidden on screen, visible when printing) -->
-            <div id="printArea" class="print-only">
-                <div style="text-align: center; margin-block-end: 20px;">
-                    <h1 style="font-size: 20px; font-weight: bold;">FuelTrak Logistics</h1>
-                    <h2 style="font-size: 16px;">Loading Report</h2>
-                    <p id="printDate" style="font-size: 12px; color: #666;"></p>
-                </div>
-                <div id="printSummary" style="margin-block-end: 20px;"></div>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>ATL Code</th>
-                            <th>SO #</th>
-                            <th>Company</th>
-                            <th>Plate</th>
-                            <th>Driver</th>
-                            <th>Volume (L)</th>
-                            <th>Actual (L)</th>
-                            <th>Printed WC</th>
-                            <th>TPS Series</th>
-                            <th>Status</th>
-                            <th>Date</th>
-                        </tr>
-                    </thead>
-                    <tbody id="printTableBody"></tbody>
-                </table></div>
-                <div style="margin-block-start: 20px; font-size: 10px; text-align: center; color: #999;">
-                    <p>Generated by FuelTrak Logistics System | <span id="printTimestamp"></span></p>
+        <div class="bg-white rounded-xl shadow-lg p-4 mb-4 no-print">
+            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                <div><label class="text-xs font-semibold">Start Date</label><input type="date" id="startDate" class="w-full px-2 py-1.5 border rounded text-sm" onchange="loadReports()"></div>
+                <div><label class="text-xs font-semibold">End Date</label><input type="date" id="endDate" class="w-full px-2 py-1.5 border rounded text-sm" onchange="loadReports()"></div>
+                <div><label class="text-xs font-semibold">Status</label><select id="statusFilter" class="w-full px-2 py-1.5 border rounded text-sm" onchange="loadReports()">
+                    <option value="completed,cancelled,dispatched">All</option>
+                    <option value="completed">Completed</option>
+                    <option value="cancelled">Cancelled</option>
+                    <option value="dispatched">Ongoing</option>
+                </select></div>
+                <div><label class="text-xs font-semibold">Client</label><select id="clientFilter" class="w-full px-2 py-1.5 border rounded text-sm" onchange="loadReports()"><option value="">All</option></select></div>
+                <div><label class="text-xs font-semibold">Truck</label><select id="truckFilter" class="w-full px-2 py-1.5 border rounded text-sm" onchange="loadReports()"><option value="">All</option></select></div>
+                <div class="flex items-end gap-2">
+                    <button onclick="clearFilters()" class="text-blue-600 text-xs">Clear</button>
+                    <button onclick="printReport()" class="bg-blue-600 text-white px-3 py-1.5 rounded text-xs">Print</button>
+                    <button onclick="exportCSV()" class="bg-green-600 text-white px-3 py-1.5 rounded text-xs">Export</button>
                 </div>
             </div>
         </div>
 
         <!-- Summary Cards -->
-        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 mb-6" id="summaryCards"></div>
+        <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-4" id="summaryCards"></div>
 
         <!-- Records Table -->
-        <div class="bg-white rounded-xl shadow-lg overflow-hidden mx-2 md:mx-0">
-            <div class="overflow-x-auto">
-                <table class="w-full text-sm">
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+            <div class="table-wrap">
+                <table class="w-full text-xs">
                     <thead class="bg-gray-50 border-b sticky top-0">
                         <tr>
-                            <th class="py-3 px-3 text-center cursor-pointer hover:bg-gray-100" onclick="sortTable('reportTableBody', 9)">Date</th>
-                            <th class="py-3 px-3 text-left cursor-pointer hover:bg-gray-100" onclick="sortTable('reportTableBody', 0)">ATL Code</th>
-                            <th class="py-3 px-3 text-left cursor-pointer hover:bg-gray-100" onclick="sortTable('reportTableBody', 1)">SO #</th>
-                            <th class="py-3 px-3 text-left cursor-pointer hover:bg-gray-100" onclick="sortTable('reportTableBody', 2)">Company</th>
-                            <th class="py-3 px-3 text-left cursor-pointer hover:bg-gray-100" onclick="sortTable('reportTableBody', 3)">Plate</th>
-                            <th class="py-3 px-3 text-left cursor-pointer hover:bg-gray-100" onclick="sortTable('reportTableBody', 4)">Driver</th>
-                            <th class="py-3 px-3 text-right cursor-pointer hover:bg-gray-100" onclick="sortTable('reportTableBody', 5)">Volume (L)</th>
-                            <th class="py-3 px-3 text-right cursor-pointer hover:bg-gray-100" onclick="sortTable('reportTableBody', 6)">Actual (L)</th>
-                            <th class="py-3 px-3 text-center cursor-pointer hover:bg-gray-100" onclick="sortTable('reportTableBody', 7)">SI</th>
-                            <th class="py-3 px-3 text-center cursor-pointer hover:bg-gray-100" onclick="sortTable('reportTableBody', 8)">Status</th>
-                            <th class="py-3 px-3 text-center cursor-pointer hover:bg-gray-100" onclick="sortTable('reportTableBody', 10)">Printed WC</th>
-                            <th class="py-3 px-3 text-center cursor-pointer hover:bg-gray-100" onclick="sortTable('reportTableBody', 11)">TPS Series</th>
-                            <th class="py-3 px-3 text-center cursor-pointer hover:bg-gray-100" onclick="sortTable('reportTableBody', 12)">Rev</th>
-                            <th class="py-3 px-3 text-center cursor-pointer hover:bg-gray-100" onclick="sortTable('reportTableBody', 13)">Details</th>
-                            <th class="py-3 px-3 text-center cursor-pointer hover:bg-gray-100" onclick="sortTable('reportTableBody', 14)">Backload</th>
-                            <th class="py-3 px-3 text-left cursor-pointer hover:bg-gray-100" onclick="sortTable('reportTableBody', 5)">User</th>
+                            <th class="py-2 px-2 text-left" onclick="sortTable('reportTableBody',0)">Date</th>
+                            <th class="py-2 px-2 text-left" onclick="sortTable('reportTableBody',1)">ATL Code</th>
+                            <th class="py-2 px-2 text-left" onclick="sortTable('reportTableBody',2)">Plate</th>
+                            <th class="py-2 px-2 text-left" onclick="sortTable('reportTableBody',3)">Driver</th>
+                            <th class="py-2 px-2 text-right" onclick="sortTable('reportTableBody',4)">Volume</th>
+                            <th class="py-2 px-2 text-center" onclick="sortTable('reportTableBody',5)">SI</th>
+                            <th class="py-2 px-2 text-center" onclick="sortTable('reportTableBody',6)">Status</th>
+                            <th class="py-2 px-2 text-center" onclick="sortTable('reportTableBody',7)">WC</th>
+                            <th class="py-2 px-2 text-center">Actions</th>
                         </tr>
                     </thead>
                     <tbody id="reportTableBody">
-                        <tr><td colspan="13" class="text-center py-8 text-gray-500">Loading...</td></tr>
+                        <tr><td colspan="9" class="text-center py-8 text-gray-500">Loading...</td></tr>
                     </tbody>
-                </table></div>
+                </table>
             </div>
-            <div class="px-4 py-3 border-t flex justify-between items-center">
-                <div class="text-sm text-gray-500" id="reportCount"></div>
-                <div class="flex items-center space-x-2" id="pagination"></div>
+            <div class="px-4 py-2 border-t flex justify-between items-center text-xs">
+                <span id="reportCount"></span>
+                <span id="pagination"></span>
             </div>
         </div>
     </div>
 
-    <!-- Backload Summary Section -->
-    <div id="backloadSection" class="hidden bg-white rounded-xl shadow-lg overflow-hidden mx-2 md:mx-0 mt-6">
-        <div class="bg-gradient-to-r from-orange-500 to-red-500 text-white p-4">
-            <h2 class="text-lg font-bold"><i class="fas fa-undo mr-2"></i>Backload Records</h2>
-            <p class="text-sm opacity-90">Transactions with backloaded volumes</p>
-        </div>
-        <div class="overflow-x-auto">
-            <table class="w-full text-sm">
-                <thead class="bg-gray-50 border-b">
-                    <tr>
-                        <th class="py-3 px-3 text-left">Date</th>
-                        <th class="py-3 px-3 text-left">SO #</th>
-                        <th class="py-3 px-3 text-left">ATL Code</th>
-                        <th class="py-3 px-3 text-left">Plate</th>
-                        <th class="py-3 px-3 text-left">Company</th>
-                        <th class="py-3 px-3 text-left">Driver</th>
-                        <th class="py-3 px-3 text-right">Volume (L)</th>
-                        <th class="py-3 px-3 text-right">Backload (L)</th>
-                        <th class="py-3 px-3 text-center">Count</th>
-                        <th class="py-3 px-3 text-left">Status</th>
-                    </tr>
-                </thead>
-                <tbody id="backloadTableBody"></tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- Detail Modal -->
     <div id="detailModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[80vh] overflow-y-auto p-6">
             <div class="flex justify-between mb-4"><h3 class="text-lg font-bold">ATL Details</h3><button onclick="document.getElementById('detailModal').classList.add('hidden')" class="text-2xl">&times;</button></div>
@@ -247,51 +106,12 @@
         </div>
     </div>
 
-    <div id="backloadModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
-            <div class="flex justify-between mb-4">
-                <h3 class="text-lg font-bold"><i class="fas fa-undo mr-2 text-orange-600"></i>Record Backload</h3>
-                <button onclick="document.getElementById('backloadModal').classList.add('hidden')" class="text-2xl">&times;</button>
-            </div>
-            <form onsubmit="submitBackload(event)" class="space-y-4">
-                <input type="hidden" id="backloadAtlId">
-                <div>
-                    <label class="block text-xs font-semibold mb-1">ATL Code</label>
-                    <input type="text" id="backloadAtlCode" class="w-full px-3 py-2 border rounded bg-gray-50" readonly>
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold mb-1">Volume (Liters) *</label>
-                    <input type="number" id="backloadVolume" class="w-full px-3 py-2 border rounded" required min="1" placeholder="Enter backload volume">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold mb-1">Reason *</label>
-                    <textarea id="backloadReason" class="w-full px-3 py-2 border rounded" rows="3" required placeholder="Reason for backload..."></textarea>
-                </div>
-                <button type="submit" class="w-full bg-orange-600 text-white py-2 rounded font-semibold hover:bg-orange-700">
-                    <i class="fas fa-save mr-2"></i>Record Backload
-                </button>
-            </form>
-        </div>
-    </div>
-
     <script>
         const API = '/api';
         const token = localStorage.getItem('fueltrak_token');
         const user = JSON.parse(localStorage.getItem('fueltrak_user') || '{}');
-        if (!token || !['dispatcher','management'].includes(user.role)) {
-            window.location.replace('/');
-        } else {
-            fetch('/api/auth/profile', { headers: { 'Authorization': 'Bearer ' + token } })
-                .then(function(res) { return res.json(); })
-                .then(function(data) {
-                    if (data.status !== 'success') {
-                        localStorage.clear();
-                        window.location.replace('/');
-                    }
-                })
-                .catch(function() {});
-        }
-        document.getElementById('userInfo').textContent = `${user.email} (${user.role})`;
+        if (!token || !['dispatcher','management'].includes(user.role)) window.location.replace('/');
+        document.getElementById('userInfo').textContent = user.email.split('@')[0].substring(0,3)+'***@'+user.email.split('@')[1] + ' (' + user.role + ')';
 
         async function api(url, method = 'GET') {
             const res = await fetch(API + url, { method, headers: { 'Authorization': 'Bearer ' + token } });
@@ -308,409 +128,147 @@
             document.getElementById('endDate').value = new Date().toISOString().split('T')[0];
         }
 
-        var currentPage = 1;
-        var recordsPerPage = 10;
-        var allRecords = [];
+        var currentPage = 1, recordsPerPage = 15, allRecords = [];
 
         function paginateData() {
             var totalPages = Math.ceil(allRecords.length / recordsPerPage);
+            if (currentPage > totalPages) currentPage = totalPages || 1;
             var start = (currentPage - 1) * recordsPerPage;
-            var end = start + recordsPerPage;
-            var pageData = allRecords.slice(start, end);
-            
-            // Update table with pageData
+            var pageData = allRecords.slice(start, start + recordsPerPage);
             renderTableRows(pageData);
             
-            // Update pagination controls
             var pagHTML = '';
-            pagHTML += '<button onclick="changePage(' + (currentPage - 1) + ')" class="px-2 py-1 border rounded text-xs ' + (currentPage === 1 ? 'text-gray-300 cursor-not-allowed' : 'hover:bg-gray-100') + '" ' + (currentPage === 1 ? 'disabled' : '') + '><i class="fas fa-chevron-left"></i></button>';
-            
+            pagHTML += '<button onclick="changePage('+(currentPage-1)+')" class="px-2 py-1 border rounded '+(currentPage===1?'text-gray-300':'hover:bg-gray-100')+'" '+(currentPage===1?'disabled':'')+'><i class="fas fa-chevron-left"></i></button>';
             for (var i = 1; i <= totalPages; i++) {
-                if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
-                    pagHTML += '<button onclick="changePage(' + i + ')" class="px-2 py-1 border rounded text-xs ' + (i === currentPage ? 'bg-blue-900 text-white' : 'hover:bg-gray-100') + '">' + i + '</button>';
-                } else if (i === currentPage - 3 || i === currentPage + 3) {
-                    pagHTML += '<span class="px-1 text-xs">...</span>';
-                }
+                if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2))
+                    pagHTML += '<button onclick="changePage('+i+')" class="px-2 py-1 border rounded '+(i===currentPage?'bg-blue-900 text-white':'hover:bg-gray-100')+'">'+i+'</button>';
+                else if (i === currentPage - 3 || i === currentPage + 3)
+                    pagHTML += '<span class="px-1">...</span>';
             }
-            
-            pagHTML += '<button onclick="changePage(' + (currentPage + 1) + ')" class="px-2 py-1 border rounded text-xs ' + (currentPage === totalPages ? 'text-gray-300 cursor-not-allowed' : 'hover:bg-gray-100') + '" ' + (currentPage === totalPages ? 'disabled' : '') + '><i class="fas fa-chevron-right"></i></button>';
-            pagHTML += '<span class="text-xs text-gray-400 ml-2">' + allRecords.length + ' total</span>';
-            
+            pagHTML += '<button onclick="changePage('+(currentPage+1)+')" class="px-2 py-1 border rounded '+(currentPage===totalPages?'text-gray-300':'hover:bg-gray-100')+'" '+(currentPage===totalPages?'disabled':'')+'><i class="fas fa-chevron-right"></i></button>';
             document.getElementById('pagination').innerHTML = pagHTML;
         }
 
         function changePage(page) {
             if (page < 1 || page > Math.ceil(allRecords.length / recordsPerPage)) return;
-            currentPage = page;
-            paginateData();
+            currentPage = page; paginateData();
         }
 
         function renderTableRows(records) {
             document.getElementById('reportTableBody').innerHTML = records.map(r => `
                 <tr class="border-b hover:bg-gray-50">
-                    <td class="py-2 px-3 text-xs">${r.completed_date ? new Date(r.completed_date).toLocaleDateString() : r.dispatch_date ? new Date(r.dispatch_date).toLocaleDateString() : '-'}</td>
-                    <td class="py-2 px-3 font-mono text-xs font-bold text-blue-900">${r.atl_code||'-'}</td>
-                    <td class="py-2 px-3 text-xs">${r.so_number||'-'}</td>
-                    <td class="py-2 px-3">${r.company||'-'}</td>
-                    <td class="py-2 px-3 font-semibold">${r.plate_no}</td>
-                    <td class="py-2 px-3">${r.driver_name||'-'}</td>
-                    <td class="py-2 px-3 text-right">${r.volume ? Math.round(r.volume).toLocaleString() : '0'}</td>
-                    <td class="py-2 px-3 text-right font-semibold">${r.actual_volume ? Math.round(r.actual_volume).toLocaleString() : '-'}</td>
-                    <td class="py-2 px-3 text-center text-xs cursor-pointer hover:bg-blue-50" onclick="toggleSI(${r.id}, this)">${r.has_si==1?"With SI":"No SI"}</td>
-                    <td class="py-2 px-3 text-center"><span class="px-2 py-1 rounded text-xs ${r.status==='completed'?'bg-green-100 text-green-800':r.status==='cancelled'?'bg-red-100 text-red-800':'bg-orange-100 text-orange-800'}">${r.status}</span></td>
-                    <td class="py-2 px-3 text-center font-mono text-xs cursor-pointer hover:bg-yellow-50" onclick="editWC(${r.id}, this)">${r.printed_wc||"-"}</td>
-                    <td class="py-2 px-3 text-center font-mono text-xs">
-                        <input type="text" id="tps_from_${r.id}" value="${r.tps_start||''}" placeholder="From" class="w-16 px-1 py-0.5 border rounded text-xs" onchange="updateTPS(${r.id}, ${r.truck_id})">
-                        <input type="text" id="tps_to_${r.id}" value="${r.tps_end||''}" placeholder="To" class="w-16 px-1 py-0.5 border rounded text-xs" onchange="updateTPS(${r.id}, ${r.truck_id})">
+                    <td class="py-1.5 px-2">${r.completed_date ? new Date(r.completed_date).toLocaleDateString() : r.dispatch_date ? new Date(r.dispatch_date).toLocaleDateString() : '-'}</td>
+                    <td class="py-1.5 px-2 font-mono font-bold text-blue-900">${r.atl_code||'-'}</td>
+                    <td class="py-1.5 px-2 font-semibold">${r.plate_no}</td>
+                    <td class="py-1.5 px-2">${r.driver_name||'-'}</td>
+                    <td class="py-1.5 px-2 text-right">${r.volume ? Math.round(r.volume).toLocaleString() : '0'}</td>
+                    <td class="py-1.5 px-2 text-center cursor-pointer hover:bg-blue-50" onclick="toggleSI(${r.id},this)">${r.has_si==1?'With SI':'No SI'}</td>
+                    <td class="py-1.5 px-2 text-center"><span class="px-1.5 py-0.5 rounded text-xs ${r.status==='completed'?'bg-green-100 text-green-800':r.status==='cancelled'?'bg-red-100 text-red-800':'bg-orange-100 text-orange-800'}">${r.status}</span></td>
+                    <td class="py-1.5 px-2 text-center cursor-pointer hover:bg-yellow-50" onclick="editWC(${r.id},this)">${r.printed_wc||'-'}</td>
+                    <td class="py-1.5 px-2 text-center">
+                        <button onclick="viewDetails(${r.id})" class="text-blue-600 text-xs mr-1"><i class="fas fa-eye"></i></button>
+                        <button onclick="openBackload(${r.id})" class="text-orange-600 text-xs"><i class="fas fa-undo"></i></button>
                     </td>
-                    <td class="py-2 px-3 text-center">${r.revision_count > 0 ? '<span class="bg-purple-100 text-purple-800 px-2 py-1 rounded text-xs">' + r.revision_count + '</span>' : '0'}</td>
-                    <td class="py-2 px-3 text-center">
-                        ${r.backload_count > 0 ? '<span class="bg-orange-100 text-orange-800 px-2 py-1 rounded text-xs mr-1" title="' + (r.backload_volume || 0) + ' L backloaded">' + r.backload_count + '</span>' : ''}
-                        <button onclick="viewDetails(${r.id})" class="text-blue-600 hover:underline text-xs"><i class="fas fa-eye"></i></button>
-                    </td>
-                    <td class="py-2 px-3 text-center">
-                        <button onclick="openBackload(${r.id})" class="text-orange-600 hover:underline text-xs" title="Record Backload"><i class="fas fa-undo"></i></button>
-                    </td>
-                    <td class="py-2 px-3 text-xs">${r.completed_by_user ? r.completed_by_user.email.split('@')[0] : '-'}</td>
                 </tr>
-            `).join('') || '<tr><td colspan="15" class="text-center py-8 text-gray-500">No records found</td></tr>';
-            
-            document.getElementById('reportCount').textContent = 'Showing ' + records.length + ' of ' + allRecords.length + ' record(s)';
+            `).join('') || '<tr><td colspan="9" class="text-center py-8 text-gray-500">No records found</td></tr>';
+            document.getElementById('reportCount').textContent = 'Showing ' + records.length + ' of ' + allRecords.length;
         }
 
         async function loadReports() {
-            if (!document.getElementById('startDate').value && !document.getElementById('endDate').value) {
-                document.getElementById('startDate').value = new Date().toISOString().split('T')[0];
-                document.getElementById('endDate').value = new Date().toISOString().split('T')[0];
-            }
+            if (!document.getElementById('startDate').value) document.getElementById('startDate').value = new Date().toISOString().split('T')[0];
+            if (!document.getElementById('endDate').value) document.getElementById('endDate').value = new Date().toISOString().split('T')[0];
             
             const params = new URLSearchParams();
-            const start = document.getElementById('startDate').value;
-            const end = document.getElementById('endDate').value;
-            const status = document.getElementById('statusFilter').value;
-            const client = document.getElementById('clientFilter').value;
-            const truck = document.getElementById('truckFilter').value;
-            
-            if (start) params.append('startDate', start);
-            if (end) params.append('endDate', end);
-            if (status) params.append('status', status);
-            if (client) params.append('clientId', client);
-            if (truck) params.append('truckId', truck);
-
-            var hasBackload = document.getElementById('backloadFilter')?.checked;
-            if (hasBackload) params.append('hasBackload', '1');
+            ['startDate','endDate'].forEach(id => { const v = document.getElementById(id).value; if (v) params.append(id, v); });
+            const status = document.getElementById('statusFilter').value; if (status) params.append('status', status);
+            const client = document.getElementById('clientFilter').value; if (client) params.append('clientId', client);
+            const truck = document.getElementById('truckFilter').value; if (truck) params.append('truckId', truck);
 
             const data = await api('/reports/summary?' + params.toString());
             if (data.status === 'success') {
                 const d = data.data;
-                
                 document.getElementById('summaryCards').innerHTML = `
-                    <div class="bg-white rounded-xl shadow p-4 text-center"><p class="text-2xl font-bold">${d.summary.total_records||0}</p><p class="text-xs text-gray-500">Total Records</p></div>
-                    <div class="bg-green-50 rounded-xl shadow p-4 text-center"><p class="text-2xl font-bold text-green-700">${d.summary.completed||0}</p><p class="text-xs text-gray-500">Completed</p></div>
-                    <div class="bg-red-50 rounded-xl shadow p-4 text-center"><p class="text-2xl font-bold text-red-700">${d.summary.cancelled||0}</p><p class="text-xs text-gray-500">Cancelled</p></div>
-                    <div class="bg-orange-50 rounded-xl shadow p-4 text-center"><p class="text-2xl font-bold text-orange-700">${(d.summary.total_volume||0).toLocaleString()}L</p><p class="text-xs text-gray-500">Total Volume</p></div>
-                    <div class="bg-blue-50 rounded-xl shadow p-4 text-center"><p class="text-2xl font-bold text-blue-700">${(d.summary.total_actual_volume||0).toLocaleString()}L</p><p class="text-xs text-gray-500">Actual Volume</p></div>
+                    <div class="bg-white rounded-xl shadow p-3 text-center"><p class="text-xl font-bold">${d.summary.total_records||0}</p><p class="text-xs text-gray-500">Records</p></div>
+                    <div class="bg-green-50 rounded-xl shadow p-3 text-center"><p class="text-xl font-bold text-green-700">${d.summary.completed||0}</p><p class="text-xs text-gray-500">Completed</p></div>
+                    <div class="bg-red-50 rounded-xl shadow p-3 text-center"><p class="text-xl font-bold text-red-700">${d.summary.cancelled||0}</p><p class="text-xs text-gray-500">Cancelled</p></div>
+                    <div class="bg-orange-50 rounded-xl shadow p-3 text-center"><p class="text-xl font-bold text-orange-700">${((d.summary.total_volume||0)/1000).toFixed(1)}kL</p><p class="text-xs text-gray-500">Total Volume</p></div>
+                    <div class="bg-blue-50 rounded-xl shadow p-3 text-center"><p class="text-xl font-bold text-blue-700">${((d.summary.total_actual_volume||0)/1000).toFixed(1)}kL</p><p class="text-xs text-gray-500">Actual</p></div>
                 `;
-
                 allRecords = d.records || [];
                 currentPage = 1;
                 paginateData();
-
-                // Populate backload section - MOVED INSIDE if block
-                var backloadRecords = allRecords.filter(function(r) { return r.backload_count > 0; });
-                if (backloadRecords.length > 0) {
-                    document.getElementById('backloadSection').classList.remove('hidden');
-                    document.getElementById('backloadTableBody').innerHTML = backloadRecords.map(function(r) {
-                        return '<tr class="border-b hover:bg-gray-50">' +
-                            '<td class="py-2 px-3 text-xs">' + (r.scheduled_date ? new Date(r.scheduled_date).toLocaleDateString() : '-') + '</td>' +
-                            '<td class="py-2 px-3 text-xs font-semibold">' + (r.so_number || '-') + '</td>' +
-                            '<td class="py-2 px-3 font-mono text-xs font-bold text-blue-900">' + (r.atl_code || '-') + '</td>' +
-                            '<td class="py-2 px-3 font-semibold">' + r.plate_no + '</td>' +
-                            '<td class="py-2 px-3">' + (r.company || '-') + '</td>' +
-                            '<td class="py-2 px-3">' + (r.driver_name || '-') + '</td>' +
-                            '<td class="py-2 px-3 text-right">' + Math.round(r.volume || 0).toLocaleString() + '</td>' +
-                            '<td class="py-2 px-3 text-right font-semibold text-red-600">' + Math.round(r.backload_volume || 0).toLocaleString() + '</td>' +
-                            '<td class="py-2 px-3 text-center"><span class="bg-orange-100 text-orange-800 px-2 py-1 rounded text-xs font-bold">' + r.backload_count + '</span></td>' +
-                            '<td class="py-2 px-3"><span class="px-2 py-1 rounded text-xs ' + (r.status==='completed'?'bg-green-100 text-green-800':'bg-orange-100 text-orange-800') + '">' + r.status + '</span></td>' +
-                            '</tr>';
-                    }).join('');
-                } else {
-                    document.getElementById('backloadSection').classList.add('hidden');
-                }
             }
         }
 
         async function viewDetails(id) {
-            try {
-                // Use the reports summary API which includes all statuses
-                const res = await fetch(API + '/reports/summary?status=completed,cancelled,dispatched,pending,approved,rejected', {
-                    headers: { 'Authorization': 'Bearer ' + token }
-                });
-                const data = await res.json();
-                
-                if (data.status === 'success') {
-                    const a = data.data.records.find(function(r) { return r.id === id; });
-                    
-                    if (a) {
-                        var revisions = a.revision_history ? (typeof a.revision_history === 'string' ? JSON.parse(a.revision_history) : a.revision_history) : [];
-                        var statusColor = a.status === 'completed' ? 'bg-green-100 text-green-800' : a.status === 'cancelled' ? 'bg-red-100 text-red-800' : a.status === 'dispatched' ? 'bg-orange-100 text-orange-800' : 'bg-blue-100 text-blue-800';
-                        
-                        document.getElementById('detailContent').innerHTML = 
-                            '<div class="text-center mb-4 pb-3 border-b"><p class="text-xs text-gray-500">ATL Code</p><p class="text-xl font-mono font-bold text-blue-900">' + (a.atl_code || 'N/A') + '</p></div>' +
-                            '<div class="grid grid-cols-2 gap-3 text-sm">' +
-                            '<div><p class="text-xs text-gray-500">Company</p><p class="font-semibold">' + (a.company || 'N/A') + '</p></div>' +
-                            '<div><p class="text-xs text-gray-500">SO Number</p><p>' + (a.so_number || 'N/A') + '</p></div>' +
-                            '<div><p class="text-xs text-gray-500">Status</p><span class="px-2 py-1 rounded text-xs ' + statusColor + '">' + a.status + '</span></div>' +
-                            '<div><p class="text-xs text-gray-500">SI</p><p>' + (a.has_si == 1 ? 'With SI' : 'No SI') + '</p></div>' +
-                            '<div><p class="text-xs text-gray-500">Volume</p><p>' + (a.volume ? Number(a.volume).toLocaleString() + ' L' : 'N/A') + '</p></div>' +
-                            '<div><p class="text-xs text-gray-500">Actual Volume</p><p class="font-semibold">' + (a.actual_volume ? Number(a.actual_volume).toLocaleString() + ' L' : 'N/A') + '</p></div>' +
-                            '<div><p class="text-xs text-gray-500">Plate No</p><p class="font-semibold">' + a.plate_no + '</p></div>' +
-                            '<div><p class="text-xs text-gray-500">Driver</p><p>' + (a.driver_name || 'N/A') + '</p></div>' +
-                            '<div><p class="text-xs text-gray-500">Hauler</p><p>' + (a.hauler || 'N/A') + '</p></div>' +
-                            '<div><p class="text-xs text-gray-500">Client</p><p>' + (a.client ? a.client.email.split('@')[0].substring(0, 3)+'***@'+a.client.email.split('@')[1] : 'N/A') + '</p></div>' +
-                            '<div><p class="text-xs text-gray-500">Scheduled</p><p>' + (a.scheduled_date || 'N/A') + '</p></div>' +
-                            '<div><p class="text-xs text-gray-500">Completed</p><p>' + (a.completed_date ? new Date(a.completed_date).toLocaleString() : 'N/A') + '</p></div>' +
-                            '<div><p class="text-xs text-gray-500">Printed WC</p><p>' + (a.printed_wc || 'N/A') + '</p></div>' +
-                            '<div><p class="text-xs text-gray-500">TPS Series</p><p>' + (a.tps_start || 'N/A') + '</p></div>' +
-                            '</div>' +
-                            (revisions.length > 0 ? '<div class="mt-4 border-t pt-3"><h4 class="font-semibold text-sm mb-2">Revision History (' + revisions.length + ')</h4>' + revisions.map(function(r, i) { return '<div class="bg-gray-50 p-2 rounded text-xs"><p class="font-semibold">#' + (i+1) + ' - ' + new Date(r.timestamp).toLocaleString() + '</p><p>By: ' + r.revised_by + '</p></div>'; }).join('') + '</div>' : '') +
-                            '<div class="mt-3"><p class="text-xs text-gray-500">Remarks</p><p class="text-sm">' + (a.remarks || 'None') + '</p></div>';
-                        
-                        document.getElementById('detailModal').classList.remove('hidden');
-                    } else {
-                        alert('ATL details not found');
-                    }
+            const res = await fetch(API + '/reports/summary?status=completed,cancelled,dispatched,pending,approved,rejected', { headers: { 'Authorization': 'Bearer ' + token } });
+            const data = await res.json();
+            if (data.status === 'success') {
+                const a = data.data.records.find(r => r.id === id);
+                if (a) {
+                    document.getElementById('detailContent').innerHTML = `
+                        <div class="text-center mb-3"><p class="text-xl font-mono font-bold text-blue-900">${a.atl_code||'N/A'}</p></div>
+                        <div class="grid grid-cols-2 gap-2 text-sm">
+                            <div><p class="text-xs text-gray-500">Company</p><p class="font-semibold">${a.company||'-'}</p></div>
+                            <div><p class="text-xs text-gray-500">SO Number</p><p>${a.so_number||'-'}</p></div>
+                            <div><p class="text-xs text-gray-500">Plate</p><p class="font-semibold">${a.plate_no}</p></div>
+                            <div><p class="text-xs text-gray-500">Driver</p><p>${a.driver_name||'-'}</p></div>
+                            <div><p class="text-xs text-gray-500">Volume</p><p>${a.volume?Number(a.volume).toLocaleString()+' L':'-'}</p></div>
+                            <div><p class="text-xs text-gray-500">Actual</p><p>${a.actual_volume?Number(a.actual_volume).toLocaleString()+' L':'-'}</p></div>
+                            <div><p class="text-xs text-gray-500">Status</p><span class="px-2 py-0.5 rounded text-xs ${a.status==='completed'?'bg-green-100 text-green-800':'bg-orange-100 text-orange-800'}">${a.status}</span></div>
+                            <div><p class="text-xs text-gray-500">SI</p><p>${a.has_si==1?'With SI':'No SI'}</p></div>
+                            <div><p class="text-xs text-gray-500">WC</p><p>${a.printed_wc||'-'}</p></div>
+                            <div><p class="text-xs text-gray-500">Scheduled</p><p>${a.scheduled_date||'-'}</p></div>
+                            <div><p class="text-xs text-gray-500">Completed</p><p>${a.completed_date?new Date(a.completed_date).toLocaleString():'-'}</p></div>
+                            <div><p class="text-xs text-gray-500">Remarks</p><p>${a.remarks||'None'}</p></div>
+                        </div>`;
+                    document.getElementById('detailModal').classList.remove('hidden');
                 }
-            } catch (error) {
-                console.error('View details error:', error);
             }
         }
 
         function clearFilters() {
-            ['startDate','endDate','statusFilter','clientFilter','truckFilter'].forEach(id => document.getElementById(id).value = '');
+            ['startDate','endDate','clientFilter','truckFilter'].forEach(id => document.getElementById(id).value = '');
             document.getElementById('startDate').value = new Date().toISOString().split('T')[0];
             document.getElementById('endDate').value = new Date().toISOString().split('T')[0];
             document.getElementById('statusFilter').value = 'completed,cancelled,dispatched';
             loadReports();
         }
 
-        function printReport() {
-            // Get current data
-            const rows = document.querySelectorAll('#reportTableBody tr');
-            const printBody = document.getElementById('printTableBody');
-            const printSummary = document.getElementById('printSummary');
-            
-            // Set print date
-            document.getElementById('printDate').textContent = 
-                `Report Period: ${document.getElementById('startDate').value || 'All time'} to ${document.getElementById('endDate').value || 'Today'}`;
-            document.getElementById('printTimestamp').textContent = new Date().toLocaleString();
-            
-            // Copy table data
-            printBody.innerHTML = '';
-            rows.forEach(row => {
-                if (row.cells.length > 1) {
-                    const newRow = document.createElement('tr');
-                    for (let i = 0; i < Math.min(row.cells.length, 9); i++) {
-                        const cell = document.createElement(i === 5 || i === 6 ? 'td' : 'td');
-                        cell.textContent = row.cells[i].textContent.trim();
-                        if (i === 5 || i === 6) cell.style.textAlign = 'right';
-                        newRow.appendChild(cell);
-                    }
-                    printBody.appendChild(newRow);
-                }
-            });
-            
-            // Copy summary
-            const summaryCards = document.querySelectorAll('#summaryCards > div');
-            printSummary.innerHTML = '';
-            summaryCards.forEach(card => {
-                const div = document.createElement('div');
-                div.className = 'summary-card';
-                div.innerHTML = card.innerHTML;
-                printSummary.appendChild(div);
-            });
-            
-            // Print
-            window.print();
-        }
+        function printReport() { window.print(); }
 
         async function exportCSV() {
             const params = new URLSearchParams();
-            const start = document.getElementById('startDate').value;
-            const end = document.getElementById('endDate').value;
-            const status = document.getElementById('statusFilter').value;
-            if (start) params.append('startDate', start);
-            if (end) params.append('endDate', end);
-            if (status) params.append('status', status);
-
-            try {
-                const res = await fetch(API + '/reports/export?' + params.toString(), {
-                    headers: { 'Authorization': 'Bearer ' + token }
-                });
-                
-                if (!res.ok) throw new Error('Export failed');
-                
-                const blob = await res.blob();
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `fueltrak-report-${new Date().toISOString().split('T')[0]}.csv`;
-                document.body.appendChild(a);
-                a.click();
-                a.remove();
-                window.URL.revokeObjectURL(url);
-            } catch (error) {
-                alert('Export failed: ' + error.message);
-            }
+            ['startDate','endDate'].forEach(id => { const v = document.getElementById(id).value; if (v) params.append(id, v); });
+            const status = document.getElementById('statusFilter').value; if (status) params.append('status', status);
+            const res = await fetch(API + '/reports/export?' + params.toString(), { headers: { 'Authorization': 'Bearer ' + token } });
+            if (!res.ok) return alert('Export failed');
+            const blob = await res.blob();
+            const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+            a.download = `report-${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
         }
 
-        async function editWC(id, cell) { const current = cell.textContent.trim(); const wc = prompt('Enter Printed WC (12 digits):', current === '-' ? '' : current); if (wc === null) return; const wcClean = wc.replace(/\D/g,'').substring(0,12); const res = await fetch('/api/dispatch/update-wc/' + id, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify({ printed_wc: wcClean || null }) }); const data = await res.json(); if (data.status === 'success') { cell.textContent = wcClean || '-'; cell.classList.add('bg-green-100'); setTimeout(() => cell.classList.remove('bg-green-100'), 1000); } }
+        async function editWC(id, cell) {
+            const wc = prompt('Printed WC:', cell.textContent.trim() === '-' ? '' : cell.textContent.trim());
+            if (wc === null) return;
+            const wcClean = wc.replace(/\D/g,'').substring(0,12);
+            const res = await fetch('/api/dispatch/update-wc/'+id, { method:'PUT', headers:{'Content-Type':'application/json','Authorization':'Bearer '+token}, body:JSON.stringify({printed_wc:wcClean||null}) });
+            const data = await res.json();
+            if (data.status==='success') { cell.textContent = wcClean||'-'; cell.classList.add('bg-green-100'); setTimeout(()=>cell.classList.remove('bg-green-100'),1000); }
+        }
 
         async function toggleSI(id, cell) {
-            var current = cell.textContent.trim() === 'With SI';
-            var news = !current;
-            var res = await fetch('/api/dispatch/update-si/' + id, { 
-                method: 'PUT', 
-                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, 
-                body: JSON.stringify({ has_si: news ? 1 : 0 }) 
-            });
-            var data = await res.json();
-            if (data.status === 'success') { 
-                cell.textContent = news ? 'With SI' : 'No SI'; 
-                cell.classList.add('bg-green-100'); 
-                setTimeout(function(){ cell.classList.remove('bg-green-100'); }, 1000);
-            }
+            const news = cell.textContent.trim() !== 'With SI';
+            const res = await fetch('/api/dispatch/update-si/'+id, { method:'PUT', headers:{'Content-Type':'application/json','Authorization':'Bearer '+token}, body:JSON.stringify({has_si:news?1:0}) });
+            if ((await res.json()).status==='success') { cell.textContent = news?'With SI':'No SI'; cell.classList.add('bg-green-100'); setTimeout(()=>cell.classList.remove('bg-green-100'),1000); }
         }
-
-        var truckTPSMap = {};
-
-        async function loadTruckTPS() {
-            var res = await fetch('/api/trucks/all', { headers: { 'Authorization': 'Bearer ' + token } });
-            var data = await res.json();
-            if (data.status === 'success') {
-                data.data.forEach(function(t) { 
-                    truckTPSMap[t.id] = parseInt(t.num_tps) || 0; 
-                });
-            }
-        }
-
-        async function updateTPS(id, truckId) {
-                var fromEl = document.getElementById("tps_from_" + id);
-                var toEl = document.getElementById("tps_to_" + id);
-                var toVal = toEl.value.trim();
-                
-                if (toVal.startsWith("=")) {
-                    var formula = toVal.substring(1);
-                    if (fromEl.value) {
-                        formula = formula.replace(/from/i, fromEl.value);
-                    }
-                    try {
-                        var result = eval(formula);
-                        toEl.value = String(result).padStart(fromEl.value.length, "0");
-                    } catch(e) {}
-                }
-                
-                var res = await fetch("/api/dispatch/update-tps/" + id, {
-                    method: "PUT",
-                    headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
-                    body: JSON.stringify({ tps_start: fromEl.value, tps_end: toEl.value })
-                });
-            }
-        
-        function maskEmail(email) {
-            if (!email) return 'N/A';
-            var parts = email.split('@');
-            return parts[0].substring(0, 3) + '***@' + parts[1];
-        }
-
-        function openBackload(atlId) {
-            document.getElementById('backloadAtlId').value = atlId;
-            // Find ATL code from the table
-            var row = event.target.closest('tr');
-            var atlCode = row ? row.cells[0].textContent.trim() : 'N/A';
-            document.getElementById('backloadAtlCode').value = atlCode;
-            document.getElementById('backloadVolume').value = '';
-            document.getElementById('backloadReason').value = '';
-            document.getElementById('backloadModal').classList.remove('hidden');
-        }
-
-        async function submitBackload(e) {
-            e.preventDefault();
-            var atlId = document.getElementById('backloadAtlId').value;
-            var volume = document.getElementById('backloadVolume').value;
-            var reason = document.getElementById('backloadReason').value;
-            
-            if (!confirm('Record backload of ' + Number(volume).toLocaleString() + ' L?\n\nReason: ' + reason)) return;
-            
-            var res = await fetch('/api/backloads', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-                body: JSON.stringify({ atl_id: atlId, volume: volume, reason: reason })
-            });
-            var data = await res.json();
-            if (data.status === 'success') {
-                alert('Backload recorded successfully!');
-                document.getElementById('backloadModal').classList.add('hidden');
-                loadReports();
-            } else {
-                alert(data.error || 'Error recording backload');
-            }
-        }
-
-        function sortTable(tableId, columnIndex) {
-            var tbody = document.getElementById(tableId);
-            if (!tbody) return;
-            
-            var rows = Array.from(tbody.querySelectorAll('tr'));
-            if (rows.length === 0) return;
-            
-            var table = tbody.closest('table');
-            var headers = table.querySelectorAll('th');
-            var header = headers[columnIndex];
-            if (!header) return;
-            
-            var isAsc = header.classList.contains('sort-asc');
-            
-            table.querySelectorAll('th').forEach(function(th) { th.classList.remove('sort-asc', 'sort-desc'); });
-            
-            rows.sort(function(a, b) {
-                var aCell = a.cells[columnIndex];
-                var bCell = b.cells[columnIndex];
-                if (!aCell || !bCell) return 0;
-                var aVal = aCell.textContent.trim().replace(/[,%$]/g, '');
-                var bVal = bCell.textContent.trim().replace(/[,%$]/g, '');
-                var aNum = parseFloat(aVal);
-                var bNum = parseFloat(bVal);
-                
-                if (!isNaN(aNum) && !isNaN(bNum)) {
-                    return isAsc ? bNum - aNum : aNum - bNum;
-                }
-                return isAsc ? bVal.localeCompare(aVal) : aVal.localeCompare(bVal);
-            });
-            
-            header.classList.add(isAsc ? 'sort-desc' : 'sort-asc');
-            rows.forEach(function(row) { tbody.appendChild(row); });
-        }
-
-        function showView(view) {
-            ['dashboardView','submitView','historyView','reportsView'].forEach(v => document.getElementById(v).classList.add('hidden'));
-            document.getElementById(view + 'View').classList.remove('hidden');
-            if (view === 'dashboard') loadDashboard();
-            if (view === 'history') loadHistory();
-            if (view === 'reports') loadClientReports();
-        }
-        function toggleSidebar(){document.getElementById("sidebar").classList.toggle("open");document.getElementById("sidebarOverlay").classList.toggle("hidden");document.body.classList.toggle("sidebar-open");}
-        document.getElementById('userInfoMob').textContent = document.getElementById('userInfo').textContent;
 
         function logout() { localStorage.clear(); window.location.href = '/'; }
 
-        loadTruckTPS();
         loadFilters();
         loadReports();
     </script>
-<div id="chatWidget" class="hidden fixed bottom-4 right-4 z-50 w-80 bg-white rounded-xl shadow-2xl border"><div class="bg-blue-900 text-white p-3 rounded-t-xl flex justify-between items-center cursor-pointer" onclick="toggleChat()"><span><i class="fas fa-comments mr-2"></i><span id="chatTitle">Chat</span></span><button onclick="event.stopPropagation();closeChat()" class="text-white">&times;</button></div><div id="chatBody" class="h-64 overflow-y-auto p-3 space-y-2"></div><div class="p-2 border-t flex gap-2"><input type="text" id="chatInput" placeholder="Type message..." class="flex-1 px-2 py-1 border rounded text-sm" onkeypress="if(event.key==='Enter')sendChat()"><button onclick="sendChat()" class="bg-blue-900 text-white px-3 py-1 rounded text-sm"><i class="fas fa-paper-plane"></i></button></div></div><button onclick="openChat()" class="fixed bottom-4 right-4 z-50 bg-blue-900 text-white p-3 rounded-full shadow-lg hover:bg-blue-800" id="chatButton"><i class="fas fa-comments"></i></button>
 </div>
-</div></body>
+</body>
 </html>
-
-
