@@ -38,6 +38,35 @@ const pool = mysql.createPool({
   connectionLimit: 10
 });
 
+// ============ INPUT VALIDATION ============
+function validateEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+function validateMobile(mobile) {
+  return /^(09\d{9}|\+639\d{9})$/.test(mobile);
+}
+
+function sanitizeString(str, maxLength = 100) {
+  if (!str) return '';
+  return String(str).trim().substring(0, maxLength).replace(/[<>]/g, '');
+}
+
+// ============ ENHANCED RATE LIMITING ============
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: { error: "Too many attempts. Try again later." },
+  keyGenerator: (req) => req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress,
+  validate: { xForwardedForHeader: false }
+});
+
+// Apply strict rate limit to auth routes
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/register', authLimiter);
+app.use('/api/auth/forgot-password', authLimiter);
+app.use('/api/auth/force-login', authLimiter);
+
 async function logAudit(userId, action, tableName, recordId, details) {
   try {
     await pool.execute("INSERT INTO audit_logs (user_id, action, table_name, record_id, details) VALUES (?, ?, ?, ?, ?)", [userId, action, tableName, recordId, JSON.stringify(details)]);
