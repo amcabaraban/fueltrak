@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -16,8 +16,8 @@
         .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
         @media (max-width: 640px) { .stat-card h3 { font-size: .875rem; } table { font-size: .75rem; } }
         th { cursor: pointer; user-select: none; }
-        th.sort-asc::after { content: ' ▲'; font-size: 10px; }
-        th.sort-desc::after { content: ' ▼'; font-size: 10px; }
+        th.sort-asc::after { content: ' ?'; font-size: 10px; }
+        th.sort-desc::after { content: ' ?'; font-size: 10px; }
         #sidebar{transition:transform 0.3s}
         @media(max-width:767px){
             #sidebar{display:none!important}
@@ -82,7 +82,7 @@
     <div id="sidebarOverlay" class="hidden fixed inset-0 bg-black bg-opacity-50 z-30" onclick="toggleSidebar()"></div>
     <button onclick="toggleSidebar()" class="fixed top-2 left-2 z-50 md:hidden bg-blue-900 text-white p-2 rounded no-print"><i class="fas fa-bars"></i></button>
 
-    <div class="max-w-7xl mx-auto px-4 py-8">
+    <div class="max-w-7xl mx-auto px-4 py-8 w-full">
         <div id="dashboardView">
             <div class="bg-gradient-to-r from-blue-900 via-blue-700 to-blue-500 rounded-2xl shadow-2xl p-6 mb-6 text-white">
                 <p class="text-blue-200 text-sm" id="welcomeDate"></p>
