@@ -468,15 +468,15 @@
             
             try {
                 const res = await api('/client/submit-atl', 'POST', {
-                    truck_id: currentTruckId,             // <-- Added this!
-                    hauler_name: hauler,                  // <-- Changed from 'hauler' to match backend
-                    remarks: hasSI ? 'With SI' : 'No SI', // <-- Passing SI info into remarks
+                    truck_id: currentTruckId,
+                    plate_no: plate,  // Add this as fallback
+                    hauler_name: hauler,
+                    driver_name: driver,
+                    volume: volume,
+                    remarks: hasSI ? 'With SI' : 'No SI',
                     company: company,
                     so_number: soNumber,
-                    volume: volume,
                     scheduled_date: date,
-                    plate_no: plate,
-                    driver_name: driver,
                     contact_number: contact,
                     has_si: hasSI
                 });
