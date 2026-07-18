@@ -311,7 +311,7 @@
 
         // ============ DASHBOARD ============
         async function loadDashboard() {
-            const data = await api('/atl/summary');
+            const data = await api('/client/dashboard');
             if (data.status === 'success') {
                 const atls = data.data.recent || [];
                 
@@ -440,7 +440,7 @@
             if (!confirm(summary + '\n\nSubmit this ATL?')) return;
             
             try {
-                const res = await api('/atl/submit', 'POST', {
+                const res = await api('/client/submit-atl', 'POST', {
                     company: company,
                     so_number: soNumber,
                     volume: volume,
