@@ -21,8 +21,8 @@
   }
   .print-only { display: none; }
   @media print { .print-only { display: block; } }
-  #sidebar{transition:transform 0.3s}@media(max-width:767px){.main-content{padding-left:0!important}}@media(max-width:767px){@media(max-width:767px){.main-content{padding-left:0!important}}@media(max-width:767px){#sidebar{transform:translateX(-100%)}#sidebar.open{transform:translateX(0)}body.sidebar-open{overflow:hidden}}}@media(min-width:768px){body{padding-left:176px}}
- </style>
+  
+ #sidebar{transition:transform 0.3s}@media(max-width:767px){#sidebar{display:none!important}#sidebarOverlay{display:none!important}body{padding-left:0!important;padding-bottom:70px}}@media(min-width:768px){body{padding-left:176px}.mobile-bottom-nav{display:none!important}}.mobile-bottom-nav{display:flex;position:fixed;bottom:0;left:0;right:0;background:#1e3a5f;color:white;z-index:50;justify-content:space-around;padding:6px 0;box-shadow:0 -2px 10px rgba(0,0,0,0.3)}.mobile-bottom-nav a,.mobile-bottom-nav button{display:flex;flex-direction:column;align-items:center;color:#93a3bc;font-size:10px;text-decoration:none;padding:4px;background:none;border:none;cursor:pointer}.mobile-bottom-nav a i,.mobile-bottom-nav button i{font-size:18px;margin-bottom:2px}.mobile-bottom-nav a.active,.mobile-bottom-nav button.active{color:#fbbf24}</style>
 
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 </head>
@@ -783,8 +783,10 @@
   loadDashboard();
  </script>
  </div>
-</div></body>
+</div><!-- Mobile Bottom Navigation --><div class="mobile-bottom-nav"><a href="/dashboard"><i class="fas fa-tachometer-alt"></i><span>Home</span></a><a href="/reports"><i class="fas fa-chart-bar"></i><span>Reports</span></a><a href="/trucks"><i class="fas fa-truck"></i><span>Trucks</span></a><a href="/docs-report"><i class="fas fa-file-alt"></i><span>Docs</span></a><button onclick="logout()"><i class="fas fa-sign-out-alt"></i><span>Logout</span></button></div></body>
 </html>
+
+
 
 
 
