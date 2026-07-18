@@ -575,6 +575,27 @@ app.get('/api/reports/export', authenticate, authorize('dispatcher', 'management
   } catch (error) { res.status(500).json({ error: error.message }); }
 });
 
+// ============ BULK DOCUMENT SYNC ============
+app.post('/api/sync-all-documents', authenticate, authorize('dispatcher', 'management'), async (req, res) => {
+  try {
+    const [trucks] = await pool.execute('SELECT id FROM trucks');
+    const types = ['lto_registration', 'fire_permit', 'dost_calibration'];
+    const farFuture = '2030-12-31';
+    let count = 0;
+    for (const truck of trucks) {
+      for (const type of types) {
+        const [existing] = await pool.execute('SELECT id FROM truck_documents WHERE truck_id = ? AND document_type = ?', [truck.id, type]);
+        if (!existing.length) {
+          await pool.execute('INSERT INTO truck_documents (truck_id, document_type, document_number, issue_date, expiry_date, status, createdAt) VALUES (?, ?, ?, NOW(), ?, ?, NOW())',
+            [truck.id, type, 'AUTO-' + type, farFuture, 'valid']);
+          count++;
+        }
+      }
+    }
+    res.json({ status: 'success', message: `Created ${count} documents with expiry ${farFuture}`, count });
+  } catch (error) { res.status(400).json({ error: error.message }); }
+});
+
 // ============ PAGE ROUTES ============
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'index.html')));
 app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'dashboard.html')));
