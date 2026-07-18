@@ -585,10 +585,20 @@ app.get('/api/reports/export', authenticate, authorize('dispatcher', 'management
 // ============ BULK DOCUMENT SYNC ============
 app.post('/api/sync-all-documents', authenticate, authorize('dispatcher', 'management'), async (req, res) => {
   try {
-    const [trucks] = await pool.execute('SELECT id FROM trucks');
+    const { batch = 0 } = req.body;
+    const batchSize = 100;
+    const offset = batch * batchSize;
+    
+    const [trucks] = await pool.execute('SELECT id FROM trucks ORDER BY id LIMIT ? OFFSET ?', [batchSize, offset]);
+    
+    if (trucks.length === 0) {
+      return res.json({ status: 'success', message: 'All done! No more trucks to process.', count: 0, done: true });
+    }
+    
     const types = ['lto_registration', 'fire_permit', 'dost_calibration'];
     const farFuture = '2030-12-31';
     let count = 0;
+    
     for (const truck of trucks) {
       for (const type of types) {
         const [existing] = await pool.execute('SELECT id FROM truck_documents WHERE truck_id = ? AND document_type = ?', [truck.id, type]);
@@ -599,7 +609,8 @@ app.post('/api/sync-all-documents', authenticate, authorize('dispatcher', 'manag
         }
       }
     }
-    res.json({ status: 'success', message: `Created ${count} documents with expiry ${farFuture}`, count });
+    
+    res.json({ status: 'success', message: `Batch ${batch + 1}: Created ${count} documents.`, count, done: false, nextBatch: batch + 1 });
   } catch (error) { res.status(400).json({ error: error.message }); }
 });
 
