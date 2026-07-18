@@ -641,6 +641,11 @@ app.post('/api/client/submit-atl', authenticate, authorize('client'), async (req
   try {
     const { truck_id, volume, driver_name, hauler_name, remarks } = req.body;
     
+    // NEW: Stop the process if truck_id is missing
+    if (!truck_id) {
+      return res.status(400).json({ error: 'Truck selection is required. No truck_id received from the form.' });
+    }
+
     // Generate the formatted ATL code using your existing helper
     const atl_code = await generateATLCode(req.user.company_name);
 
@@ -652,7 +657,7 @@ app.post('/api/client/submit-atl', authenticate, authorize('client'), async (req
       [
         atl_code || null, 
         req.user.id || null, 
-        truck_id || null,     // Fix: explicitly converted undefined to null
+        truck_id, // We now know this is safely present
         volume || 0, 
         driver_name || null, 
         hauler_name || null, 
@@ -675,6 +680,7 @@ app.post('/api/client/submit-atl', authenticate, authorize('client'), async (req
     res.status(500).json({ error: 'Failed to submit ATL: ' + error.message });
   }
 });
+
 app.post('/api/client/cancel-atl/:id', authenticate, authorize('client'), async (req, res) => {
   try {
     await pool.execute("UPDATE authority_to_load SET status = 'cancelled', remarks = ? WHERE id = ? AND client_id = ?", ['Cancellation: ' + (req.body.reason || ''), req.params.id, req.user.id]);
