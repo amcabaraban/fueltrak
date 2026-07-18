@@ -296,6 +296,63 @@ app.put('/api/dispatch/update-si/:id', authenticate, authorize('dispatcher', 'ma
   } catch (error) { res.status(400).json({ error: error.message }); }
 });
 
+app.get('/api/dispatch/approved-for-loading', authenticate, authorize('dispatcher', 'management'), async (req, res) => {
+  try {
+    const [atls] = await pool.execute("SELECT * FROM authority_to_load WHERE status = 'approved' ORDER BY createdAt DESC");
+    const result = [];
+    for (const atl of atls) {
+      const [trucks] = await pool.execute('SELECT * FROM trucks WHERE id = ?', [atl.truck_id]);
+      const [clients] = await pool.execute('SELECT id, email, company_name FROM users WHERE id = ?', [atl.client_id]);
+      result.push({ ...atl, truck: trucks[0] || null, client: clients[0] || null });
+    }
+    res.json({ status: 'success', data: result });
+  } catch (error) { res.status(500).json({ error: error.message }); }
+});
+
+app.get('/api/dispatch/ongoing-loading', authenticate, authorize('dispatcher', 'management'), async (req, res) => {
+  try {
+    const [atls] = await pool.execute("SELECT * FROM authority_to_load WHERE status = 'dispatched' ORDER BY dispatch_date DESC");
+    const result = [];
+    for (const atl of atls) {
+      const [trucks] = await pool.execute('SELECT * FROM trucks WHERE id = ?', [atl.truck_id]);
+      const [clients] = await pool.execute('SELECT id, email, company_name FROM users WHERE id = ?', [atl.client_id]);
+      result.push({ ...atl, truck: trucks[0] || null, client: clients[0] || null });
+    }
+    res.json({ status: 'success', data: result });
+  } catch (error) { res.status(500).json({ error: error.message }); }
+});
+
+app.post('/api/dispatch/cancel-loading/:id', authenticate, authorize('dispatcher', 'management'), async (req, res) => {
+  try {
+    await pool.execute("UPDATE authority_to_load SET status = 'pending', dispatch_date = NULL, remarks = ? WHERE id = ?",
+      ['Loading cancelled: ' + (req.body.reason || 'No reason'), req.params.id]);
+    res.json({ status: 'success', message: 'Cancelled' });
+  } catch (error) { res.status(400).json({ error: error.message }); }
+});
+
+app.post('/api/dispatch/handle-cancellation/:id', authenticate, authorize('dispatcher', 'management'), async (req, res) => {
+  try {
+    const status = req.body.action === 'approve_cancel' ? 'cancelled' : 'approved';
+    await pool.execute('UPDATE authority_to_load SET status = ? WHERE id = ?', [status, req.params.id]);
+    res.json({ status: 'success', message: 'Done' });
+  } catch (error) { res.status(400).json({ error: error.message }); }
+});
+
+app.put('/api/dispatch/update-loading/:id', authenticate, authorize('dispatcher', 'management'), async (req, res) => {
+  try {
+    const { volume, actual_volume, driver_name, hauler, remarks } = req.body;
+    await pool.execute('UPDATE authority_to_load SET volume = ?, actual_volume = ?, driver_name = ?, hauler = ?, remarks = ? WHERE id = ?',
+      [volume || null, actual_volume || null, driver_name || null, hauler || null, remarks || null, req.params.id]);
+    res.json({ status: 'success', message: 'Updated' });
+  } catch (error) { res.status(400).json({ error: error.message }); }
+});
+
+  try {
+    await pool.execute('UPDATE authority_to_load SET has_si = ? WHERE id = ?', [req.body.has_si, req.params.id]);
+    res.json({ status: 'success' });
+  } catch (error) { res.status(400).json({ error: error.message }); }
+});
+
 app.get('/api/dispatch/truck-stats', authenticate, authorize('dispatcher', 'management'), async (req, res) => {
   try {
     const [truckCounts] = await pool.execute('SELECT COUNT(*) as total, SUM(CASE WHEN is_active = 1 THEN 1 ELSE 0 END) as active, SUM(CASE WHEN is_active = 0 THEN 1 ELSE 0 END) as inactive, COALESCE(SUM(total_capacity), 0) as totalCapacity FROM trucks');
