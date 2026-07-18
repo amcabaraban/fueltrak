@@ -284,54 +284,19 @@ app.get('/api/dispatch/truck-stats', authenticate, authorize('dispatcher', 'mana
       if (truck.is_active) { stats.active++; stats.totalCapacity += parseFloat(truck.total_capacity) || 0; }
       else { stats.inactive++; }
       const [docs] = await pool.execute('SELECT * FROM truck_documents WHERE truck_id = ?', [truck.id]);
-      let hasExpired = false, hasExpiring = false;
-      ['lto_registration','fire_permit','dost_calibration'].forEach(type => {
-        const doc = docs.find(d => d.document_type === type);
-        const key = type === 'lto_registration' ? 'lto' : type === 'fire_permit' ? 'fire' : 'dost';
-        if (!doc) { stats.documentBreakdown[key].missing++; if (truck.is_active) hasExpired = true; }
-        else {
-          const days = Math.ceil((new Date(doc.expiry_date) - today) / 86400000);
-          if (days < 0) { stats.documentBreakdown[key].expired++; if (truck.is_active) hasExpired = true; }
-          else if (days <= 30) { stats.documentBreakdown[key].valid++; if (truck.is_active) hasExpiring = true; }
-          else { stats.documentBreakdown[key].valid++; }
-        }
-      });
-      if (truck.is_active && hasExpired) stats.withExpiredDocs++;
-      else if (truck.is_active && hasExpiring) stats.expiringSoon++;
-      else if (truck.is_active) stats.withValidDocs++;
-    }
-    res.json({ status: 'success', data: stats });
-  } catch (error) { res.status(500).json({ error: error.message }); }
-});
-
-// ============ CLIENT ATL ROUTES ============
-app.get('/api/client/dashboard', authenticate, authorize('client'), async (req, res) => {
-  try {
-    const [atls] = await pool.execute('SELECT * FROM authority_to_load WHERE client_id = ? ORDER BY createdAt DESC', [req.user.id]);
-    const result = [];
-    for (const atl of atls) {
-      const [trucks] = await pool.execute('SELECT * FROM trucks WHERE id = ?', [atl.truck_id]);
-      result.push({ ...atl, truck: trucks[0] || null });
-    }
-    const stats = { total: atls.length, pending: atls.filter(a => a.status === 'pending').length, approved: atls.filter(a => a.status === 'approved').length, dispatched: atls.filter(a => a.status === 'dispatched').length, completed: atls.filter(a => a.status === 'completed').length, cancelled: atls.filter(a => a.status === 'cancelled' || a.status === 'rejected').length };
-    res.json({ status: 'success', data: { stats, recent: result, recentATLs: result } });
-  } catch (error) { res.status(500).json({ error: error.message }); }
-});
-
-app.get('/api/client/verify-truck/:plateNo', authenticate, authorize('client'), async (req, res) => {
-  try {
-    const plateNo = req.params.plateNo.toUpperCase();
-    const [trucks] = await pool.execute('SELECT * FROM trucks WHERE plate_no = ? AND is_active = 1', [plateNo]);
-    if (trucks.length > 0) {
-      const truck = trucks[0];
-      const [docs] = await pool.execute('SELECT * FROM truck_documents WHERE truck_id = ?', [truck.id]);
-      const docStatus = {}; let allValid = true;
-      ['lto_registration','fire_permit','dost_calibration'].forEach(type => {
-        const doc = docs.find(d => d.document_type === type);
-        const days = doc ? Math.ceil((new Date(doc.expiry_date) - new Date()) / 86400000) : -1;
-        docStatus[type] = { status: days < 0 ? 'expired' : days <= 30 ? 'expiring_soon' : 'valid', valid: days >= 0, days_remaining: days };
-        if (days < 0) allValid = false;
-      });
+const docStatus = {}; let allValid = true;
+if (docs.length === 0) {
+  ['lto_registration','fire_permit','dost_calibration'].forEach(type => {
+    docStatus[type] = { status: 'not_required', valid: true, days_remaining: 999 };
+  });
+} else {
+  ['lto_registration','fire_permit','dost_calibration'].forEach(type => {
+    const doc = docs.find(d => d.document_type === type);
+    const days = doc ? Math.ceil((new Date(doc.expiry_date) - new Date()) / 86400000) : -1;
+    docStatus[type] = { status: days < 0 ? 'expired' : days <= 30 ? 'expiring_soon' : 'valid', valid: days >= 0, days_remaining: days };
+    if (days < 0) allValid = false;
+  });
+}
       return res.json({ status: 'success', data: { truck: { id: truck.id, plate_no: truck.plate_no, make: truck.make, driver_name: truck.driver_name, hauler_name: truck.hauler_name, total_capacity: truck.total_capacity }, documents: docStatus, can_proceed: allValid } });
     }
     const [master] = await pool.execute('SELECT * FROM truck_masterlist WHERE plate_no = ?', [plateNo]);
