@@ -9,10 +9,10 @@
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
     <style>
         .table-wrap{overflow-x:auto}@media print{nav,.no-print{display:none!important}}
-        #sidebar{transition:transform 0.3s}@media(max-width:767px){#sidebar{transform:translateX(-100%)}#sidebar.open{transform:translateX(0)}body.sidebar-open{overflow:hidden}}@media(min-width:768px){body{padding-left:176px}}  
+        #sidebar{transition:transform 0.3s}@media(max-inline-size:767px){#sidebar{transform:translateX(-100%)}#sidebar.open{transform:translateX(0)}body.sidebar-open{overflow:hidden}}@media(min-inline-size:768px){body{padding-inline-start:176px}}  
     </style>
 </head>
-<body class="bg-gray-50 min-h-screen">
+<div id="sidebarOverlay" class="hidden fixed inset-0 bg-black bg-opacity-50 z-30 md:hidden" onclick="toggleSidebar()"></div><button onclick="toggleSidebar()" class="fixed top-2 left-2 z-50 md:hidden bg-blue-900 text-white p-2 rounded no-print"><i class="fas fa-bars"></i></button><div class="fixed left-0 top-0 h-full w-12 md:w-44 bg-blue-900 text-white z-40 pt-14 overflow-y-auto no-print" id="sidebar" style="transition:transform 0.3s"><a href="/dashboard" class="flex items-center px-1 md:px-3 py-2.5 hover:bg-blue-800 text-[10px] md:text-xs whitespace-nowrap"><i class="fas fa-tachometer-alt w-5 text-center text-sm"></i><span class="hidden md:inline ml-2">Dashboard</span></a><a href="/reports" class="flex items-center px-1 md:px-3 py-2.5 hover:bg-blue-800 text-[10px] md:text-xs whitespace-nowrap"><i class="fas fa-chart-bar w-5 text-center text-sm"></i><span class="hidden md:inline ml-2">Reports</span></a><a href="/trucks" class="flex items-center px-1 md:px-3 py-2.5 hover:bg-blue-800 text-[10px] md:text-xs whitespace-nowrap"><i class="fas fa-truck w-5 text-center text-sm"></i><span class="hidden md:inline ml-2">Trucks</span></a><a href="/docs-report" class="flex items-center px-1 md:px-3 py-2.5 hover:bg-blue-800 text-[10px] md:text-xs whitespace-nowrap"><i class="fas fa-file-alt w-5 text-center text-sm"></i><span class="hidden md:inline ml-2">Doc Report</span></a><a href="/ttsd-checklist" class="flex items-center px-1 md:px-3 py-2.5 hover:bg-blue-800 text-[10px] md:text-xs whitespace-nowrap"><i class="fas fa-clipboard-check w-5 text-center text-sm"></i><span class="hidden md:inline ml-2">TTSD</span></a><a href="/audit-logs" class="flex items-center px-1 md:px-3 py-2.5 hover:bg-blue-800 text-[10px] md:text-xs whitespace-nowrap"><i class="fas fa-history w-5 text-center text-sm"></i><span class="hidden md:inline ml-2">Audit</span></a><a href="/client" class="flex items-center px-1 md:px-3 py-2.5 hover:bg-blue-800 text-[10px] md:text-xs whitespace-nowrap"><i class="fas fa-user w-5 text-center text-sm"></i><span class="hidden md:inline ml-2">Client</span></a><div class="border-t border-blue-700 mt-1 pt-1"><button onclick="logout()" class="flex items-center px-1 md:px-3 py-2.5 hover:bg-red-700 text-[10px] md:text-xs w-full text-left whitespace-nowrap"><i class="fas fa-sign-out-alt w-5 text-center text-sm"></i><span class="hidden md:inline ml-2">Logout</span></button></div></div><body class="bg-gray-50 min-h-screen">
     <div class="main-content">
     <nav class="bg-gradient-to-r from-blue-900 to-blue-800 text-white shadow-xl sticky top-0 z-50 no-print">
         <!-- Desktop -->
@@ -65,3 +65,5 @@
     </div>
 </body>
 </html>
+
+
