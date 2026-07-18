@@ -338,15 +338,7 @@ app.post('/api/dispatch/handle-cancellation/:id', authenticate, authorize('dispa
   } catch (error) { res.status(400).json({ error: error.message }); }
 });
 
-app.put('/api/dispatch/update-loading/:id', authenticate, authorize('dispatcher', 'management'), async (req, res) => {
-  try {
-    const { volume, actual_volume, driver_name, hauler, remarks } = req.body;
-    await pool.execute('UPDATE authority_to_load SET volume = ?, actual_volume = ?, driver_name = ?, hauler = ?, remarks = ? WHERE id = ?',
-      [volume || null, actual_volume || null, driver_name || null, hauler || null, remarks || null, req.params.id]);
-    res.json({ status: 'success', message: 'Updated' });
-  } catch (error) { res.status(400).json({ error: error.message }); }
-});
-
+app.put('/api/dispatch/update-si/:id', authenticate, authorize('dispatcher', 'management'), async (req, res) => {
   try {
     await pool.execute('UPDATE authority_to_load SET has_si = ? WHERE id = ?', [req.body.has_si, req.params.id]);
     res.json({ status: 'success' });
