@@ -298,30 +298,43 @@ app.put('/api/dispatch/update-si/:id', authenticate, authorize('dispatcher', 'ma
 
 app.get('/api/dispatch/truck-stats', authenticate, authorize('dispatcher', 'management'), async (req, res) => {
   try {
-    const [trucks] = await pool.execute('SELECT * FROM trucks');
-    const today = new Date();
-    const stats = { total: trucks.length, active: 0, inactive: 0, withExpiredDocs: 0, withValidDocs: 0, expiringSoon: 0, totalCapacity: 0, documentBreakdown: { lto: { valid: 0, expired: 0, missing: 0 }, fire: { valid: 0, expired: 0, missing: 0 }, dost: { valid: 0, expired: 0, missing: 0 } }, trucksNeedingAttention: [] };
-    for (const truck of trucks) {
-      if (truck.is_active) { stats.active++; stats.totalCapacity += parseFloat(truck.total_capacity) || 0; }
-      else { stats.inactive++; }
-      const [docs] = await pool.execute('SELECT * FROM truck_documents WHERE truck_id = ?', [truck.id]);
-      let hasExpired = false, hasExpiring = false;
-      ['lto_registration','fire_permit','dost_calibration'].forEach(type => {
-        const doc = docs.find(d => d.document_type === type);
-        const key = type === 'lto_registration' ? 'lto' : type === 'fire_permit' ? 'fire' : 'dost';
-        if (!doc) { stats.documentBreakdown[key].missing++; if (truck.is_active) hasExpired = true; }
-        else {
-          const days = Math.ceil((new Date(doc.expiry_date) - today) / 86400000);
-          if (days < 0) { stats.documentBreakdown[key].expired++; if (truck.is_active) hasExpired = true; }
-          else if (days <= 30) { stats.documentBreakdown[key].valid++; if (truck.is_active) hasExpiring = true; }
-          else { stats.documentBreakdown[key].valid++; }
-        }
-      });
-      if (truck.is_active && hasExpired) stats.withExpiredDocs++;
-      else if (truck.is_active && hasExpiring) stats.expiringSoon++;
-      else if (truck.is_active) stats.withValidDocs++;
-    }
-    res.json({ status: 'success', data: stats });
+    const [truckCounts] = await pool.execute('SELECT COUNT(*) as total, SUM(CASE WHEN is_active = 1 THEN 1 ELSE 0 END) as active, SUM(CASE WHEN is_active = 0 THEN 1 ELSE 0 END) as inactive, COALESCE(SUM(total_capacity), 0) as totalCapacity FROM trucks');
+    const [docCounts] = await pool.execute(`
+      SELECT 
+        document_type,
+        SUM(CASE WHEN expiry_date >= NOW() THEN 1 ELSE 0 END) as valid,
+        SUM(CASE WHEN expiry_date < NOW() THEN 1 ELSE 0 END) as expired
+      FROM truck_documents 
+      WHERE document_type IN ('lto_registration','fire_permit','dost_calibration')
+      GROUP BY document_type
+    `);
+    
+    const docBreakdown = { lto: { valid: 0, expired: 0, missing: 0 }, fire: { valid: 0, expired: 0, missing: 0 }, dost: { valid: 0, expired: 0, missing: 0 } };
+    docCounts.forEach(d => {
+      const key = d.document_type === 'lto_registration' ? 'lto' : d.document_type === 'fire_permit' ? 'fire' : 'dost';
+      docBreakdown[key].valid = d.valid || 0;
+      docBreakdown[key].expired = d.expired || 0;
+      docBreakdown[key].missing = (truckCounts[0].total * 3) - (d.valid + d.expired);
+    });
+    
+    // Count trucks with all valid docs
+    const [validTruckCount] = await pool.execute(`
+      SELECT COUNT(*) as count FROM trucks t 
+      WHERE t.is_active = 1 
+      AND (SELECT COUNT(*) FROM truck_documents WHERE truck_id = t.id AND expiry_date >= NOW()) = 3
+    `);
+    
+    const total = truckCounts[0].total;
+    const withValidDocs = validTruckCount[0].count;
+    const withExpiredDocs = total - withValidDocs;
+    
+    res.json({ status: 'success', data: {
+      total, active: truckCounts[0].active, inactive: truckCounts[0].inactive,
+      withExpiredDocs, withValidDocs, expiringSoon: 0,
+      totalCapacity: truckCounts[0].totalCapacity,
+      documentBreakdown: docBreakdown,
+      trucksNeedingAttention: []
+    }});
   } catch (error) { res.status(500).json({ error: error.message }); }
 });
 
