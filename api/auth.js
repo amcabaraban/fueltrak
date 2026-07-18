@@ -275,6 +275,35 @@ app.put('/api/dispatch/update-si/:id', authenticate, authorize('dispatcher', 'ma
   } catch (error) { res.status(400).json({ error: error.message }); }
 });
 
+app.get('/api/dispatch/truck-stats', authenticate, authorize('dispatcher', 'management'), async (req, res) => {
+  try {
+    const [trucks] = await pool.execute('SELECT * FROM trucks');
+    const today = new Date();
+    const stats = { total: trucks.length, active: 0, inactive: 0, withExpiredDocs: 0, withValidDocs: 0, expiringSoon: 0, totalCapacity: 0, documentBreakdown: { lto: { valid: 0, expired: 0, missing: 0 }, fire: { valid: 0, expired: 0, missing: 0 }, dost: { valid: 0, expired: 0, missing: 0 } }, trucksNeedingAttention: [] };
+    for (const truck of trucks) {
+      if (truck.is_active) { stats.active++; stats.totalCapacity += parseFloat(truck.total_capacity) || 0; }
+      else { stats.inactive++; }
+      const [docs] = await pool.execute('SELECT * FROM truck_documents WHERE truck_id = ?', [truck.id]);
+      let hasExpired = false, hasExpiring = false;
+      ['lto_registration','fire_permit','dost_calibration'].forEach(type => {
+        const doc = docs.find(d => d.document_type === type);
+        const key = type === 'lto_registration' ? 'lto' : type === 'fire_permit' ? 'fire' : 'dost';
+        if (!doc) { stats.documentBreakdown[key].missing++; if (truck.is_active) hasExpired = true; }
+        else {
+          const days = Math.ceil((new Date(doc.expiry_date) - today) / 86400000);
+          if (days < 0) { stats.documentBreakdown[key].expired++; if (truck.is_active) hasExpired = true; }
+          else if (days <= 30) { stats.documentBreakdown[key].valid++; if (truck.is_active) hasExpiring = true; }
+          else { stats.documentBreakdown[key].valid++; }
+        }
+      });
+      if (truck.is_active && hasExpired) stats.withExpiredDocs++;
+      else if (truck.is_active && hasExpiring) stats.expiringSoon++;
+      else if (truck.is_active) stats.withValidDocs++;
+    }
+    res.json({ status: 'success', data: stats });
+  } catch (error) { res.status(500).json({ error: error.message }); }
+});
+
 // ============ CLIENT ATL ROUTES ============
 app.get('/api/client/dashboard', authenticate, authorize('client'), async (req, res) => {
   try {
