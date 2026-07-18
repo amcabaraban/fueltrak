@@ -26,27 +26,74 @@
     </nav>
 
     <div class="max-w-7xl mx-auto px-4 py-8">
-        <div class="flex justify-between items-center mb-6"><h1 class="text-3xl font-bold">Truck Masterlist</h1><div class="flex gap-2"><input type="text" id="searchInput" placeholder="Search plate, driver..." class="px-3 py-2 border rounded text-sm" oninput="loadTrucks()"><button onclick="window.print()" class="bg-blue-600 text-white px-4 py-2 rounded text-sm no-print"><i class="fas fa-print mr-1"></i>Print</button></div></div>
-        <div class="bg-white rounded-xl shadow-lg overflow-hidden"><div class="table-wrap"><table class="w-full text-sm"><thead class="bg-gray-50 border-b"><tr><th class="py-3 px-3 text-left">Make</th><th class="py-3 px-3 text-left">Plate No</th><th class="py-3 px-3 text-left">Driver</th><th class="py-3 px-3 text-left">Hauler</th><th class="py-3 px-3 text-center">COTs</th><th class="py-3 px-3 text-right">Capacity (L)</th><th class="py-3 px-3 text-center">TPS</th></tr></thead><tbody id="truckBody"><tr><td colspan="7" class="text-center py-8 text-gray-500">Loading...</td></tr></tbody></table></div></div>
+        <div class="flex flex-wrap justify-between items-center mb-6 gap-2">
+            <h1 class="text-3xl font-bold">Truck Masterlist</h1>
+            <div class="flex gap-2">
+                <input type="text" id="searchInput" placeholder="Search plate, driver, hauler..." class="px-3 py-2 border rounded text-sm w-64" oninput="currentPage=1;loadTrucks()">
+                <button onclick="window.print()" class="bg-blue-600 text-white px-4 py-2 rounded text-sm no-print"><i class="fas fa-print mr-1"></i>Print</button>
+            </div>
+        </div>
+        <p class="text-sm text-gray-500 mb-2" id="recordCount"></p>
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden"><div class="table-wrap"><table class="w-full text-sm"><thead class="bg-gray-50 border-b"><tr><th class="py-3 px-3 text-left">Make</th><th class="py-3 px-3 text-left">Plate No</th><th class="py-3 px-3 text-left">Driver</th><th class="py-3 px-3 text-left">Hauler/Customer</th><th class="py-3 px-3 text-center">COTs</th><th class="py-3 px-3 text-right">Capacity (L)</th><th class="py-3 px-3 text-center">TPS Count</th></tr></thead><tbody id="truckBody"><tr><td colspan="7" class="text-center py-8 text-gray-500">Loading...</td></tr></tbody></table></div></div>
+        <div class="px-4 py-3 border-t flex justify-between items-center bg-white rounded-b-xl">
+            <div class="text-sm text-gray-500" id="pageInfo"></div>
+            <div class="flex items-center space-x-2" id="pagination"></div>
+        </div>
     </div>
 
     <script>
         const token=localStorage.getItem('fueltrak_token');const user=JSON.parse(localStorage.getItem('fueltrak_user')||'{}');
         if(!token)window.location.replace('/');
         document.getElementById('userInfo').textContent=user.email+' ('+user.role+')';
+        document.getElementById('userInfoMob').textContent=user.email+' ('+user.role+')';
+        
+        var allTrucks=[],currentPage=1,perPage=20;
         
         async function loadTrucks(){
-            var search=document.getElementById('searchInput').value.toLowerCase();
             var res=await fetch('/api/truck-masterlist-all',{headers:{'Authorization':'Bearer '+token}});
             var data=await res.json();
             if(data.status==='success'){
-                var trucks=data.data;
-                if(search) trucks=trucks.filter(function(t){return(t.plate_no||'').toLowerCase().indexOf(search)>=0||(t.driver_name||'').toLowerCase().indexOf(search)>=0||(t.hauler_name||'').toLowerCase().indexOf(search)>=0;});
-                document.getElementById('truckBody').innerHTML=trucks.map(function(t){
-                    var cots=[t.cot1,t.cot2,t.cot3,t.cot4,t.cot5,t.cot6,t.cot7,t.cot8,t.cot9,t.cot10].filter(function(v){return v>0;});
-                    return'<tr class="border-b hover:bg-gray-50"><td class="py-2 px-3">'+(t.truck_make||'-')+'</td><td class="py-2 px-3 font-semibold">'+t.plate_no+'</td><td class="py-2 px-3">'+(t.driver_name||'-')+'</td><td class="py-2 px-3">'+(t.hauler_name||'-')+'</td><td class="py-2 px-3 text-center">'+cots.length+'</td><td class="py-2 px-3 text-right">'+(t.total_capacity||0).toLocaleString()+'</td><td class="py-2 px-3 text-center">'+(t.tps_count||0)+'</td></tr>';
-                }).join('')||'<tr><td colspan="7" class="text-center py-8 text-gray-500">No trucks found</td></tr>';
+                var search=document.getElementById('searchInput').value.toLowerCase();
+                allTrucks=data.data;
+                if(search) allTrucks=allTrucks.filter(function(t){return(t.plate_no||'').toLowerCase().indexOf(search)>=0||(t.driver_name||'').toLowerCase().indexOf(search)>=0||(t.hauler_name||'').toLowerCase().indexOf(search)>=0;});
+                renderPage();
             }
+        }
+        
+        function renderPage(){
+            var totalPages=Math.ceil(allTrucks.length/perPage);
+            if(currentPage>totalPages)currentPage=totalPages||1;
+            var start=(currentPage-1)*perPage;
+            var pageData=allTrucks.slice(start,start+perPage);
+            
+            document.getElementById('recordCount').textContent='Total: '+allTrucks.length+' trucks';
+            document.getElementById('pageInfo').textContent='Showing '+(start+1)+'-'+Math.min(start+perPage,allTrucks.length)+' of '+allTrucks.length;
+            
+            document.getElementById('truckBody').innerHTML=pageData.map(function(t){
+                var cots=[t.cot1,t.cot2,t.cot3,t.cot4,t.cot5,t.cot6,t.cot7,t.cot8,t.cot9,t.cot10].filter(function(v){return v>0;});
+                var totalCap=cots.reduce(function(s,v){return s+v;},0);
+                return'<tr class="border-b hover:bg-gray-50"><td class="py-2 px-3">'+(t.truck_make||'-')+'</td><td class="py-2 px-3 font-semibold">'+t.plate_no+'</td><td class="py-2 px-3">'+(t.driver_name||'-')+'</td><td class="py-2 px-3">'+(t.hauler_name||'-')+'</td><td class="py-2 px-3 text-center">'+cots.length+'</td><td class="py-2 px-3 text-right">'+totalCap.toLocaleString()+'</td><td class="py-2 px-3 text-center">'+(t.tps_count||0)+'</td></tr>';
+            }).join('')||'<tr><td colspan="7" class="text-center py-8 text-gray-500">No trucks found</td></tr>';
+            
+            // Pagination
+            var pagHTML='';
+            pagHTML+='<button onclick="changePage('+(currentPage-1)+')" class="px-2 py-1 border rounded text-xs '+(currentPage===1?'text-gray-300 cursor-not-allowed':'hover:bg-gray-100')+'" '+(currentPage===1?'disabled':'')+'><i class="fas fa-chevron-left"></i></button>';
+            for(var i=1;i<=totalPages;i++){
+                if(i===1||i===totalPages||(i>=currentPage-2&&i<=currentPage+2)){
+                    pagHTML+='<button onclick="changePage('+i+')" class="px-2 py-1 border rounded text-xs '+(i===currentPage?'bg-blue-900 text-white':'hover:bg-gray-100')+'">'+i+'</button>';
+                }else if(i===currentPage-3||i===currentPage+3){
+                    pagHTML+='<span class="px-1 text-xs">...</span>';
+                }
+            }
+            pagHTML+='<button onclick="changePage('+(currentPage+1)+')" class="px-2 py-1 border rounded text-xs '+(currentPage===totalPages?'text-gray-300 cursor-not-allowed':'hover:bg-gray-100')+'" '+(currentPage===totalPages?'disabled':'')+'><i class="fas fa-chevron-right"></i></button>';
+            document.getElementById('pagination').innerHTML=pagHTML;
+        }
+        
+        function changePage(page){
+            var totalPages=Math.ceil(allTrucks.length/perPage);
+            if(page<1||page>totalPages)return;
+            currentPage=page;
+            renderPage();
         }
         
         function logout(){localStorage.clear();window.location.href='/';}
