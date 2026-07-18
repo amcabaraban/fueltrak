@@ -18,7 +18,7 @@
     th { cursor: pointer; user-select: none; }
     th.sort-asc::after { content: ' ?'; font-size: 10px; }
     th.sort-desc::after { content: ' ?'; font-size: 10px; }
-    #sidebar{transition:transform 0.3s}
+    #sidebar{transition:transform 0.3s}@media(min-width:768px){body{padding-left:176px}}
     @media(max-inline-size:767px){
       #sidebar{transform:translateX(-100%)}
       #sidebar.open{transform:translateX(0)}
@@ -818,6 +818,8 @@
   </div>
 </body>
 </html>
+
+
 
 
 
