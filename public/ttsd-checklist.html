@@ -58,12 +58,12 @@
     @media print {
         .no-print { display: none !important; }
         body { padding: 0 !important; margin: 0 !important; background: white !important; }
-        .container { max-width: 100% !important; border: 1px solid #000 !important; padding: 8px !important; margin: 0 !important; }
+        .container { max-inline-size: 100% !important; border: 1px solid #000 !important; padding: 8px !important; margin: 0 !important; }
         @page { size: A4; margin: 5mm; }
         h1 { font-size: 16px !important; }
-        .section-title { font-size: 13px !important; margin-top: 8px !important; margin-bottom: 5px !important; }
-        .field-row { margin-bottom: 3px !important; }
-        .field-label { width: 130px !important; font-size: 11px !important; }
+        .section-title { font-size: 13px !important; margin-block-start: 8px !important; margin-block-end: 5px !important; }
+        .field-row { margin-block-end: 3px !important; }
+        .field-label { inline-size: 130px !important; font-size: 11px !important; }
         .field-value { font-size: 11px !important; }
         .field-value input { font-size: 11px !important; padding: 3px 0 !important; }
         .comp-table th, .comp-table td { padding: 3px 4px !important; font-size: 10px !important; }
@@ -71,16 +71,16 @@
         .comp-table input[type="text"] { font-size: 10px !important; padding: 4px 2px !important; }
         .comp-table select { font-size: 9px !important; padding: 3px 1px !important; }
         .comp-table th { font-size: 9px !important; padding: 3px 2px !important; }
-        .comp-table tr { height: 28px !important; }
-        .comp-table thead tr { height: 24px !important; }
+        .comp-table tr { block-size: 28px !important; }
+        .comp-table thead tr { block-size: 24px !important; }
         .capacity { font-size: 12px !important; }
         #totalVol, #tableTotalVol { font-size: 13px !important; }
-        .flex-row { gap: 8px !important; margin-bottom: 8px !important; }
-        .col-half { padding: 6px !important; min-width: 250px !important; }
-        .depot { margin-bottom: 8px !important; font-size: 12px !important; }
-        .feedback-box textarea { min-height: 30px !important; font-size: 10px !important; }
-        .sig-line { height: 30px !important; }
-        .signature-box { width: 180px !important; }
+        .flex-row { gap: 8px !important; margin-block-end: 8px !important; }
+        .col-half { padding: 6px !important; min-inline-size: 250px !important; }
+        .depot { margin-block-end: 8px !important; font-size: 12px !important; }
+        .feedback-box textarea { min-block-size: 30px !important; font-size: 10px !important; }
+        .sig-line { block-size: 30px !important; }
+        .signature-box { inline-size: 180px !important; }
         textarea { font-size: 10px !important; }
     }
 </style>
