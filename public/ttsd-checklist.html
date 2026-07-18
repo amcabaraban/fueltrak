@@ -34,7 +34,7 @@
   .checklist-input { inline-size: 100%; border: none; text-align: center; background: transparent; font-size: 11px; font-weight: bold; }
   #sidebar{transition:transform 0.3s}
   @media(max-inline-size:767px){#sidebar{transform:translateX(-100%)}#sidebar.open{transform:translateX(0)}body.sidebar-open{overflow:hidden}}
-  @media(min-inline-size:768px){body{padding-inline-start:176px}}
+  @media(min-width:768px){body{padding-left:176px}}
   @media print{.no-print{display:none!important}body{padding:0!important;margin:0!important}@page{size:A4;margin:5mm}}
 </style>
 </head>
@@ -75,7 +75,7 @@
     </div>
   </nav>
 
-  <div class="max-w-4xl mx-auto px-4 py-6">
+  <div class="max-w-7xl mx-auto px-4 py-8">
     <div class="bg-white rounded-xl shadow-lg p-6 mb-4 no-print">
       <h2 class="text-lg font-bold mb-3"><i class="fas fa-print mr-2"></i>Print Checklist</h2>
       <p class="text-sm text-gray-600 mb-3">Select a plate number, fill details, then print.</p>
@@ -231,4 +231,5 @@
   </script>
 </body>
 </html>
+
 
