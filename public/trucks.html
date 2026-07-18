@@ -73,8 +73,16 @@
                 var cots=[t.cot1,t.cot2,t.cot3,t.cot4,t.cot5,t.cot6,t.cot7,t.cot8,t.cot9,t.cot10].filter(function(v){return parseFloat(v)>0;});
                 var totalCap=cots.reduce(function(s,v){return s+parseFloat(v);},0);
                 var capKL=totalCap>0?Math.round(totalCap/1000):0;
-                return'<tr class="border-b hover:bg-gray-50"><td class="py-2 px-3">'+(t.truck_make||'-')+'</td><td class="py-2 px-3 font-semibold">'+t.plate_no+'</td><td class="py-2 px-3">'+(t.driver_name||'-').replace(/"/g,'')+'</td><td class="py-2 px-3">'+(t.hauler_name||'-')+'</td><td class="py-2 px-3 text-center">'+cots.length+'</td><td class="py-2 px-3 text-right font-bold">'+capKL.toLocaleString()+' KL</td><td class="py-2 px-3 text-center">'+(t.tps_count||0)+'</td></tr>';
-            }).join('')||'<tr><td colspan="7" class="text-center py-8 text-gray-500">No trucks found</td></tr>';            
+                return'<tr class="border-b hover:bg-gray-50">'+
+                    '<td class="py-2 px-3 cursor-pointer hover:bg-yellow-50" onclick="editTruck('+t.id+',\'truck_make\',this)">'+(t.truck_make||'-')+'</td>'+
+                    '<td class="py-2 px-3 font-semibold">'+t.plate_no+'</td>'+
+                    '<td class="py-2 px-3 cursor-pointer hover:bg-yellow-50" onclick="editTruck('+t.id+',\'driver_name\',this)">'+(t.driver_name||'-').replace(/"/g,'')+'</td>'+
+                    '<td class="py-2 px-3 cursor-pointer hover:bg-yellow-50" onclick="editTruck('+t.id+',\'hauler_name\',this)">'+(t.hauler_name||'-')+'</td>'+
+                    '<td class="py-2 px-3 text-center">'+cots.length+'</td>'+
+                    '<td class="py-2 px-3 text-right font-bold">'+capKL.toLocaleString()+' KL</td>'+
+                    '<td class="py-2 px-3 text-center cursor-pointer hover:bg-yellow-50" onclick="editTruck('+t.id+',\'tps_count\',this)">'+(t.tps_count||0)+'</td>'+
+                    '</tr>';
+            }).join('')||'<tr><td colspan="7" class="text-center py-8 text-gray-500">No trucks found</td></tr>';
 
             // Pagination
             var pagHTML='';
@@ -97,6 +105,30 @@
             renderPage();
         }
         
+        async function editTruck(id, field, cell){
+            var current=cell.textContent.trim();
+            if(field==='tps_count') current=parseInt(current)||0;
+            var newVal=prompt('Edit '+field.replace(/_/g,' ')+':', current);
+            if(newVal===null) return;
+            
+            var body={};
+            body[field]=field==='tps_count'?parseInt(newVal):newVal;
+            
+            var res=await fetch('/api/update-truck-masterlist/'+id,{
+                method:'PUT',
+                headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+                body:JSON.stringify(body)
+            });
+            var data=await res.json();
+            if(data.status==='success'){
+                cell.textContent=field==='tps_count'?parseInt(newVal):newVal;
+                cell.classList.add('bg-green-100');
+                setTimeout(function(){cell.classList.remove('bg-green-100');},1000);
+            }else{
+                alert(data.error||'Error updating');
+            }
+        }
+
         function logout(){localStorage.clear();window.location.href='/';}
         loadTrucks();
     </script>

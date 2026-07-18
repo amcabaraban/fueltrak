@@ -883,7 +883,27 @@ app.get('/api/truck-masterlist-all', authenticate, async (req, res) => {
 });
 app.get('/trucks', (req, res) => res.sendFile(require('path').join(__dirname, '..', 'public', 'trucks.html')));
 
+
+app.put('/api/update-truck-masterlist/:id', authenticate, authorize('dispatcher', 'management'), async (req, res) => {
+  try {
+    var allowed = ['truck_make', 'driver_name', 'hauler_name', 'tps_count'];
+    var updates = [];
+    var params = [];
+    for (var key in req.body) {
+      if (allowed.includes(key)) {
+        updates.push(key + ' = ?');
+        params.push(req.body[key]);
+      }
+    }
+    if (updates.length === 0) return res.status(400).json({ error: 'No valid fields' });
+    params.push(req.params.id);
+    await pool.execute('UPDATE truck_masterlist SET ' + updates.join(', ') + ' WHERE id = ?', params);
+    res.json({ status: 'success', message: 'Updated' });
+  } catch (error) { res.status(400).json({ error: error.message }); }
+});
+
 module.exports = app;
+
 
 
 
