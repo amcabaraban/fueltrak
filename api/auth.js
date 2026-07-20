@@ -930,6 +930,26 @@ app.post('/api/migrate', authenticate, authorize('management'), async (req, res)
   res.json({ status: 'success', message: `Created: ${created}, Skipped: ${skipped}, Failed: ${failed}`, results });
 });
 
+// Add to api/auth.js before module.exports
+app.post('/api/sync-truck-capacities', authenticate, authorize('management'), async (req, res) => {
+  try {
+    const [trucks] = await pool.execute('SELECT id, plate_no, total_capacity FROM trucks WHERE total_capacity = 0 OR total_capacity IS NULL');
+    let count = 0;
+    for (const truck of trucks) {
+      const [master] = await pool.execute('SELECT * FROM truck_masterlist WHERE plate_no = ?', [truck.plate_no]);
+      if (master.length > 0) {
+        const m = master[0];
+        const totalCap = [m.cot1,m.cot2,m.cot3,m.cot4,m.cot5,m.cot6,m.cot7,m.cot8,m.cot9,m.cot10].reduce((s,v) => s + parseFloat(v||0), 0);
+        if (totalCap > 0) {
+          await pool.execute('UPDATE trucks SET total_capacity = ? WHERE id = ?', [totalCap, truck.id]);
+          count++;
+        }
+      }
+    }
+    res.json({ status: 'success', message: `Updated ${count} trucks with correct capacity`, count });
+  } catch (error) { res.status(400).json({ error: error.message }); }
+});
+
 // ============ LOGOUT ============
 app.post('/api/auth/logout', authenticate, async (req, res) => {
   try { const t = req.header('Authorization')?.replace('Bearer ', ''); if(t){tokenBlacklist.add(t); await pool.execute('UPDATE users SET current_token = NULL WHERE id = ?',[req.user.id]);} await logAudit(req.user.id,'LOGOUT','users',req.user.id,{email:req.user.email}); res.json({status:'success',message:'Logged out'}); }
