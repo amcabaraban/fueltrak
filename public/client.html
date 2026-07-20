@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
  <meta charset="UTF-8">
@@ -684,7 +684,7 @@
    document.getElementById('chatInputArea').classList.remove('hidden');
    loadChatMessages();
    if (chatInterval) clearInterval(chatInterval);
-   chatInterval = setInterval(loadChatMessages, 3000);
+   chatInterval = setInterval(loadChatMessages, 10000);
   }
 
   async function loadChatMessages() {
@@ -757,5 +757,6 @@
  </div>
 </div></body>
 </html>
+
 
 
