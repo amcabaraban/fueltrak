@@ -1,3 +1,4 @@
+// FuelTrak API v3.0 - Email OTP + SMS
 // FuelTrak API v2.0 - COT Capacity Fix
 const express = require('express');
 const helmet = require('helmet');
@@ -19,7 +20,7 @@ const transporter = nodemailer.createTransport({
   secure: false,
   auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
 });
-async function sendOTP(email, mobile, otp, type) {
+async function sendOTPEmail(email, mobile, otp, type) {
   // Try free SMS first
   if (mobile) {
     const smsSent = await sendFreeSMS(mobile, otp);
@@ -996,6 +997,8 @@ app.get('/tutorial', (req, res) => res.sendFile(path.join(__dirname, '..', 'publ
 app.get('/audit-logs', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'audit-logs.html')));
 
 module.exports = app;
+
+
 
 
 
