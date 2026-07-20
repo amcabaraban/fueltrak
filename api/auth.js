@@ -11,6 +11,25 @@ const path = require('path');
 
 const app = express();
 const otpCache = new NodeCache({ stdTTL: 600 });
+const nodemailer = require('nodemailer');
+const transporter = nodemailer.createTransport({
+  host: process.env.SMTP_HOST || 'smtp.gmail.com',
+  port: parseInt(process.env.SMTP_PORT) || 587,
+  secure: false,
+  auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
+});
+async function sendOTPEmail(email, otp, type) {
+  if (!process.env.SMTP_USER) { console.log('[DEV] OTP for ' + email + ': ' + otp); return; }
+  try {
+    await transporter.sendMail({
+      from: '"FuelTrak" <' + process.env.SMTP_USER + '>',
+      to: email,
+      subject: type === 'reset' ? 'FuelTrak - Password Reset OTP' : 'FuelTrak - Verify Your Email',
+      html: '<div style="font-family:Arial;max-width:500px;margin:auto;padding:20px;border:1px solid #ddd;border-radius:10px"><h2 style="color:#1e3a5f">FuelTrak Logistics</h2><p>Your OTP code is:</p><h1 style="color:#1e3a5f;font-size:36px;letter-spacing:5px;text-align:center">' + otp + '</h1><p>This code expires in 10 minutes.</p></div>'
+    });
+    console.log('OTP emailed to ' + email);
+  } catch(e) { console.error('Email error:', e.message); console.log('[FALLBACK] OTP for ' + email + ': ' + otp); }
+}
 const tokenBlacklist = new Set();
 setInterval(() => { tokenBlacklist.forEach(t => { try { jwt.verify(t, process.env.JWT_SECRET ); } catch(e) { tokenBlacklist.delete(t); } }); }, 3600000);
 
@@ -117,7 +136,7 @@ app.post('/api/auth/register', async (req, res) => {
       [email, hashedPassword, mobile, company_name || null, 'client', false, true]);
     const otp = generateOTP();
     otpCache.set(email, otp);
-    console.log('OTP for ' + email + ': ' + otp);
+    await sendOTPEmail(email, otp, 'verification');
     res.status(201).json({ status: 'success', message: 'Registration successful. Check console for OTP.', email, otp });
   } catch (error) { res.status(400).json({ error: error.message }); }
 });
@@ -170,7 +189,7 @@ app.post('/api/auth/resend-otp', async (req, res) => {
   if (users[0].is_verified) return res.json({ message: 'Already verified' });
   const otp = generateOTP();
   otpCache.set(email, otp);
-  console.log('OTP for ' + email + ': ' + otp);
+  await sendOTPEmail(email, otp, 'verification');
   res.json({ message: 'OTP resent', otp });
 });
 
@@ -225,7 +244,7 @@ app.post('/api/auth/forgot-password', async (req, res) => {
     otpCache.set('reset_' + email, otp);
 
     
-    console.log('Reset OTP for ' + email + ': ' + otp);
+    await sendOTPEmail(email, otp, 'reset');
     res.json({ status: 'success', message: 'OTP sent. Check console.', otp });
   } catch (error) { res.status(500).json({ error: error.message }); }
 });
@@ -935,3 +954,4 @@ app.get('/tutorial', (req, res) => res.sendFile(path.join(__dirname, '..', 'publ
 app.get('/audit-logs', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'audit-logs.html')));
 
 module.exports = app;
+
