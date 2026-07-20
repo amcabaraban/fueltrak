@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
  <meta charset="UTF-8">
@@ -374,9 +374,11 @@
      if (truck && truck.driver_name) document.getElementById('driverName').value = truck.driver_name;
      if (truck && truck.hauler_name) document.getElementById('hauler').value = truck.hauler_name || '';
      if (truck && truck.total_capacity) {
-      document.getElementById('capacityHint').textContent = 'Max capacity: ' + Number(truck.total_capacity).toLocaleString() + ' L';
-      document.getElementById('volume').max = truck.total_capacity;
-     }
+          var capKL = parseFloat(truck.total_capacity) || 0;
+          var capLiters = capKL < 100 ? capKL * 1000 : capKL; // If small number, assume KL and convert
+          document.getElementById('capacityHint').textContent = 'Max capacity: ' + Math.round(capLiters).toLocaleString() + ' L';
+          document.getElementById('volume').max = capLiters;
+      }
     } else {
      truckVerified = false;
      currentTruckId = null;
