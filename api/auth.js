@@ -1010,7 +1010,13 @@ app.post('/api/admin/verify-user', authenticate, authorize('dispatcher','managem
   } catch (error) { res.status(400).json({ error: error.message }); }
 });
 
-// ============ PAGE ROUTES ============
+// ============ ADMIN CLEANUP ============
+app.post('/api/admin/cleanup-loading', authenticate, authorize('dispatcher','management'), async (req, res) => {
+  try {
+    await pool.execute("DELETE FROM authority_to_load");
+    res.json({ status: 'success', message: 'All loading records deleted' });
+  } catch (error) { res.status(400).json({ error: error.message }); }
+});// ============ PAGE ROUTES ============
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'index.html')));
 app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'dashboard.html')));
 app.get('/dashboard.html', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'dashboard.html')));
@@ -1026,6 +1032,7 @@ app.get('/tutorial', (req, res) => res.sendFile(path.join(__dirname, '..', 'publ
 app.get('/audit-logs', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'audit-logs.html')));
 
 module.exports = app;
+
 
 
 
