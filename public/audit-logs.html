@@ -84,33 +84,26 @@
     if(!token||!['dispatcher','management'].includes(user.role))window.location.replace('/');
     document.getElementById('userInfo').textContent=user.email.split('@')[0].substring(0,3)+'***@'+user.email.split('@')[1]+' ('+user.role+')';
 
+    var logPage=1,logsPerPage=15,allLogs=[];
+
     async function loadLogs(){
         const r=await fetch('/api/audit-logs',{headers:{'Authorization':'Bearer '+token}});
         const d=await r.json();
-        if(d.status==='success'){
-            document.getElementById('logBody').innerHTML=d.data.map(l=>`
-                <tr class="border-b hover:bg-gray-50">
-                    <td class="py-2 px-3 text-xs">${new Date(l.created_at).toLocaleString()}</td>
-                    <td class="py-2 px-3">${l.email||'-'}</td>
-                    <td class="py-2 px-3"><span class="px-2 py-0.5 rounded text-xs ${l.action.includes('COMPLETE')?'bg-green-100 text-green-800':l.action.includes('VERIFY')?'bg-blue-100 text-blue-800':'bg-gray-100'}">${l.action}</span></td>
-                    <td class="py-2 px-3 text-xs">${l.table_name}</td>
-                    <td class="py-2 px-3 text-xs">${l.record_id}</td>
-                    <td class="py-2 px-3 text-xs max-w-xs truncate">${l.details||'-'}</td>
-                </tr>`).join('')||'<tr><td colspan="6" class="text-center py-8 text-gray-500">No logs found</td></tr>';
-            document.getElementById('logCount').textContent=d.data.length+' records';
-        }
+        if(d.status==='success'){allLogs=d.data;logPage=1;renderLogPage();}
     }
-    var currentChatUser=null,currentChatName='',chatInterval=null,contactList=[];
-async function openChat(){document.getElementById('chatWidget').classList.remove('hidden');document.getElementById('chatButton').classList.add('hidden');loadContactList();}
-function showContactList(){document.getElementById('contactList').classList.remove('hidden');document.getElementById('chatBody').classList.add('hidden');document.getElementById('chatInputArea').classList.add('hidden');document.getElementById('chatTitle').textContent='Chat';currentChatUser=null;loadContactList();}
-async function loadContactList(){var r=await fetch('/api/chat-list',{headers:{'Authorization':'Bearer '+token}});var d=await r.json();if(d.status==='success'){contactList=d.data;var h='';contactList.forEach(function(c){h+='<div onclick="startChat('+c.id+',\''+(c.company_name||c.email)+'\')" class="flex items-center p-3 hover:bg-gray-50 cursor-pointer border-b"><div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3"><i class="fas fa-user text-blue-600 text-sm"></i></div><div class="flex-1"><p class="text-sm font-semibold">'+(c.company_name||c.email)+'</p><p class="text-xs text-gray-400">'+(c.email||'')+'</p></div><div class="w-2 h-2 bg-green-400 rounded-full" title="Online"></div></div>'});document.getElementById('contactList').innerHTML=h||'<p class="p-3 text-center text-gray-400 text-sm">No contacts</p>';}}
-function startChat(id,name){currentChatUser=id;currentChatName=name;document.getElementById('chatTitle').textContent=name;document.getElementById('contactList').classList.add('hidden');document.getElementById('chatBody').classList.remove('hidden');document.getElementById('chatInputArea').classList.remove('hidden');loadChatMessages();if(chatInterval)clearInterval(chatInterval);chatInterval=setInterval(loadChatMessages,10000);}
-async function loadChatMessages(){if(!currentChatUser)return;var r=await fetch('/api/chat/'+currentChatUser,{headers:{'Authorization':'Bearer '+token}});var d=await r.json();if(d.status==='success'){var h='';d.data.forEach(function(m){var isMe=m.sender_id==user.id;h+='<div class="'+(isMe?'text-right':'text-left')+' mb-2"><div class="inline-block '+(isMe?'bg-blue-100':'bg-gray-100')+' rounded-lg px-3 py-1.5 text-sm max-w-[80%]"><p class="text-[10px] text-gray-500">'+(isMe?'You':currentChatName)+'</p><p>'+m.message+'</p><p class="text-[9px] text-gray-400 text-right">'+new Date(m.created_at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})+'</p></div></div>'});document.getElementById('chatBody').innerHTML=h||'<p class="text-center text-gray-400 text-sm pt-10">Start the conversation!</p>';document.getElementById('chatBody').scrollTop=document.getElementById('chatBody').scrollHeight;}}
-async function sendChat(){var i=document.getElementById('chatInput');var m=i.value.trim();if(!m||!currentChatUser)return;i.value='';await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({receiver_id:currentChatUser,message:m})});loadChatMessages();}
-function closeChat(){document.getElementById('chatWidget').classList.add('hidden');document.getElementById('chatButton').classList.remove('hidden');}
-async function logout(){try{await fetch('/api/auth/logout',{method:'POST',headers:{'Authorization':'Bearer '+localStorage.getItem('fueltrak_token')}})}catch(e){}localStorage.clear();window.location.href='/'}
+
+    function renderLogPage(){
+        var tp=Math.ceil(allLogs.length/logsPerPage);
+        var s=(logPage-1)*logsPerPage;
+        var pd=allLogs.slice(s,s+logsPerPage);
+        document.getElementById('logBody').innerHTML=pd.map(l=>`<tr class="border-b hover:bg-gray-50"><td class="py-2 px-3 text-xs">${new Date(l.created_at).toLocaleString()}</td><td class="py-2 px-3">${l.email||'-'}</td><td class="py-2 px-3"><span class="px-2 py-0.5 rounded text-xs ${l.action.includes('COMPLETE')?'bg-green-100 text-green-800':l.action.includes('VERIFY')?'bg-blue-100 text-blue-800':'bg-gray-100'}">${l.action}</span></td><td class="py-2 px-3 text-xs">${l.table_name}</td><td class="py-2 px-3 text-xs">${l.record_id}</td><td class="py-2 px-3 text-xs max-w-xs truncate">${l.details||'-'}</td></tr>`).join('')||'<tr><td colspan="6" class="text-center py-8 text-gray-500">No logs found</td></tr>';
+        document.getElementById('logCount').innerHTML='Page '+logPage+' of '+tp+' ('+allLogs.length+' records) <button onclick="logPage=1;renderLogPage()" class="px-2 py-1 border rounded text-xs">First</button> <button onclick="if(logPage>1){logPage--;renderLogPage()}" class="px-2 py-1 border rounded text-xs">Prev</button> <button onclick="if(logPage<tp){logPage++;renderLogPage()}" class="px-2 py-1 border rounded text-xs">Next</button> <button onclick="logPage=tp;renderLogPage()" class="px-2 py-1 border rounded text-xs">Last</button>';
+    }
+
+    async function logout(){try{await fetch('/api/auth/logout',{method:'POST',headers:{'Authorization':'Bearer '+localStorage.getItem('fueltrak_token')}})}catch(e){}localStorage.clear();window.location.href='/'}
     loadLogs();
 </script>
+
 <div id="chatWidget" class="hidden fixed bottom-4 right-4 z-50 w-80 bg-white rounded-xl shadow-2xl border">
     <div class="bg-blue-900 text-white p-3 rounded-t-xl flex justify-between items-center">
         <span><i class="fas fa-comments mr-2"></i><span id="chatTitle">Chat</span></span>
