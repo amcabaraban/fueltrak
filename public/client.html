@@ -238,10 +238,7 @@
    fetch('/api/auth/profile', { headers: { 'Authorization': 'Bearer ' + token } })
     .then(function(res) { return res.json(); })
     .then(function(data) {
-     if (data.status !== 'success') {
-      localStorage.clear();
-      window.location.replace('/');
-     }
+     if (data.status !== 'success') { console.log('Profile check failed'); }
     })
     .catch(function() {});
   }
@@ -757,6 +754,7 @@
  </div>
 </div></body>
 </html>
+
 
 
 
