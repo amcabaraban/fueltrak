@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -100,12 +100,26 @@
         var html = records.map(r=>`
             <tr class="border-b hover:bg-gray-50">
                 <td>${r.completed_date?new Date(r.completed_date).toLocaleDateString():r.dispatch_date?new Date(r.dispatch_date).toLocaleDateString():'-'}</td>
-                ...
+                <td class="font-mono font-bold text-blue-900">${r.atl_code||'-'}</td>
+                <td>${r.so_number||'-'}</td>
+                <td>${r.company||'-'}</td>
+                <td class="font-semibold">${r.plate_no}</td>
+                <td>${r.driver_name||'-'}</td>
+                <td>${r.hauler||'-'}</td>
+                <td>${r.contact_number||'-'}</td>
+                <td class="text-right">${r.volume?Math.round(r.volume).toLocaleString():'0'}</td>
+                <td class="text-right">${r.actual_volume?Math.round(r.actual_volume).toLocaleString():'-'}</td>
+                <td class="text-center cursor-pointer hover:bg-blue-50" onclick="toggleSI(${r.id},this)">${r.has_si==1?'Yes':'No'}</td>
+                <td class="text-center"><span class="px-1 py-0.5 rounded ${r.status==='completed'?'bg-green-100 text-green-800':r.status==='cancelled'?'bg-red-100 text-red-800':'bg-orange-100 text-orange-800'}">${r.status}</span></td>
+                <td class="text-center cursor-pointer hover:bg-yellow-50 font-mono" onclick="editWC(${r.id},this)">${r.printed_wc||'-'}</td>
+                <td class="text-center font-mono"><input value="${r.tps_start||''}" onchange="updateTPS(${r.id},'start',this.value)" class="w-16 border rounded px-1 text-xs"></td>
+                <td class="text-center font-mono"><input value="${r.tps_end||''}" onchange="updateTPS(${r.id},'end',this.value)" class="w-16 border rounded px-1 text-xs"></td>
+                <td class="text-center">${r.backload_count>0?`<span class="bg-orange-100 text-orange-800 px-1 rounded" title="${r.backload_volume||0}L">${r.backload_count}</span>`:'0'}</td>
+                <td class="text-center"><button onclick="openBackload(${r.id})" class="text-orange-600"><i class="fas fa-undo"></i></button></td>
             </tr>`).join('');
         
-        // Add empty spacer rows if less than 10 records
-        var emptyRows = 10 - records.length;
-        for (var i = 0; i < emptyRows; i++) {
+        // Add empty rows to prevent pagination overlap
+        for(var i=records.length; i<10; i++){
             html += '<tr style="height:35px"><td colspan="17">&nbsp;</td></tr>';
         }
         
