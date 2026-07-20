@@ -868,7 +868,7 @@ app.post('/api/clients', authenticate, authorize('dispatcher', 'management'), as
     const [existing] = await pool.execute('SELECT id FROM users WHERE email = ?', [email]);
     if (existing.length) return res.status(400).json({ error: 'Email already registered' });
     const hashedPassword = await bcrypt.hash(password, 12);
-    await pool.execute('INSERT INTO users (email, password, mobile, company_name, role, is_verified, is_active, createdAt, updatedAt) VALUES (?,?,?,?,?,1,1,NOW())',      [email, hashedPassword, mobile, company_name || null, 'client']);
+    await pool.execute('INSERT INTO users (email, password, mobile, company_name, role, is_verified, is_active, createdAt, updatedAt) VALUES (?,?,?,?,?,1,1,NOW(),NOW())',      [email, hashedPassword, mobile, company_name || null, 'client']);
     await logAudit(req.user.id, "CREATE_CLIENT", "users", 0, {email});
     res.status(201).json({ status: 'success', message: 'Client created' });
   } catch (error) { res.status(400).json({ error: error.message }); }
@@ -1026,6 +1026,9 @@ app.get('/tutorial', (req, res) => res.sendFile(path.join(__dirname, '..', 'publ
 app.get('/audit-logs', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'audit-logs.html')));
 
 module.exports = app;
+
+
+
 
 
 
