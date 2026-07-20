@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -69,6 +69,8 @@
             <button onclick="logout()" class="flex items-center px-2 py-3 hover:bg-red-700 text-xs md:text-sm w-full text-left whitespace-nowrap"><i class="fas fa-sign-out-alt w-6 text-center"></i><span class="hidden md:inline ml-2">Logout</span></button>
         </div>
     </div>
+
+    <div id="clientModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"><div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6"><div class="flex justify-between mb-4"><h3 class="text-lg font-bold" id="clientModalTitle">Add Client</h3><button onclick="closeClientModal()" class="text-2xl">&times;</button></div><form onsubmit="saveClient(event)"><input type="hidden" id="editClientId"><input type="email" id="clientEmail" placeholder="Email *" class="w-full px-3 py-2 border rounded mb-3" required><input type="text" id="clientMobile" placeholder="Mobile *" class="w-full px-3 py-2 border rounded mb-3" required><input type="text" id="clientCompany" placeholder="Company" class="w-full px-3 py-2 border rounded mb-3"><input type="password" id="clientPassword" placeholder="Password (min 8 chars)" class="w-full px-3 py-2 border rounded mb-3" minlength="8"><button type="submit" class="w-full bg-blue-900 text-white py-2 rounded font-semibold">Save Client</button></form></div></div>
 
     <!-- Mobile Bottom Navigation -->
     <div class="mobile-bottom-nav">
@@ -142,7 +144,7 @@
         </div>
 
         <div id="tabClients" class="hidden">
-            <div class="flex items-center justify-between mb-4"><div class="flex items-center"><button onclick="showDashboard()" class="text-gray-500 hover:text-gray-700 mr-3"><i class="fas fa-arrow-left text-xl"></i></button><h2 class="text-xl font-bold">Client Management</h2></div></div>
+            <div class="flex items-center justify-between mb-4"><div class="flex items-center"><button onclick="showDashboard()" class="text-gray-500 hover:text-gray-700 mr-3"><i class="fas fa-arrow-left text-xl"></i></button><h2 class="text-xl font-bold">Client Management</h2><button onclick="showAddClient()" class="bg-green-600 text-white px-4 py-2 rounded text-sm">+ Add Client</button></div></div>
             <div id="clientList"></div>
         </div>
     </div>
@@ -199,7 +201,15 @@ async function completeLoading(id){var v=prompt('Actual volume (L):');if(!v)retu
 
 async function loadTrucks(){var d=await api('/truck-masterlist-all');if(d.status==='success'){document.getElementById('truckList').innerHTML='<div class="table-wrap"><table class="w-full text-sm bg-white rounded-lg shadow"><thead class="bg-gray-50"><tr><th class="py-2 px-3">Plate</th><th class="py-2 px-3">Driver</th><th class="py-2 px-3">Hauler</th></tr></thead><tbody>'+d.data.slice(0,50).map(t=>`<tr class="border-b"><td class="py-2 px-3 font-semibold">${t.plate_no}</td><td class="py-2 px-3">${(t.driver_name||'').replace(/"/g,'')}</td><td class="py-2 px-3">${t.hauler_name||''}</td></tr>`).join('')+'</tbody></table></div>'}}
 
-async function loadClients(){var d=await api('/clients');if(d.status==='success'){document.getElementById('clientList').innerHTML='<div class="table-wrap"><table class="w-full text-sm bg-white rounded-lg shadow"><thead class="bg-gray-50"><tr><th class="py-2 px-3">Company</th><th class="py-2 px-3">Email</th><th class="py-2 px-3">Mobile</th></tr></thead><tbody>'+d.data.map(c=>`<tr class="border-b"><td class="py-2 px-3 font-semibold">${c.company_name||'-'}</td><td class="py-2 px-3">${c.email}</td><td class="py-2 px-3">${c.mobile}</td></tr>`).join('')+'</tbody></table></div>'}}
+async function loadClients(){var d=await api('/clients');if(d.status==='success'){document.getElementById('clientList').innerHTML='<div class="table-wrap"><table class="w-full text-sm bg-white rounded-lg shadow"><thead class="bg-gray-50"><tr><th class="py-2 px-3">Company</th><th class="py-2 px-3">Email</th><th class="py-2 px-3">Mobile</th><th class="py-2 px-3">ATLs</th><th class="py-2 px-3">Actions</th></tr></thead><tbody>'+d.data.map(c=>'<tr class="border-b"><td class="py-2 px-3 font-semibold">'+(c.company_name||'-')+'</td><td class="py-2 px-3">'+c.email+'</td><td class="py-2 px-3">'+c.mobile+'</td><td class="py-2 px-3 text-center">'+c.total_atls+'</td><td class="py-2 px-3"><div class="flex space-x-2 justify-center"><button onclick="editClient('+c.id+')" class="text-blue-600"><i class="fas fa-edit"></i></button>'+(c.is_active?'<button onclick="toggleClient('+c.id+')" class="text-orange-600"><i class="fas fa-ban"></i></button>':'<button onclick="toggleClient('+c.id+')" class="text-green-600"><i class="fas fa-check"></i></button>')+'<button onclick="deleteClient('+c.id+',\''+c.email+'\')" class="text-red-600"><i class="fas fa-trash"></i></button></div></td></tr>').join('')+'</tbody></table></div>'}}
+
+function showAddClient(){document.getElementById('editClientId').value='';document.getElementById('clientModalTitle').textContent='Add Client';['clientEmail','clientMobile','clientCompany','clientPassword'].forEach(id=>document.getElementById(id).value='');document.getElementById('clientModal').classList.remove('hidden');}
+function closeClientModal(){document.getElementById('clientModal').classList.add('hidden');}
+async function editClient(id){var d=await api('/clients/'+id);if(d.status==='success'){var c=d.data;document.getElementById('editClientId').value=c.id;document.getElementById('clientModalTitle').textContent='Edit Client';document.getElementById('clientEmail').value=c.email;document.getElementById('clientMobile').value=c.mobile;document.getElementById('clientCompany').value=c.company_name||'';document.getElementById('clientPassword').value='';document.getElementById('clientModal').classList.remove('hidden');}}
+async function saveClient(e){e.preventDefault();var id=document.getElementById('editClientId').value;var body={email:document.getElementById('clientEmail').value,mobile:document.getElementById('clientMobile').value,company_name:document.getElementById('clientCompany').value};var pw=document.getElementById('clientPassword').value;if(pw)body.password=pw;var url=id?'/clients/'+id:'/clients';var method=id?'PUT':'POST';var d=await api(url,method,body);if(d.status==='success'){closeClientModal();loadClients();}else alert(d.error||'Error');}
+async function toggleClient(id){await api('/clients/'+id+'/toggle-status','PATCH');loadClients();}
+async function deleteClient(id,email){if(!confirm('Delete '+email+'?'))return;await api('/clients/'+id,'DELETE');loadClients();}
+
 
 function toggleSidebar(){var s=document.getElementById("sidebar");s.classList.toggle("open");document.getElementById("sidebarOverlay").classList.toggle("hidden")}
 async function logout(){try{await fetch('/api/auth/logout',{method:'POST',headers:{'Authorization':'Bearer '+localStorage.getItem('fueltrak_token')}})}catch(e){}localStorage.clear();window.location.href='/'}
