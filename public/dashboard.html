@@ -146,7 +146,7 @@ async function loadDashboard(){
             {label:'Pending',value:s.pending,gradient:'from-yellow-400 to-yellow-500'},
             {label:'Approved',value:s.approved,gradient:'from-blue-400 to-blue-500'},
             {label:'Loading',value:s.loading,gradient:'from-orange-400 to-orange-500'},
-            {label:'Completed',value:s.completed,gradient:'from-green-400 to-green-500'},
+            {label:'Completed',value:s.completedLoading,gradient:'from-green-400 to-green-500'},
             {label:'Today',value:s.loadedToday,gradient:'from-indigo-400 to-indigo-500'},
             {label:'Today Vol',value:Math.round((s.todayVolume||0)/1000).toLocaleString()+'kL',gradient:'from-purple-400 to-purple-500' }
         ].map(c=>`<div class="stat-card bg-gradient-to-br ${c.gradient} rounded-xl shadow-lg p-3 text-white"><p class="text-xs opacity-90">${c.label}</p><p class="text-2xl font-bold mt-1">${c.value}</p></div>`).join('');
