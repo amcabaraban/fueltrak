@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -248,6 +248,23 @@ async function loadChatMessages(){
 }
 async function sendChat(){var i=document.getElementById('chatInput');var m=i.value.trim();if(!m||!currentChatUser)return;i.value='';await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({receiver_id:currentChatUser,message:m})});loadChatMessages();}
 function closeChat(){document.getElementById('chatWidget').classList.add('hidden');document.getElementById('chatButton').classList.remove('hidden');}
+
+// Background chat polling for notifications - runs every 15 seconds
+setInterval(async function(){
+    if(document.getElementById('chatWidget').classList.contains('hidden') && currentChatUser){
+        var r=await fetch('/api/chat/'+currentChatUser,{headers:{'Authorization':'Bearer '+token}});
+        var d=await r.json();
+        if(d.status==='success'){
+            var newMsg=0;
+            d.data.forEach(function(m){if(m.sender_id!=user.id)newMsg++;});
+            if(newMsg>0){
+                var badge=document.getElementById('unreadBadge');
+                badge.textContent=newMsg>9?'9+':newMsg;
+                badge.classList.remove('hidden');
+            }
+        }
+    }
+},15000);
 
 function toggleSidebar(){var s=document.getElementById("sidebar");s.classList.toggle("open");document.getElementById("sidebarOverlay").classList.toggle("hidden")}
 async function logout(){try{await fetch('/api/auth/logout',{method:'POST',headers:{'Authorization':'Bearer '+localStorage.getItem('fueltrak_token')}})}catch(e){}localStorage.clear();window.location.href='/'}
