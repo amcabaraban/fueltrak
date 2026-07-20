@@ -18,17 +18,17 @@ const transporter = nodemailer.createTransport({
   secure: false,
   auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
 });
-async function sendOTPEmail(email, otp, type) {
-  if (!process.env.SMTP_USER) { console.log('[DEV] OTP for ' + email + ': ' + otp); return; }
-  try {
-    await transporter.sendMail({
-      from: '"FuelTrak" <' + process.env.SMTP_USER + '>',
-      to: email,
-      subject: type === 'reset' ? 'FuelTrak - Password Reset OTP' : 'FuelTrak - Verify Your Email',
-      html: '<div style="font-family:Arial;max-inline-size:500px;margin:auto;padding:20px;border:1px solid #ddd;border-radius:10px"><h2 style="color:#1e3a5f">FuelTrak Logistics</h2><p>Your OTP code is:</p><h1 style="color:#1e3a5f;font-size:36px;letter-spacing:5px;text-align:center">' + otp + '</h1><p>This code expires in 10 minutes.</p></div>'
-    });
-    console.log('OTP emailed to ' + email);
-  } catch(e) { console.error('Email error:', e.message); console.log('[FALLBACK] OTP for ' + email + ': ' + otp); }
+async function sendOTP(email, mobile, otp, type) {
+  // Try free SMS first
+  if (mobile) {
+    const smsSent = await sendFreeSMS(mobile, otp);
+    if (smsSent) {
+      console.log(`OTP sent via SMS to ${mobile}`);
+      return;
+    }
+  }
+  // Fallback to email
+  await sendOTPEmail(email, otp, type);
 }
 const tokenBlacklist = new Set();
 setInterval(() => { tokenBlacklist.forEach(t => { try { jwt.verify(t, process.env.JWT_SECRET ); } catch(e) { tokenBlacklist.delete(t); } }); }, 3600000);
