@@ -507,7 +507,10 @@ app.get('/api/client/verify-truck/:plateNo', authenticate, authorize('client'), 
           if (days < 0) allValid = false;
         });
       }
-      return res.json({ status: 'success', data: { truck: { id: truck.id, plate_no: truck.plate_no, make: truck.make, driver_name: truck.driver_name, hauler_name: truck.hauler_name, total_capacity: truck.total_capacity }, documents: docStatus, can_proceed: allValid } });
+      const [masterRefresh] = await pool.execute('SELECT * FROM truck_masterlist WHERE plate_no = ?', [plateNo]);
+      const freshDriver = (masterRefresh.length > 0 ? masterRefresh[0].driver_name : truck.driver_name) || truck.driver_name;
+      const freshHauler = (masterRefresh.length > 0 ? masterRefresh[0].hauler_name : truck.hauler_name) || truck.hauler_name;
+      return res.json({ status: 'success', data: { truck: { id: truck.id, plate_no: truck.plate_no, make: truck.make, driver_name: freshDriver, hauler_name: freshHauler, total_capacity: truck.total_capacity }, documents: docStatus, can_proceed: allValid } });
     }
     const [master] = await pool.execute('SELECT * FROM truck_masterlist WHERE plate_no = ?', [plateNo]);
     if (master.length > 0) {
@@ -993,6 +996,7 @@ app.get('/tutorial', (req, res) => res.sendFile(path.join(__dirname, '..', 'publ
 app.get('/audit-logs', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'audit-logs.html')));
 
 module.exports = app;
+
 
 
 
