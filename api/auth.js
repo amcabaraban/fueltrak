@@ -69,6 +69,9 @@ const limiter = rateLimit({
   
 });
 app.use("/api/", limiter);
+// Skip rate limiting for chat endpoints
+app.use('/api/chat', (req, res, next) => next());
+app.use('/api/chat-list', (req, res, next) => next());
 
 const pool = mysql.createPool({
   host: process.env.DB_HOST,
@@ -1032,6 +1035,7 @@ app.get('/tutorial', (req, res) => res.sendFile(path.join(__dirname, '..', 'publ
 app.get('/audit-logs', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'audit-logs.html')));
 
 module.exports = app;
+
 
 
 
