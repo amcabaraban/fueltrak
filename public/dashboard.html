@@ -11,13 +11,7 @@
         .stat-card { transition: all 0.3s ease; }
         .stat-card:hover { transform: translateY(-3px); box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
         .progress-bar { transition: width 0.5s ease; }
-        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
-        .pulse { animation: pulse 2s infinite; }
-        .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-        @media (max-inline-size: 640px) { .stat-card h3 { font-size: .875rem; } table { font-size: .75rem; } }
-        th { cursor: pointer; user-select: none; }
-        th.sort-asc::after { content: ' ?'; font-size: 10px; }
-        th.sort-desc::after { content: ' ?'; font-size: 10px; }
+        
         #sidebar{transition:transform 0.3s}
         @media(max-width:767px){#sidebar{display:none!important}#sidebarOverlay{display:none!important}body{padding-left:0!important;padding-bottom:70px}.mobile-bottom-nav{display:flex!important}}
         @media(min-width:768px){body{padding-left:176px}.mobile-bottom-nav{display:none!important}}
