@@ -43,8 +43,7 @@ const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
   message: { error: "Too many requests" },
-  keyGenerator: (req) => req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress,
-  validate: { xForwardedForHeader: false }
+  
 });
 app.use("/api/", limiter);
 
@@ -78,8 +77,7 @@ const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 10,
   message: { error: "Too many attempts. Try again later." },
-  keyGenerator: (req) => req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress,
-  validate: { xForwardedForHeader: false }
+  
 });
 
 // Apply strict rate limit to auth routes
@@ -132,8 +130,8 @@ app.post('/api/auth/register', async (req, res) => {
     const [existing] = await pool.execute('SELECT id FROM users WHERE email = ?', [email]);
     if (existing.length) return res.status(400).json({ error: 'Email already registered' });
     const hashedPassword = await bcrypt.hash(password, 12);
-    await pool.execute('INSERT INTO users (email, password, mobile, company_name, role, is_verified, is_active, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())',
-      [email, hashedPassword, mobile, company_name || null, 'client', false, true]);
+    await pool.execute('INSERT INTO users (email, password, mobile, company_name, role, is_verified, is_active, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())',
+      [email, hashedPassword, mobile, company_name || null, 'client', false, true, NOW());
     const otp = generateOTP();
     otpCache.set(email, otp);
     await sendOTPEmail(email, otp, 'verification');
@@ -842,7 +840,7 @@ app.post('/api/clients', authenticate, authorize('dispatcher', 'management'), as
     const [existing] = await pool.execute('SELECT id FROM users WHERE email = ?', [email]);
     if (existing.length) return res.status(400).json({ error: 'Email already registered' });
     const hashedPassword = await bcrypt.hash(password, 12);
-    await pool.execute('INSERT INTO users (email, password, mobile, company_name, role, is_verified, is_active, createdAt) VALUES (?,?,?,?,?,1,1,NOW())',
+    await pool.execute('INSERT INTO users (email, password, mobile, company_name, role, is_verified, is_active, createdAt, updatedAt) VALUES (?,?,?,?,?,1,1,NOW())',
       [email, hashedPassword, mobile, company_name || null, 'client']);
     await logAudit(req.user.id, "CREATE_CLIENT", "users", 0, {email});
     res.status(201).json({ status: 'success', message: 'Client created' });
@@ -954,4 +952,5 @@ app.get('/tutorial', (req, res) => res.sendFile(path.join(__dirname, '..', 'publ
 app.get('/audit-logs', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'audit-logs.html')));
 
 module.exports = app;
+
 
