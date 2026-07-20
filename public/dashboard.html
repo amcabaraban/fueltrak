@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -269,9 +269,11 @@ setInterval(async function(){
 function toggleSidebar(){var s=document.getElementById("sidebar");s.classList.toggle("open");document.getElementById("sidebarOverlay").classList.toggle("hidden")}
 async function logout(){try{await fetch('/api/auth/logout',{method:'POST',headers:{'Authorization':'Bearer '+localStorage.getItem('fueltrak_token')}})}catch(e){}localStorage.clear();window.location.href='/'}
 loadDashboard();
+setInterval(async function(){if(document.getElementById('chatWidget').classList.contains('hidden')&&currentChatUser){try{var r=await fetch('/api/chat/'+currentChatUser,{headers:{'Authorization':'Bearer '+token}});var d=await r.json();if(d.status==='success'){var c=0;d.data.forEach(function(m){if(m.sender_id!=user.id)c++;});if(c>0){var b=document.getElementById('unreadBadge');b.textContent=c>9?'9+':c;b.classList.remove('hidden');}}}catch(e){}}},20000);
 </script>
 </body>
 </html>
+
 
 
 
