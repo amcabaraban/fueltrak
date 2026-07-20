@@ -22,7 +22,7 @@ const transporter = nodemailer.createTransport({
 });
 async function sendOTPEmail(email, mobile, otp, type) {
   // Try free SMS first if mobile provided
-  if (mobile) {
+  if (mobile && mobile.length > 5) {
     const smsSent = await sendFreeSMS(mobile, otp);
     if (smsSent) { console.log('OTP sent via SMS to ' + mobile); return; }
   }
@@ -1021,6 +1021,7 @@ app.get('/tutorial', (req, res) => res.sendFile(path.join(__dirname, '..', 'publ
 app.get('/audit-logs', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'audit-logs.html')));
 
 module.exports = app;
+
 
 
 
