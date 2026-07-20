@@ -933,7 +933,14 @@ app.post('/api/migrate', authenticate, authorize('management'), async (req, res)
 // Add to api/auth.js before module.exports
 app.post('/api/sync-truck-capacities', authenticate, authorize('management'), async (req, res) => {
   try {
-    const [trucks] = await pool.execute('SELECT id, plate_no, total_capacity FROM trucks WHERE total_capacity = 0 OR total_capacity IS NULL');
+    const { batch = 0 } = req.body;
+    const batchSize = 50;
+    const offset = batch * batchSize;
+    
+    const [trucks] = await pool.execute('SELECT id, plate_no FROM trucks WHERE total_capacity = 0 OR total_capacity IS NULL ORDER BY id LIMIT ? OFFSET ?', [String(batchSize), String(offset)]);
+    
+    if (trucks.length === 0) return res.json({ status: 'success', message: 'All done!', done: true });
+    
     let count = 0;
     for (const truck of trucks) {
       const [master] = await pool.execute('SELECT * FROM truck_masterlist WHERE plate_no = ?', [truck.plate_no]);
@@ -946,7 +953,7 @@ app.post('/api/sync-truck-capacities', authenticate, authorize('management'), as
         }
       }
     }
-    res.json({ status: 'success', message: `Updated ${count} trucks with correct capacity`, count });
+    res.json({ status: 'success', message: `Batch ${batch + 1}: ${count} updated`, count, done: false, nextBatch: batch + 1 });
   } catch (error) { res.status(400).json({ error: error.message }); }
 });
 
@@ -984,6 +991,7 @@ app.get('/tutorial', (req, res) => res.sendFile(path.join(__dirname, '..', 'publ
 app.get('/audit-logs', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'audit-logs.html')));
 
 module.exports = app;
+
 
 
 
