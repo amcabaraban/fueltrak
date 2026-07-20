@@ -688,7 +688,7 @@ app.get('/api/chat-list', authenticate, async (req, res) => {
       [users] = await pool.execute("SELECT id, email FROM users WHERE role IN ('dispatcher','management') LIMIT 5");
     } else {
       [users] = await pool.execute("SELECT DISTINCT u.id, u.email FROM users u JOIN chat_messages cm ON (cm.sender_id = u.id OR cm.receiver_id = u.id) WHERE u.role = 'client' AND (cm.sender_id = ? OR cm.receiver_id = ?) LIMIT 20", [req.user.id, req.user.id]);
-      if (users.length === 0) [users] = await pool.execute("SELECT id, email FROM users WHERE role = 'client' LIMIT 10");
+      if (users.length === 0) [users] = await pool.execute("SELECT id, email FROM users WHERE role = 'client' LIMIT 50");
     }
     res.json({ status: 'success', data: users });
   } catch (error) { res.status(500).json({ error: error.message }); }
@@ -807,7 +807,7 @@ app.post('/api/sync-all-documents', authenticate, authorize('dispatcher', 'manag
 // ============ AUDIT LOGS ============
 app.get("/api/audit-logs", authenticate, authorize("dispatcher", "management"), async (req, res) => {
   try {
-    const [logs] = await pool.execute("SELECT al.*, u.email FROM audit_logs al JOIN users u ON al.user_id = u.id ORDER BY al.created_at DESC LIMIT 100");
+    const [logs] = await pool.execute("SELECT al.*, u.email FROM audit_logs al JOIN users u ON al.user_id = u.id ORDER BY al.created_at DESC LIMIT 500");
     res.json({ status: "success", data: logs });
   } catch (error) { res.status(500).json({ error: error.message }); }
 });
@@ -1032,6 +1032,7 @@ app.get('/tutorial', (req, res) => res.sendFile(path.join(__dirname, '..', 'publ
 app.get('/audit-logs', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'audit-logs.html')));
 
 module.exports = app;
+
 
 
 
