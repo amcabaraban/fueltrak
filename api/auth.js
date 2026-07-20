@@ -64,7 +64,7 @@ app.use(cors({ origin: ['https://fueltrak-seven.vercel.app', 'http://localhost:3
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100,
+  max: 300,
   message: { error: "Too many requests" },
   
 });
@@ -98,7 +98,7 @@ function sanitizeString(str, maxLength = 100) {
 // ============ ENHANCED RATE LIMITING ============
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 10,
+  max: 20,
   message: { error: "Too many attempts. Try again later." },
   
 });
@@ -1032,6 +1032,7 @@ app.get('/tutorial', (req, res) => res.sendFile(path.join(__dirname, '..', 'publ
 app.get('/audit-logs', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'audit-logs.html')));
 
 module.exports = app;
+
 
 
 
