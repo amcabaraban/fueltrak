@@ -950,6 +950,18 @@ app.post('/api/sync-truck-capacities', authenticate, authorize('management'), as
   } catch (error) { res.status(400).json({ error: error.message }); }
 });
 
+app.get('/api/atl/summary', authenticate, async (req, res) => {
+  try {
+    const [atls] = await pool.execute('SELECT * FROM authority_to_load WHERE client_id = ? ORDER BY createdAt DESC LIMIT 50', [req.user.id]);
+    const result = [];
+    for (const atl of atls) {
+      const [trucks] = await pool.execute('SELECT plate_no, make FROM trucks WHERE id = ?', [atl.truck_id]);
+      result.push({ ...atl, truck: trucks[0] || null });
+    }
+    res.json({ status: 'success', data: { recent: result } });
+  } catch (error) { res.status(500).json({ error: error.message }); }
+});
+
 // ============ LOGOUT ============
 app.post('/api/auth/logout', authenticate, async (req, res) => {
   try { const t = req.header('Authorization')?.replace('Bearer ', ''); if(t){tokenBlacklist.add(t); await pool.execute('UPDATE users SET current_token = NULL WHERE id = ?',[req.user.id]);} await logAudit(req.user.id,'LOGOUT','users',req.user.id,{email:req.user.email}); res.json({status:'success',message:'Logged out'}); }
