@@ -1002,6 +1002,14 @@ app.post('/api/auth/logout', authenticate, async (req, res) => {
   catch(e) { res.status(400).json({error:e.message}); }
 });
 
+// ============ ADMIN USER VERIFICATION ============
+app.post('/api/admin/verify-user', authenticate, authorize('dispatcher','management'), async (req, res) => {
+  try {
+    await pool.execute('UPDATE users SET is_verified = 1 WHERE email = ?', [req.body.email]);
+    res.json({ status: 'success', message: 'User verified' });
+  } catch (error) { res.status(400).json({ error: error.message }); }
+});
+
 // ============ PAGE ROUTES ============
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'index.html')));
 app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'dashboard.html')));
@@ -1018,6 +1026,7 @@ app.get('/tutorial', (req, res) => res.sendFile(path.join(__dirname, '..', 'publ
 app.get('/audit-logs', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'audit-logs.html')));
 
 module.exports = app;
+
 
 
 
