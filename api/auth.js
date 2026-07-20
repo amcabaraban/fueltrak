@@ -898,7 +898,7 @@ app.put('/api/clients/:id', authenticate, authorize('dispatcher', 'management'),
   } catch (error) { res.status(400).json({ error: error.message }); }
 });
 
-app.patch('/api/clients/:id/toggle-status', authenticate, authorize('management'), async (req, res) => {
+app.patch('/api/clients/:id/toggle-status', authenticate, authorize('dispatcher','management'), async (req, res) => {
   try {
     const [clients] = await pool.execute("SELECT is_active FROM users WHERE id = ? AND role = 'client'", [req.params.id]);
     if (!clients.length) return res.status(404).json({ error: 'Client not found' });
@@ -908,7 +908,7 @@ app.patch('/api/clients/:id/toggle-status', authenticate, authorize('management'
   } catch (error) { res.status(400).json({ error: error.message }); }
 });
 
-app.delete('/api/clients/:id', authenticate, authorize('management'), async (req, res) => {
+app.delete('/api/clients/:id', authenticate, authorize('dispatcher','management'), async (req, res) => {
   try {
     await pool.execute("DELETE FROM users WHERE id = ? AND role = 'client'", [req.params.id]);
     res.json({ status: 'success', message: 'Client deleted' });
@@ -916,7 +916,7 @@ app.delete('/api/clients/:id', authenticate, authorize('management'), async (req
 });
 
 // ============ DATABASE MIGRATION ============
-app.post('/api/migrate', authenticate, authorize('management'), async (req, res) => {
+app.post('/api/migrate', authenticate, authorize('dispatcher','management'), async (req, res) => {
   const indexes = [
     { name: 'idx_atl_status', sql: 'CREATE INDEX idx_atl_status ON authority_to_load(status)' },
     { name: 'idx_atl_client_id', sql: 'CREATE INDEX idx_atl_client_id ON authority_to_load(client_id)' },
@@ -961,7 +961,7 @@ app.post('/api/migrate', authenticate, authorize('management'), async (req, res)
 });
 
 // Add to api/auth.js before module.exports
-app.post('/api/sync-truck-capacities', authenticate, authorize('management'), async (req, res) => {
+app.post('/api/sync-truck-capacities', authenticate, authorize('dispatcher','management'), async (req, res) => {
   try {
     const { batch = 0 } = req.body;
     const batchSize = 50;
@@ -1021,6 +1021,7 @@ app.get('/tutorial', (req, res) => res.sendFile(path.join(__dirname, '..', 'publ
 app.get('/audit-logs', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'audit-logs.html')));
 
 module.exports = app;
+
 
 
 
