@@ -687,7 +687,7 @@ app.get('/api/chat-list', authenticate, async (req, res) => {
     if (req.user.role === 'client') {
       [users] = await pool.execute("SELECT id, email FROM users WHERE role IN ('dispatcher','management') LIMIT 5");
     } else {
-      [users] = await pool.execute("SELECT DISTINCT u.id, u.email FROM users u JOIN chat_messages cm ON (cm.sender_id = u.id OR cm.receiver_id = u.id) WHERE u.role = 'client' AND (cm.sender_id = ? OR cm.receiver_id = ?) LIMIT 20", [req.user.id, req.user.id]);
+      [users] = await pool.execute("SELECT id, email FROM users WHERE role = 'client' ORDER BY company_name LIMIT 50", [req.user.id, req.user.id]);
       if (users.length === 0) [users] = await pool.execute("SELECT id, email FROM users WHERE role = 'client' LIMIT 50");
     }
     res.json({ status: 'success', data: users });
@@ -1032,6 +1032,7 @@ app.get('/tutorial', (req, res) => res.sendFile(path.join(__dirname, '..', 'publ
 app.get('/audit-logs', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'audit-logs.html')));
 
 module.exports = app;
+
 
 
 
