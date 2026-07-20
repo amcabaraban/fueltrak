@@ -27,24 +27,143 @@
 
     <div class="max-w-5xl mx-auto px-4 py-8">
         <div class="text-center mb-8"><h1 class="text-3xl font-bold text-blue-900 mb-2">FuelTrak User Guide</h1><p class="text-gray-500">Complete tutorial for Admin, Dispatcher, and Client users</p></div>
-        <div class="flex mb-8 no-print"><button onclick="showTab('admin')" id="adminTab" class="flex-1 py-3 rounded-l-lg font-semibold bg-blue-900 text-white">Admin / Dispatcher</button><button onclick="showTab('client')" id="clientTab" class="flex-1 py-3 rounded-r-lg font-semibold bg-gray-200 text-gray-700">Client</button></div>
+        
+        <div class="flex mb-8 no-print">
+            <button onclick="showTab('admin')" id="adminTab" class="flex-1 py-3 rounded-l-lg font-semibold bg-blue-900 text-white">Admin / Dispatcher</button>
+            <button onclick="showTab('client')" id="clientTab" class="flex-1 py-3 rounded-r-lg font-semibold bg-gray-200 text-gray-700">Client</button>
+        </div>
 
+        <!-- ADMIN/DISPATCHER TUTORIAL -->
         <div id="adminContent">
-            <div class="bg-white rounded-2xl shadow-lg p-6 mb-8"><h2 class="text-2xl font-bold text-blue-900 mb-4"><i class="fas fa-tachometer-alt mr-2"></i>Dashboard Overview</h2><p class="text-gray-600 mb-4">The dashboard gives you a real-time overview of all operations.</p><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div class="step-card bg-blue-50 p-4 rounded-lg border border-blue-200"><h3 class="font-bold text-blue-900"><span class="bg-blue-900 text-white px-2 py-0.5 rounded text-xs mr-2">1</span> Stats Cards</h3><p class="text-sm text-gray-600">View Pending, Approved, Loading, Completed counts at a glance.</p></div><div class="step-card bg-green-50 p-4 rounded-lg border border-green-200"><h3 class="font-bold text-green-900"><span class="bg-green-900 text-white px-2 py-0.5 rounded text-xs mr-2">2</span> Document Status</h3><p class="text-sm text-gray-600">LTO, Fire Permit, DOST Calibration percentages.</p></div></div></div>
-            <div class="bg-white rounded-2xl shadow-lg p-6 mb-8"><h2 class="text-2xl font-bold text-blue-900 mb-4"><i class="fas fa-clipboard-check mr-2"></i>Verify ATL</h2><ol class="space-y-3 text-gray-600"><li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">1</span>Click <b>Verify ATL</b> on the dashboard.</li><li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">2</span>Search for ATLs by plate, company, or ATL code.</li><li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">3</span>Review details: Company, SO#, Volume, Driver.</li><li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">4</span>Click <b>Approve</b> or <b>Reject</b>. Add optional remarks.</li></ol></div>
-            <div class="bg-white rounded-2xl shadow-lg p-6 mb-8"><h2 class="text-2xl font-bold text-blue-900 mb-4"><i class="fas fa-truck-loading mr-2"></i>Loading Management</h2><ol class="space-y-3 text-gray-600"><li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">1</span>Click <b>Loading</b> on dashboard.</li><li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">2</span>Click <b>Start Loading</b> for approved ATLs.</li><li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">3</span>Monitor ongoing loads. Use Edit/Cancel/Done.</li><li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">4</span>Click <b>Done</b>: Enter Actual Volume, WC, TPS Series.</li></ol></div>
-            <div class="bg-white rounded-2xl shadow-lg p-6 mb-8"><h2 class="text-2xl font-bold text-blue-900 mb-4"><i class="fas fa-truck mr-2"></i>Truck Management</h2><ol class="space-y-3 text-gray-600"><li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">1</span>Click <b>Trucks</b> to view all.</li><li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">2</span>Click <b>+ Add Truck</b> to register new.</li><li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">3</span>Fill: Plate, Make, Driver, Hauler, Capacity, TPS.</li><li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">4</span>Set document expiry: LTO, Fire, DOST.</li></ol></div>
-            <div class="bg-white rounded-2xl shadow-lg p-6 mb-8"><h2 class="text-2xl font-bold text-blue-900 mb-4"><i class="fas fa-chart-bar mr-2"></i>Reports</h2><p class="text-gray-600">Filter by date, status, client, truck. Edit SI, WC, TPS inline. Export CSV or Print.</p></div>
-            <div class="bg-white rounded-2xl shadow-lg p-6 mb-8"><h2 class="text-2xl font-bold text-blue-900 mb-4"><i class="fas fa-comments mr-2"></i>Chat</h2><p class="text-gray-600">Click blue chat bubble (bottom-right) to message clients.</p></div>
+            <div class="bg-white rounded-2xl shadow-lg p-6 mb-8">
+                <h2 class="text-2xl font-bold text-blue-900 mb-4"><i class="fas fa-tachometer-alt mr-2"></i>Dashboard Overview</h2>
+                <p class="text-gray-600 mb-4">The dashboard gives you a real-time overview of all operations with quick action buttons.</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="step-card bg-blue-50 p-4 rounded-lg border border-blue-200"><h3 class="font-bold text-blue-900"><span class="bg-blue-900 text-white px-2 py-0.5 rounded text-xs mr-2">1</span>Stats Cards</h3><p class="text-sm text-gray-600">View Pending, Approved, Loading, Completed counts. Today's volume in kL.</p></div>
+                    <div class="step-card bg-green-50 p-4 rounded-lg border border-green-200"><h3 class="font-bold text-green-900"><span class="bg-green-900 text-white px-2 py-0.5 rounded text-xs mr-2">2</span>Fleet Stats</h3><p class="text-sm text-gray-600">Total trucks, valid documents, expired documents at a glance.</p></div>
+                    <div class="step-card bg-purple-50 p-4 rounded-lg border border-purple-200"><h3 class="font-bold text-purple-900"><span class="bg-purple-900 text-white px-2 py-0.5 rounded text-xs mr-2">3</span>Document Status</h3><p class="text-sm text-gray-600">LTO, Fire Permit, DOST Calibration progress bars with percentages.</p></div>
+                    <div class="step-card bg-orange-50 p-4 rounded-lg border border-orange-200"><h3 class="font-bold text-orange-900"><span class="bg-orange-900 text-white px-2 py-0.5 rounded text-xs mr-2">4</span>Quick Actions</h3><p class="text-sm text-gray-600">One-click access to Verify ATL, Loading, Trucks, Clients, Reports, and more.</p></div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-lg p-6 mb-8">
+                <h2 class="text-2xl font-bold text-blue-900 mb-4"><i class="fas fa-clipboard-check mr-2"></i>Verify ATL (Approve/Reject)</h2>
+                <ol class="space-y-3 text-gray-600">
+                    <li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">1</span>Click <b>Verify ATL</b> on the dashboard Quick Actions.</li>
+                    <li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">2</span>Use the <b>search bar</b> to find specific ATLs by plate, company, or ATL code.</li>
+                    <li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">3</span>Review the ATL details: Company, SO#, Date, Volume, Driver.</li>
+                    <li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">4</span>Click <b>Approve</b> (green) or <b>Reject</b> (red). Add optional remarks.</li>
+                </ol>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-lg p-6 mb-8">
+                <h2 class="text-2xl font-bold text-blue-900 mb-4"><i class="fas fa-truck-loading mr-2"></i>Loading Management</h2>
+                <ol class="space-y-3 text-gray-600">
+                    <li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">1</span>Click <b>Loading</b> on the dashboard.</li>
+                    <li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">2</span><b>Approved - Waiting</b>: Click <b>Start</b> to begin loading.</li>
+                    <li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">3</span><b>Ongoing Loading</b>: Monitor active loads. Click <b>Done</b> to complete.</li>
+                    <li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">4</span>Enter Actual Volume when completing. Confirm to finalize.</li>
+                </ol>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-lg p-6 mb-8">
+                <h2 class="text-2xl font-bold text-blue-900 mb-4"><i class="fas fa-truck mr-2"></i>Truck Masterlist</h2>
+                <ol class="space-y-3 text-gray-600">
+                    <li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">1</span>Click <b>Truck Masterlist</b> to view all 656 trucks.</li>
+                    <li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">2</span>Search by plate number, driver, or hauler.</li>
+                    <li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">3</span><b>Click any field</b> (Make, Driver, Hauler, TPS) to edit inline.</li>
+                    <li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">4</span>Changes save automatically to the database.</li>
+                </ol>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-lg p-6 mb-8">
+                <h2 class="text-2xl font-bold text-blue-900 mb-4"><i class="fas fa-users mr-2"></i>Client Management</h2>
+                <ol class="space-y-3 text-gray-600">
+                    <li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">1</span>Click <b>Clients</b> from sidebar or Quick Actions.</li>
+                    <li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">2</span>Click <b>+ Add Client</b> to create new client account.</li>
+                    <li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">3</span>Edit, deactivate, or delete clients using the action buttons.</li>
+                </ol>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-lg p-6 mb-8">
+                <h2 class="text-2xl font-bold text-blue-900 mb-4"><i class="fas fa-chart-bar mr-2"></i>Reports & Analytics</h2>
+                <ol class="space-y-3 text-gray-600">
+                    <li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">1</span>Filter by date range, status, client, or truck.</li>
+                    <li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">2</span><b>Click SI cell</b> to toggle With SI / No SI.</li>
+                    <li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">3</span><b>Click Printed WC</b> to edit withdrawal certificate number.</li>
+                    <li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">4</span>Enter TPS From/To series directly in the table.</li>
+                    <li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">5</span>Click <b>Export CSV</b> to download or <b>Print</b> for hard copy.</li>
+                </ol>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-lg p-6 mb-8">
+                <h2 class="text-2xl font-bold text-blue-900 mb-4"><i class="fas fa-file-alt mr-2"></i>Document Compliance Report</h2>
+                <p class="text-gray-600">View all truck documents (LTO, Fire Permit, DOST) with expiry dates. Filter by document type and status. Edit expiry dates inline and save directly.</p>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-lg p-6 mb-8">
+                <h2 class="text-2xl font-bold text-blue-900 mb-4"><i class="fas fa-comments mr-2"></i>Chat Feature</h2>
+                <ol class="space-y-3 text-gray-600">
+                    <li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">1</span>Click the <b>blue chat bubble</b> (bottom-right) on any admin page.</li>
+                    <li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">2</span>Select a client from the list to start chatting.</li>
+                    <li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">3</span>Chat is available globally across all admin pages.</li>
+                </ol>
+            </div>
         </div>
 
+        <!-- CLIENT TUTORIAL -->
         <div id="clientContent" class="hidden">
-            <div class="bg-white rounded-2xl shadow-lg p-6 mb-8"><h2 class="text-2xl font-bold text-blue-900 mb-4"><i class="fas fa-plus-circle mr-2"></i>Submit New ATL</h2><ol class="space-y-3 text-gray-600"><li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">1</span>Click <b>New ATL</b>.</li><li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">2</span>Enter Company, SO#, Date, Volume.</li><li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">3</span>Select With SI or No SI.</li><li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">4</span>Enter Plate Number - auto-verifies truck.</li><li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">5</span>Review and confirm to submit.</li></ol><div class="bg-yellow-50 border border-yellow-200 p-3 rounded mt-4 text-sm"><i class="fas fa-lightbulb text-yellow-600 mr-2"></i><b>Tip:</b> Cannot submit for truck with existing pending ATL.</div></div>
-            <div class="bg-white rounded-2xl shadow-lg p-6 mb-8"><h2 class="text-2xl font-bold text-blue-900 mb-4"><i class="fas fa-list mr-2"></i>My ATLs</h2><ol class="space-y-3 text-gray-600"><li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">1</span>View all ATLs with status badges.</li><li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">2</span>Search and filter by status.</li><li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">3</span>Click View for details, Cancel to request cancellation.</li></ol></div>
-            <div class="bg-white rounded-2xl shadow-lg p-6 mb-8"><h2 class="text-2xl font-bold text-blue-900 mb-4"><i class="fas fa-comments mr-2"></i>Chat</h2><p class="text-gray-600">Click blue chat bubble to message admin/dispatcher.</p></div>
+            <div class="bg-white rounded-2xl shadow-lg p-6 mb-8">
+                <h2 class="text-2xl font-bold text-blue-900 mb-4"><i class="fas fa-tachometer-alt mr-2"></i>Client Dashboard</h2>
+                <p class="text-gray-600">View your ATL summary: Total, Dispatched, Pending, Approved, and Cancelled counts. See recent ATL codes.</p>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-lg p-6 mb-8">
+                <h2 class="text-2xl font-bold text-blue-900 mb-4"><i class="fas fa-plus-circle mr-2"></i>Submit New ATL</h2>
+                <ol class="space-y-3 text-gray-600">
+                    <li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">1</span>Click <b>New ATL</b> button in the header.</li>
+                    <li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">2</span>Enter <b>Company</b>, <b>SO Number</b> (optional), <b>Scheduled Date</b>, <b>Volume (Liters)</b>.</li>
+                    <li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">3</span>Select <b>With SI</b> or <b>No SI</b> (Sales Invoice).</li>
+                    <li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">4</span>Enter <b>Plate Number</b> - it auto-verifies the truck and fills driver/hauler details.</li>
+                    <li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">5</span>Review all details in the confirmation popup, then click <b>OK</b> to submit.</li>
+                    <li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">6</span>An <b>ATL Code</b> (e.g., AMC-000000001) is auto-generated.</li>
+                </ol>
+                <div class="bg-yellow-50 border border-yellow-200 p-3 rounded mt-4 text-sm"><i class="fas fa-lightbulb text-yellow-600 mr-2"></i><b>Tip:</b> You cannot submit a new ATL for a truck that already has a pending or approved ATL.</div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-lg p-6 mb-8">
+                <h2 class="text-2xl font-bold text-blue-900 mb-4"><i class="fas fa-list mr-2"></i>My ATLs (History)</h2>
+                <ol class="space-y-3 text-gray-600">
+                    <li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">1</span>View all your submitted ATLs with status badges.</li>
+                    <li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">2</span>Use <b>search</b> and <b>status filter</b> to find ATLs.</li>
+                    <li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">3</span>Click <b>View</b> for full details, <b>Cancel</b> on pending/approved ATLs.</li>
+                </ol>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-lg p-6 mb-8">
+                <h2 class="text-2xl font-bold text-blue-900 mb-4"><i class="fas fa-chart-bar mr-2"></i>Client Reports</h2>
+                <ol class="space-y-3 text-gray-600">
+                    <li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">1</span>View your ATL history with date and status filters.</li>
+                    <li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">2</span>Summary cards show records, dispatched, failed, pending, total volume.</li>
+                    <li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">3</span>Click <b>Print</b> or <b>Export CSV</b> to download.</li>
+                </ol>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-lg p-6 mb-8">
+                <h2 class="text-2xl font-bold text-blue-900 mb-4"><i class="fas fa-comments mr-2"></i>Chat with Admin</h2>
+                <p class="text-gray-600">Click the <b>blue chat bubble</b> (bottom-right corner) to message the admin/dispatcher directly. Chat is available on all client pages.</p>
+            </div>
         </div>
 
-        <div class="bg-gradient-to-r from-blue-900 to-blue-700 text-white rounded-2xl shadow-lg p-6 mb-8"><h2 class="text-xl font-bold mb-4"><i class="fas fa-key mr-2"></i>Demo Login Credentials</h2><div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm"><div class="bg-white/10 p-3 rounded"><p class="font-bold">Admin</p><p>admin@fueltrak.com</p><p>Admin123!</p></div><div class="bg-white/10 p-3 rounded"><p class="font-bold">Dispatcher</p><p>dispatcher@fueltrak.com</p><p>Dispatch123!</p></div><div class="bg-white/10 p-3 rounded"><p class="font-bold">Client</p><p>client1@hauler.com</p><p>Client123!</p></div></div></div>
+        <!-- LOGIN CREDENTIALS -->
+        <div class="bg-gradient-to-r from-blue-900 to-blue-700 text-white rounded-2xl shadow-lg p-6 mb-8">
+            <h2 class="text-xl font-bold mb-4"><i class="fas fa-key mr-2"></i>Demo Login Credentials</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                <div class="bg-white/10 p-3 rounded"><p class="font-bold">Admin</p><p>admin@fueltrak.com</p><p>Admin123!</p></div>
+                <div class="bg-white/10 p-3 rounded"><p class="font-bold">Dispatcher</p><p>dispatcher@fueltrak.com</p><p>Dispatch123!</p></div>
+                <div class="bg-white/10 p-3 rounded"><p class="font-bold">Client</p><p>client1@hauler.com</p><p>Client123!</p></div>
+            </div>
+        </div>
     </div>
 
     <!-- Mobile Bottom Navigation -->
@@ -56,7 +175,19 @@
     </div>
 
     <script>
-        function showTab(role){if(role==='admin'){document.getElementById('adminContent').classList.remove('hidden');document.getElementById('clientContent').classList.add('hidden');document.getElementById('adminTab').className='flex-1 py-3 rounded-l-lg font-semibold bg-blue-900 text-white';document.getElementById('clientTab').className='flex-1 py-3 rounded-r-lg font-semibold bg-gray-200 text-gray-700'}else{document.getElementById('adminContent').classList.add('hidden');document.getElementById('clientContent').classList.remove('hidden');document.getElementById('adminTab').className='flex-1 py-3 rounded-l-lg font-semibold bg-gray-200 text-gray-700';document.getElementById('clientTab').className='flex-1 py-3 rounded-r-lg font-semibold bg-blue-900 text-white'}}
+        function showTab(role){
+            if(role==='admin'){
+                document.getElementById('adminContent').classList.remove('hidden');
+                document.getElementById('clientContent').classList.add('hidden');
+                document.getElementById('adminTab').className='flex-1 py-3 rounded-l-lg font-semibold bg-blue-900 text-white';
+                document.getElementById('clientTab').className='flex-1 py-3 rounded-r-lg font-semibold bg-gray-200 text-gray-700';
+            } else {
+                document.getElementById('adminContent').classList.add('hidden');
+                document.getElementById('clientContent').classList.remove('hidden');
+                document.getElementById('adminTab').className='flex-1 py-3 rounded-l-lg font-semibold bg-gray-200 text-gray-700';
+                document.getElementById('clientTab').className='flex-1 py-3 rounded-r-lg font-semibold bg-blue-900 text-white';
+            }
+        }
     </script>
 </body>
 </html>
