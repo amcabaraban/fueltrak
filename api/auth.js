@@ -132,7 +132,7 @@ app.post('/api/auth/register', async (req, res) => {
     if (existing.length) return res.status(400).json({ error: 'Email already registered' });
     const hashedPassword = await bcrypt.hash(password, 12);
     await pool.execute('INSERT INTO users (email, password, mobile, company_name, role, is_verified, is_active, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())',
-      [email, hashedPassword, mobile, company_name || null, 'client', false, true, NOW()]);
+      [email, hashedPassword, mobile, company_name || null, 'client', false, true]);
     const otp = generateOTP();
     otpCache.set(email, otp);
     await sendOTPEmail(email, otp, 'verification');
@@ -996,6 +996,7 @@ app.get('/tutorial', (req, res) => res.sendFile(path.join(__dirname, '..', 'publ
 app.get('/audit-logs', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'audit-logs.html')));
 
 module.exports = app;
+
 
 
 
