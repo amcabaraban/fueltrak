@@ -8,36 +8,36 @@
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <style>
     .checklist-form{font-family:Arial,sans-serif;font-size:11px;line-height:1.4;color:#333}
-    .checklist-form h1{text-align:center;font-size:16px;text-transform:uppercase;border-bottom:2px solid #000;padding-bottom:5px;margin:0 0 5px 0}
-    .depot{text-align:right;font-weight:bold;margin-bottom:15px}
-    .flex-row{display:flex;justify-content:space-between;margin-bottom:15px;gap:15px}
+    .checklist-form h1{text-align:center;font-size:16px;text-transform:uppercase;border-block-end:2px solid #000;padding-block-end:5px;margin:0 0 5px 0}
+    .depot{text-align:end;font-weight:bold;margin-block-end:15px}
+    .flex-row{display:flex;justify-content:space-between;margin-block-end:15px;gap:15px}
     .col-half{flex:1;border:1px solid #000;padding:10px}
-    .section-title{font-weight:bold;text-align:center;margin-bottom:5px;text-decoration:underline;font-size:14px;margin-top:10px}
-    .field-row{display:flex;margin-bottom:5px;align-items:center}
-    .field-label{width:140px;font-weight:bold;font-size:12px}
-    .field-value{flex:1;border-bottom:1px solid #000}
-    .field-value input,.field-value select{width:100%;border:none;outline:none;font-size:13px;padding:4px 0;background:transparent}
-    table{width:100%;border-collapse:collapse;margin-top:10px;margin-bottom:15px}
-    th,td{border:1px solid #000;padding:5px;text-align:left;vertical-align:top}
+    .section-title{font-weight:bold;text-align:center;margin-block-end:5px;text-decoration:underline;font-size:14px;margin-block-start:10px}
+    .field-row{display:flex;margin-block-end:5px;align-items:center}
+    .field-label{inline-size:140px;font-weight:bold;font-size:12px}
+    .field-value{flex:1;border-block-end:1px solid #000}
+    .field-value input,.field-value select{inline-size:100%;border:none;outline:none;font-size:13px;padding:4px 0;background:transparent}
+    table{inline-size:100%;border-collapse:collapse;margin-block-start:10px;margin-block-end:15px}
+    th,td{border:1px solid #000;padding:5px;text-align:start;vertical-align:top}
     th{background-color:#f0f0f0;text-align:center}
     .center{text-align:center}
     .comp-table th,.comp-table td{padding:5px 6px;text-align:center;vertical-align:middle;font-size:12px}
-    .comp-table td:first-child{text-align:right;font-weight:bold;width:12%}
-    .comp-table input[type="text"]{width:100%;border:none;background:#fcfcfc;border-bottom:1px dashed #ccc;font-size:12px;text-align:center;padding:6px 4px;box-sizing:border-box}
-    .comp-table select{width:100%;border:none;background:#fcfcfc;border-bottom:1px dashed #ccc;font-size:11px;text-align:center;padding:5px 3px}
-    .comp-table input[type="checkbox"]{width:18px;height:18px}
+    .comp-table td:first-child{text-align:end;font-weight:bold;inline-size:12%}
+    .comp-table input[type="text"]{inline-size:100%;border:none;background:#fcfcfc;border-block-end:1px dashed #ccc;font-size:12px;text-align:center;padding:6px 4px;box-sizing:border-box}
+    .comp-table select{inline-size:100%;border:none;background:#fcfcfc;border-block-end:1px dashed #ccc;font-size:11px;text-align:center;padding:5px 3px}
+    .comp-table input[type="checkbox"]{inline-size:18px;block-size:18px}
     .capacity{font-size:14px!important;font-weight:bold!important}
     .vol-highlight{font-size:16px!important;font-weight:bold}
-    .signature-row{display:flex;justify-content:space-around;margin-top:30px;margin-bottom:20px}
-    .signature-box{text-align:center;width:200px}
-    .sig-line{border-bottom:1px solid #000;height:25px;margin-bottom:2px}
-    .checklist-input{width:100%;border:none;text-align:center;background:transparent;font-size:11px;font-weight:bold}
+    .signature-row{display:flex;justify-content:space-around;margin-block-start:30px;margin-block-end:20px}
+    .signature-box{text-align:center;inline-size:200px}
+    .sig-line{border-block-end:1px solid #000;block-size:25px;margin-block-end:2px}
+    .checklist-input{inline-size:100%;border:none;text-align:center;background:transparent;font-size:11px;font-weight:bold}
     #sidebar{transition:transform 0.3s}
-    @media(max-width:767px){#sidebar{display:none!important}#sidebarOverlay{display:none!important}body{padding-left:0!important;padding-bottom:70px}.mobile-bottom-nav{display:flex!important}}
-    @media(min-width:768px){body{padding-left:176px}.mobile-bottom-nav{display:none!important}}
-    .mobile-bottom-nav{display:flex;position:fixed;bottom:0;left:0;right:0;background:#1e3a5f;color:white;z-index:50;justify-content:space-around;padding:6px 0;box-shadow:0 -2px 10px rgba(0,0,0,0.3)}
+    @media(max-inline-size:767px){#sidebar{display:none!important}#sidebarOverlay{display:none!important}body{padding-inline-start:0!important;padding-block-end:70px}.mobile-bottom-nav{display:flex!important}}
+    @media(min-inline-size:768px){body{padding-inline-start:176px}.mobile-bottom-nav{display:none!important}}
+    .mobile-bottom-nav{display:flex;position:fixed;inset-block-end:0;inset-inline-start:0;inset-inline-end:0;background:#1e3a5f;color:white;z-index:50;justify-content:space-around;padding:6px 0;box-shadow:0 -2px 10px rgba(0,0,0,0.3)}
     .mobile-bottom-nav a,.mobile-bottom-nav button{display:flex;flex-direction:column;align-items:center;color:#93a3bc;font-size:10px;text-decoration:none;padding:4px;background:none;border:none;cursor:pointer}
-    .mobile-bottom-nav a i,.mobile-bottom-nav button i{font-size:18px;margin-bottom:2px}
+    .mobile-bottom-nav a i,.mobile-bottom-nav button i{font-size:18px;margin-block-end:2px}
     .mobile-bottom-nav a.active,.mobile-bottom-nav button.active{color:#fbbf24}
     @media print{.no-print{display:none!important}body{padding:0!important;margin:0!important}@page{size:A4;margin:5mm}}
 </style>
@@ -86,7 +86,7 @@
             <div class="depot">Depot/Terminal: DAVAO</div>
             <div class="flex-row">
                 <div class="col-half">
-                    <div class="section-title" style="margin-top:0;">To be accomplished by the Gate Guard</div>
+                    <div class="section-title" style="margin-block-start:0;">To be accomplished by the Gate Guard</div>
                     <div class="field-row"><div class="field-label">Customer Name:</div><div class="field-value"><input type="text" id="customerName"></div></div>
                     <div class="field-row"><div class="field-label">Plate #:</div><div class="field-value"><input type="text" id="plateNo" list="plateList"><datalist id="plateList"></datalist></div></div>
                     <div class="field-row"><div class="field-label">Driver:</div><div class="field-value"><input type="text" id="driverName"></div></div>
@@ -94,7 +94,7 @@
                     <div class="field-row"><div class="field-label">Date / Time Out:</div><div class="field-value"><input type="datetime-local"></div></div>
                 </div>
                 <div class="col-half">
-                    <div class="section-title" style="margin-top:0;">To be accomplished by Customer/ Receiver</div>
+                    <div class="section-title" style="margin-block-start:0;">To be accomplished by Customer/ Receiver</div>
                     <div class="field-row"><div class="field-label">Arrival Date/Time:</div><div class="field-value"><input type="datetime-local"></div></div>
                     <div class="field-row"><div class="field-label">Total Vol (Loaded):</div><div class="field-value"><input type="text" id="totalVol" class="vol-highlight" readonly></div></div>
                     <div class="field-row"><div class="field-label">Start of Unloading:</div><div class="field-value"><input type="time"></div></div>
@@ -104,14 +104,14 @@
             <div class="section-title">Sealing Plan / Compartmentation</div>
             <table class="comp-table"><thead><tr><th>Comp No.</th><th>COT 1</th><th>COT 2</th><th>COT 3</th><th>COT 4</th><th>COT 5</th><th>COT 6</th><th>COT 7</th><th>COT 8</th><th>COT 9</th><th>COT 10</th><th>COT 11</th><th>COT 12</th></tr></thead><tbody id="compBody"></tbody></table>
             <div class="section-title">To be accomplished by authorized Receiver and Driver</div>
-            <table><thead><tr><th style="width:5%">No.</th><th>Items to Check</th><th style="width:12%">Receiver</th><th style="width:12%">Driver</th></tr></thead><tbody id="checklistBody"></tbody></table>
+            <table><thead><tr><th style="inline-size:5%">No.</th><th>Items to Check</th><th style="inline-size:12%">Receiver</th><th style="inline-size:12%">Driver</th></tr></thead><tbody id="checklistBody"></tbody></table>
             <div class="signature-row"><div class="signature-box"><div class="sig-line"></div>Authorized Receiver</div><div class="signature-box"><div class="sig-line"></div>Driver</div></div>
             <div class="section-title">Feedback / Comments:</div>
-            <div style="border:1px solid #000;padding:5px;min-height:40px;margin-bottom:8px"><textarea style="width:100%;border:none;min-height:30px;resize:vertical;font-size:10px" placeholder="Enter feedback..."></textarea></div>
+            <div style="border:1px solid #000;padding:5px;min-block-size:40px;margin-block-end:8px"><textarea style="inline-size:100%;border:none;min-block-size:30px;resize:vertical;font-size:10px" placeholder="Enter feedback..."></textarea></div>
             <div class="section-title">If with split load:</div>
             <div class="flex-row"><div class="col-half"><div class="field-row"><div class="field-label">Dealer(s) Name:</div><div class="field-value"><input type="text"></div></div><div class="field-row"><div class="field-label">Invoice(s) No.:</div><div class="field-value"><input type="text"></div></div><div class="field-row"><div class="field-label">CHECK #:</div><div class="field-value"><input type="text"></div></div></div><div class="col-half"><div class="field-row"><div class="field-label">Date/Time TT Returned:</div><div class="field-value"><input type="datetime-local"></div></div></div></div>
-            <div class="flex-row"><div class="col-half"><div class="section-title" style="margin-top:0">Kitrol Personnel</div><div style="height:40px;border-bottom:1px solid #000;margin-bottom:5px"></div><p style="text-align:center;font-size:10px">Signature over printed name</p></div><div class="col-half"><div class="section-title" style="margin-top:0">Guard on Duty</div><div style="height:40px;border-bottom:1px solid #000;margin-bottom:5px"></div><p style="text-align:center;font-size:10px">Signature over printed name</p></div></div>
-            <div style="border:1px solid #000;padding:10px;margin-bottom:15px;font-size:10px"><strong>Notes:</strong> If OK to unload, receiver to provide initials/signature per compartment. If compartment is empty, indicate "Empty". If tank truck has fewer compartments, indicate "n/a"</div>
+            <div class="flex-row"><div class="col-half"><div class="section-title" style="margin-block-start:0">Kitrol Personnel</div><div style="block-size:40px;border-block-end:1px solid #000;margin-block-end:5px"></div><p style="text-align:center;font-size:10px">Signature over printed name</p></div><div class="col-half"><div class="section-title" style="margin-block-start:0">Guard on Duty</div><div style="block-size:40px;border-block-end:1px solid #000;margin-block-end:5px"></div><p style="text-align:center;font-size:10px">Signature over printed name</p></div></div>
+            <div style="border:1px solid #000;padding:10px;margin-block-end:15px;font-size:10px"><strong>Notes:</strong> If OK to unload, receiver to provide initials/signature per compartment. If compartment is empty, indicate "Empty". If tank truck has fewer compartments, indicate "n/a"</div>
             <div class="field-row"><div class="field-label">DISCHARGE PIPE/LINE:</div><div class="field-value"><input type="text" value="INCLUDING" style="font-weight:bold"></div></div>
             <div class="field-row"><div class="field-label">IF UNDERLOAD, APPROVED BY:</div><div class="field-value"><input type="text" value="TONY/DENMARK" style="font-weight:bold"></div></div>
             <div class="field-row"><div class="field-label"></div><div class="field-value" style="font-weight:bold">Operations Manager</div></div>
@@ -136,7 +136,7 @@ var truckData={};
 var items=['Receiver is authorized','Customer name/address are correct','Receiving tank has enough ullage','Seals complete and intact','Receiver removed the seals','Product levels touch gauge marker','Fire extinguisher and wheel chocks deployed','All UGT covers properly labeled','Receiver instructed discharge points','Product ID placed near UGT cover','Samples taken and compared','Discharge valves free of water/sediments','UGTs free of water/sediments','Correct water finding paste used','Witnessed draining of hose','TT compartments empty after discharging','Dealer/Receiver issued check payment'];
 document.getElementById('checklistBody').innerHTML=items.map((item,i)=>`<tr><td class="center">${i+1}</td><td>${item}</td><td><input type="text" class="checklist-input"></td>${i<4?'<td class="center" style="background:#f7f7f7">n.a</td>':'<td><input type="text" class="checklist-input"></td>'}</tr>`).join('');
 
-function buildCompTable(){var labels=['Include?','Customer','DHC Seal','Product','Cap (KL)','DV Seal','Valve Box','Total KL'];var h='';for(var r=0;r<8;r++){h+='<tr><td>'+labels[r]+'</td>';for(var c=1;c<=12;c++){if(r===0)h+='<td><input type="checkbox" class="active-chk" checked></td>';else if(r===1)h+='<td><input type="text" class="comp-customer"></td>';else if(r===2)h+='<td><input type="text" class="dhc-seal"></td>';else if(r===3)h+='<td><select class="prod"><option value="">-</option><option>ADO</option><option>UNLEADED</option><option>PREMIUM</option></select></td>';else if(r===4)h+='<td><input type="text" class="capacity" id="cap_cot'+c+'"></td>';else if(r===5)h+='<td><input type="text" class="dv-seal"></td>';else if(r===6)h+=c<=3?'<td><input type="text" class="vbox"></td>':'<td></td>';else if(r===7)h+=c===1?'<td colspan="12"><input type="text" id="tableTotalVol" class="vol-highlight" style="width:100%;text-align:center;border:none;background:transparent" readonly></td>':''}h+='</tr>'}document.getElementById('compBody').innerHTML=h;bindEvents()}
+function buildCompTable(){var labels=['Include?','Customer','DHC Seal','Product','Cap (KL)','DV Seal','Valve Box','Total KL'];var h='';for(var r=0;r<8;r++){h+='<tr><td>'+labels[r]+'</td>';for(var c=1;c<=12;c++){if(r===0)h+='<td><input type="checkbox" class="active-chk" checked></td>';else if(r===1)h+='<td><input type="text" class="comp-customer"></td>';else if(r===2)h+='<td><input type="text" class="dhc-seal"></td>';else if(r===3)h+='<td><select class="prod"><option value="">-</option><option>ADO</option><option>UNLEADED</option><option>PREMIUM</option></select></td>';else if(r===4)h+='<td><input type="text" class="capacity" id="cap_cot'+c+'"></td>';else if(r===5)h+='<td><input type="text" class="dv-seal"></td>';else if(r===6)h+=c<=3?'<td><input type="text" class="vbox"></td>':'<td></td>';else if(r===7)h+=c===1?'<td colspan="12"><input type="text" id="tableTotalVol" class="vol-highlight" style="inline-size:100%;text-align:center;border:none;background:transparent" readonly></td>':''}h+='</tr>'}document.getElementById('compBody').innerHTML=h;bindEvents()}
 
 function bindEvents(){document.querySelectorAll('.active-chk').forEach((chk,i)=>{chk.addEventListener('change',function(){if(!this.checked){document.querySelectorAll('.comp-customer')[i].value='EMPTY / LOADED';document.querySelectorAll('.dhc-seal')[i].value='EMPTY / LOADED';document.querySelectorAll('.prod')[i].value='EMPTY / LOADED';document.getElementById('cap_cot'+(i+1)).value='EMPTY / LOADED';document.querySelectorAll('.dv-seal')[i].value='EMPTY / LOADED'}else{var cv=document.getElementById('customerName').value;document.querySelectorAll('.comp-customer')[i].value=cv;var plate=document.getElementById('plateNo').value.trim().toUpperCase();var m=truckData[plate];document.getElementById('cap_cot'+(i+1)).value=(m&&m.capacities[i])?Math.round(m.capacities[i]/100)/10:'';document.querySelectorAll('.dhc-seal')[i].value='';document.querySelectorAll('.prod')[i].value='';document.querySelectorAll('.dv-seal')[i].value=''}autoFillSeals();calculateVolume()})});document.getElementById('customerName').addEventListener('input',function(){var v=this.value;document.querySelectorAll('.active-chk').forEach(function(chk,i){if(chk.checked)document.querySelectorAll('.comp-customer')[i].value=v})});document.getElementById('tpsStart').addEventListener('input',autoFillSeals)}
 
