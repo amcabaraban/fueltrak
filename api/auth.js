@@ -41,6 +41,7 @@ async function sendOTPEmail(email, mobile, otp, type) {
   } catch(e) { console.error('Email error:', e.message); console.log('[FALLBACK] OTP for ' + email + ': ' + otp); }
 }
 async function sendFreeSMS(mobile, otp) {
+  if (!process.env.SMTP_USER) return false;
   const gateways = [
     mobile.replace('+63','0') + '@txt.globe.com.ph',
     mobile.replace('+63','0') + '@isms.smart.com.ph'
