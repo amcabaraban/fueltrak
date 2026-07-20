@@ -14,22 +14,22 @@
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
         .pulse { animation: pulse 2s infinite; }
         .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-        @media (max-width: 640px) { .stat-card h3 { font-size: .875rem; } table { font-size: .75rem; } }
+        @media (max-inline-size: 640px) { .stat-card h3 { font-size: .875rem; } table { font-size: .75rem; } }
         th { cursor: pointer; user-select: none; }
         th.sort-asc::after { content: ' ?'; font-size: 10px; }
         th.sort-desc::after { content: ' ?'; font-size: 10px; }
         #sidebar{transition:transform 0.3s}
-        @media(max-width:767px){
+        @media(max-inline-size:767px){
             #sidebar{display:none!important}
             #sidebarOverlay{display:none!important}
-            body{padding-left:0!important;padding-bottom:70px}
+            body{padding-inline-start:0!important;padding-block-end:70px}
         }
-        @media(min-width:768px){
-            body{padding-left:176px}
+        @media(min-inline-size:768px){
+            body{padding-inline-start:176px}
             .mobile-bottom-nav{display:none!important}
         }
         .mobile-bottom-nav{
-            display:flex;position:fixed;bottom:0;left:0;right:0;
+            display:flex;position:fixed;inset-block-end:0;inset-inline-start:0;inset-inline-end:0;
             background:#1e3a5f;color:white;z-index:50;
             justify-content:space-around;padding:6px 0;
             box-shadow:0 -2px 10px rgba(0,0,0,0.3);
@@ -39,7 +39,7 @@
             color:#93a3bc;font-size:10px;text-decoration:none;
             padding:4px;background:none;border:none;cursor:pointer;
         }
-        .mobile-bottom-nav a i,.mobile-bottom-nav button i{font-size:18px;margin-bottom:2px}
+        .mobile-bottom-nav a i,.mobile-bottom-nav button i{font-size:18px;margin-block-end:2px}
         .mobile-bottom-nav a.active,.mobile-bottom-nav button.active{color:#fbbf24}
     </style>
 </head>
@@ -192,9 +192,9 @@ async function verifyATL(id,action){if(!confirm(action==='approve'?'Approve?':'R
 
 async function loadApproved(){
     var o=await api('/dispatch/ongoing-loading');
-    document.getElementById('ongoingLoading').innerHTML=o.status==='success'?o.data.map(a=>`<div class="bg-orange-50 border-l-4 border-orange-500 rounded-lg shadow p-3 flex justify-between"><div><p class="font-bold text-sm">${a.atl_code} - ${a.plate_no}</p><p class="text-xs">${a.company} | ${a.driver_name}</p><p class="text-xs">Date: ${a.dispatch_date?new Date(a.dispatch_date).toLocaleDateString():'N/A'} | Vol: ${a.volume?Number(a.volume).toLocaleString()+'L':'N/A'}</p></div><div class="flex space-x-1"><button onclick="completeLoading(${a.id})" class="bg-green-500 text-white px-2 py-1 rounded text-xs">Done</button></div></div>`).join('')||'<p class="text-gray-500 text-center py-4">No ongoing loading</p>':'';
+    document.getElementById('ongoingLoading').innerHTML=o.status==='success'?o.data.map(a=>`<div class="bg-orange-50 border-l-4 border-orange-500 rounded-lg shadow p-3 flex justify-between"><div><p class="font-bold text-sm">${a.atl_code} - ${a.plate_no}</p><p class="text-xs">${a.company} | ${a.so_number} | ${a.driver_name}</p><p class="text-xs">Date: ${a.dispatch_date?new Date(a.dispatch_date).toLocaleDateString():'N/A'} | Vol: ${a.volume?Number(a.volume).toLocaleString()+'L':'N/A'}</p></div><div class="flex space-x-1"><button onclick="completeLoading(${a.id})" class="bg-green-500 text-white px-2 py-1 rounded text-xs">Done</button></div></div>`).join('')||'<p class="text-gray-500 text-center py-4">No ongoing loading</p>':'';
     var w=await api('/dispatch/approved-for-loading');
-    document.getElementById('approvedForLoading').innerHTML=w.status==='success'?w.data.map(a=>`<div class="bg-white rounded-lg shadow p-3 flex justify-between"><div><p class="font-bold text-sm">${a.atl_code} - ${a.plate_no}</p><p class="text-xs">${a.company||''} | Date: ${a.scheduled_date?new Date(a.scheduled_date).toLocaleDateString():'N/A'} | Vol: ${a.volume?Number(a.volume).toLocaleString()+'L':'N/A'}</p></div><button onclick="startLoading(${a.id})" class="bg-orange-500 text-white px-3 py-1 rounded text-xs">Start</button></div>`).join('')||'<p class="text-gray-500 text-center py-4">None waiting</p>':'';
+    document.getElementById('approvedForLoading').innerHTML=w.status==='success'?w.data.map(a=>`<div class="bg-white rounded-lg shadow p-3 flex justify-between"><div><p class="font-bold text-sm">${a.atl_code} - ${a.plate_no}</p><p class="text-xs">${a.so_number | a.company||''} | Date: ${a.scheduled_date?new Date(a.scheduled_date).toLocaleDateString():'N/A'} | Vol: ${a.volume?Number(a.volume).toLocaleString()+'L':'N/A'}</p></div><button onclick="startLoading(${a.id})" class="bg-orange-500 text-white px-3 py-1 rounded text-xs">Start</button></div>`).join('')||'<p class="text-gray-500 text-center py-4">None waiting</p>':'';
 }
 async function startLoading(id){if(!confirm('Start loading?'))return;await api('/dispatch/start-loading/'+id,'POST');loadApproved();loadDashboard()}
 async function completeLoading(id){var v=prompt('Actual volume (L):');if(!v)return;await api('/dispatch/complete-loading/'+id,'POST',{actual_volume:v});loadApproved();loadDashboard()}
