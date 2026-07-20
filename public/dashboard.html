@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -212,11 +212,40 @@ async function toggleClient(id){await api('/clients/'+id+'/toggle-status','PATCH
 async function deleteClient(id,email){if(!confirm('Delete '+email+'?'))return;await api('/clients/'+id,'DELETE');loadClients();}
 
 var currentChatUser=null,currentChatName='',chatInterval=null,contactList=[];
-async function openChat(){document.getElementById('chatWidget').classList.remove('hidden');document.getElementById('chatButton').classList.add('hidden');loadContactList();}
+async function openChat(){
+    document.getElementById('chatWidget').classList.remove('hidden');
+    document.getElementById('chatButton').classList.add('hidden');
+    document.getElementById('unreadBadge').classList.add('hidden');
+    loadContactList();
+}
 function showContactList(){document.getElementById('contactList').classList.remove('hidden');document.getElementById('chatBody').classList.add('hidden');document.getElementById('chatInputArea').classList.add('hidden');document.getElementById('chatTitle').textContent='Chat';currentChatUser=null;loadContactList();}
 async function loadContactList(){var r=await fetch('/api/chat-list',{headers:{'Authorization':'Bearer '+token}});var d=await r.json();if(d.status==='success'){contactList=d.data;var h='';contactList.forEach(function(c){h+='<div onclick="startChat('+c.id+',\''+(c.email||c.company_name)+'\')" class="flex items-center p-3 hover:bg-gray-50 cursor-pointer border-b"><div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3"><i class="fas fa-user text-blue-600 text-sm"></i></div><div class="flex-1"><p class="text-sm font-semibold">'+(c.company_name||c.email)+'</p><p class="text-xs text-gray-400">'+(c.email||'')+'</p></div><div class="w-2 h-2 bg-green-400 rounded-full" title="Online"></div></div>'});document.getElementById('contactList').innerHTML=h||'<p class="p-3 text-center text-gray-400 text-sm">No contacts</p>';}}
 function startChat(id,name){currentChatUser=id;currentChatName=name;document.getElementById('chatTitle').textContent=name;document.getElementById('contactList').classList.add('hidden');document.getElementById('chatBody').classList.remove('hidden');document.getElementById('chatInputArea').classList.remove('hidden');loadChatMessages();if(chatInterval)clearInterval(chatInterval);chatInterval=setInterval(loadChatMessages,10000);}
-async function loadChatMessages(){if(!currentChatUser)return;var r=await fetch('/api/chat/'+currentChatUser,{headers:{'Authorization':'Bearer '+token}});var d=await r.json();if(d.status==='success'){var h='';d.data.forEach(function(m){var isMe=m.sender_id==user.id;h+='<div class="'+(isMe?'text-right':'text-left')+' mb-2"><div class="inline-block '+(isMe?'bg-blue-100':'bg-gray-100')+' rounded-lg px-3 py-1.5 text-sm max-w-[80%]"><p class="text-[10px] text-gray-500">'+(isMe?'You':currentChatName)+'</p><p>'+m.message+'</p><p class="text-[9px] text-gray-400 text-right">'+new Date(m.created_at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})+'</p></div></div>'});document.getElementById('chatBody').innerHTML=h||'<p class="text-center text-gray-400 text-sm pt-10">Start the conversation!</p>';document.getElementById('chatBody').scrollTop=document.getElementById('chatBody').scrollHeight;}}
+async function loadChatMessages(){
+    if(!currentChatUser)return;
+    var r=await fetch('/api/chat/'+currentChatUser,{headers:{'Authorization':'Bearer '+token}});
+    var d=await r.json();
+    if(d.status==='success'){
+        var h='';
+        var newMessages=0;
+        var lastSender='';
+        d.data.forEach(function(m){
+            var isMe=m.sender_id==user.id;
+            if(!isMe) { newMessages++; lastSender=m.sender_email||'Client'; }
+            h+='<div class="'+(isMe?'text-right':'text-left')+' mb-2"><div class="inline-block '+(isMe?'bg-blue-100':'bg-gray-100')+' rounded-lg px-3 py-1.5 text-sm max-w-[80%]"><p class="text-[10px] text-gray-500">'+(isMe?'You':currentChatName)+'</p><p>'+m.message+'</p><p class="text-[9px] text-gray-400 text-right">'+new Date(m.created_at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})+'</p></div></div>';
+        });
+        document.getElementById('chatBody').innerHTML=h||'<p class="text-center text-gray-400 text-sm pt-10">Start the conversation!</p>';
+        document.getElementById('chatBody').scrollTop=document.getElementById('chatBody').scrollHeight;
+        
+        // Update notification badge if chat is closed
+        if(newMessages>0 && document.getElementById('chatWidget').classList.contains('hidden')){
+            var badge=document.getElementById('unreadBadge');
+            badge.textContent=newMessages;
+            badge.classList.remove('hidden');
+            badge.title='New messages from '+lastSender;
+        }
+    }
+}
 async function sendChat(){var i=document.getElementById('chatInput');var m=i.value.trim();if(!m||!currentChatUser)return;i.value='';await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({receiver_id:currentChatUser,message:m})});loadChatMessages();}
 function closeChat(){document.getElementById('chatWidget').classList.add('hidden');document.getElementById('chatButton').classList.remove('hidden');if(chatInterval)clearInterval(chatInterval);}
 
