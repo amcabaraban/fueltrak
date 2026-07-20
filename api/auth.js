@@ -514,7 +514,7 @@ app.get('/api/client/verify-truck/:plateNo', authenticate, authorize('client'), 
         'INSERT INTO trucks (plate_no, make, driver_name, hauler_name, total_capacity, is_active, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, 1, NOW(), NOW())',
         [master[0].plate_no, master[0].truck_make || 'Unknown', (master[0].driver_name || '').replace(/"/g, ''), master[0].hauler_name || '', master[0].total_capacity || 0]
       );
-      return res.json({ status: 'success', data: { truck: { id: newTruck.insertId, plate_no: master[0].plate_no, make: master[0].truck_make, driver_name: master[0].driver_name, hauler_name: master[0].hauler_name, total_capacity: master[0].total_capacity }, documents: { lto_registration: { status: 'not_required', valid: true, days_remaining: 999 }, fire_permit: { status: 'not_required', valid: true, days_remaining: 999 }, dost_calibration: { status: 'not_required', valid: true, days_remaining: 999 } }, can_proceed: true } });
+      return res.json({ status: 'success', data: { truck: { id: newTruck.insertId, plate_no: master[0].plate_no, make: master[0].truck_make, driver_name: master[0].driver_name, hauler_name: master[0].hauler_name, total_capacity: parseFloat(master[0].total_capacity) || [master[0].cot1,master[0].cot2,master[0].cot3,master[0].cot4,master[0].cot5,master[0].cot6,master[0].cot7,master[0].cot8,master[0].cot9,master[0].cot10].reduce((s,v)=>s+parseFloat(v||0),0) }, documents: { lto_registration: { status: 'not_required', valid: true, days_remaining: 999 }, fire_permit: { status: 'not_required', valid: true, days_remaining: 999 }, dost_calibration: { status: 'not_required', valid: true, days_remaining: 999 } }, can_proceed: true } });
     }
     res.status(404).json({ error: 'Truck not found', can_proceed: false });
   } catch (error) { res.status(500).json({ error: error.message }); }
@@ -951,6 +951,7 @@ app.get('/tutorial', (req, res) => res.sendFile(path.join(__dirname, '..', 'publ
 app.get('/audit-logs', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'audit-logs.html')));
 
 module.exports = app;
+
 
 
 
