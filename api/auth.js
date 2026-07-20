@@ -532,8 +532,10 @@ app.post('/api/client/submit-atl', authenticate, authorize('client'), async (req
       const [trucks] = await pool.execute('SELECT * FROM trucks WHERE id = ? AND is_active = 1', [truckId]);
       if (!trucks.length) return res.status(404).json({ error: 'Truck not found' });
       plateNo = trucks[0].plate_no;
-      if (!driver) driver = trucks[0].driver_name;
-      if (!hauler) hauler = trucks[0].hauler_name;
+        if (!driver) driver = trucks[0].driver_name;
+        if (!hauler) hauler = trucks[0].hauler_name;
+        const [masterUpdate] = await pool.execute('SELECT * FROM truck_masterlist WHERE plate_no = ?', [plateNo.toUpperCase()]);
+        if (masterUpdate.length > 0) { if (!driver) driver = masterUpdate[0].driver_name; if (!hauler) hauler = masterUpdate[0].hauler_name; }
     } else if (plateNo) {
       const [trucks] = await pool.execute('SELECT * FROM trucks WHERE plate_no = ? AND is_active = 1', [plateNo.toUpperCase()]);
       if (trucks.length > 0) {
@@ -991,6 +993,7 @@ app.get('/tutorial', (req, res) => res.sendFile(path.join(__dirname, '..', 'publ
 app.get('/audit-logs', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'audit-logs.html')));
 
 module.exports = app;
+
 
 
 
