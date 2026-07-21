@@ -36,7 +36,7 @@
           padding-block-end: 70px;
         }
         .mobile-bottom-nav {
-          display: none !important;
+          display: flex !important;
         }
       }
       @media (min-inline-size: 768px) {
@@ -948,11 +948,12 @@
         }
       }, 15000);
 
-      function toggleSidebar() {
-        var s = document.getElementById("sidebar");
-        s.classList.toggle("open");
-        document.getElementById("sidebarOverlay").classList.toggle("hidden");
-      }
+      //function toggleSidebar() {
+      //  var s = document.getElementById("sidebar");
+      //  s.classList.toggle("open");
+      //  document.getElementById("sidebarOverlay").classList.toggle("hidden");
+      //}*//
+      
       async function logout() {
         try {
           await fetch("/api/auth/logout", {
