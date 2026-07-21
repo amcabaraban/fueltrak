@@ -147,12 +147,21 @@ const authorize = (...roles) => (req, res, next) => {
   next();
 };
 
+function validatePasswordComplexity(password) {
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
+    return passwordRegex.test(password);
+}
+
 // ============ AUTH ROUTES ============
 app.post('/api/auth/register', async (req, res) => {
   try {
     const { email, password, mobile, company_name } = req.body;
     const mobileRegex = /^(09\d{9}|\+639\d{9})$/;
     if (!mobileRegex.test(mobile)) return res.status(400).json({ error: 'Invalid mobile format' });
+    // --- NEW: BACKEND PASSWORD COMPLEXITY CHECK ---
+    if (!validatePasswordComplexity(password)) {
+        return res.status(400).json({ error: 'Password must have 8+ chars, 1 uppercase, 1 lowercase, 1 number, and 1 symbol.' });
+    }
     const [existing] = await pool.execute('SELECT id FROM users WHERE email = ?', [email]);
     if (existing.length) return res.status(400).json({ error: 'Email already registered' });
     const hashedPassword = await bcrypt.hash(password, 12);
@@ -287,7 +296,9 @@ app.post('/api/auth/verify-reset-otp', async (req, res) => {
 app.post('/api/auth/reset-password', async (req, res) => {
   try {
     const { resetToken, newPassword } = req.body;
-    if (!newPassword || newPassword.length < 8) return res.status(400).json({ error: 'Password must be at least 8 characters' });
+    if (!newPassword || !validatePasswordComplexity(newPassword)) {
+        return res.status(400).json({ error: 'Password must have 8+ chars, 1 uppercase, 1 lowercase, 1 number, and 1 symbol.' });
+    }
     const decoded = jwt.verify(resetToken, process.env.JWT_SECRET );
     if (decoded.purpose !== 'reset') return res.status(400).json({ error: 'Invalid reset token' });
     const hashedPassword = await bcrypt.hash(newPassword, 12);
