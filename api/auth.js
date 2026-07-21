@@ -1024,6 +1024,13 @@ app.get('/api/chat/unread', authenticate, async (req, res) => {
   } catch (error) { res.status(500).json({ error: error.message }); }
 });
 
+app.put('/api/dispatch/update-so/:id', authenticate, authorize('dispatcher','management'), async (req, res) => {
+  try {
+    await pool.execute('UPDATE authority_to_load SET so_number = ? WHERE id = ?', [req.body.so_number, req.params.id]);
+    res.json({ status: 'success' });
+  } catch (error) { res.status(400).json({ error: error.message }); }
+});
+
 // ============ LOGOUT ============
 app.post('/api/auth/logout', authenticate, async (req, res) => {
   try { const t = req.header('Authorization')?.replace('Bearer ', ''); if(t){tokenBlacklist.add(t); await pool.execute('UPDATE users SET current_token = NULL WHERE id = ?',[req.user.id]);} await logAudit(req.user.id,'LOGOUT','users',req.user.id,{email:req.user.email}); res.json({status:'success',message:'Logged out'}); }
