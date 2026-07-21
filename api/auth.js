@@ -420,7 +420,7 @@ app.put('/api/dispatch/update-si/:id', authenticate, authorize('dispatcher', 'ma
 
 app.put('/api/dispatch/update-tps/:id', authenticate, authorize('dispatcher', 'management'), async (req, res) => {
   try {
-    await pool.execute('UPDATE authority_to_load SET tps_start = ?, tps_end = ? WHERE id = ?', [req.body.tps_start || null, req.body.tps_end || null, req.params.id]);
+    const tpsUpdates = []; const tpsParams = []; if (req.body.tps_start !== undefined) { tpsUpdates.push('tps_start = ?'); tpsParams.push(req.body.tps_start); } if (req.body.tps_end !== undefined) { tpsUpdates.push('tps_end = ?'); tpsParams.push(req.body.tps_end); } if (tpsUpdates.length > 0) { tpsParams.push(req.params.id); await pool.execute('UPDATE authority_to_load SET ' + tpsUpdates.join(', ') + ' WHERE id = ?', tpsParams); }
     res.json({ status: 'success' });
   } catch (error) { res.status(400).json({ error: error.message }); }
 });
@@ -476,7 +476,7 @@ app.put('/api/dispatch/update-si/:id', authenticate, authorize('dispatcher', 'ma
 
 app.put('/api/dispatch/update-tps/:id', authenticate, authorize('dispatcher', 'management'), async (req, res) => {
   try {
-    await pool.execute('UPDATE authority_to_load SET tps_start = ?, tps_end = ? WHERE id = ?', [req.body.tps_start || null, req.body.tps_end || null, req.params.id]);
+    const tpsUpdates = []; const tpsParams = []; if (req.body.tps_start !== undefined) { tpsUpdates.push('tps_start = ?'); tpsParams.push(req.body.tps_start); } if (req.body.tps_end !== undefined) { tpsUpdates.push('tps_end = ?'); tpsParams.push(req.body.tps_end); } if (tpsUpdates.length > 0) { tpsParams.push(req.params.id); await pool.execute('UPDATE authority_to_load SET ' + tpsUpdates.join(', ') + ' WHERE id = ?', tpsParams); }
     res.json({ status: 'success' });
   } catch (error) { res.status(400).json({ error: error.message }); }
 });
@@ -1081,6 +1081,7 @@ app.get('/tutorial', (req, res) => res.sendFile(path.join(__dirname, '..', 'publ
 app.get('/audit-logs', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'audit-logs.html')));
 
 module.exports = app;
+
 
 
 
