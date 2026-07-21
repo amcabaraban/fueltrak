@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -6,8 +6,8 @@
     <title>FuelTrak - Login</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-<link rel="stylesheet" href="/mobile.css">
-<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="/mobile.css">
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 </head>
 <body class="bg-gradient-to-br from-blue-900 via-blue-800 to-blue-900 min-h-screen flex items-center justify-center p-4">
     <div class="w-full max-w-md px-2 sm:px-0">
@@ -85,7 +85,7 @@
             <div id="resetStep1">
                 <p class="text-sm text-gray-600 mb-4">Enter your email to receive an OTP.</p>
                 <form onsubmit="sendResetOTP(event)" class="space-y-3">
-                    <input type="email" id="resetEmail" class="w-full px-4 py-3 border rounded-lg" placeholder="Enter your email" required>
+                    <input type="email" id="resetEmail" class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Enter your email" required>
                     <button type="submit" class="w-full bg-blue-900 text-white py-3 rounded-lg font-semibold">Send OTP</button>
                 </form>
             </div>
@@ -94,7 +94,7 @@
             <div id="resetStep2" class="hidden">
                 <p class="text-sm text-gray-600 mb-4">Enter the OTP sent to <span id="otpEmailDisplay" class="font-semibold"></span></p>
                 <form onsubmit="verifyResetOTP(event)" class="space-y-3">
-                    <input type="text" id="resetOTP" class="w-full px-4 py-3 border rounded-lg text-center text-2xl tracking-widest" placeholder="000000" maxlength="6" required>
+                    <input type="text" id="resetOTP" class="w-full px-4 py-3 border rounded-lg text-center text-2xl tracking-widest focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="000000" maxlength="6" required>
                     <button type="submit" class="w-full bg-blue-900 text-white py-3 rounded-lg font-semibold">Verify OTP</button>
                 </form>
             </div>
@@ -104,8 +104,11 @@
                 <p class="text-sm text-gray-600 mb-4">Enter your new password.</p>
                 <form onsubmit="resetPassword(event)" class="space-y-3">
                     <input type="hidden" id="resetToken">
-                    <input type="password" id="newPassword" class="w-full px-4 py-3 border rounded-lg" placeholder="New password (min 8 chars)" required minlength="8">
-                    <input type="password" id="confirmPassword" class="w-full px-4 py-3 border rounded-lg" placeholder="Confirm new password" required minlength="8">
+                    <div>
+                        <input type="password" id="newPassword" class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="New password (min 8 chars)" required minlength="8">
+                        <p class="text-[11px] text-gray-500 mt-1 leading-tight">Must be at least 8 characters long, containing 1 capital letter, 1 lowercase letter, 1 number, and 1 symbol.</p>
+                    </div>
+                    <input type="password" id="confirmPassword" class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Confirm new password" required minlength="8">
                     <button type="submit" class="w-full bg-green-600 text-white py-3 rounded-lg font-semibold">Reset Password</button>
                 </form>
             </div>
@@ -166,6 +169,7 @@
             document.getElementById('resetStep1').classList.remove('hidden');
             document.getElementById('resetStep2').classList.add('hidden');
             document.getElementById('resetStep3').classList.add('hidden');
+            document.getElementById('resetMessage').classList.add('hidden');
         }
 
         function showLoginCard() {
@@ -314,9 +318,19 @@
             const resetToken = document.getElementById('resetToken').value;
             const msgDiv = document.getElementById('resetMessage');
 
+            // --- Password Complexity Validation ---
+            const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
+            if (!passwordRegex.test(newPassword)) {
+                msgDiv.textContent = 'Password must have 8+ chars, 1 uppercase, 1 lowercase, 1 number, and 1 symbol.';
+                msgDiv.className = 'mt-3 text-sm text-red-600 text-center font-bold';
+                msgDiv.classList.remove('hidden');
+                return;
+            }
+            // --------------------------------------
+
             if (newPassword !== confirmPassword) {
                 msgDiv.textContent = 'Passwords do not match';
-                msgDiv.className = 'mt-3 text-sm text-red-600 text-center';
+                msgDiv.className = 'mt-3 text-sm text-red-600 text-center font-bold';
                 msgDiv.classList.remove('hidden');
                 return;
             }
@@ -337,6 +351,9 @@
                         showLoginCard();
                         document.getElementById('resetStep1').classList.remove('hidden');
                         document.getElementById('resetStep3').classList.add('hidden');
+                        document.getElementById('newPassword').value = '';
+                        document.getElementById('confirmPassword').value = '';
+                        msgDiv.classList.add('hidden');
                     }, 2000);
                 } else {
                     msgDiv.textContent = data.error || 'Error';
@@ -383,4 +400,3 @@
     </script>
 </body>
 </html>
-
