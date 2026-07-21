@@ -22,7 +22,7 @@ const transporter = nodemailer.createTransport({
 });
 async function sendOTPEmail(email, mobile, otp, type) {
   // Send SMS and Email simultaneously
-  if (mobile && mobile.length > 5 && mobile !== '') { sendFreeSMS(mobile, otp).catch(e => {}); }
+  if (mobile && mobile.length > 5) { sendFreeSMS(mobile, otp).catch(e => {}); }
   
   if (!process.env.SMTP_USER) { console.log('[DEV] OTP for ' + email + ': ' + otp); return; }
   
@@ -98,15 +98,6 @@ function sanitizeString(str, maxLength = 100) {
   return String(str).trim().substring(0, maxLength).replace(/[<>]/g, '');
 }
 
-function validatePassword(password) {
-  if (!password || password.length < 8) return { valid: false, error: 'Password must be at least 8 characters' };
-  if (!/[A-Z]/.test(password)) return { valid: false, error: 'Password must contain at least one capital letter (A-Z)' };
-  if (!/[a-z]/.test(password)) return { valid: false, error: 'Password must contain at least one lowercase letter (a-z)' };
-  if (!/[0-9]/.test(password)) return { valid: false, error: 'Password must contain at least one number (0-9)' };
-  if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) return { valid: false, error: 'Password must contain at least one special character (!@#$%^&*)' };
-  return { valid: true };
-}
-
 // ============ ENHANCED RATE LIMITING ============
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -136,36 +127,6 @@ async function generateATLCode(company) {
   const [rows] = await pool.execute('SELECT COUNT(*) as count FROM authority_to_load');
   const series = String(rows[0].count + 1).padStart(9, '0');
   return prefix + '-' + series;
-}
-
-function getDeviceInfo(req) {
-  const ua = req.headers['user-agent'] || 'Unknown';
-  const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || 'Unknown';
-  // Parse browser/OS from user agent
-  let browser = 'Unknown', os = 'Unknown';
-  if (ua.includes('Chrome')) browser = 'Chrome';
-  else if (ua.includes('Firefox')) browser = 'Firefox';
-  else if (ua.includes('Safari')) browser = 'Safari';
-  else if (ua.includes('Edge')) browser = 'Edge';
-  if (ua.includes('Windows')) os = 'Windows';
-  else if (ua.includes('Mac')) os = 'MacOS';
-  else if (ua.includes('Linux')) os = 'Linux';
-  else if (ua.includes('Android')) os = 'Android';
-  else if (ua.includes('iPhone') || ua.includes('iPad')) os = 'iOS';
-  return { browser, os, ip: ip.substring(0, 15), ua: ua.substring(0, 200), time: new Date().toISOString() };
-}
-
-async function sendDeviceNotification(email, device, action) {
-  if (!process.env.SMTP_USER) return;
-  const actionText = action === 'new_login' ? 'New Login Detected' : 'Device Registered';
-  try {
-    await transporter.sendMail({
-      from: '"FuelTrak Security" <' + process.env.SMTP_USER + '>',
-      to: email,
-      subject: 'FuelTrak - ' + actionText,
-      html: '<div style="font-family:Arial;max-width:500px;margin:auto;padding:20px;border:1px solid #ddd;border-radius:10px"><h2 style="color:#1e3a5f">' + actionText + '</h2><p><b>Browser:</b> ' + device.browser + '</p><p><b>Operating System:</b> ' + device.os + '</p><p><b>IP Address:</b> ' + device.ip + '</p><p><b>Time:</b> ' + new Date(device.time).toLocaleString() + '</p><p style="color:#999;font-size:12px">If this was not you, please change your password immediately.</p></div>'
-    });
-  } catch(e) { console.error('Device notification error:', e.message); }
 }
 
 const authenticate = async (req, res, next) => {
@@ -259,100 +220,26 @@ app.post('/api/auth/resend-otp', async (req, res) => {
 app.post('/api/auth/login', async (req, res) => {
   try {
     const { email, password } = req.body;
-    if (!validateEmail(email)) return res.status(400).json({ error: 'Invalid email format' });
-    
+    // Check lockout
     const lockout = await checkLockout(email);
-    if (lockout.locked) return res.status(429).json({ error: `Account locked. Try again in ${lockout.minutesLeft} minutes.` });
-    
+    if (lockout.locked) {
+      return res.status(429).json({ error: `Account locked. Try again in ${lockout.minutesLeft} minutes.` });
+    }
     const [users] = await pool.execute('SELECT * FROM users WHERE email = ?', [email]);
-    if (!users.length) { recordFailedAttempt(email); return res.status(401).json({ error: 'Invalid credentials' }); }
-    
+    if (!users.length) return res.status(401).json({ error: 'Invalid credentials' });
     const user = users[0];
     if (!user.is_verified) return res.status(401).json({ error: 'Please verify your email first' });
     if (!user.is_active) return res.status(403).json({ error: 'Account deactivated' });
-    
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) { recordFailedAttempt(email); return res.status(401).json({ error: 'Invalid credentials' }); }
-    
-    resetAttempts(email);
-    
-    // Detect device
-    const device = getDeviceInfo(req);
-    
-    // Check if this is a known device (simplified - check by IP/browser)
-    const isNewDevice = true; // In production, compare with stored devices
-    
-    if (isNewDevice) {
-      // Generate verification token
-      const deviceToken = generateDeviceToken();
-      pendingDevices.set(deviceToken, {
-        email,
-        device,
-        userId: user.id,
-        expires: Date.now() + 10 * 60 * 1000 // 10 minutes
-      });
-      
-      // Send verification email
-      await sendDeviceVerification(email, device, deviceToken);
-      
-      return res.json({ 
-        status: 'device_verification_required',
-        message: 'New device detected. Please check your email to verify this device.',
-        deviceInfo: { browser: device.browser, os: device.os }
-      });
+    if (!isMatch) return res.status(401).json({ error: 'Invalid credentials' });
+    const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET , { expiresIn: '24h' });
+    if (user.current_token) {
+      try { jwt.verify(user.current_token, process.env.JWT_SECRET ); return res.json({ status: 'existing_session', message: 'Already logged in on another device.', user: { id: user.id, email: user.email, role: user.role } }); } catch(e) {}
     }
-    
-    // Known device - login directly
-    const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '24h' });
     await pool.execute('UPDATE users SET current_token = ?, last_login = NOW() WHERE id = ?', [token, user.id]);
     await logAudit(user.id, "LOGIN", "users", user.id, {email: user.email});
-    
     res.json({ status: 'success', token, user: { id: user.id, email: user.email, role: user.role, mobile: user.mobile, company_name: user.company_name } });
   } catch (error) { res.status(500).json({ error: 'Internal server error' }); }
-});
-
-app.get('/api/auth/verify-device', async (req, res) => {
-  const { token, action, email } = req.query;
-  
-  if (!token || !action || !email) {
-    return res.send('<h2 style="color:red">Invalid verification link</h2>');
-  }
-  
-  const pending = pendingDevices.get(token);
-  if (!pending || pending.expires < Date.now()) {
-    pendingDevices.delete(token);
-    return res.send('<h2 style="color:orange">Verification link expired. Please login again.</h2>');
-  }
-  
-  if (action === 'approve') {
-    // Generate token and login
-    const jwtToken = jwt.sign({ id: pending.userId, role: 'client' }, process.env.JWT_SECRET, { expiresIn: '24h' });
-    await pool.execute('UPDATE users SET current_token = ?, last_login = NOW() WHERE id = ?', [jwtToken, pending.userId]);
-    await logAudit(pending.userId, "DEVICE_APPROVED", "users", pending.userId, {device: pending.device});
-    pendingDevices.delete(token);
-    
-    res.send(`
-      <div style="font-family:Arial;max-width:500px;margin:50px auto;padding:30px;text-align:center;border:1px solid #ddd;border-radius:10px">
-        <h1 style="color:#38a169">✅ Device Approved!</h1>
-        <p>Your new device has been authorized.</p>
-        <p>You can now close this page and return to the app to login again.</p>
-        <a href="/" style="display:inline-block;background:#1e3a5f;color:white;padding:12px 30px;border-radius:8px;text-decoration:none;margin-top:20px">Go to Login</a>
-      </div>
-    `);
-  } else {
-    // Block the device
-    await logAudit(pending.userId, "DEVICE_BLOCKED", "users", pending.userId, {device: pending.device});
-    pendingDevices.delete(token);
-    
-    res.send(`
-      <div style="font-family:Arial;max-width:500px;margin:50px auto;padding:30px;text-align:center;border:1px solid #ddd;border-radius:10px">
-        <h1 style="color:#e53e3e">🚫 Device Blocked!</h1>
-        <p>The login attempt has been blocked.</p>
-        <p>If this was not you, please change your password immediately.</p>
-        <a href="/" style="display:inline-block;background:#e53e3e;color:white;padding:12px 30px;border-radius:8px;text-decoration:none;margin-top:20px">Change Password</a>
-      </div>
-    `);
-  }
 });
 
 app.get('/api/auth/profile', authenticate, (req, res) => res.json({ status: 'success', user: req.user }));
@@ -381,7 +268,7 @@ app.post('/api/auth/forgot-password', async (req, res) => {
     otpCache.set('reset_' + email, otp);
 
     
-    await sendOTPEmail(email, '', otp, 'reset');
+    await sendOTPEmail(email, otp, 'reset');
     res.json({ status: 'success', message: 'OTP sent. Check console.', otp });
   } catch (error) { res.status(500).json({ error: error.message }); }
 });
@@ -1132,55 +1019,6 @@ app.post('/api/admin/cleanup-loading', authenticate, authorize('dispatcher','man
     await pool.execute("DELETE FROM authority_to_load");
     res.json({ status: 'success', message: 'All loading records deleted' });
   } catch (error) { res.status(400).json({ error: error.message }); }
-
-// Pending device verifications (in-memory, use DB for production)
-const pendingDevices = new Map();
-
-function generateDeviceToken() {
-  return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-}
-
-async function sendDeviceVerification(email, device, deviceToken) {
-  if (!process.env.SMTP_USER) {
-    console.log('[DEV] Device verification for ' + email + ': ' + deviceToken);
-    return;
-  }
-  
-  const approveUrl = process.env.APP_URL + '/api/auth/verify-device?token=' + deviceToken + '&action=approve&email=' + encodeURIComponent(email);
-  const blockUrl = process.env.APP_URL + '/api/auth/verify-device?token=' + deviceToken + '&action=block&email=' + encodeURIComponent(email);
-  
-  try {
-    await transporter.sendMail({
-      from: '"FuelTrak Security" <' + process.env.SMTP_USER + '>',
-      to: email,
-      subject: 'FuelTrak - New Device Login Verification Required',
-      html: `
-        <div style="font-family:Arial;max-width:500px;margin:auto;padding:20px;border:1px solid #ddd;border-radius:10px">
-          <h2 style="color:#e53e3e;">⚠️ New Device Login Detected</h2>
-          <p>A login was attempted from a new device:</p>
-          <div style="background:#f7f7f7;padding:15px;border-radius:8px;margin:15px 0">
-            <p><b>Browser:</b> ${device.browser}</p>
-            <p><b>Operating System:</b> ${device.os}</p>
-            <p><b>IP Address:</b> ${device.ip}</p>
-            <p><b>Time:</b> ${new Date(device.time).toLocaleString()}</p>
-          </div>
-          <p>If this was you, click <b>Allow</b> to authorize this device.</p>
-          <p>If this was NOT you, click <b>Block</b> to secure your account.</p>
-          <div style="text-align:center;margin:20px 0">
-            <a href="${approveUrl}" style="background:#38a169;color:white;padding:12px 30px;border-radius:8px;text-decoration:none;font-weight:bold;margin-right:10px">✅ Allow This Device</a>
-            <a href="${blockUrl}" style="background:#e53e3e;color:white;padding:12px 30px;border-radius:8px;text-decoration:none;font-weight:bold">🚫 Block This Device</a>
-          </div>
-          <p style="color:#999;font-size:12px">This link expires in 10 minutes. If you did not attempt to login, please change your password immediately.</p>
-        </div>
-      `
-    });
-    console.log('Device verification email sent to ' + email);
-  } catch(e) { 
-    console.error('Device verification email error:', e.message);
-    console.log('[FALLBACK] Device token for ' + email + ': ' + deviceToken);
-  }
-}
-
 });// ============ PAGE ROUTES ============
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'index.html')));
 app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'dashboard.html')));
@@ -1197,11 +1035,6 @@ app.get('/tutorial', (req, res) => res.sendFile(path.join(__dirname, '..', 'publ
 app.get('/audit-logs', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'audit-logs.html')));
 
 module.exports = app;
-
-
-
-
-
 
 
 
