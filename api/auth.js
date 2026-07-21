@@ -418,6 +418,15 @@ app.put('/api/dispatch/update-si/:id', authenticate, authorize('dispatcher', 'ma
   } catch (error) { res.status(400).json({ error: error.message }); }
 });
 
+app.put('/api/dispatch/update-tps/:id', authenticate, authorize('dispatcher', 'management'), async (req, res) => {
+  try {
+    await pool.execute('UPDATE authority_to_load SET tps_start = ?, tps_end = ? WHERE id = ?', [req.body.tps_start || null, req.body.tps_end || null, req.params.id]);
+    res.json({ status: 'success' });
+  } catch (error) { res.status(400).json({ error: error.message }); }
+});
+  } catch (error) { res.status(400).json({ error: error.message }); }
+});
+
 app.get('/api/dispatch/approved-for-loading', authenticate, authorize('dispatcher', 'management'), async (req, res) => {
   try {
     const [atls] = await pool.execute("SELECT * FROM authority_to_load WHERE status = 'approved' ORDER BY createdAt DESC");
@@ -464,6 +473,15 @@ app.put('/api/dispatch/update-si/:id', authenticate, authorize('dispatcher', 'ma
   try {
     await pool.execute('UPDATE authority_to_load SET has_si = ? WHERE id = ?', [req.body.has_si, req.params.id]);
     res.json({ status: 'success' });
+  } catch (error) { res.status(400).json({ error: error.message }); }
+});
+
+app.put('/api/dispatch/update-tps/:id', authenticate, authorize('dispatcher', 'management'), async (req, res) => {
+  try {
+    await pool.execute('UPDATE authority_to_load SET tps_start = ?, tps_end = ? WHERE id = ?', [req.body.tps_start || null, req.body.tps_end || null, req.params.id]);
+    res.json({ status: 'success' });
+  } catch (error) { res.status(400).json({ error: error.message }); }
+});
   } catch (error) { res.status(400).json({ error: error.message }); }
 });
 
@@ -1067,4 +1085,5 @@ app.get('/tutorial', (req, res) => res.sendFile(path.join(__dirname, '..', 'publ
 app.get('/audit-logs', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'audit-logs.html')));
 
 module.exports = app;
+
 
