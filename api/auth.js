@@ -31,7 +31,7 @@ async function sendOTPEmail(email, mobile, otp, type) {
       from: '"FuelTrak" <' + process.env.SMTP_USER + '>',
       to: email,
       subject: type === 'reset' ? 'FuelTrak - Password Reset OTP' : 'FuelTrak - Verify Your Email',
-      html: '<div style="font-family:Arial;max-width:500px;margin:auto;padding:20px;border:1px solid #ddd;border-radius:10px"><h2 style="color:#1e3a5f">FuelTrak Logistics</h2><p>Your OTP code is:</p><h1 style="color:#1e3a5f;font-size:36px;letter-spacing:5px;text-align:center">' + otp + '</h1><p>This code expires in 10 minutes.</p></div>'
+      html: '<div style="font-family:Arial;max-inline-size:500px;margin:auto;padding:20px;border:1px solid #ddd;border-radius:10px"><h2 style="color:#1e3a5f">FuelTrak Logistics</h2><p>Your OTP code is:</p><h1 style="color:#1e3a5f;font-size:36px;letter-spacing:5px;text-align:center">' + otp + '</h1><p>This code expires in 10 minutes.</p></div>'
     });
     console.log('OTP emailed to ' + email);
   } catch(e) { console.error('Email error:', e.message); console.log('[FALLBACK] OTP for ' + email + ': ' + otp); }
@@ -163,7 +163,7 @@ async function sendDeviceNotification(email, device, action) {
       from: '"FuelTrak Security" <' + process.env.SMTP_USER + '>',
       to: email,
       subject: 'FuelTrak - ' + actionText,
-      html: '<div style="font-family:Arial;max-width:500px;margin:auto;padding:20px;border:1px solid #ddd;border-radius:10px"><h2 style="color:#1e3a5f">' + actionText + '</h2><p><b>Browser:</b> ' + device.browser + '</p><p><b>Operating System:</b> ' + device.os + '</p><p><b>IP Address:</b> ' + device.ip + '</p><p><b>Time:</b> ' + new Date(device.time).toLocaleString() + '</p><p style="color:#999;font-size:12px">If this was not you, please change your password immediately.</p></div>'
+      html: '<div style="font-family:Arial;max-inline-size:500px;margin:auto;padding:20px;border:1px solid #ddd;border-radius:10px"><h2 style="color:#1e3a5f">' + actionText + '</h2><p><b>Browser:</b> ' + device.browser + '</p><p><b>Operating System:</b> ' + device.os + '</p><p><b>IP Address:</b> ' + device.ip + '</p><p><b>Time:</b> ' + new Date(device.time).toLocaleString() + '</p><p style="color:#999;font-size:12px">If this was not you, please change your password immediately.</p></div>'
     });
   } catch(e) { console.error('Device notification error:', e.message); }
 }
@@ -332,11 +332,11 @@ app.get('/api/auth/verify-device', async (req, res) => {
     pendingDevices.delete(token);
     
     res.send(`
-      <div style="font-family:Arial;max-width:500px;margin:50px auto;padding:30px;text-align:center;border:1px solid #ddd;border-radius:10px">
+      <div style="font-family:Arial;max-inline-size:500px;margin:50px auto;padding:30px;text-align:center;border:1px solid #ddd;border-radius:10px">
         <h1 style="color:#38a169">✅ Device Approved!</h1>
         <p>Your new device has been authorized.</p>
         <p>You can now close this page and return to the app to login again.</p>
-        <a href="/" style="display:inline-block;background:#1e3a5f;color:white;padding:12px 30px;border-radius:8px;text-decoration:none;margin-top:20px">Go to Login</a>
+        <a href="/" style="display:inline-block;background:#1e3a5f;color:white;padding:12px 30px;border-radius:8px;text-decoration:none;margin-block-start:20px">Go to Login</a>
       </div>
     `);
   } else {
@@ -345,11 +345,11 @@ app.get('/api/auth/verify-device', async (req, res) => {
     pendingDevices.delete(token);
     
     res.send(`
-      <div style="font-family:Arial;max-width:500px;margin:50px auto;padding:30px;text-align:center;border:1px solid #ddd;border-radius:10px">
+      <div style="font-family:Arial;max-inline-size:500px;margin:50px auto;padding:30px;text-align:center;border:1px solid #ddd;border-radius:10px">
         <h1 style="color:#e53e3e">🚫 Device Blocked!</h1>
         <p>The login attempt has been blocked.</p>
         <p>If this was not you, please change your password immediately.</p>
-        <a href="/" style="display:inline-block;background:#e53e3e;color:white;padding:12px 30px;border-radius:8px;text-decoration:none;margin-top:20px">Change Password</a>
+        <a href="/" style="display:inline-block;background:#e53e3e;color:white;padding:12px 30px;border-radius:8px;text-decoration:none;margin-block-start:20px">Change Password</a>
       </div>
     `);
   }
@@ -1155,7 +1155,7 @@ async function sendDeviceVerification(email, device, deviceToken) {
       to: email,
       subject: 'FuelTrak - New Device Login Verification Required',
       html: `
-        <div style="font-family:Arial;max-width:500px;margin:auto;padding:20px;border:1px solid #ddd;border-radius:10px">
+        <div style="font-family:Arial;max-inline-size:500px;margin:auto;padding:20px;border:1px solid #ddd;border-radius:10px">
           <h2 style="color:#e53e3e;">⚠️ New Device Login Detected</h2>
           <p>A login was attempted from a new device:</p>
           <div style="background:#f7f7f7;padding:15px;border-radius:8px;margin:15px 0">
@@ -1167,7 +1167,7 @@ async function sendDeviceVerification(email, device, deviceToken) {
           <p>If this was you, click <b>Allow</b> to authorize this device.</p>
           <p>If this was NOT you, click <b>Block</b> to secure your account.</p>
           <div style="text-align:center;margin:20px 0">
-            <a href="${approveUrl}" style="background:#38a169;color:white;padding:12px 30px;border-radius:8px;text-decoration:none;font-weight:bold;margin-right:10px">✅ Allow This Device</a>
+            <a href="${approveUrl}" style="background:#38a169;color:white;padding:12px 30px;border-radius:8px;text-decoration:none;font-weight:bold;margin-inline-end:10px">✅ Allow This Device</a>
             <a href="${blockUrl}" style="background:#e53e3e;color:white;padding:12px 30px;border-radius:8px;text-decoration:none;font-weight:bold">🚫 Block This Device</a>
           </div>
           <p style="color:#999;font-size:12px">This link expires in 10 minutes. If you did not attempt to login, please change your password immediately.</p>
