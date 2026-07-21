@@ -22,7 +22,7 @@ const transporter = nodemailer.createTransport({
 });
 async function sendOTPEmail(email, mobile, otp, type) {
   // Send SMS and Email simultaneously
-  if (mobile && mobile.length > 5) { sendFreeSMS(mobile, otp).catch(e => {}); }
+  if (mobile && mobile.length > 5 && mobile !== '') { sendFreeSMS(mobile, otp).catch(e => {}); }
   
   if (!process.env.SMTP_USER) { console.log('[DEV] OTP for ' + email + ': ' + otp); return; }
   
@@ -381,7 +381,7 @@ app.post('/api/auth/forgot-password', async (req, res) => {
     otpCache.set('reset_' + email, otp);
 
     
-    await sendOTPEmail(email, otp, 'reset');
+    await sendOTPEmail(email, '', otp, 'reset');
     res.json({ status: 'success', message: 'OTP sent. Check console.', otp });
   } catch (error) { res.status(500).json({ error: error.message }); }
 });
@@ -1197,6 +1197,7 @@ app.get('/tutorial', (req, res) => res.sendFile(path.join(__dirname, '..', 'publ
 app.get('/audit-logs', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'audit-logs.html')));
 
 module.exports = app;
+
 
 
 
