@@ -600,7 +600,7 @@ app.post('/api/client/submit-atl', authenticate, authorize('client'), async (req
     const atlCode = await generateATLCode(company || req.user.company_name);
     await pool.execute(
       `INSERT INTO authority_to_load (atl_code, client_id, truck_id, company, so_number, volume, hauler, plate_no, driver_name, contact_number, has_si, scheduled_date, remarks, status, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
-      [atlCode, req.user.id, truckId, company || req.user.company_name || '', so_number || null, volume || null, hauler || '', plateNo || '', driver || '', contact_number || null, has_si || false, scheduled_date || new Date().toISOString().split('T')[0], remarks || '', 'pending']
+      [atlCode, req.user.id, truckId, company || req.user.company_name || '', so_number, volume || null, hauler || '', plateNo || '', driver || '', contact_number || null, has_si || false, scheduled_date || new Date().toISOString().split('T')[0], remarks || '', 'pending']
     );
     res.status(201).json({ status: 'success', message: 'ATL ' + atlCode + ' Submitted!', data: { atl_code: atlCode } });
   } catch (error) { res.status(400).json({ error: error.message }); }
@@ -1060,3 +1060,4 @@ app.get('/tutorial', (req, res) => res.sendFile(path.join(__dirname, '..', 'publ
 app.get('/audit-logs', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'audit-logs.html')));
 
 module.exports = app;
+
