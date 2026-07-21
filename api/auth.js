@@ -424,8 +424,6 @@ app.put('/api/dispatch/update-tps/:id', authenticate, authorize('dispatcher', 'm
     res.json({ status: 'success' });
   } catch (error) { res.status(400).json({ error: error.message }); }
 });
-  } catch (error) { res.status(400).json({ error: error.message }); }
-});
 
 app.get('/api/dispatch/approved-for-loading', authenticate, authorize('dispatcher', 'management'), async (req, res) => {
   try {
@@ -480,8 +478,6 @@ app.put('/api/dispatch/update-tps/:id', authenticate, authorize('dispatcher', 'm
   try {
     await pool.execute('UPDATE authority_to_load SET tps_start = ?, tps_end = ? WHERE id = ?', [req.body.tps_start || null, req.body.tps_end || null, req.params.id]);
     res.json({ status: 'success' });
-  } catch (error) { res.status(400).json({ error: error.message }); }
-});
   } catch (error) { res.status(400).json({ error: error.message }); }
 });
 
@@ -1085,5 +1081,6 @@ app.get('/tutorial', (req, res) => res.sendFile(path.join(__dirname, '..', 'publ
 app.get('/audit-logs', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'audit-logs.html')));
 
 module.exports = app;
+
 
 
