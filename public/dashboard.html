@@ -1,288 +1,995 @@
-<!DOCTYPE html>
+﻿<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>FuelTrak - Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <style>
-        .stat-card { transition: all 0.3s ease; }
-        .stat-card:hover { transform: translateY(-3px); box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
-        .progress-bar { transition: width 0.5s ease; }
-        #sidebar{transition:transform 0.3s}
-        @media(max-width:767px){#sidebar{display:none!important}#sidebarOverlay{display:none!important}body{padding-left:0!important;padding-bottom:70px}.mobile-bottom-nav{display:flex!important}}
-        @media(min-width:768px){body{padding-left:176px}.mobile-bottom-nav{display:none!important}}
-        .mobile-bottom-nav{display:flex;position:fixed;bottom:0;left:0;right:0;background:#1e3a5f;color:white;z-index:50;justify-content:space-around;padding:6px 0;box-shadow:0 -2px 10px rgba(0,0,0,0.3)}
-        .mobile-bottom-nav a,.mobile-bottom-nav button{display:flex;flex-direction:column;align-items:center;color:#93a3bc;font-size:10px;text-decoration:none;padding:4px;background:none;border:none;cursor:pointer}
-        .mobile-bottom-nav a i,.mobile-bottom-nav button i{font-size:18px;margin-bottom:2px}
-        .mobile-bottom-nav a.active,.mobile-bottom-nav button.active{color:#fbbf24}
+      .stat-card {
+        transition: all 0.3s ease;
+      }
+      .stat-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+      }
+      .progress-bar {
+        transition: width 0.5s ease;
+      }
+      #sidebar {
+        transition: transform 0.3s;
+      }
+      @media (max-inline-size: 767px) {
+        #sidebar {
+          display: none !important;
+        }
+        #sidebarOverlay {
+          display: none !important;
+        }
+        body {
+          padding-inline-start: 0 !important;
+          padding-block-end: 70px;
+        }
+        .mobile-bottom-nav {
+          display: flex !important;
+        }
+      }
+      @media (min-inline-size: 768px) {
+        body {
+          padding-inline-start: 176px;
+        }
+        .mobile-bottom-nav {
+          display: none !important;
+        }
+      }
+      .mobile-bottom-nav {
+        display: flex;
+        position: fixed;
+        inset-block-end: 0;
+        inset-inline-start: 0;
+        inset-inline-end: 0;
+        background: #1e3a5f;
+        color: white;
+        z-index: 50;
+        justify-content: space-around;
+        padding: 6px 0;
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.3);
+      }
+      .mobile-bottom-nav a,
+      .mobile-bottom-nav button {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        color: #93a3bc;
+        font-size: 10px;
+        text-decoration: none;
+        padding: 4px;
+        background: none;
+        border: none;
+        cursor: pointer;
+      }
+      .mobile-bottom-nav a i,
+      .mobile-bottom-nav button i {
+        font-size: 18px;
+        margin-block-end: 2px;
+      }
+      .mobile-bottom-nav a.active,
+      .mobile-bottom-nav button.active {
+        color: #fbbf24;
+      }
     </style>
-</head>
-<body class="bg-gray-50 min-h-screen">
-<div class="main-content">
-    <nav class="bg-gradient-to-r from-blue-900 to-blue-800 text-white shadow-xl sticky top-0 z-20">
-        <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
-            <div class="flex items-center space-x-3">
-                <div class="bg-white/20 p-2 rounded-lg"><i class="fas fa-gas-pump text-2xl text-yellow-400"></i></div>
-                <div><span class="font-bold text-lg">FuelTrak</span><p class="text-xs text-blue-300 hidden sm:block">Logistics Management</p></div>
+  </head>
+  <body class="bg-gray-50 min-h-screen">
+    <div class="main-content">
+      <nav
+        class="bg-gradient-to-r from-blue-900 to-blue-800 text-white shadow-xl sticky top-0 z-20"
+      >
+        <div
+          class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center"
+        >
+          <div class="flex items-center space-x-3">
+            <div class="bg-white/20 p-2 rounded-lg">
+              <i class="fas fa-gas-pump text-2xl text-yellow-400"></i>
             </div>
-            <div class="flex items-center space-x-3">
-                <span id="userInfo" class="text-sm bg-white/10 px-3 py-1 rounded-full truncate max-w-[150px]"></span>
+            <div>
+              <span class="font-bold text-lg">FuelTrak</span>
+              <p class="text-xs text-blue-300 hidden sm:block">
+                Logistics Management
+              </p>
             </div>
+          </div>
+          <div class="flex items-center space-x-3">
+            <span
+              id="userInfo"
+              class="text-sm bg-white/10 px-3 py-1 rounded-full truncate max-w-[150px]"
+            ></span>
+          </div>
         </div>
-    </nav>
+      </nav>
 
-    <!-- Desktop Sidebar -->
-    <div class="fixed left-0 top-0 h-full w-14 md:w-48 bg-blue-900 text-white z-40 pt-16 overflow-y-auto no-print" id="sidebar">
-        <a href="/dashboard" class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap"><i class="fas fa-tachometer-alt w-6 text-center"></i><span class="hidden md:inline ml-2">Dashboard</span></a>
-        <a href="#" onclick="openTab('clients');return false;" class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap" title="Clients">
-            <i class="fas fa-users w-6 text-center"></i><span class="hidden md:inline ml-2">Clients</span>
+      <!-- Desktop Sidebar -->
+      <div
+        class="fixed left-0 top-0 h-full w-14 md:w-48 bg-blue-900 text-white z-40 pt-16 overflow-y-auto no-print"
+        id="sidebar"
+      >
+        <a
+          href="/dashboard"
+          class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap"
+          ><i class="fas fa-tachometer-alt w-6 text-center"></i
+          ><span class="hidden md:inline ml-2">Dashboard</span></a
+        >
+        <a
+          href="#"
+          onclick="
+            openTab('clients');
+            return false;
+          "
+          class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap"
+          title="Clients"
+        >
+          <i class="fas fa-users w-6 text-center"></i
+          ><span class="hidden md:inline ml-2">Clients</span>
         </a>
-        <a href="/reports" class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap"><i class="fas fa-chart-bar w-6 text-center"></i><span class="hidden md:inline ml-2">Reports</span></a>
-        <a href="/trucks" class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap"><i class="fas fa-truck w-6 text-center"></i><span class="hidden md:inline ml-2">Truck Masterlist</span></a>
-        <a href="/docs-report" class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap"><i class="fas fa-file-alt w-6 text-center"></i><span class="hidden md:inline ml-2">Doc Report</span></a>
-        <a href="/ttsd-checklist" class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap"><i class="fas fa-clipboard-check w-6 text-center"></i><span class="hidden md:inline ml-2">TTSD Checklist</span></a>
-        <a href="/audit-logs" class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap"><i class="fas fa-history w-6 text-center"></i><span class="hidden md:inline ml-2">Audit Logs</span></a>
+        <a
+          href="/reports"
+          class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap"
+          ><i class="fas fa-chart-bar w-6 text-center"></i
+          ><span class="hidden md:inline ml-2">Reports</span></a
+        >
+        <a
+          href="/trucks"
+          class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap"
+          ><i class="fas fa-truck w-6 text-center"></i
+          ><span class="hidden md:inline ml-2">Truck Masterlist</span></a
+        >
+        <a
+          href="/docs-report"
+          class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap"
+          ><i class="fas fa-file-alt w-6 text-center"></i
+          ><span class="hidden md:inline ml-2">Doc Report</span></a
+        >
+        <a
+          href="/ttsd-checklist"
+          class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap"
+          ><i class="fas fa-clipboard-check w-6 text-center"></i
+          ><span class="hidden md:inline ml-2">TTSD Checklist</span></a
+        >
+        <a
+          href="/audit-logs"
+          class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap"
+          ><i class="fas fa-history w-6 text-center"></i
+          ><span class="hidden md:inline ml-2">Audit Logs</span></a
+        >
         <div class="border-t border-blue-700 p-2 mt-2">
-            <button onclick="logout()" class="flex items-center px-2 py-3 hover:bg-red-700 text-xs md:text-sm w-full text-left whitespace-nowrap"><i class="fas fa-sign-out-alt w-6 text-center"></i><span class="hidden md:inline ml-2">Logout</span></button>
+          <button
+            onclick="logout()"
+            class="flex items-center px-2 py-3 hover:bg-red-700 text-xs md:text-sm w-full text-left whitespace-nowrap"
+          >
+            <i class="fas fa-sign-out-alt w-6 text-center"></i
+            ><span class="hidden md:inline ml-2">Logout</span>
+          </button>
         </div>
-    </div>
+      </div>
 
-    <div id="clientModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"><div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6"><div class="flex justify-between mb-4"><h3 class="text-lg font-bold" id="clientModalTitle">Add Client</h3><button onclick="closeClientModal()" class="text-2xl">&times;</button></div><form onsubmit="saveClient(event)"><input type="hidden" id="editClientId"><input type="email" id="clientEmail" placeholder="Email *" class="w-full px-3 py-2 border rounded mb-3" required><input type="text" id="clientMobile" placeholder="Mobile *" class="w-full px-3 py-2 border rounded mb-3" required><input type="text" id="clientCompany" placeholder="Company" class="w-full px-3 py-2 border rounded mb-3"><input type="password" id="clientPassword" placeholder="Password (min 8 chars)" class="w-full px-3 py-2 border rounded mb-3" minlength="8"><button type="submit" class="w-full bg-blue-900 text-white py-2 rounded font-semibold">Save Client</button></form></div></div>
+      <div
+        id="clientModal"
+        class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+      >
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
+          <div class="flex justify-between mb-4">
+            <h3 class="text-lg font-bold" id="clientModalTitle">Add Client</h3>
+            <button onclick="closeClientModal()" class="text-2xl">
+              &times;
+            </button>
+          </div>
+          <form onsubmit="saveClient(event)">
+            <input type="hidden" id="editClientId" /><input
+              type="email"
+              id="clientEmail"
+              placeholder="Email *"
+              class="w-full px-3 py-2 border rounded mb-3"
+              required
+            /><input
+              type="text"
+              id="clientMobile"
+              placeholder="Mobile *"
+              class="w-full px-3 py-2 border rounded mb-3"
+              required
+            /><input
+              type="text"
+              id="clientCompany"
+              placeholder="Company"
+              class="w-full px-3 py-2 border rounded mb-3"
+            /><input
+              type="password"
+              id="clientPassword"
+              placeholder="Password (min 8 chars)"
+              class="w-full px-3 py-2 border rounded mb-3"
+              minlength="8"
+            /><button
+              type="submit"
+              class="w-full bg-blue-900 text-white py-2 rounded font-semibold"
+            >
+              Save Client
+            </button>
+          </form>
+        </div>
+      </div>
 
-    <!-- Mobile Bottom Navigation -->
-    <div class="mobile-bottom-nav">
-        <a href="/dashboard" class="active"><i class="fas fa-tachometer-alt"></i><span>Home</span></a>
-        <a href="/reports"><i class="fas fa-chart-bar"></i><span>Reports</span></a>
+      <!-- Mobile Bottom Navigation -->
+      <div class="mobile-bottom-nav">
+        <a href="/dashboard" class="active"
+          ><i class="fas fa-tachometer-alt"></i><span>Home</span></a
+        >
+        <a href="/reports"
+          ><i class="fas fa-chart-bar"></i><span>Reports</span></a
+        >
         <a href="/trucks"><i class="fas fa-truck"></i><span>Trucks</span></a>
-        <a href="/docs-report"><i class="fas fa-file-alt"></i><span>Docs</span></a>
-        <button onclick="logout()"><i class="fas fa-sign-out-alt"></i><span>Logout</span></button>
-    </div>
+        <a href="/docs-report"
+          ><i class="fas fa-file-alt"></i><span>Docs</span></a
+        >
+        <button onclick="logout()">
+          <i class="fas fa-sign-out-alt"></i><span>Logout</span>
+        </button>
+      </div>
 
-    <div id="sidebarOverlay" class="hidden fixed inset-0 bg-black bg-opacity-50 z-30" onclick="toggleSidebar()"></div>
-    
+      <div
+        id="sidebarOverlay"
+        class="hidden fixed inset-0 bg-black bg-opacity-50 z-30"
+        onclick="toggleSidebar()"
+      ></div>
 
-    <div class="max-w-7xl mx-auto px-4 py-8 w-full">
+      <div class="max-w-7xl mx-auto px-4 py-8 w-full">
         <div id="dashboardView">
-            <div class="bg-gradient-to-r from-blue-900 via-blue-700 to-blue-500 rounded-2xl shadow-2xl p-6 mb-6 text-white">
-                <p class="text-blue-200 text-sm" id="welcomeDate"></p>
-                <h1 class="text-2xl font-bold mt-1">Dispatch Dashboard</h1>
-                <p class="text-blue-100 mt-1 text-sm">Real-time overview of all operations</p>
-            </div>
-            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-6" id="atlStats"></div>
-            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mb-6" id="fleetStats"></div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-6" id="docStats"></div>
-            <h2 class="text-lg font-bold text-gray-800 mb-4">Quick Actions</h2>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <button onclick="openTab('verify')" class="stat-card bg-gradient-to-br from-yellow-400 to-yellow-500 text-white rounded-xl shadow-lg p-4 text-left w-full relative">
-                    <i class="fas fa-clipboard-check text-2xl mb-2"></i><h3 class="font-bold text-sm">Verify ATL</h3>
-                    <span id="pendingBadge" class="absolute top-2 right-2 bg-red-500 text-white text-xs w-6 h-6 rounded-full flex items-center justify-center font-bold hidden">0</span>
-                </button>
-                <button onclick="openTab('loading')" class="stat-card bg-gradient-to-br from-blue-400 to-blue-500 text-white rounded-xl shadow-lg p-4 text-left w-full">
-                    <i class="fas fa-truck-loading text-2xl mb-2"></i><h3 class="font-bold text-sm">Loading</h3>
-                </button>
-                <a href="/trucks" class="stat-card bg-gradient-to-br from-green-400 to-green-500 text-white rounded-xl shadow-lg p-4 block">
-                    <i class="fas fa-truck text-2xl mb-2"></i><h3 class="font-bold text-sm">Truck Masterlist</h3>
-                </a>
-                <button onclick="openTab('clients')" class="stat-card bg-gradient-to-br from-purple-400 to-purple-500 text-white rounded-xl shadow-lg p-4 text-left w-full">
-                    <i class="fas fa-users text-2xl mb-2"></i><h3 class="font-bold text-sm">Clients</h3>
-                </button>
-                <a href="/ttsd-checklist" class="stat-card bg-gradient-to-br from-cyan-400 to-cyan-500 text-white rounded-xl shadow-lg p-4 block">
-                    <i class="fas fa-clipboard-check text-2xl mb-2"></i><h3 class="font-bold text-sm">TTSD Checklist</h3>
-                </a>
-                <a href="/reports" class="stat-card bg-gradient-to-br from-teal-400 to-teal-500 text-white rounded-xl shadow-lg p-4 block">
-                    <i class="fas fa-chart-bar text-2xl mb-2"></i><h3 class="font-bold text-sm">Reports</h3>
-                </a>
-                <a href="/docs-report" class="stat-card bg-gradient-to-br from-orange-400 to-orange-500 text-white rounded-xl shadow-lg p-4 block">
-                    <i class="fas fa-file-alt text-2xl mb-2"></i><h3 class="font-bold text-sm">Doc Report</h3>
-                </a>
-                <a href="/audit-logs" class="stat-card bg-gradient-to-br from-gray-600 to-gray-700 text-white rounded-xl shadow-lg p-4 block">
-                    <i class="fas fa-history text-2xl mb-2"></i><h3 class="font-bold text-sm">Audit Logs</h3>
-                </a>
-            </div>
+          <div
+            class="bg-gradient-to-r from-blue-900 via-blue-700 to-blue-500 rounded-2xl shadow-2xl p-6 mb-6 text-white"
+          >
+            <p class="text-blue-200 text-sm" id="welcomeDate"></p>
+            <h1 class="text-2xl font-bold mt-1">Dispatch Dashboard</h1>
+            <p class="text-blue-100 mt-1 text-sm">
+              Real-time overview of all operations
+            </p>
+          </div>
+          <div
+            class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-6"
+            id="atlStats"
+          ></div>
+          <div
+            class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mb-6"
+            id="fleetStats"
+          ></div>
+          <div
+            class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-6"
+            id="docStats"
+          ></div>
+          <h2 class="text-lg font-bold text-gray-800 mb-4">Quick Actions</h2>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <button
+              onclick="openTab('verify')"
+              class="stat-card bg-gradient-to-br from-yellow-400 to-yellow-500 text-white rounded-xl shadow-lg p-4 text-left w-full relative"
+            >
+              <i class="fas fa-clipboard-check text-2xl mb-2"></i>
+              <h3 class="font-bold text-sm">Verify ATL</h3>
+              <span
+                id="pendingBadge"
+                class="absolute top-2 right-2 bg-red-500 text-white text-xs w-6 h-6 rounded-full flex items-center justify-center font-bold hidden"
+                >0</span
+              >
+            </button>
+            <button
+              onclick="openTab('loading')"
+              class="stat-card bg-gradient-to-br from-blue-400 to-blue-500 text-white rounded-xl shadow-lg p-4 text-left w-full"
+            >
+              <i class="fas fa-truck-loading text-2xl mb-2"></i>
+              <h3 class="font-bold text-sm">Loading</h3>
+            </button>
+            <a
+              href="/trucks"
+              class="stat-card bg-gradient-to-br from-green-400 to-green-500 text-white rounded-xl shadow-lg p-4 block"
+            >
+              <i class="fas fa-truck text-2xl mb-2"></i>
+              <h3 class="font-bold text-sm">Truck Masterlist</h3>
+            </a>
+            <button
+              onclick="openTab('clients')"
+              class="stat-card bg-gradient-to-br from-purple-400 to-purple-500 text-white rounded-xl shadow-lg p-4 text-left w-full"
+            >
+              <i class="fas fa-users text-2xl mb-2"></i>
+              <h3 class="font-bold text-sm">Clients</h3>
+            </button>
+            <a
+              href="/ttsd-checklist"
+              class="stat-card bg-gradient-to-br from-cyan-400 to-cyan-500 text-white rounded-xl shadow-lg p-4 block"
+            >
+              <i class="fas fa-clipboard-check text-2xl mb-2"></i>
+              <h3 class="font-bold text-sm">TTSD Checklist</h3>
+            </a>
+            <a
+              href="/reports"
+              class="stat-card bg-gradient-to-br from-teal-400 to-teal-500 text-white rounded-xl shadow-lg p-4 block"
+            >
+              <i class="fas fa-chart-bar text-2xl mb-2"></i>
+              <h3 class="font-bold text-sm">Reports</h3>
+            </a>
+            <a
+              href="/docs-report"
+              class="stat-card bg-gradient-to-br from-orange-400 to-orange-500 text-white rounded-xl shadow-lg p-4 block"
+            >
+              <i class="fas fa-file-alt text-2xl mb-2"></i>
+              <h3 class="font-bold text-sm">Doc Report</h3>
+            </a>
+            <a
+              href="/audit-logs"
+              class="stat-card bg-gradient-to-br from-gray-600 to-gray-700 text-white rounded-xl shadow-lg p-4 block"
+            >
+              <i class="fas fa-history text-2xl mb-2"></i>
+              <h3 class="font-bold text-sm">Audit Logs</h3>
+            </a>
+          </div>
         </div>
 
         <div id="tabVerify" class="hidden">
-            <div class="flex items-center mb-4"><button onclick="showDashboard()" class="text-gray-500 hover:text-gray-700 mr-3"><i class="fas fa-arrow-left text-xl"></i></button><h2 class="text-xl font-bold">Pending ATL Verifications</h2></div>
-            <div class="bg-white rounded-lg shadow p-3 mb-4">
-                <input type="text" id="pendingSearch" placeholder="Search plate, company..." class="w-full px-3 py-2 border rounded text-sm" oninput="filterPending()">
-            </div>
-            <div id="pendingATLs" class="space-y-3"></div>
+          <div class="flex items-center mb-4">
+            <button
+              onclick="showDashboard()"
+              class="text-gray-500 hover:text-gray-700 mr-3"
+            >
+              <i class="fas fa-arrow-left text-xl"></i>
+            </button>
+            <h2 class="text-xl font-bold">Pending ATL Verifications</h2>
+          </div>
+          <div class="bg-white rounded-lg shadow p-3 mb-4">
+            <input
+              type="text"
+              id="pendingSearch"
+              placeholder="Search plate, company..."
+              class="w-full px-3 py-2 border rounded text-sm"
+              oninput="filterPending()"
+            />
+          </div>
+          <div id="pendingATLs" class="space-y-3"></div>
         </div>
 
         <div id="tabLoading" class="hidden">
-            <div class="flex items-center mb-4"><button onclick="showDashboard()" class="text-gray-500 hover:text-gray-700 mr-3"><i class="fas fa-arrow-left text-xl"></i></button><h2 class="text-xl font-bold">Loading Management</h2></div>
-            <div class="mb-8"><h3 class="text-lg font-semibold text-orange-700 mb-3">Ongoing Loading</h3><div id="ongoingLoading" class="space-y-3"></div></div>
-            <div><h3 class="text-lg font-semibold text-blue-700 mb-3">Approved - Waiting</h3><div id="approvedForLoading" class="space-y-3"></div></div>
+          <div class="flex items-center mb-4">
+            <button
+              onclick="showDashboard()"
+              class="text-gray-500 hover:text-gray-700 mr-3"
+            >
+              <i class="fas fa-arrow-left text-xl"></i>
+            </button>
+            <h2 class="text-xl font-bold">Loading Management</h2>
+          </div>
+          <div class="mb-8">
+            <h3 class="text-lg font-semibold text-orange-700 mb-3">
+              Ongoing Loading
+            </h3>
+            <div id="ongoingLoading" class="space-y-3"></div>
+          </div>
+          <div>
+            <h3 class="text-lg font-semibold text-blue-700 mb-3">
+              Approved - Waiting
+            </h3>
+            <div id="approvedForLoading" class="space-y-3"></div>
+          </div>
         </div>
 
         <div id="tabTrucks" class="hidden">
-            <div class="flex items-center justify-between mb-4"><div class="flex items-center"><button onclick="showDashboard()" class="text-gray-500 hover:text-gray-700 mr-3"><i class="fas fa-arrow-left text-xl"></i></button><h2 class="text-xl font-bold">Truck Management</h2></div></div>
-            <div id="truckList"></div>
+          <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center">
+              <button
+                onclick="showDashboard()"
+                class="text-gray-500 hover:text-gray-700 mr-3"
+              >
+                <i class="fas fa-arrow-left text-xl"></i>
+              </button>
+              <h2 class="text-xl font-bold">Truck Management</h2>
+            </div>
+          </div>
+          <div id="truckList"></div>
         </div>
 
         <div id="tabClients" class="hidden">
-            <div class="flex items-center justify-between mb-4"><div class="flex items-center"><button onclick="showDashboard()" class="text-gray-500 hover:text-gray-700 mr-3"><i class="fas fa-arrow-left text-xl"></i></button><h2 class="text-xl font-bold">Client Management</h2></div><button onclick="showAddClient()" class="bg-green-600 text-white px-4 py-2 rounded text-sm">+ Add Client</button></div>
-            <div id="clientList"></div>
+          <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center">
+              <button
+                onclick="showDashboard()"
+                class="text-gray-500 hover:text-gray-700 mr-3"
+              >
+                <i class="fas fa-arrow-left text-xl"></i>
+              </button>
+              <h2 class="text-xl font-bold">Client Management</h2>
+            </div>
+            <button
+              onclick="showAddClient()"
+              class="bg-green-600 text-white px-4 py-2 rounded text-sm"
+            >
+              + Add Client
+            </button>
+          </div>
+          <div id="clientList"></div>
         </div>
+      </div>
     </div>
-</div>
 
-<div id="chatWidget" class="hidden fixed bottom-4 right-4 z-50 w-80 bg-white rounded-xl shadow-2xl border">
-    <div class="bg-blue-900 text-white p-3 rounded-t-xl flex justify-between items-center">
-        <span><i class="fas fa-comments mr-2"></i><span id="chatTitle">Chat</span></span>
+    <div
+      id="chatWidget"
+      class="hidden fixed bottom-4 right-4 z-50 w-80 bg-white rounded-xl shadow-2xl border"
+    >
+      <div
+        class="bg-blue-900 text-white p-3 rounded-t-xl flex justify-between items-center"
+      >
+        <span
+          ><i class="fas fa-comments mr-2"></i
+          ><span id="chatTitle">Chat</span></span
+        >
         <div>
-            <button onclick="showContactList()" class="text-white mr-2 text-sm"><i class="fas fa-users"></i></button>
-            <button onclick="closeChat()" class="text-white">&times;</button>
+          <button onclick="showContactList()" class="text-white mr-2 text-sm">
+            <i class="fas fa-users"></i>
+          </button>
+          <button onclick="closeChat()" class="text-white">&times;</button>
         </div>
+      </div>
+      <div id="contactList" class="h-64 overflow-y-auto">
+        <div class="p-3 text-center text-gray-400 text-sm">
+          Loading contacts...
+        </div>
+      </div>
+      <div
+        id="chatBody"
+        class="hidden h-64 overflow-y-auto p-3 space-y-2"
+      ></div>
+      <div id="chatInputArea" class="hidden p-2 border-t flex gap-2">
+        <input
+          type="text"
+          id="chatInput"
+          placeholder="Type message..."
+          class="flex-1 px-2 py-1 border rounded text-sm"
+          onkeypress="if (event.key === 'Enter') sendChat();"
+        />
+        <button
+          onclick="sendChat()"
+          class="bg-blue-900 text-white px-3 py-1 rounded text-sm"
+        >
+          <i class="fas fa-paper-plane"></i>
+        </button>
+      </div>
     </div>
-    <div id="contactList" class="h-64 overflow-y-auto"><div class="p-3 text-center text-gray-400 text-sm">Loading contacts...</div></div>
-    <div id="chatBody" class="hidden h-64 overflow-y-auto p-3 space-y-2"></div>
-    <div id="chatInputArea" class="hidden p-2 border-t flex gap-2">
-        <input type="text" id="chatInput" placeholder="Type message..." class="flex-1 px-2 py-1 border rounded text-sm" onkeypress="if(event.key==='Enter')sendChat()">
-        <button onclick="sendChat()" class="bg-blue-900 text-white px-3 py-1 rounded text-sm"><i class="fas fa-paper-plane"></i></button>
-    </div>
-</div>
-<button onclick="openChat()" class="fixed bottom-4 right-4 z-50 bg-blue-900 text-white p-3 rounded-full shadow-lg hover:bg-blue-800" id="chatButton">
-    <i class="fas fa-comments"></i>
-    <span id="unreadBadge" class="hidden absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">0</span>
-</button>
+    <button
+      onclick="openChat()"
+      class="fixed bottom-4 right-4 z-50 bg-blue-900 text-white p-3 rounded-full shadow-lg hover:bg-blue-800"
+      id="chatButton"
+    >
+      <i class="fas fa-comments"></i>
+      <span
+        id="unreadBadge"
+        class="hidden absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center"
+        >0</span
+      >
+    </button>
 
-<script>
-const API='/api';const token=localStorage.getItem('fueltrak_token');const user=JSON.parse(localStorage.getItem('fueltrak_user')||'{}');
-if(!token||!['dispatcher','management'].includes(user.role))window.location.replace('/');
-document.getElementById('userInfo').textContent=(user.email||'').split('@')[0].substring(0,3)+'***@'+(user.email||'').split('@')[1];
-document.getElementById('welcomeDate').textContent=new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
-
-async function api(url,method,body){method=method||'GET';var o={method,headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'}};if(body)o.body=JSON.stringify(body);var r=await fetch(API+url,o);return await r.json()}
-
-function showDashboard(){['tabVerify','tabLoading','tabTrucks','tabClients'].forEach(t=>document.getElementById(t).classList.add('hidden'));document.getElementById('dashboardView').classList.remove('hidden');loadDashboard()}
-
-function openTab(tab){document.getElementById('dashboardView').classList.add('hidden');['tabVerify','tabLoading','tabTrucks','tabClients'].forEach(t=>document.getElementById(t).classList.add('hidden'));var el=document.getElementById('tab'+tab.charAt(0).toUpperCase()+tab.slice(1));if(el)el.classList.remove('hidden');try{if(tab==='verify')loadPending();if(tab==='loading')loadApproved();if(tab==='trucks')loadTrucks();if(tab==='clients')loadClients()}catch(e){}}
-
-async function loadDashboard(){
-    var a=await api('/dispatch/enhanced-stats'),t=await api('/dispatch/truck-stats');
-    if(a.status==='success'){var s=a.data;
-        document.getElementById('atlStats').innerHTML=[
-            {label:'Pending',value:s.pending,gradient:'from-yellow-400 to-yellow-500'},
-            {label:'Approved',value:s.approved,gradient:'from-blue-400 to-blue-500'},
-            {label:'Loading',value:s.loading,gradient:'from-orange-400 to-orange-500'},
-            {label:'Completed',value:s.completed,gradient:'from-green-400 to-green-500'},
-            {label:'Today',value:s.loadedToday,gradient:'from-indigo-400 to-indigo-500'},
-            {label:'Today Vol',value:Math.round((s.todayVolume||0)/1000).toLocaleString()+'kL',gradient:'from-purple-400 to-purple-500' }
-        ].map(c=>`<div class="stat-card bg-gradient-to-br ${c.gradient} rounded-xl shadow-lg p-3 text-white"><p class="text-xs opacity-90">${c.label}</p><p class="text-2xl font-bold mt-1">${c.value}</p></div>`).join('');
-        var pb=document.getElementById('pendingBadge');if(s.pending>0){pb.textContent=s.pending>99?'99+':s.pending;pb.classList.remove('hidden')}else pb.classList.add('hidden');
-    }
-    if(t.status==='success'){var d=t.data;
-        document.getElementById('fleetStats').innerHTML=[
-            {label:'Total Trucks',value:d.total,sub:(d.active||0)+' active',border:'border-blue-500'},
-            {label:'Valid Docs',value:d.withValidDocs,border:'border-green-500'},
-            {label:'Expired',value:d.withExpiredDocs,border:'border-red-500'},
-            {label:'Capacity',value:((d.totalCapacity||0)/1000).toFixed(1)+'kL',border:'border-purple-500'}
-        ].map(c=>`<div class="stat-card bg-white rounded-xl shadow-lg p-3 border-l-4 ${c.border}"><p class="text-xs text-gray-500">${c.label}</p><p class="text-xl font-bold">${c.value}</p></div>`).join('');
-    }
-}
-
-var allPendingATLs=[];
-async function loadPending(){var d=await api('/dispatch/pending');if(d.status==='success'){allPendingATLs=d.data;filterPending()}}
-function filterPending(){var s=(document.getElementById('pendingSearch')?.value||'').toLowerCase();var f=allPendingATLs.filter(a=>!s||(a.plate_no||'').toLowerCase().includes(s)||(a.company||'').toLowerCase().includes(s)||(a.atl_code||'').toLowerCase().includes(s));document.getElementById('pendingATLs').innerHTML=f.map(a=>`<div class="bg-white rounded-lg shadow p-3 flex justify-between"><div><p class="font-bold text-sm">${a.atl_code||'N/A'} - ${a.plate_no}</p><p class="text-xs">${a.company||''} | SO: ${a.so_number||'N/A'} | Date: ${a.scheduled_date?new Date(a.scheduled_date).toLocaleDateString():'N/A'} | Vol: ${a.volume||'N/A'}L | ${a.driver_name}</p></div><div class="flex space-x-2"><button onclick="verifyATL(${a.id},'approve')" class="bg-green-500 text-white px-2 py-1 rounded text-xs">Approve</button><button onclick="verifyATL(${a.id},'reject')" class="bg-red-500 text-white px-2 py-1 rounded text-xs">Reject</button></div></div>`).join('')||'<p class="text-gray-500 text-center py-8">No pending ATLs</p>'}
-async function verifyATL(id,action){if(!confirm(action==='approve'?'Approve?':'Reject?'))return;await api('/dispatch/verify/'+id,'POST',{action,remarks:prompt('Remarks:')||''});loadPending();loadDashboard()}
-
-async function loadApproved(){
-    var o=await api('/dispatch/ongoing-loading');
-    document.getElementById('ongoingLoading').innerHTML=o.status==='success'?o.data.map(a=>`<div class="bg-orange-50 border-l-4 border-orange-500 rounded-lg shadow p-3 flex justify-between"><div><p class="font-bold text-sm">${a.atl_code} - ${a.plate_no} - ${a.driver_name}</p><p class="text-xs">${a.company} | SO: ${a.so_number||'N/A'} | ${a.driver_name}</p><p class="text-xs">Date: ${a.dispatch_date?new Date(a.dispatch_date).toLocaleDateString():'N/A'} | Vol: ${a.volume?Number(a.volume).toLocaleString()+'L':'N/A'}</p></div><div class="flex space-x-1"><button onclick="completeLoading(${a.id})" class="bg-green-500 text-white px-2 py-1 rounded text-xs">Done</button></div></div>`).join('')||'<p class="text-gray-500 text-center py-4">No ongoing loading</p>':'';
-    var w=await api('/dispatch/approved-for-loading');
-    document.getElementById('approvedForLoading').innerHTML=w.status==='success'?w.data.map(a=>`<div class="bg-white rounded-lg shadow p-3 flex justify-between"><div><p class="font-bold text-sm">${a.atl_code} - ${a.plate_no} - ${a.driver_name}</p><p class="text-xs">${a.company||''} | SO: ${a.so_number||'N/A'} | Date: ${a.scheduled_date?new Date(a.scheduled_date).toLocaleDateString():'N/A'} | Vol: ${a.volume?Number(a.volume).toLocaleString()+'L':'N/A'}</p></div><button onclick="startLoading(${a.id})" class="bg-orange-500 text-white px-3 py-1 rounded text-xs">Start</button></div>`).join('')||'<p class="text-gray-500 text-center py-4">None waiting</p>':'';
-}
-
-async function startLoading(id){if(!confirm('Start loading?'))return;await api('/dispatch/start-loading/'+id,'POST');loadApproved();loadDashboard()}
-async function completeLoading(id){var v=prompt('Actual volume (L):');if(!v)return;await api('/dispatch/complete-loading/'+id,'POST',{actual_volume:v});loadApproved();loadDashboard()}
-
-async function loadTrucks(){var d=await api('/truck-masterlist-all');if(d.status==='success'){document.getElementById('truckList').innerHTML='<div class="table-wrap"><table class="w-full text-sm bg-white rounded-lg shadow"><thead class="bg-gray-50"><tr><th class="py-2 px-3">Plate</th><th class="py-2 px-3">Driver</th><th class="py-2 px-3">Hauler</th></tr></thead><tbody>'+d.data.slice(0,50).map(t=>`<tr class="border-b"><td class="py-2 px-3 font-semibold">${t.plate_no}</td><td class="py-2 px-3">${(t.driver_name||'').replace(/"/g,'')}</td><td class="py-2 px-3">${t.hauler_name||''}</td></tr>`).join('')+'</tbody></table></div>'}}
-
-async function loadClients(){var d=await api('/clients');if(d.status==='success'){document.getElementById('clientList').innerHTML='<div class="table-wrap"><table class="w-full text-sm bg-white rounded-lg shadow"><thead class="bg-gray-50"><tr><th class="py-2 px-3">Company</th><th class="py-2 px-3">Email</th><th class="py-2 px-3">Mobile</th><th class="py-2 px-3">ATLs</th><th class="py-2 px-3">Actions</th></tr></thead><tbody>'+d.data.map(c=>'<tr class="border-b"><td class="py-2 px-3 font-semibold">'+(c.company_name||'-')+'</td><td class="py-2 px-3">'+c.email+'</td><td class="py-2 px-3">'+c.mobile+'</td><td class="py-2 px-3 text-center">'+c.total_atls+'</td><td class="py-2 px-3"><div class="flex space-x-2 justify-center"><button onclick="editClient('+c.id+')" class="text-blue-600"><i class="fas fa-edit"></i></button>'+(c.is_active?'<button onclick="toggleClient('+c.id+')" class="text-orange-600"><i class="fas fa-ban"></i></button>':'<button onclick="toggleClient('+c.id+')" class="text-green-600"><i class="fas fa-check"></i></button>')+'<button onclick="deleteClient('+c.id+',\''+c.email+'\')" class="text-red-600"><i class="fas fa-trash"></i></button></div></td></tr>').join('')+'</tbody></table></div>'}}
-
-function showAddClient(){document.getElementById('editClientId').value='';document.getElementById('clientModalTitle').textContent='Add Client';['clientEmail','clientMobile','clientCompany','clientPassword'].forEach(id=>document.getElementById(id).value='');document.getElementById('clientModal').classList.remove('hidden');}
-function closeClientModal(){document.getElementById('clientModal').classList.add('hidden');}
-async function editClient(id){var d=await api('/clients/'+id);if(d.status==='success'){var c=d.data;document.getElementById('editClientId').value=c.id;document.getElementById('clientModalTitle').textContent='Edit Client';document.getElementById('clientEmail').value=c.email;document.getElementById('clientMobile').value=c.mobile;document.getElementById('clientCompany').value=c.company_name||'';document.getElementById('clientPassword').value='';document.getElementById('clientModal').classList.remove('hidden');}}
-async function saveClient(e){e.preventDefault();var id=document.getElementById('editClientId').value;var body={email:document.getElementById('clientEmail').value,mobile:document.getElementById('clientMobile').value,company_name:document.getElementById('clientCompany').value};var pw=document.getElementById('clientPassword').value;if(pw)body.password=pw;var url=id?'/clients/'+id:'/clients';var method=id?'PUT':'POST';var d=await api(url,method,body);if(d.status==='success'){closeClientModal();loadClients();}else alert(d.error||'Error');}
-async function toggleClient(id){await api('/clients/'+id+'/toggle-status','PATCH');loadClients();}
-async function deleteClient(id,email){if(!confirm('Delete '+email+'?'))return;await api('/clients/'+id,'DELETE');loadClients();}
-
-var currentChatUser=null,currentChatName='',chatInterval=null,contactList=[];
-async function openChat(){
-    document.getElementById('chatWidget').classList.remove('hidden');
-    document.getElementById('chatButton').classList.add('hidden');
-    document.getElementById('unreadBadge').classList.add('hidden');
-    loadContactList();
-}
-function showContactList(){document.getElementById('contactList').classList.remove('hidden');document.getElementById('chatBody').classList.add('hidden');document.getElementById('chatInputArea').classList.add('hidden');document.getElementById('chatTitle').textContent='Chat';currentChatUser=null;loadContactList();}
-async function loadContactList(){var r=await fetch('/api/chat-list',{headers:{'Authorization':'Bearer '+token}});var d=await r.json();if(d.status==='success'){contactList=d.data;var h='';contactList.forEach(function(c){h+='<div onclick="startChat('+c.id+',\''+(c.email||c.company_name)+'\')" class="flex items-center p-3 hover:bg-gray-50 cursor-pointer border-b"><div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3"><i class="fas fa-user text-blue-600 text-sm"></i></div><div class="flex-1"><p class="text-sm font-semibold">'+(c.company_name||c.email)+'</p><p class="text-xs text-gray-400">'+(c.email||'')+'</p></div><div class="w-2 h-2 bg-green-400 rounded-full" title="Online"></div></div>'});document.getElementById('contactList').innerHTML=h||'<p class="p-3 text-center text-gray-400 text-sm">No contacts</p>';}}
-function startChat(id,name){currentChatUser=id;currentChatName=name;document.getElementById('chatTitle').textContent=name;document.getElementById('contactList').classList.add('hidden');document.getElementById('chatBody').classList.remove('hidden');document.getElementById('chatInputArea').classList.remove('hidden');loadChatMessages();if(chatInterval)clearInterval(chatInterval);chatInterval=setInterval(loadChatMessages,10000);}
-async function loadChatMessages(){
-    if(!currentChatUser)return;
-    var r=await fetch('/api/chat/'+currentChatUser,{headers:{'Authorization':'Bearer '+token}});
-    var d=await r.json();
-    if(d.status==='success'){
-        var h='';
-        var newMessages=0;
-        var lastSender='';
-        d.data.forEach(function(m){
-            var isMe=m.sender_id==user.id;
-            if(!isMe) { newMessages++; lastSender=m.sender_email||'Client'; }
-            h+='<div class="'+(isMe?'text-right':'text-left')+' mb-2"><div class="inline-block '+(isMe?'bg-blue-100':'bg-gray-100')+' rounded-lg px-3 py-1.5 text-sm max-w-[80%]"><p class="text-[10px] text-gray-500">'+(isMe?'You':currentChatName)+'</p><p>'+m.message+'</p><p class="text-[9px] text-gray-400 text-right">'+new Date(m.created_at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})+'</p></div></div>';
+    <script>
+      const API = "/api";
+      const token = localStorage.getItem("fueltrak_token");
+      const user = JSON.parse(localStorage.getItem("fueltrak_user") || "{}");
+      if (!token || !["dispatcher", "management"].includes(user.role))
+        window.location.replace("/");
+      document.getElementById("userInfo").textContent =
+        (user.email || "").split("@")[0].substring(0, 3) +
+        "***@" +
+        (user.email || "").split("@")[1];
+      document.getElementById("welcomeDate").textContent =
+        new Date().toLocaleDateString("en-US", {
+          weekday: "long",
+          year: "numeric",
+          month: "long",
+          day: "numeric",
         });
-        document.getElementById('chatBody').innerHTML=h||'<p class="text-center text-gray-400 text-sm pt-10">Start the conversation!</p>';
-        document.getElementById('chatBody').scrollTop=document.getElementById('chatBody').scrollHeight;
-        
-        // Update notification badge if chat is closed
-        if(newMessages>0 && document.getElementById('chatWidget').classList.contains('hidden')){
-            var badge=document.getElementById('unreadBadge');
-            badge.textContent=newMessages;
-            badge.classList.remove('hidden');
-            badge.title='New messages from '+lastSender;
-        }
-    }
-}
-async function sendChat(){var i=document.getElementById('chatInput');var m=i.value.trim();if(!m||!currentChatUser)return;i.value='';await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({receiver_id:currentChatUser,message:m})});loadChatMessages();}
-function closeChat(){document.getElementById('chatWidget').classList.add('hidden');document.getElementById('chatButton').classList.remove('hidden');}
 
-// Background chat polling for notifications - runs every 15 seconds
-setInterval(async function(){
-    if(document.getElementById('chatWidget').classList.contains('hidden') && currentChatUser){
-        var r=await fetch('/api/chat/'+currentChatUser,{headers:{'Authorization':'Bearer '+token}});
-        var d=await r.json();
-        if(d.status==='success'){
-            var newMsg=0;
-            d.data.forEach(function(m){if(m.sender_id!=user.id)newMsg++;});
-            if(newMsg>0){
-                var badge=document.getElementById('unreadBadge');
-                badge.textContent=newMsg>9?'9+':newMsg;
-                badge.classList.remove('hidden');
+      async function api(url, method, body) {
+        method = method || "GET";
+        var o = {
+          method,
+          headers: {
+            Authorization: "Bearer " + token,
+            "Content-Type": "application/json",
+          },
+        };
+        if (body) o.body = JSON.stringify(body);
+        var r = await fetch(API + url, o);
+        return await r.json();
+      }
+
+      function showDashboard() {
+        ["tabVerify", "tabLoading", "tabTrucks", "tabClients"].forEach((t) =>
+          document.getElementById(t).classList.add("hidden"),
+        );
+        document.getElementById("dashboardView").classList.remove("hidden");
+        loadDashboard();
+      }
+
+      function openTab(tab) {
+        document.getElementById("dashboardView").classList.add("hidden");
+        ["tabVerify", "tabLoading", "tabTrucks", "tabClients"].forEach((t) =>
+          document.getElementById(t).classList.add("hidden"),
+        );
+        var el = document.getElementById(
+          "tab" + tab.charAt(0).toUpperCase() + tab.slice(1),
+        );
+        if (el) el.classList.remove("hidden");
+        try {
+          if (tab === "verify") loadPending();
+          if (tab === "loading") loadApproved();
+          if (tab === "trucks") loadTrucks();
+          if (tab === "clients") loadClients();
+        } catch (e) {}
+      }
+
+      async function loadDashboard() {
+        var a = await api("/dispatch/enhanced-stats"),
+          t = await api("/dispatch/truck-stats");
+        if (a.status === "success") {
+          var s = a.data;
+          document.getElementById("atlStats").innerHTML = [
+            {
+              label: "Pending",
+              value: s.pending,
+              gradient: "from-yellow-400 to-yellow-500",
+            },
+            {
+              label: "Approved",
+              value: s.approved,
+              gradient: "from-blue-400 to-blue-500",
+            },
+            {
+              label: "Loading",
+              value: s.loading,
+              gradient: "from-orange-400 to-orange-500",
+            },
+            {
+              label: "Completed",
+              value: s.completed,
+              gradient: "from-green-400 to-green-500",
+            },
+            {
+              label: "Today",
+              value: s.loadedToday,
+              gradient: "from-indigo-400 to-indigo-500",
+            },
+            {
+              label: "Today Vol",
+              value:
+                Math.round((s.todayVolume || 0) / 1000).toLocaleString() + "kL",
+              gradient: "from-purple-400 to-purple-500",
+            },
+          ]
+            .map(
+              (c) =>
+                `<div class="stat-card bg-gradient-to-br ${c.gradient} rounded-xl shadow-lg p-3 text-white"><p class="text-xs opacity-90">${c.label}</p><p class="text-2xl font-bold mt-1">${c.value}</p></div>`,
+            )
+            .join("");
+          var pb = document.getElementById("pendingBadge");
+          if (s.pending > 0) {
+            pb.textContent = s.pending > 99 ? "99+" : s.pending;
+            pb.classList.remove("hidden");
+          } else pb.classList.add("hidden");
+        }
+        if (t.status === "success") {
+          var d = t.data;
+          document.getElementById("fleetStats").innerHTML = [
+            {
+              label: "Total Trucks",
+              value: d.total,
+              sub: (d.active || 0) + " active",
+              border: "border-blue-500",
+            },
+            {
+              label: "Valid Docs",
+              value: d.withValidDocs,
+              border: "border-green-500",
+            },
+            {
+              label: "Expired",
+              value: d.withExpiredDocs,
+              border: "border-red-500",
+            },
+            {
+              label: "Capacity",
+              value: ((d.totalCapacity || 0) / 1000).toFixed(1) + "kL",
+              border: "border-purple-500",
+            },
+          ]
+            .map(
+              (c) =>
+                `<div class="stat-card bg-white rounded-xl shadow-lg p-3 border-l-4 ${c.border}"><p class="text-xs text-gray-500">${c.label}</p><p class="text-xl font-bold">${c.value}</p></div>`,
+            )
+            .join("");
+        }
+      }
+
+      var allPendingATLs = [];
+      async function loadPending() {
+        var d = await api("/dispatch/pending");
+        if (d.status === "success") {
+          allPendingATLs = d.data;
+          filterPending();
+        }
+      }
+      function filterPending() {
+        var s = (
+          document.getElementById("pendingSearch")?.value || ""
+        ).toLowerCase();
+        var f = allPendingATLs.filter(
+          (a) =>
+            !s ||
+            (a.plate_no || "").toLowerCase().includes(s) ||
+            (a.company || "").toLowerCase().includes(s) ||
+            (a.atl_code || "").toLowerCase().includes(s),
+        );
+        document.getElementById("pendingATLs").innerHTML =
+          f
+            .map(
+              (a) =>
+                `<div class="bg-white rounded-lg shadow p-3 flex justify-between"><div><p class="font-bold text-sm">${a.atl_code || "N/A"} - ${a.plate_no}</p><p class="text-xs">${a.company || ""} | SO: ${a.so_number || "N/A"} | Date: ${a.scheduled_date ? new Date(a.scheduled_date).toLocaleDateString() : "N/A"} | Vol: ${a.volume || "N/A"}L | ${a.driver_name}</p></div><div class="flex space-x-2"><button onclick="verifyATL(${a.id},'approve')" class="bg-green-500 text-white px-2 py-1 rounded text-xs">Approve</button><button onclick="verifyATL(${a.id},'reject')" class="bg-red-500 text-white px-2 py-1 rounded text-xs">Reject</button></div></div>`,
+            )
+            .join("") ||
+          '<p class="text-gray-500 text-center py-8">No pending ATLs</p>';
+      }
+      async function verifyATL(id, action) {
+        if (!confirm(action === "approve" ? "Approve?" : "Reject?")) return;
+        await api("/dispatch/verify/" + id, "POST", {
+          action,
+          remarks: prompt("Remarks:") || "",
+        });
+        loadPending();
+        loadDashboard();
+      }
+
+      async function loadApproved() {
+        var o = await api("/dispatch/ongoing-loading");
+        document.getElementById("ongoingLoading").innerHTML =
+          o.status === "success"
+            ? o.data
+                .map(
+                  (a) =>
+                    `<div class="bg-orange-50 border-l-4 border-orange-500 rounded-lg shadow p-3 flex justify-between"><div><p class="font-bold text-sm">${a.atl_code} - ${a.plate_no} - ${a.driver_name}</p><p class="text-xs">${a.company} | SO: ${a.so_number || "N/A"} | ${a.driver_name}</p><p class="text-xs">Date: ${a.dispatch_date ? new Date(a.dispatch_date).toLocaleDateString() : "N/A"} | Vol: ${a.volume ? Number(a.volume).toLocaleString() + "L" : "N/A"}</p></div><div class="flex space-x-1"><button onclick="completeLoading(${a.id})" class="bg-green-500 text-white px-2 py-1 rounded text-xs">Done</button></div></div>`,
+                )
+                .join("") ||
+              '<p class="text-gray-500 text-center py-4">No ongoing loading</p>'
+            : "";
+        var w = await api("/dispatch/approved-for-loading");
+        document.getElementById("approvedForLoading").innerHTML =
+          w.status === "success"
+            ? w.data
+                .map(
+                  (a) =>
+                    `<div class="bg-white rounded-lg shadow p-3 flex justify-between"><div><p class="font-bold text-sm">${a.atl_code} - ${a.plate_no} - ${a.driver_name}</p><p class="text-xs">${a.company || ""} | SO: ${a.so_number || "N/A"} | Date: ${a.scheduled_date ? new Date(a.scheduled_date).toLocaleDateString() : "N/A"} | Vol: ${a.volume ? Number(a.volume).toLocaleString() + "L" : "N/A"}</p></div><button onclick="startLoading(${a.id})" class="bg-orange-500 text-white px-3 py-1 rounded text-xs">Start</button></div>`,
+                )
+                .join("") ||
+              '<p class="text-gray-500 text-center py-4">None waiting</p>'
+            : "";
+      }
+
+      async function startLoading(id) {
+        if (!confirm("Start loading?")) return;
+        await api("/dispatch/start-loading/" + id, "POST");
+        loadApproved();
+        loadDashboard();
+      }
+      async function completeLoading(id) {
+        var v = prompt("Actual volume (L):");
+        if (!v) return;
+        await api("/dispatch/complete-loading/" + id, "POST", {
+          actual_volume: v,
+        });
+        loadApproved();
+        loadDashboard();
+      }
+
+      async function loadTrucks() {
+        var d = await api("/truck-masterlist-all");
+        if (d.status === "success") {
+          document.getElementById("truckList").innerHTML =
+            '<div class="table-wrap"><table class="w-full text-sm bg-white rounded-lg shadow"><thead class="bg-gray-50"><tr><th class="py-2 px-3">Plate</th><th class="py-2 px-3">Driver</th><th class="py-2 px-3">Hauler</th></tr></thead><tbody>' +
+            d.data
+              .slice(0, 50)
+              .map(
+                (t) =>
+                  `<tr class="border-b"><td class="py-2 px-3 font-semibold">${t.plate_no}</td><td class="py-2 px-3">${(t.driver_name || "").replace(/"/g, "")}</td><td class="py-2 px-3">${t.hauler_name || ""}</td></tr>`,
+              )
+              .join("") +
+            "</tbody></table></div>";
+        }
+      }
+
+      async function loadClients() {
+        var d = await api("/clients");
+        if (d.status === "success") {
+          document.getElementById("clientList").innerHTML =
+            '<div class="table-wrap"><table class="w-full text-sm bg-white rounded-lg shadow"><thead class="bg-gray-50"><tr><th class="py-2 px-3">Company</th><th class="py-2 px-3">Email</th><th class="py-2 px-3">Mobile</th><th class="py-2 px-3">ATLs</th><th class="py-2 px-3">Actions</th></tr></thead><tbody>' +
+            d.data
+              .map(
+                (c) =>
+                  '<tr class="border-b"><td class="py-2 px-3 font-semibold">' +
+                  (c.company_name || "-") +
+                  '</td><td class="py-2 px-3">' +
+                  c.email +
+                  '</td><td class="py-2 px-3">' +
+                  c.mobile +
+                  '</td><td class="py-2 px-3 text-center">' +
+                  c.total_atls +
+                  '</td><td class="py-2 px-3"><div class="flex space-x-2 justify-center"><button onclick="editClient(' +
+                  c.id +
+                  ')" class="text-blue-600"><i class="fas fa-edit"></i></button>' +
+                  (c.is_active
+                    ? '<button onclick="toggleClient(' +
+                      c.id +
+                      ')" class="text-orange-600"><i class="fas fa-ban"></i></button>'
+                    : '<button onclick="toggleClient(' +
+                      c.id +
+                      ')" class="text-green-600"><i class="fas fa-check"></i></button>') +
+                  '<button onclick="deleteClient(' +
+                  c.id +
+                  ",'" +
+                  c.email +
+                  '\')" class="text-red-600"><i class="fas fa-trash"></i></button></div></td></tr>',
+              )
+              .join("") +
+            "</tbody></table></div>";
+        }
+      }
+
+      function showAddClient() {
+        document.getElementById("editClientId").value = "";
+        document.getElementById("clientModalTitle").textContent = "Add Client";
+        [
+          "clientEmail",
+          "clientMobile",
+          "clientCompany",
+          "clientPassword",
+        ].forEach((id) => (document.getElementById(id).value = ""));
+        document.getElementById("clientModal").classList.remove("hidden");
+      }
+      function closeClientModal() {
+        document.getElementById("clientModal").classList.add("hidden");
+      }
+      async function editClient(id) {
+        var d = await api("/clients/" + id);
+        if (d.status === "success") {
+          var c = d.data;
+          document.getElementById("editClientId").value = c.id;
+          document.getElementById("clientModalTitle").textContent =
+            "Edit Client";
+          document.getElementById("clientEmail").value = c.email;
+          document.getElementById("clientMobile").value = c.mobile;
+          document.getElementById("clientCompany").value = c.company_name || "";
+          document.getElementById("clientPassword").value = "";
+          document.getElementById("clientModal").classList.remove("hidden");
+        }
+      }
+      async function saveClient(e) {
+        e.preventDefault();
+        var id = document.getElementById("editClientId").value;
+        var body = {
+          email: document.getElementById("clientEmail").value,
+          mobile: document.getElementById("clientMobile").value,
+          company_name: document.getElementById("clientCompany").value,
+        };
+        var pw = document.getElementById("clientPassword").value;
+        if (pw) body.password = pw;
+        var url = id ? "/clients/" + id : "/clients";
+        var method = id ? "PUT" : "POST";
+        var d = await api(url, method, body);
+        if (d.status === "success") {
+          closeClientModal();
+          loadClients();
+        } else alert(d.error || "Error");
+      }
+      async function toggleClient(id) {
+        await api("/clients/" + id + "/toggle-status", "PATCH");
+        loadClients();
+      }
+      async function deleteClient(id, email) {
+        if (!confirm("Delete " + email + "?")) return;
+        await api("/clients/" + id, "DELETE");
+        loadClients();
+      }
+
+      var currentChatUser = null,
+        currentChatName = "",
+        chatInterval = null,
+        contactList = [];
+      async function openChat() {
+        document.getElementById("chatWidget").classList.remove("hidden");
+        document.getElementById("chatButton").classList.add("hidden");
+        document.getElementById("unreadBadge").classList.add("hidden");
+        loadContactList();
+      }
+      function showContactList() {
+        document.getElementById("contactList").classList.remove("hidden");
+        document.getElementById("chatBody").classList.add("hidden");
+        document.getElementById("chatInputArea").classList.add("hidden");
+        document.getElementById("chatTitle").textContent = "Chat";
+        currentChatUser = null;
+        loadContactList();
+      }
+      async function loadContactList() {
+        var r = await fetch("/api/chat-list", {
+          headers: { Authorization: "Bearer " + token },
+        });
+        var d = await r.json();
+        if (d.status === "success") {
+          contactList = d.data;
+          var h = "";
+          contactList.forEach(function (c) {
+            h +=
+              '<div onclick="startChat(' +
+              c.id +
+              ",'" +
+              (c.email || c.company_name) +
+              '\')" class="flex items-center p-3 hover:bg-gray-50 cursor-pointer border-b"><div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3"><i class="fas fa-user text-blue-600 text-sm"></i></div><div class="flex-1"><p class="text-sm font-semibold">' +
+              (c.company_name || c.email) +
+              '</p><p class="text-xs text-gray-400">' +
+              (c.email || "") +
+              '</p></div><div class="w-2 h-2 bg-green-400 rounded-full" title="Online"></div></div>';
+          });
+          document.getElementById("contactList").innerHTML =
+            h ||
+            '<p class="p-3 text-center text-gray-400 text-sm">No contacts</p>';
+        }
+      }
+      function startChat(id, name) {
+        currentChatUser = id;
+        currentChatName = name;
+        document.getElementById("chatTitle").textContent = name;
+        document.getElementById("contactList").classList.add("hidden");
+        document.getElementById("chatBody").classList.remove("hidden");
+        document.getElementById("chatInputArea").classList.remove("hidden");
+        loadChatMessages();
+        if (chatInterval) clearInterval(chatInterval);
+        chatInterval = setInterval(loadChatMessages, 10000);
+      }
+      async function loadChatMessages() {
+        if (!currentChatUser) return;
+        var r = await fetch("/api/chat/" + currentChatUser, {
+          headers: { Authorization: "Bearer " + token },
+        });
+        var d = await r.json();
+        if (d.status === "success") {
+          var h = "";
+          var newMessages = 0;
+          var lastSender = "";
+          d.data.forEach(function (m) {
+            var isMe = m.sender_id == user.id;
+            if (!isMe) {
+              newMessages++;
+              lastSender = m.sender_email || "Client";
             }
+            h +=
+              '<div class="' +
+              (isMe ? "text-right" : "text-left") +
+              ' mb-2"><div class="inline-block ' +
+              (isMe ? "bg-blue-100" : "bg-gray-100") +
+              ' rounded-lg px-3 py-1.5 text-sm max-w-[80%]"><p class="text-[10px] text-gray-500">' +
+              (isMe ? "You" : currentChatName) +
+              "</p><p>" +
+              m.message +
+              '</p><p class="text-[9px] text-gray-400 text-right">' +
+              new Date(m.created_at).toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+              }) +
+              "</p></div></div>";
+          });
+          document.getElementById("chatBody").innerHTML =
+            h ||
+            '<p class="text-center text-gray-400 text-sm pt-10">Start the conversation!</p>';
+          document.getElementById("chatBody").scrollTop =
+            document.getElementById("chatBody").scrollHeight;
+
+          // Update notification badge if chat is closed
+          if (
+            newMessages > 0 &&
+            document.getElementById("chatWidget").classList.contains("hidden")
+          ) {
+            var badge = document.getElementById("unreadBadge");
+            badge.textContent = newMessages;
+            badge.classList.remove("hidden");
+            badge.title = "New messages from " + lastSender;
+          }
         }
-    }
-},15000);
+      }
+      async function sendChat() {
+        var i = document.getElementById("chatInput");
+        var m = i.value.trim();
+        if (!m || !currentChatUser) return;
+        i.value = "";
+        await fetch("/api/chat", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + token,
+          },
+          body: JSON.stringify({ receiver_id: currentChatUser, message: m }),
+        });
+        loadChatMessages();
+      }
+      function closeChat() {
+        document.getElementById("chatWidget").classList.add("hidden");
+        document.getElementById("chatButton").classList.remove("hidden");
+      }
 
-function toggleSidebar(){var s=document.getElementById("sidebar");s.classList.toggle("open");document.getElementById("sidebarOverlay").classList.toggle("hidden")}
-async function logout(){try{await fetch('/api/auth/logout',{method:'POST',headers:{'Authorization':'Bearer '+localStorage.getItem('fueltrak_token')}})}catch(e){}localStorage.clear();window.location.href='/'}
-loadDashboard();
-setInterval(async function(){if(document.getElementById('chatWidget').classList.contains('hidden')&&currentChatUser){try{var r=await fetch('/api/chat/'+currentChatUser,{headers:{'Authorization':'Bearer '+token}});var d=await r.json();if(d.status==='success'){var c=0;d.data.forEach(function(m){if(m.sender_id!=user.id)c++;});if(c>0){var b=document.getElementById('unreadBadge');b.textContent=c>9?'9+':c;b.classList.remove('hidden');}}}catch(e){}}},20000);
-</script>
-</body>
+      // Background chat polling for notifications - runs every 15 seconds
+      setInterval(async function () {
+        if (
+          document.getElementById("chatWidget").classList.contains("hidden") &&
+          currentChatUser
+        ) {
+          var r = await fetch("/api/chat/" + currentChatUser, {
+            headers: { Authorization: "Bearer " + token },
+          });
+          var d = await r.json();
+          if (d.status === "success") {
+            var newMsg = 0;
+            d.data.forEach(function (m) {
+              if (m.sender_id != user.id) newMsg++;
+            });
+            if (newMsg > 0) {
+              var badge = document.getElementById("unreadBadge");
+              badge.textContent = newMsg > 9 ? "9+" : newMsg;
+              badge.classList.remove("hidden");
+            }
+          }
+        }
+      }, 15000);
+
+      function toggleSidebar() {
+        var s = document.getElementById("sidebar");
+        s.classList.toggle("open");
+        document.getElementById("sidebarOverlay").classList.toggle("hidden");
+      }
+      async function logout() {
+        try {
+          await fetch("/api/auth/logout", {
+            method: "POST",
+            headers: {
+              Authorization: "Bearer " + localStorage.getItem("fueltrak_token"),
+            },
+          });
+        } catch (e) {}
+        localStorage.clear();
+        window.location.href = "/";
+      }
+      loadDashboard();
+      setInterval(async function () {
+        if (
+          document.getElementById("chatWidget").classList.contains("hidden") &&
+          currentChatUser
+        ) {
+          try {
+            var r = await fetch("/api/chat/" + currentChatUser, {
+              headers: { Authorization: "Bearer " + token },
+            });
+            var d = await r.json();
+            if (d.status === "success") {
+              var c = 0;
+              d.data.forEach(function (m) {
+                if (m.sender_id != user.id) c++;
+              });
+              if (c > 0) {
+                var b = document.getElementById("unreadBadge");
+                b.textContent = c > 9 ? "9+" : c;
+                b.classList.remove("hidden");
+              }
+            }
+          } catch (e) {}
+        }
+      }, 20000);
+    </script>
+  </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
