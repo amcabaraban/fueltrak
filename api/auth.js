@@ -1010,6 +1010,20 @@ app.get('/api/atl/summary', authenticate, async (req, res) => {
   } catch (error) { res.status(500).json({ error: error.message }); }
 });
 
+// Get unread message count for current user
+app.get('/api/chat/unread', authenticate, async (req, res) => {
+  try {
+    const [result] = await pool.execute(
+      `SELECT COUNT(*) as unread FROM chat_messages 
+       WHERE receiver_id = ? AND created_at > COALESCE(
+         (SELECT last_read FROM chat_reads WHERE user_id = ?), '1970-01-01'
+       )`,
+      [req.user.id, req.user.id]
+    );
+    res.json({ status: 'success', unread: result[0].unread });
+  } catch (error) { res.status(500).json({ error: error.message }); }
+});
+
 // ============ LOGOUT ============
 app.post('/api/auth/logout', authenticate, async (req, res) => {
   try { const t = req.header('Authorization')?.replace('Bearer ', ''); if(t){tokenBlacklist.add(t); await pool.execute('UPDATE users SET current_token = NULL WHERE id = ?',[req.user.id]);} await logAudit(req.user.id,'LOGOUT','users',req.user.id,{email:req.user.email}); res.json({status:'success',message:'Logged out'}); }
@@ -1046,33 +1060,3 @@ app.get('/tutorial', (req, res) => res.sendFile(path.join(__dirname, '..', 'publ
 app.get('/audit-logs', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'audit-logs.html')));
 
 module.exports = app;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
