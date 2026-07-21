@@ -8,20 +8,20 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
     <style>
-        @media print{body{background:white!important}nav,.no-print,#sidebar,#sidebarOverlay{display:none!important}#printArea{display:block!important;padding:20px}#printArea table{inline-size:100%;border-collapse:collapse;font-size:9px}#printArea th,#printArea td{border:1px solid #ddd;padding:2px 4px}#printArea th{background:#f0f0f0!important}body{padding-inline-start:0!important}}
+        @media print{body{background:white!important}nav,.no-print,#sidebar,#sidebarOverlay{display:none!important}#printArea{display:block!important;padding:20px}#printArea table{width:100%;border-collapse:collapse;font-size:9px}#printArea th,#printArea td{border:1px solid #ddd;padding:2px 4px}#printArea th{background:#f0f0f0!important}body{padding-left:0!important}}
         .print-only{display:none}@media print{.print-only{display:block}}
         th{cursor:pointer;user-select:none;white-space:nowrap;font-size:11px}
         th.sort-asc::after{content:' ?';font-size:9px}
         th.sort-desc::after{content:' ?';font-size:9px}
         #sidebar{transition:transform 0.3s}
-        @media(max-inline-size:767px){#sidebar{display:none!important}#sidebarOverlay{display:none!important}body{padding-inline-start:0!important;padding-block-end:70px}.mobile-bottom-nav{display:flex!important}}
-        @media(min-inline-size:768px){body{padding-inline-start:176px}.mobile-bottom-nav{display:none!important}}
-        .mobile-bottom-nav{display:none;position:fixed;inset-block-end:0;inset-inline-start:0;inset-inline-end:0;background:#1e3a5f;color:white;z-index:50;justify-content:space-around;padding:6px 0;box-shadow:0 -2px 10px rgba(0,0,0,0.3)}
+        @media(max-width:767px){#sidebar{display:none!important}#sidebarOverlay{display:none!important}body{padding-left:0!important;padding-bottom:70px}.mobile-bottom-nav{display:flex!important}}
+        @media(min-width:768px){body{padding-left:176px}.mobile-bottom-nav{display:none!important}}
+        .mobile-bottom-nav{display:flex;position:fixed;bottom:0;left:0;right:0;background:#1e3a5f;color:white;z-index:50;justify-content:space-around;padding:6px 0;box-shadow:0 -2px 10px rgba(0,0,0,0.3)}
         .mobile-bottom-nav a,.mobile-bottom-nav button{display:flex;flex-direction:column;align-items:center;color:#93a3bc;font-size:10px;text-decoration:none;padding:4px;background:none;border:none;cursor:pointer}
-        .mobile-bottom-nav a i,.mobile-bottom-nav button i{font-size:18px;margin-block-end:2px}
+        .mobile-bottom-nav a i,.mobile-bottom-nav button i{font-size:18px;margin-bottom:2px}
         .mobile-bottom-nav a.active,.mobile-bottom-nav button.active{color:#fbbf24}
         .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
-        table{min-inline-size:1400px;font-size:11px;inline-size:100%}
+        table{min-width:1400px;font-size:11px;width:100%}
         td{white-space:nowrap;padding:4px 3px}
     </style>
 </head>
@@ -64,7 +64,7 @@
         </div>
         <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-4" id="summaryCards"></div>
         <div class="bg-white rounded-xl shadow-lg overflow-hidden">
-            <div class="overflow-x-auto" style="padding-block-end:60px">
+            <div class="overflow-x-auto" style="padding-bottom:60px">
                 <table>
                     <thead class="bg-gray-50 border-b sticky top-0"><tr><th onclick="sortTable('reportTableBody',0)">Date</th><th onclick="sortTable('reportTableBody',1)">ATL Code</th><th onclick="sortTable('reportTableBody',2)">SO #</th><th onclick="sortTable('reportTableBody',3)">Company</th><th onclick="sortTable('reportTableBody',4)">Plate</th><th onclick="sortTable('reportTableBody',5)">Driver</th><th onclick="sortTable('reportTableBody',6)">Hauler</th><th onclick="sortTable('reportTableBody',7)">Contact</th><th class="text-right" onclick="sortTable('reportTableBody',8)">Volume</th><th class="text-right" onclick="sortTable('reportTableBody',9)">Actual</th><th class="text-center" onclick="sortTable('reportTableBody',10)">SI</th><th class="text-center" onclick="sortTable('reportTableBody',11)">Status</th><th class="text-center" onclick="sortTable('reportTableBody',12)">WC</th><th class="text-center" onclick="sortTable('reportTableBody',13)">TPS From</th><th class="text-center" onclick="sortTable('reportTableBody',14)">TPS To</th><th class="text-center">Backload</th><th class="text-center">Act</th></tr></thead>
                     <tbody id="reportTableBody"><tr><td colspan="17" class="text-center py-8 text-gray-500">Loading...</td></tr></tbody>
@@ -120,7 +120,7 @@
         
         // Add empty rows to prevent pagination overlap
         for(var i=records.length; i<10; i++){
-            html += '<tr style="block-size:35px"><td colspan="17">&nbsp;</td></tr>';
+            html += '<tr style="height:35px"><td colspan="17">&nbsp;</td></tr>';
         }
         
         document.getElementById('reportTableBody').innerHTML = html || '<tr><td colspan="17" class="text-center py-8 text-gray-500">No records found</td></tr>';
@@ -166,7 +166,6 @@ async function logout(){try{await fetch('/api/auth/logout',{method:'POST',header
     <i class="fas fa-comments"></i>
 </button></body>
 </html>
-
 
 
 
