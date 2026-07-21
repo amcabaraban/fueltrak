@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -24,6 +24,9 @@
       #sidebar {
         transition: transform 0.3s;
       }
+      #sidebarOverlay {
+        display: none !important;
+      }
       @media (max-inline-size: 767px) {
         #sidebar {
           display: none !important;
@@ -44,11 +47,11 @@
           padding-inline-start: 176px;
         }
         .mobile-bottom-nav {
-          display: none !important;
+          display: flex !important;
         }
       }
       .mobile-bottom-nav {
-        display: none;
+        display: flex;
         position: fixed;
         inset-block-end: 0;
         inset-inline-start: 0;
