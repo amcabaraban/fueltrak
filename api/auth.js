@@ -98,6 +98,15 @@ function sanitizeString(str, maxLength = 100) {
   return String(str).trim().substring(0, maxLength).replace(/[<>]/g, '');
 }
 
+function validatePassword(password) {
+  if (!password || password.length < 8) return { valid: false, error: 'Password must be at least 8 characters' };
+  if (!/[A-Z]/.test(password)) return { valid: false, error: 'Password must contain at least one capital letter (A-Z)' };
+  if (!/[a-z]/.test(password)) return { valid: false, error: 'Password must contain at least one lowercase letter (a-z)' };
+  if (!/[0-9]/.test(password)) return { valid: false, error: 'Password must contain at least one number (0-9)' };
+  if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) return { valid: false, error: 'Password must contain at least one special character (!@#$%^&*)' };
+  return { valid: true };
+}
+
 // ============ ENHANCED RATE LIMITING ============
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -1035,6 +1044,7 @@ app.get('/tutorial', (req, res) => res.sendFile(path.join(__dirname, '..', 'publ
 app.get('/audit-logs', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'audit-logs.html')));
 
 module.exports = app;
+
 
 
 
