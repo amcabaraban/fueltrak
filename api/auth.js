@@ -31,7 +31,7 @@ async function sendOTPEmail(email, mobile, otp, type) {
       from: '"FuelTrak" <' + process.env.SMTP_USER + '>',
       to: email,
       subject: type === 'reset' ? 'FuelTrak - Password Reset OTP' : 'FuelTrak - Verify Your Email',
-      html: '<div style="font-family:Arial;max-width:500px;margin:auto;padding:20px;border:1px solid #ddd;border-radius:10px"><h2 style="color:#1e3a5f">FuelTrak Logistics</h2><p>Your OTP code is:</p><h1 style="color:#1e3a5f;font-size:36px;letter-spacing:5px;text-align:center">' + otp + '</h1><p>This code expires in 10 minutes.</p></div>'
+      html: '<div style="font-family:Arial;max-inline-size:500px;margin:auto;padding:20px;border:1px solid #ddd;border-radius:10px"><h2 style="color:#1e3a5f">FuelTrak Logistics</h2><p>Your OTP code is:</p><h1 style="color:#1e3a5f;font-size:36px;letter-spacing:5px;text-align:center">' + otp + '</h1><p>This code expires in 10 minutes.</p></div>'
     });
     console.log('OTP emailed to ' + email);
   } catch(e) { console.error('Email error:', e.message); console.log('[FALLBACK] OTP for ' + email + ': ' + otp); }
@@ -163,7 +163,7 @@ async function sendDeviceNotification(email, device, action) {
       from: '"FuelTrak Security" <' + process.env.SMTP_USER + '>',
       to: email,
       subject: 'FuelTrak - ' + actionText,
-      html: '<div style="font-family:Arial;max-width:500px;margin:auto;padding:20px;border:1px solid #ddd;border-radius:10px"><h2 style="color:#1e3a5f">' + actionText + '</h2><p><b>Browser:</b> ' + device.browser + '</p><p><b>Operating System:</b> ' + device.os + '</p><p><b>IP Address:</b> ' + device.ip + '</p><p><b>Time:</b> ' + new Date(device.time).toLocaleString() + '</p><p style="color:#999;font-size:12px">If this was not you, please change your password immediately.</p></div>'
+      html: '<div style="font-family:Arial;max-inline-size:500px;margin:auto;padding:20px;border:1px solid #ddd;border-radius:10px"><h2 style="color:#1e3a5f">' + actionText + '</h2><p><b>Browser:</b> ' + device.browser + '</p><p><b>Operating System:</b> ' + device.os + '</p><p><b>IP Address:</b> ' + device.ip + '</p><p><b>Time:</b> ' + new Date(device.time).toLocaleString() + '</p><p style="color:#999;font-size:12px">If this was not you, please change your password immediately.</p></div>'
     });
   } catch(e) { console.error('Device notification error:', e.message); }
 }
@@ -283,7 +283,6 @@ app.post('/api/auth/login', async (req, res) => {
     // Detect device
     const device = getDeviceInfo(req);
     await sendDeviceNotification(email, device, 'new_login');
-    }
     await pool.execute('UPDATE users SET current_token = ?, last_login = NOW() WHERE id = ?', [token, user.id]);
     await logAudit(user.id, "LOGIN", "users", user.id, {email: user.email});
     res.json({ status: 'success', token, user: { id: user.id, email: user.email, role: user.role, mobile: user.mobile, company_name: user.company_name } });
