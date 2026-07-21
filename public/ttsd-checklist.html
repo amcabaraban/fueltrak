@@ -40,7 +40,7 @@
     .mobile-bottom-nav a i,.mobile-bottom-nav button i{font-size:18px;margin-block-end:2px}
     .mobile-bottom-nav a.active,.mobile-bottom-nav button.active{color:#fbbf24}
     @media print{.no-print{display:none!important}body{padding:0!important;margin:0!important}@page{size:A4;margin:5mm}}
-    .mobile-bottom-nav{display:none;position:fixed;inset-block-end:0;inset-inline-start:0;inset-inline-end:0;background:#1e3a5f;color:white;z-index:50;justify-content:space-around;padding:6px 0;box-shadow:0 -2px 10px rgba(0,0,0,0.3)}.mobile-bottom-nav a,.mobile-bottom-nav button{display:flex;flex-direction:column;align-items:center;color:#93a3bc;font-size:10px;text-decoration:none;padding:4px;background:none;border:none;cursor:pointer}.mobile-bottom-nav a i,.mobile-bottom-nav button i{font-size:18px;margin-block-end:2px}@media(max-inline-size:767px){#sidebar{display:none!important}body{padding-inline-start:0!important;padding-block-end:70px}.mobile-bottom-nav{display:flex!important}}@media(min-inline-size:768px){body{padding-inline-start:176px}.mobile-bottom-nav{display:none!important}}</style>
+</style>
 </head>
 <body class="bg-gray-50 min-h-screen">
 <div class="main-content">
@@ -178,9 +178,8 @@ buildCompTable();loadPlateList();
 </div>
 <button onclick="openChat()" class="fixed bottom-4 right-4 z-50 bg-blue-900 text-white p-3 rounded-full shadow-lg hover:bg-blue-800" id="chatButton">
     <i class="fas fa-comments"></i>
-</button><div class="mobile-bottom-nav"><a href="/dashboard"><i class="fas fa-tachometer-alt"></i><span>Home</span></a><a href="/reports"><i class="fas fa-chart-bar"></i><span>Reports</span></a><a href="/trucks"><i class="fas fa-truck"></i><span>Trucks</span></a><a href="/docs-report"><i class="fas fa-file-alt"></i><span>Docs</span></a><button onclick="logout()"><i class="fas fa-sign-out-alt"></i><span>Logout</span></button></div></body>
+</button></body>
 </html>
-
 
 
 
