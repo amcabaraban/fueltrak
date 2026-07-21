@@ -128,7 +128,41 @@
     }
     async function editSO(id,cell){const v=prompt('SO Number:',cell.textContent.trim()==='-'?'':cell.textContent.trim());if(v===null)return;const r=await fetch('/api/dispatch/update-so/'+id,{method:'PUT',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({so_number:v})});if((await r.json()).status==='success'){cell.textContent=v||'-';cell.classList.add('bg-green-100');setTimeout(()=>cell.classList.remove('bg-green-100'),1000);}}
     async function loadReports(){if(!document.getElementById('startDate').value)document.getElementById('startDate').value=new Date().toISOString().split('T')[0];if(!document.getElementById('endDate').value)document.getElementById('endDate').value=new Date().toISOString().split('T')[0];const p=new URLSearchParams();['startDate','endDate'].forEach(id=>{const v=document.getElementById(id).value;if(v)p.append(id,v)});const st=document.getElementById('statusFilter').value;if(st)p.append('status',st);const cl=document.getElementById('clientFilter').value;if(cl)p.append('clientId',cl);const tr=document.getElementById('truckFilter').value;if(tr)p.append('truckId',tr);const d=await api('/reports/summary?'+p.toString());if(d.status==='success'){const s=d.data.summary;document.getElementById('summaryCards').innerHTML=`<div class="bg-white rounded-xl shadow p-3 text-center"><p class="text-xl font-bold">${s.total_records||0}</p><p class="text-xs text-gray-500">Records</p></div><div class="bg-green-50 rounded-xl shadow p-3 text-center"><p class="text-xl font-bold text-green-700">${s.completed||0}</p><p class="text-xs text-gray-500">Completed</p></div><div class="bg-red-50 rounded-xl shadow p-3 text-center"><p class="text-xl font-bold text-red-700">${s.cancelled||0}</p><p class="text-xs text-gray-500">Cancelled</p></div><div class="bg-orange-50 rounded-xl shadow p-3 text-center"><p class="text-xl font-bold text-orange-700">${((s.total_volume||0)/1000).toFixed(1)}kL</p><p class="text-xs text-gray-500">Total Vol</p></div><div class="bg-blue-50 rounded-xl shadow p-3 text-center"><p class="text-xl font-bold text-blue-700">${((s.total_actual_volume||0)/1000).toFixed(1)}kL</p><p class="text-xs text-gray-500">Actual</p></div>`;allRecords=d.data.records||[];currentPage=1;paginateData()}}
-    async function updateTPS(id,field,val){await fetch('/api/dispatch/update-tps/'+id,{method:'PUT',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify(field==='start'?{tps_start:val}:{tps_end:val})})}
+    async function updateTPS(id, field, val) {
+        // Support formulas: =001+050, =from+10, =to-5
+        if (val.startsWith('=')) {
+            var formula = val.substring(1);
+            var fromEl = document.getElementById('tps_from_' + id);
+            var toEl = document.getElementById('tps_to_' + id);
+            var fromVal = fromEl ? fromEl.value : '0';
+            var toVal = toEl ? toEl.value : '0';
+            
+            // Replace variables
+            formula = formula.replace(/from/i, fromVal || '0');
+            formula = formula.replace(/to/i, toVal || '0');
+            
+            try {
+                var result = eval(formula);
+                if (!isNaN(result)) {
+                    val = String(Math.floor(result)).padStart(fromVal.length || 3, '0');
+                    // Update the other field's input
+                    if (field === 'start') {
+                        if (toEl) toEl.value = val;
+                    } else {
+                        if (fromEl) fromEl.value = val;
+                    }
+                }
+            } catch(e) { console.error('Formula error:', e); }
+        }
+        
+        var body = {};
+        body[field === 'start' ? 'tps_start' : 'tps_end'] = val;
+        await fetch('/api/dispatch/update-tps/' + id, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+            body: JSON.stringify(body)
+        });
+    }
     function clearFilters(){['startDate','endDate','clientFilter','truckFilter'].forEach(id=>document.getElementById(id).value='');document.getElementById('startDate').value=new Date().toISOString().split('T')[0];document.getElementById('endDate').value=new Date().toISOString().split('T')[0];document.getElementById('statusFilter').value='completed,cancelled,dispatched';loadReports()}
     function printReport(){window.print()}
     async function exportCSV(){const p=new URLSearchParams();['startDate','endDate'].forEach(id=>{const v=document.getElementById(id).value;if(v)p.append(id,v)});const st=document.getElementById('statusFilter').value;if(st)p.append('status',st);const r=await fetch(API+'/reports/export?'+p.toString(),{headers:{'Authorization':'Bearer '+token}});if(!r.ok)return alert('Export failed');const b=await r.blob();const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='report-'+new Date().toISOString().split('T')[0]+'.csv';a.click()}
