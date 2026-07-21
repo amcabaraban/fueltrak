@@ -160,7 +160,7 @@ app.post('/api/auth/register', async (req, res) => {
       [email, hashedPassword, mobile, company_name || null, 'client', false, true]);
     const otp = generateOTP();
     otpCache.set(email, otp);
-    await sendOTPEmail(email, otp, 'verification');
+    await sendOTPEmail(email, '', otp, 'verification');
     res.status(201).json({ status: 'success', message: 'Registration successful. Check console for OTP.', email, otp });
   } catch (error) { res.status(400).json({ error: error.message }); }
 });
@@ -213,7 +213,7 @@ app.post('/api/auth/resend-otp', async (req, res) => {
   if (users[0].is_verified) return res.json({ message: 'Already verified' });
   const otp = generateOTP();
   otpCache.set(email, otp);
-  await sendOTPEmail(email, otp, 'verification');
+  await sendOTPEmail(email, '', otp, 'verification');
   res.json({ message: 'OTP resent', otp });
 });
 
@@ -268,7 +268,7 @@ app.post('/api/auth/forgot-password', async (req, res) => {
     otpCache.set('reset_' + email, otp);
 
     
-    await sendOTPEmail(email, otp, 'reset');
+    await sendOTPEmail(email, '', otp, 'reset');
     res.json({ status: 'success', message: 'OTP sent. Check console.', otp });
   } catch (error) { res.status(500).json({ error: error.message }); }
 });
@@ -1035,6 +1035,7 @@ app.get('/tutorial', (req, res) => res.sendFile(path.join(__dirname, '..', 'publ
 app.get('/audit-logs', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'audit-logs.html')));
 
 module.exports = app;
+
 
 
 
