@@ -58,7 +58,7 @@
             </div>
         </div>
         <p class="text-sm text-gray-500 mb-2" id="recordCount"></p>
-        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+        <div class="bg-white rounded-xl shadow-[0_4px_15px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.5)] overflow-hidden">
             <div class="table-wrap"><table class="w-full text-sm"><thead class="bg-gray-50 border-b"><tr><th class="py-3 px-3 text-left">Make</th><th class="py-3 px-3 text-left">Plate No</th><th class="py-3 px-3 text-left">Driver</th><th class="py-3 px-3 text-left">Hauler/Customer</th><th class="py-3 px-3 text-center">COTs</th><th class="py-3 px-3 text-right">Capacity (KL)</th><th class="py-3 px-3 text-center">TPS Count</th></tr></thead><tbody id="truckBody"><tr><td colspan="7" class="text-center py-8 text-gray-500">Loading...</td></tr></tbody></table></div>
         </div>
         <div class="px-4 py-3 border-t flex justify-between items-center bg-white rounded-b-xl">
@@ -183,6 +183,7 @@ async function logout(){try{await fetch('/api/auth/logout',{method:'POST',header
     <i class="fas fa-comments"></i>
 </button></body>
 </html>
+
 
 
 

@@ -52,7 +52,7 @@
 
     <div class="max-w-7xl mx-auto px-4 py-8">
         <h1 class="text-2xl font-bold mb-4">Reports & Analytics</h1>
-        <div class="bg-white rounded-xl shadow-lg p-4 mb-4 no-print">
+        <div class="bg-white rounded-xl shadow-[0_4px_15px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.5)] p-4 mb-4 no-print">
             <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
                 <div><label class="text-xs font-semibold">Start</label><input type="date" id="startDate" class="w-full px-2 py-1.5 border rounded text-xs" onchange="loadReports()"></div>
                 <div><label class="text-xs font-semibold">End</label><input type="date" id="endDate" class="w-full px-2 py-1.5 border rounded text-xs" onchange="loadReports()"></div>
@@ -63,7 +63,7 @@
             </div>
         </div>
         <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-4" id="summaryCards"></div>
-        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+        <div class="bg-white rounded-xl shadow-[0_4px_15px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.5)] overflow-hidden">
             <div class="overflow-x-auto" style="padding-bottom:60px">
                 <table>
                     <thead class="bg-gray-50 border-b sticky top-0"><tr><th onclick="sortTable('reportTableBody',0)">Date</th><th onclick="sortTable('reportTableBody',1)">ATL Code</th><th onclick="sortTable('reportTableBody',2)">SO #</th><th onclick="sortTable('reportTableBody',3)">Company</th><th onclick="sortTable('reportTableBody',4)">Plate</th><th onclick="sortTable('reportTableBody',5)">Driver</th><th onclick="sortTable('reportTableBody',6)">Hauler</th><th onclick="sortTable('reportTableBody',7)">Contact</th><th class="text-right" onclick="sortTable('reportTableBody',8)">Volume</th><th class="text-right" onclick="sortTable('reportTableBody',9)">Actual</th><th class="text-center" onclick="sortTable('reportTableBody',10)">SI</th><th class="text-center" onclick="sortTable('reportTableBody',11)">Status</th><th class="text-center" onclick="sortTable('reportTableBody',12)">WC</th><th class="text-center" onclick="sortTable('reportTableBody',13)">TPS From</th><th class="text-center" onclick="sortTable('reportTableBody',14)">TPS To</th><th class="text-center">Backload</th><th class="text-center">Act</th></tr></thead>
@@ -85,7 +85,7 @@
 </div>
 
 <div id="detailModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"><div class="bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[80vh] overflow-y-auto p-6"><div class="flex justify-between mb-4"><h3 class="text-lg font-bold">ATL Details</h3><button onclick="document.getElementById('detailModal').classList.add('hidden')" class="text-2xl">&times;</button></div><div id="detailContent"></div></div></div>
-<div id="backloadModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"><div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6"><div class="flex justify-between mb-4"><h3 class="text-lg font-bold"><i class="fas fa-undo mr-2 text-orange-600"></i>Record Backload</h3><button onclick="document.getElementById('backloadModal').classList.add('hidden')" class="text-2xl">&times;</button></div><form onsubmit="submitBackload(event)" class="space-y-4"><input type="hidden" id="backloadAtlId"><div><label class="block text-xs font-semibold mb-1">ATL Code</label><input type="text" id="backloadAtlCode" class="w-full px-3 py-2 border rounded bg-gray-50" readonly></div><div><label class="block text-xs font-semibold mb-1">Volume (Liters) *</label><input type="number" id="backloadVolume" class="w-full px-3 py-2 border rounded" required min="1"></div><div><label class="block text-xs font-semibold mb-1">Reason *</label><textarea id="backloadReason" class="w-full px-3 py-2 border rounded" rows="3" required></textarea></div><button type="submit" class="w-full bg-orange-600 text-white py-2 rounded font-semibold">Record Backload</button></form></div></div>
+<div id="backloadModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"><div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6"><div class="flex justify-between mb-4"><h3 class="text-lg font-bold"><i class="fas fa-undo mr-2 text-orange-600"></i>Record Backload</h3><button onclick="document.getElementById('backloadModal').classList.add('hidden')" class="text-2xl">&times;</button></div><form onsubmit="submitBackload(event)" class="space-y-4"><input type="hidden" id="backloadAtlId"><div><label class="block text-xs font-semibold mb-1">ATL Code</label><input type="text" id="backloadAtlCode" class="w-full px-3 py-2 border rounded shadow-[inset_0_2px_4px_rgba(0,0,0,0.1)] bg-gray-50" readonly></div><div><label class="block text-xs font-semibold mb-1">Volume (Liters) *</label><input type="number" id="backloadVolume" class="w-full px-3 py-2 border rounded shadow-[inset_0_2px_4px_rgba(0,0,0,0.1)]" required min="1"></div><div><label class="block text-xs font-semibold mb-1">Reason *</label><textarea id="backloadReason" class="w-full px-3 py-2 border rounded shadow-[inset_0_2px_4px_rgba(0,0,0,0.1)]" rows="3" required></textarea></div><button type="submit" class="w-full bg-orange-600 text-white py-2 rounded font-semibold">Record Backload</button></form></div></div>
 
 <script>
     const API='/api';const token=localStorage.getItem('fueltrak_token');const user=JSON.parse(localStorage.getItem('fueltrak_user')||'{}');
@@ -201,6 +201,7 @@ async function logout(){try{await fetch('/api/auth/logout',{method:'POST',header
     <i class="fas fa-comments"></i>
 </button></body>
 </html>
+
 
 
 

@@ -50,7 +50,7 @@
         </div>
     </div>
 
-    <div id="clientModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"><div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6"><div class="flex justify-between mb-4"><h3 class="text-lg font-bold" id="clientModalTitle">Add Client</h3><button onclick="closeClientModal()" class="text-2xl">&times;</button></div><form onsubmit="saveClient(event)"><input type="hidden" id="editClientId"><input type="email" id="clientEmail" placeholder="Email *" class="w-full px-3 py-2 border rounded mb-3" required><input type="text" id="clientMobile" placeholder="Mobile *" class="w-full px-3 py-2 border rounded mb-3" required><input type="text" id="clientCompany" placeholder="Company" class="w-full px-3 py-2 border rounded mb-3"><input type="password" id="clientPassword" placeholder="Password (min 8 chars)" class="w-full px-3 py-2 border rounded mb-3" minlength="8"><button type="submit" class="w-full bg-blue-900 text-white py-2 rounded font-semibold">Save Client</button></form></div></div>
+    <div id="clientModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"><div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6"><div class="flex justify-between mb-4"><h3 class="text-lg font-bold" id="clientModalTitle">Add Client</h3><button onclick="closeClientModal()" class="text-2xl">&times;</button></div><form onsubmit="saveClient(event)"><input type="hidden" id="editClientId"><input type="email" id="clientEmail" placeholder="Email *" class="w-full px-3 py-2 border rounded shadow-[inset_0_2px_4px_rgba(0,0,0,0.1)] mb-3" required><input type="text" id="clientMobile" placeholder="Mobile *" class="w-full px-3 py-2 border rounded shadow-[inset_0_2px_4px_rgba(0,0,0,0.1)] mb-3" required><input type="text" id="clientCompany" placeholder="Company" class="w-full px-3 py-2 border rounded shadow-[inset_0_2px_4px_rgba(0,0,0,0.1)] mb-3"><input type="password" id="clientPassword" placeholder="Password (min 8 chars)" class="w-full px-3 py-2 border rounded shadow-[inset_0_2px_4px_rgba(0,0,0,0.1)] mb-3" minlength="8"><button type="submit" class="w-full bg-blue-900 text-white py-2 rounded font-semibold shadow-[0_4px_6px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.1)] hover:shadow-[0_6px_8px_rgba(0,0,0,0.3)]">Save Client</button></form></div></div>
 
     <!-- Mobile Bottom Navigation -->
     <div class="mobile-bottom-nav">
@@ -76,29 +76,29 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-6" id="docStats"></div>
             <h2 class="text-lg font-bold text-gray-800 mb-4">Quick Actions</h2>
             <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <button onclick="openTab('verify')" class="stat-card bg-gradient-to-br from-yellow-400 to-yellow-500 text-white rounded-xl shadow-lg p-4 text-left w-full relative">
+                <button onclick="openTab('verify')" class="stat-card bg-gradient-to-br shadow-[0_4px_15px_rgba(0,0,0,0.2)] from-yellow-400 to-yellow-500 text-white rounded-xl shadow-lg p-4 text-left w-full relative">
                     <i class="fas fa-clipboard-check text-2xl mb-2"></i><h3 class="font-bold text-sm">Verify ATL</h3>
                     <span id="pendingBadge" class="absolute top-2 right-2 bg-red-500 text-white text-xs w-6 h-6 rounded-full flex items-center justify-center font-bold hidden">0</span>
                 </button>
-                <button onclick="openTab('loading')" class="stat-card bg-gradient-to-br from-blue-400 to-blue-500 text-white rounded-xl shadow-lg p-4 text-left w-full">
+                <button onclick="openTab('loading')" class="stat-card bg-gradient-to-br shadow-[0_4px_15px_rgba(0,0,0,0.2)] from-blue-400 to-blue-500 text-white rounded-xl shadow-lg p-4 text-left w-full">
                     <i class="fas fa-truck-loading text-2xl mb-2"></i><h3 class="font-bold text-sm">Loading</h3>
                 </button>
-                <a href="/trucks" class="stat-card bg-gradient-to-br from-green-400 to-green-500 text-white rounded-xl shadow-lg p-4 block">
+                <a href="/trucks" class="stat-card bg-gradient-to-br shadow-[0_4px_15px_rgba(0,0,0,0.2)] from-green-400 to-green-500 text-white rounded-xl shadow-lg p-4 block">
                     <i class="fas fa-truck text-2xl mb-2"></i><h3 class="font-bold text-sm">Truck Masterlist</h3>
                 </a>
-                <button onclick="openTab('clients')" class="stat-card bg-gradient-to-br from-purple-400 to-purple-500 text-white rounded-xl shadow-lg p-4 text-left w-full">
+                <button onclick="openTab('clients')" class="stat-card bg-gradient-to-br shadow-[0_4px_15px_rgba(0,0,0,0.2)] from-purple-400 to-purple-500 text-white rounded-xl shadow-lg p-4 text-left w-full">
                     <i class="fas fa-users text-2xl mb-2"></i><h3 class="font-bold text-sm">Clients</h3>
                 </button>
-                <a href="/ttsd-checklist" class="stat-card bg-gradient-to-br from-cyan-400 to-cyan-500 text-white rounded-xl shadow-lg p-4 block">
+                <a href="/ttsd-checklist" class="stat-card bg-gradient-to-br shadow-[0_4px_15px_rgba(0,0,0,0.2)] from-cyan-400 to-cyan-500 text-white rounded-xl shadow-lg p-4 block">
                     <i class="fas fa-clipboard-check text-2xl mb-2"></i><h3 class="font-bold text-sm">TTSD Checklist</h3>
                 </a>
-                <a href="/reports" class="stat-card bg-gradient-to-br from-teal-400 to-teal-500 text-white rounded-xl shadow-lg p-4 block">
+                <a href="/reports" class="stat-card bg-gradient-to-br shadow-[0_4px_15px_rgba(0,0,0,0.2)] from-teal-400 to-teal-500 text-white rounded-xl shadow-lg p-4 block">
                     <i class="fas fa-chart-bar text-2xl mb-2"></i><h3 class="font-bold text-sm">Reports</h3>
                 </a>
-                <a href="/docs-report" class="stat-card bg-gradient-to-br from-orange-400 to-orange-500 text-white rounded-xl shadow-lg p-4 block">
+                <a href="/docs-report" class="stat-card bg-gradient-to-br shadow-[0_4px_15px_rgba(0,0,0,0.2)] from-orange-400 to-orange-500 text-white rounded-xl shadow-lg p-4 block">
                     <i class="fas fa-file-alt text-2xl mb-2"></i><h3 class="font-bold text-sm">Doc Report</h3>
                 </a>
-                <a href="/audit-logs" class="stat-card bg-gradient-to-br from-gray-600 to-gray-700 text-white rounded-xl shadow-lg p-4 block">
+                <a href="/audit-logs" class="stat-card bg-gradient-to-br shadow-[0_4px_15px_rgba(0,0,0,0.2)] from-gray-600 to-gray-700 text-white rounded-xl shadow-lg p-4 block">
                     <i class="fas fa-history text-2xl mb-2"></i><h3 class="font-bold text-sm">Audit Logs</h3>
                 </a>
             </div>
@@ -106,8 +106,8 @@
 
         <div id="tabVerify" class="hidden">
             <div class="flex items-center mb-4"><button onclick="showDashboard()" class="text-gray-500 hover:text-gray-700 mr-3"><i class="fas fa-arrow-left text-xl"></i></button><h2 class="text-xl font-bold">Pending ATL Verifications</h2></div>
-            <div class="bg-white rounded-lg shadow p-3 mb-4">
-                <input type="text" id="pendingSearch" placeholder="Search plate, company..." class="w-full px-3 py-2 border rounded text-sm" oninput="filterPending()">
+            <div class="bg-white rounded-lg shadow-[0_4px_10px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.5)] p-3 mb-4">
+                <input type="text" id="pendingSearch" placeholder="Search plate, company..." class="w-full px-3 py-2 border rounded shadow-[inset_0_2px_4px_rgba(0,0,0,0.1)] text-sm" oninput="filterPending()">
             </div>
             <div id="pendingATLs" class="space-y-3"></div>
         </div>
@@ -172,7 +172,7 @@ async function loadDashboard(){
             {label:'Completed',value:s.completed,gradient:'from-green-400 to-green-500'},
             {label:'Today',value:s.loadedToday,gradient:'from-indigo-400 to-indigo-500'},
             {label:'Today Vol',value:Math.round((s.todayVolume||0)/1000).toLocaleString()+'kL',gradient:'from-purple-400 to-purple-500' }
-        ].map(c=>`<div class="stat-card bg-gradient-to-br ${c.gradient} rounded-xl shadow-lg p-3 text-white"><p class="text-xs opacity-90">${c.label}</p><p class="text-2xl font-bold mt-1">${c.value}</p></div>`).join('');
+        ].map(c=>`<div class="stat-card bg-gradient-to-br shadow-[0_4px_15px_rgba(0,0,0,0.2)] ${c.gradient} rounded-xl shadow-lg p-3 text-white"><p class="text-xs opacity-90">${c.label}</p><p class="text-2xl font-bold mt-1">${c.value}</p></div>`).join('');
         var pb=document.getElementById('pendingBadge');if(s.pending>0){pb.textContent=s.pending>99?'99+':s.pending;pb.classList.remove('hidden')}else pb.classList.add('hidden');
     }
     if(t.status==='success'){var d=t.data;
@@ -181,28 +181,28 @@ async function loadDashboard(){
             {label:'Valid Docs',value:d.withValidDocs,border:'border-green-500'},
             {label:'Expired',value:d.withExpiredDocs,border:'border-red-500'},
             {label:'Capacity',value:((d.totalCapacity||0)/1000).toFixed(1)+'kL',border:'border-purple-500'}
-        ].map(c=>`<div class="stat-card bg-white rounded-xl shadow-lg p-3 border-l-4 ${c.border}"><p class="text-xs text-gray-500">${c.label}</p><p class="text-xl font-bold">${c.value}</p></div>`).join('');
+        ].map(c=>`<div class="stat-card bg-white rounded-xl shadow-[0_4px_15px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.5)] p-3 border-l-4 ${c.border}"><p class="text-xs text-gray-500">${c.label}</p><p class="text-xl font-bold">${c.value}</p></div>`).join('');
     }
 }
 
 var allPendingATLs=[];
 async function loadPending(){var d=await api('/dispatch/pending');if(d.status==='success'){allPendingATLs=d.data;filterPending()}}
-function filterPending(){var s=(document.getElementById('pendingSearch')?.value||'').toLowerCase();var f=allPendingATLs.filter(a=>!s||(a.plate_no||'').toLowerCase().includes(s)||(a.company||'').toLowerCase().includes(s)||(a.atl_code||'').toLowerCase().includes(s));document.getElementById('pendingATLs').innerHTML=f.map(a=>`<div class="bg-white rounded-lg shadow p-3 flex justify-between"><div><p class="font-bold text-sm">${a.atl_code||'N/A'} - ${a.plate_no}</p><p class="text-xs">${a.company||''} | SO: ${a.so_number||'N/A'} | Date: ${a.scheduled_date?new Date(a.scheduled_date).toLocaleDateString():'N/A'} | Vol: ${a.volume||'N/A'}L | ${a.driver_name}</p></div><div class="flex space-x-2"><button onclick="verifyATL(${a.id},'approve')" class="bg-green-500 text-white px-2 py-1 rounded text-xs">Approve</button><button onclick="verifyATL(${a.id},'reject')" class="bg-red-500 text-white px-2 py-1 rounded text-xs">Reject</button></div></div>`).join('')||'<p class="text-gray-500 text-center py-8">No pending ATLs</p>'}
+function filterPending(){var s=(document.getElementById('pendingSearch')?.value||'').toLowerCase();var f=allPendingATLs.filter(a=>!s||(a.plate_no||'').toLowerCase().includes(s)||(a.company||'').toLowerCase().includes(s)||(a.atl_code||'').toLowerCase().includes(s));document.getElementById('pendingATLs').innerHTML=f.map(a=>`<div class="bg-white rounded-lg shadow-[0_4px_10px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.5)] p-3 flex justify-between"><div><p class="font-bold text-sm">${a.atl_code||'N/A'} - ${a.plate_no}</p><p class="text-xs">${a.company||''} | SO: ${a.so_number||'N/A'} | Date: ${a.scheduled_date?new Date(a.scheduled_date).toLocaleDateString():'N/A'} | Vol: ${a.volume||'N/A'}L | ${a.driver_name}</p></div><div class="flex space-x-2"><button onclick="verifyATL(${a.id},'approve')" class="bg-green-500 text-white px-2 py-1 rounded text-xs">Approve</button><button onclick="verifyATL(${a.id},'reject')" class="bg-red-500 text-white px-2 py-1 rounded text-xs">Reject</button></div></div>`).join('')||'<p class="text-gray-500 text-center py-8">No pending ATLs</p>'}
 async function verifyATL(id,action){if(!confirm(action==='approve'?'Approve?':'Reject?'))return;await api('/dispatch/verify/'+id,'POST',{action,remarks:prompt('Remarks:')||''});loadPending();loadDashboard()}
 
 async function loadApproved(){
     var o=await api('/dispatch/ongoing-loading');
     document.getElementById('ongoingLoading').innerHTML=o.status==='success'?o.data.map(a=>`<div class="bg-orange-50 border-l-4 border-orange-500 rounded-lg shadow p-3 flex justify-between"><div><p class="font-bold text-sm">${a.atl_code} - ${a.plate_no} - ${a.driver_name}</p><p class="text-xs">${a.company} | SO: ${a.so_number||'N/A'} | ${a.driver_name}</p><p class="text-xs">Date: ${a.dispatch_date?new Date(a.dispatch_date).toLocaleDateString():'N/A'} | Vol: ${a.volume?Number(a.volume).toLocaleString()+'L':'N/A'}</p></div><div class="flex space-x-1"><button onclick="completeLoading(${a.id})" class="bg-green-500 text-white px-2 py-1 rounded text-xs">Done</button></div></div>`).join('')||'<p class="text-gray-500 text-center py-4">No ongoing loading</p>':'';
     var w=await api('/dispatch/approved-for-loading');
-    document.getElementById('approvedForLoading').innerHTML=w.status==='success'?w.data.map(a=>`<div class="bg-white rounded-lg shadow p-3 flex justify-between"><div><p class="font-bold text-sm">${a.atl_code} - ${a.plate_no} - ${a.driver_name}</p><p class="text-xs">${a.company||''} | SO: ${a.so_number||'N/A'} | Date: ${a.scheduled_date?new Date(a.scheduled_date).toLocaleDateString():'N/A'} | Vol: ${a.volume?Number(a.volume).toLocaleString()+'L':'N/A'}</p></div><button onclick="startLoading(${a.id})" class="bg-orange-500 text-white px-3 py-1 rounded text-xs">Start</button></div>`).join('')||'<p class="text-gray-500 text-center py-4">None waiting</p>':'';
+    document.getElementById('approvedForLoading').innerHTML=w.status==='success'?w.data.map(a=>`<div class="bg-white rounded-lg shadow-[0_4px_10px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.5)] p-3 flex justify-between"><div><p class="font-bold text-sm">${a.atl_code} - ${a.plate_no} - ${a.driver_name}</p><p class="text-xs">${a.company||''} | SO: ${a.so_number||'N/A'} | Date: ${a.scheduled_date?new Date(a.scheduled_date).toLocaleDateString():'N/A'} | Vol: ${a.volume?Number(a.volume).toLocaleString()+'L':'N/A'}</p></div><button onclick="startLoading(${a.id})" class="bg-orange-500 text-white px-3 py-1 rounded text-xs">Start</button></div>`).join('')||'<p class="text-gray-500 text-center py-4">None waiting</p>':'';
 }
 
 async function startLoading(id){if(!confirm('Start loading?'))return;await api('/dispatch/start-loading/'+id,'POST');loadApproved();loadDashboard()}
 async function completeLoading(id){var v=prompt('Actual volume (L):');if(!v)return;await api('/dispatch/complete-loading/'+id,'POST',{actual_volume:v});loadApproved();loadDashboard()}
 
-async function loadTrucks(){var d=await api('/truck-masterlist-all');if(d.status==='success'){document.getElementById('truckList').innerHTML='<div class="table-wrap"><table class="w-full text-sm bg-white rounded-lg shadow"><thead class="bg-gray-50"><tr><th class="py-2 px-3">Plate</th><th class="py-2 px-3">Driver</th><th class="py-2 px-3">Hauler</th></tr></thead><tbody>'+d.data.slice(0,50).map(t=>`<tr class="border-b"><td class="py-2 px-3 font-semibold">${t.plate_no}</td><td class="py-2 px-3">${(t.driver_name||'').replace(/"/g,'')}</td><td class="py-2 px-3">${t.hauler_name||''}</td></tr>`).join('')+'</tbody></table></div>'}}
+async function loadTrucks(){var d=await api('/truck-masterlist-all');if(d.status==='success'){document.getElementById('truckList').innerHTML='<div class="table-wrap"><table class="w-full text-sm bg-white rounded-lg shadow-[0_4px_10px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.5)]"><thead class="bg-gray-50"><tr><th class="py-2 px-3">Plate</th><th class="py-2 px-3">Driver</th><th class="py-2 px-3">Hauler</th></tr></thead><tbody>'+d.data.slice(0,50).map(t=>`<tr class="border-b"><td class="py-2 px-3 font-semibold">${t.plate_no}</td><td class="py-2 px-3">${(t.driver_name||'').replace(/"/g,'')}</td><td class="py-2 px-3">${t.hauler_name||''}</td></tr>`).join('')+'</tbody></table></div>'}}
 
-async function loadClients(){var d=await api('/clients');if(d.status==='success'){document.getElementById('clientList').innerHTML='<div class="table-wrap"><table class="w-full text-sm bg-white rounded-lg shadow"><thead class="bg-gray-50"><tr><th class="py-2 px-3">Company</th><th class="py-2 px-3">Email</th><th class="py-2 px-3">Mobile</th><th class="py-2 px-3">ATLs</th><th class="py-2 px-3">Actions</th></tr></thead><tbody>'+d.data.map(c=>'<tr class="border-b"><td class="py-2 px-3 font-semibold">'+(c.company_name||'-')+'</td><td class="py-2 px-3">'+c.email+'</td><td class="py-2 px-3">'+c.mobile+'</td><td class="py-2 px-3 text-center">'+c.total_atls+'</td><td class="py-2 px-3"><div class="flex space-x-2 justify-center"><button onclick="editClient('+c.id+')" class="text-blue-600"><i class="fas fa-edit"></i></button>'+(c.is_active?'<button onclick="toggleClient('+c.id+')" class="text-orange-600"><i class="fas fa-ban"></i></button>':'<button onclick="toggleClient('+c.id+')" class="text-green-600"><i class="fas fa-check"></i></button>')+'<button onclick="deleteClient('+c.id+',\''+c.email+'\')" class="text-red-600"><i class="fas fa-trash"></i></button></div></td></tr>').join('')+'</tbody></table></div>'}}
+async function loadClients(){var d=await api('/clients');if(d.status==='success'){document.getElementById('clientList').innerHTML='<div class="table-wrap"><table class="w-full text-sm bg-white rounded-lg shadow-[0_4px_10px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.5)]"><thead class="bg-gray-50"><tr><th class="py-2 px-3">Company</th><th class="py-2 px-3">Email</th><th class="py-2 px-3">Mobile</th><th class="py-2 px-3">ATLs</th><th class="py-2 px-3">Actions</th></tr></thead><tbody>'+d.data.map(c=>'<tr class="border-b"><td class="py-2 px-3 font-semibold">'+(c.company_name||'-')+'</td><td class="py-2 px-3">'+c.email+'</td><td class="py-2 px-3">'+c.mobile+'</td><td class="py-2 px-3 text-center">'+c.total_atls+'</td><td class="py-2 px-3"><div class="flex space-x-2 justify-center"><button onclick="editClient('+c.id+')" class="text-blue-600"><i class="fas fa-edit"></i></button>'+(c.is_active?'<button onclick="toggleClient('+c.id+')" class="text-orange-600"><i class="fas fa-ban"></i></button>':'<button onclick="toggleClient('+c.id+')" class="text-green-600"><i class="fas fa-check"></i></button>')+'<button onclick="deleteClient('+c.id+',\''+c.email+'\')" class="text-red-600"><i class="fas fa-trash"></i></button></div></td></tr>').join('')+'</tbody></table></div>'}}
 
 function showAddClient(){document.getElementById('editClientId').value='';document.getElementById('clientModalTitle').textContent='Add Client';['clientEmail','clientMobile','clientCompany','clientPassword'].forEach(id=>document.getElementById(id).value='');document.getElementById('clientModal').classList.remove('hidden');}
 function closeClientModal(){document.getElementById('clientModal').classList.add('hidden');}
@@ -274,6 +274,7 @@ setInterval(async function(){if(document.getElementById('chatWidget').classList.
 </script>
 </body>
 </html>
+
 
 
 

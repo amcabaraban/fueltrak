@@ -42,7 +42,7 @@
             <h1 class="text-2xl font-bold">Client Management</h1>
             <button onclick="showAddClient()" class="bg-green-600 text-white px-4 py-2 rounded text-sm"><i class="fas fa-plus mr-1"></i>Add Client</button>
         </div>
-        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+        <div class="bg-white rounded-xl shadow-[0_4px_15px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.5)] overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="w-full text-sm">
                     <thead class="bg-gray-50 border-b"><tr><th class="py-3 px-3">Company</th><th class="py-3 px-3">Email</th><th class="py-3 px-3">Mobile</th><th class="py-3 px-3">ATLs</th><th class="py-3 px-3">Status</th><th class="py-3 px-3">Actions</th></tr></thead>
@@ -59,11 +59,11 @@
         <div class="flex justify-between mb-4"><h3 class="text-lg font-bold" id="modalTitle">Add Client</h3><button onclick="closeModal()" class="text-2xl">&times;</button></div>
         <form onsubmit="saveClient(event)">
             <input type="hidden" id="editClientId">
-            <input type="email" id="clientEmail" placeholder="Email *" class="w-full px-3 py-2 border rounded mb-3" required>
-            <input type="text" id="clientMobile" placeholder="Mobile * (09XXXXXXXXX)" class="w-full px-3 py-2 border rounded mb-3" required>
-            <input type="text" id="clientCompany" placeholder="Company Name" class="w-full px-3 py-2 border rounded mb-3">
-            <input type="password" id="clientPassword" placeholder="Password (leave blank to keep current)" class="w-full px-3 py-2 border rounded mb-3" minlength="8">
-            <button type="submit" class="w-full bg-blue-900 text-white py-2 rounded font-semibold">Save Client</button>
+            <input type="email" id="clientEmail" placeholder="Email *" class="w-full px-3 py-2 border rounded shadow-[inset_0_2px_4px_rgba(0,0,0,0.1)] mb-3" required>
+            <input type="text" id="clientMobile" placeholder="Mobile * (09XXXXXXXXX)" class="w-full px-3 py-2 border rounded shadow-[inset_0_2px_4px_rgba(0,0,0,0.1)] mb-3" required>
+            <input type="text" id="clientCompany" placeholder="Company Name" class="w-full px-3 py-2 border rounded shadow-[inset_0_2px_4px_rgba(0,0,0,0.1)] mb-3">
+            <input type="password" id="clientPassword" placeholder="Password (leave blank to keep current)" class="w-full px-3 py-2 border rounded shadow-[inset_0_2px_4px_rgba(0,0,0,0.1)] mb-3" minlength="8">
+            <button type="submit" class="w-full bg-blue-900 text-white py-2 rounded font-semibold shadow-[0_4px_6px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.1)] hover:shadow-[0_6px_8px_rgba(0,0,0,0.3)]">Save Client</button>
         </form>
     </div>
 </div>
@@ -112,4 +112,5 @@ loadClients();
 </script>
 </body>
 </html>
+
 
