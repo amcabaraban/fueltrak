@@ -32,8 +32,8 @@
 
     <!-- Desktop Sidebar -->
     <div class="fixed left-0 top-0 h-full w-14 md:w-48 bg-blue-900 text-white z-40 pt-16 overflow-y-auto no-print" id="sidebar">
-        <a href="/dashboard" class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap"><i class="fas fa-tachometer-alt w-6 text-center"></i><span class="hidden md:inline ml-2">Dashboard</span></a>
-        <a href="#" href="/dashboard" class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap" title="Clients">
+        <a href="/dashboard?tab=clients" class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap"><i class="fas fa-tachometer-alt w-6 text-center"></i><span class="hidden md:inline ml-2">Dashboard</span></a>
+        <a href="#" href="/dashboard?tab=clients" class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap" title="Clients">
             <i class="fas fa-users w-6 text-center"></i><span class="hidden md:inline ml-2">Clients</span>
         </a>
         <a href="/reports" class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap"><i class="fas fa-chart-bar w-6 text-center"></i><span class="hidden md:inline ml-2">Reports</span></a>
@@ -77,7 +77,7 @@
 
 <!-- Mobile Bottom Navigation -->
 <div class="mobile-bottom-nav">
-    <a href="/dashboard"><i class="fas fa-tachometer-alt"></i><span>Home</span></a>
+    <a href="/dashboard?tab=clients"><i class="fas fa-tachometer-alt"></i><span>Home</span></a>
     <a href="/reports"><i class="fas fa-chart-bar"></i><span>Reports</span></a>
     <a href="/trucks"><i class="fas fa-truck"></i><span>Trucks</span></a>
     <a href="/docs-report" class="active"><i class="fas fa-file-alt"></i><span>Docs</span></a>
@@ -166,4 +166,6 @@ async function logout(){try{await fetch('/api/auth/logout',{method:'POST',header
     <i class="fas fa-comments"></i>
 </button></body>
 </html>
+
+
 
