@@ -40,7 +40,7 @@
         <a href="/trucks" class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap"><i class="fas fa-truck w-6 text-center"></i><span class="hidden md:inline ml-2">Truck Masterlist</span></a>
         <a href="/docs-report" class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap"><i class="fas fa-file-alt w-6 text-center"></i><span class="hidden md:inline ml-2">Doc Report</span></a>
         <a href="/ttsd-checklist" class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap"><i class="fas fa-clipboard-check w-6 text-center"></i><span class="hidden md:inline ml-2">TTSD Checklist</span></a>
-        <a href="/audit-logs" class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap"><i class="fas fa-history w-6 text-center"></i><span class="hidden md:inline ml-2">Audit Logs</span></a>
+        <a href="/users" class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap"><i class="fas fa-users-cog w-6 text-center"></i><span class="hidden md:inline ml-2">Users</span></a><a href="/audit-logs" class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap"><i class="fas fa-history w-6 text-center"></i><span class="hidden md:inline ml-2">Audit Logs</span></a>
         <div class="border-t border-blue-700 p-2 mt-2">
             <button onclick="logout()" class="flex items-center px-2 py-3 hover:bg-red-700 text-xs md:text-sm w-full text-left whitespace-nowrap"><i class="fas fa-sign-out-alt w-6 text-center"></i><span class="hidden md:inline ml-2">Logout</span></button>
         </div>
@@ -157,6 +157,8 @@ async function logout(){try{await fetch('/api/auth/logout',{method:'POST',header
     <i class="fas fa-comments"></i>
 </button></body>
 </html>
+
+
 
 
 
