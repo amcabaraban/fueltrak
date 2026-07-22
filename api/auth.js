@@ -274,10 +274,7 @@ app.post('/api/auth/login', async (req, res) => {
         await pool.execute('UPDATE users SET current_token = NULL WHERE id = ?', [user.id]);
       } catch(e) {}
     }
-    
-    const device = getDeviceInfo(req);
-    await sendDeviceNotification(email, device, 'new_login');
-    
+        
     await pool.execute('UPDATE users SET current_token = ?, last_login = NOW() WHERE id = ?', [token, user.id]);
     await logAudit(user.id, "LOGIN", "users", user.id, {email: user.email});
     
