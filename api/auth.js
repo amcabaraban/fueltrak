@@ -1174,7 +1174,20 @@ app.post('/api/auth/first-login-setup', authenticate, async (req, res) => {
 
 
 
-// ============ PAGE ROUTES ============
+// ============ ADD FIRST_LOGIN COLUMN ============
+app.post('/api/admin/add-first-login-column', authenticate, authorize('dispatcher','management'), async (req, res) => {
+  try {
+    await pool.execute("ALTER TABLE users ADD COLUMN first_login TINYINT DEFAULT 0");
+    await pool.execute("ALTER TABLE users ADD COLUMN terms_accepted TINYINT DEFAULT 0");
+    res.json({ status: 'success', message: 'Columns added' });
+  } catch (error) {
+    if (error.code === 'ER_DUP_FIELDNAME') {
+      res.json({ status: 'success', message: 'Columns already exist' });
+    } else {
+      res.status(400).json({ error: error.message });
+    }
+  }
+});// ============ PAGE ROUTES ============
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'index.html')));
 app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'dashboard.html')));
 app.get('/dashboard.html', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'dashboard.html')));
@@ -1192,6 +1205,7 @@ app.get('/adminclient', (req, res) => res.sendFile(path.join(__dirname, '..', 'p
 app.get('/audit-logs', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'audit-logs.html')));
 
 module.exports = app;
+
 
 
 
