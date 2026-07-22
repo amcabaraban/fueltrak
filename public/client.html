@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
  <meta charset="UTF-8">
@@ -747,6 +747,8 @@
   }
   function toggleSidebar(){document.getElementById("sidebar").classList.toggle("open");document.getElementById("sidebarOverlay").classList.toggle("hidden");document.body.classList.toggle("sidebar-open");}
   document.getElementById('userInfoMob').textContent = document.getElementById('userInfo').textContent;
+
+  function openTab(tab){document.getElementById('dashboardView').classList.add('hidden');['tabVerify','tabLoading','tabTrucks','tabClients'].forEach(t=>document.getElementById(t).classList.add('hidden'));var el=document.getElementById('tab'+tab.charAt(0).toUpperCase()+tab.slice(1));if(el)el.classList.remove('hidden');try{if(tab==='verify')loadPending();if(tab==='loading')loadApproved();if(tab==='trucks')loadTrucks();if(tab==='clients')loadClients()}catch(e){}}
 
   function logout() { localStorage.clear(); window.location.href = '/'; }
   loadDashboard();
