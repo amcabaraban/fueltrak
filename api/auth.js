@@ -1110,8 +1110,15 @@ app.put('/api/users/:id', authenticate, authorize('dispatcher','management'), as
 
 app.delete('/api/users/:id', authenticate, authorize('dispatcher','management'), async (req, res) => {
   try {
+    const [activeATLs] = await pool.execute("SELECT COUNT(*) as count FROM authority_to_load WHERE client_id = ? AND status IN ('pending','approved','dispatched')", [req.params.id]);
+    if (activeATLs[0].count > 0) {
+      return res.status(400).json({ error: 'Cannot delete user with ' + activeATLs[0].count + ' active ATLs. Cancel or complete them first.' });
+    }
     await pool.execute("DELETE FROM users WHERE id = ?", [req.params.id]);
     await logAudit(req.user.id, "DELETE_USER", "users", req.params.id, {});
+    res.json({ status: 'success', message: 'User deleted' });
+  } catch (error) { res.status(400).json({ error: error.message }); }
+});
     res.json({ status: 'success', message: 'User deleted' });
   } catch (error) { res.status(400).json({ error: error.message }); }
 });
@@ -1149,6 +1156,7 @@ app.get('/adminclient', (req, res) => res.sendFile(path.join(__dirname, '..', 'p
 app.get('/audit-logs', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'audit-logs.html')));
 
 module.exports = app;
+
 
 
 
