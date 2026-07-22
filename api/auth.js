@@ -1166,30 +1166,73 @@ app.post('/api/auth/first-login-setup', authenticate, async (req, res) => {
     if (!pwdCheck.valid) return res.status(400).json({ error: pwdCheck.error });
     
     const hashedPassword = await bcrypt.hash(password, 12);
-    await pool.execute('UPDATE users SET password = ?, first_login = 0, terms_accepted = 1, is_verified = 1 WHERE id = ?', [hashedPassword, req.user.id]);
+    await pool.execute('UPDATE users SET password = ?, terms_accepted = 1 WHERE id = ?', [hashedPassword, req.user.id]);
+    // Keep first_login = 1 until OTP verified
     
-    // Generate OTP and send verification email to client
+    // Generate OTP and send verification email
     const otp = generateOTP();
     otpCache.set(req.user.email, otp);
     await sendOTPEmail(req.user.email, '', otp, 'verification');
     
-    // Notify admin about first login
+    // Notify admin
     const [admins] = await pool.execute("SELECT email FROM users WHERE role IN ('dispatcher','management') LIMIT 1");
     if (admins.length > 0 && process.env.SMTP_USER) {
       try {
         await transporter.sendMail({
           from: '"FuelTrak Security" <' + process.env.SMTP_USER + '>',
           to: admins[0].email,
-          subject: 'FuelTrak - Client First Login Completed',
-          html: '<div style="font-family:Arial;max-width:500px;margin:auto;padding:20px;border:1px solid #ddd;border-radius:10px"><h2 style="color:#38a169">✅ Client Setup Complete</h2><p><b>Client:</b> ' + req.user.email + '</p><p><b>Company:</b> ' + (req.user.company_name || 'N/A') + '</p><p>Has accepted Terms & Conditions and changed their password.</p><p style="color:#999;font-size:12px">Time: ' + new Date().toLocaleString() + '</p></div>'
+          subject: 'FuelTrak - Client Changed Password',
+          html: '<div style="font-family:Arial;max-width:500px;margin:auto;padding:20px;border:1px solid #ddd;border-radius:10px"><h2 style="color:#38a169">✅ Client Password Changed</h2><p><b>Client:</b> ' + req.user.email + '</p><p><b>Company:</b> ' + (req.user.company_name || 'N/A') + '</p><p>Has accepted Terms & Conditions and set a new password.</p><p>Awaiting email verification.</p></div>'
         });
       } catch(e) {}
     }
     
-    const token = jwt.sign({ id: req.user.id, role: req.user.role }, process.env.JWT_SECRET, { expiresIn: '24h' });
-    await logAudit(req.user.id, "FIRST_LOGIN_SETUP", "users", req.user.id, {});
+    await logAudit(req.user.id, "FIRST_LOGIN_PASSWORD_CHANGED", "users", req.user.id, {});
     
-    res.json({ status: 'success', message: 'Setup complete! Check your email for verification.', token, user: { id: req.user.id, email: req.user.email, role: req.user.role } });
+    res.json({ 
+      status: 'otp_required',
+      message: 'Password changed! Check your email for the OTP to verify your account.',
+      email: req.user.email
+    });
+  } catch (error) { res.status(400).json({ error: error.message }); }
+});
+
+app.post('/api/auth/verify-first-login-otp', async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+    const [users] = await pool.execute('SELECT * FROM users WHERE email = ?', [email]);
+    if (!users.length) return res.status(404).json({ error: 'User not found' });
+    
+    const storedOTP = otpCache.get(email);
+    if (!storedOTP || storedOTP !== otp) return res.status(400).json({ error: 'Invalid OTP' });
+    
+    otpCache.del(email);
+    await pool.execute('UPDATE users SET is_verified = 1, first_login = 0 WHERE email = ?', [email]);
+    
+    // Generate real token
+    const token = jwt.sign({ id: users[0].id, role: users[0].role }, process.env.JWT_SECRET, { expiresIn: '24h' });
+    
+    // Notify admin of completion
+    const [admins] = await pool.execute("SELECT email FROM users WHERE role IN ('dispatcher','management') LIMIT 1");
+    if (admins.length > 0 && process.env.SMTP_USER) {
+      try {
+        await transporter.sendMail({
+          from: '"FuelTrak Security" <' + process.env.SMTP_USER + '>',
+          to: admins[0].email,
+          subject: 'FuelTrak - Client Account Fully Activated',
+          html: '<div style="font-family:Arial;max-width:500px;margin:auto;padding:20px;border:1px solid #ddd;border-radius:10px"><h2 style="color:#38a169">✅ Client Fully Activated</h2><p><b>Client:</b> ' + email + '</p><p>Has verified email and completed all setup steps.</p></div>'
+        });
+      } catch(e) {}
+    }
+    
+    await logAudit(users[0].id, "FIRST_LOGIN_OTP_VERIFIED", "users", users[0].id, {});
+    
+    res.json({ 
+      status: 'success', 
+      message: 'Email verified! You can now login.',
+      token,
+      user: { id: users[0].id, email: users[0].email, role: users[0].role }
+    });
   } catch (error) { res.status(400).json({ error: error.message }); }
 });
 
