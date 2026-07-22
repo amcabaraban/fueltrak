@@ -86,7 +86,7 @@
                 <p class="text-sm text-gray-600 mb-4">Enter your email to receive an OTP.</p>
                 <form onsubmit="sendResetOTP(event)" class="space-y-3">
                     <input type="email" id="resetEmail" class="w-full px-4 py-3 border shadow-[inset_0_2px_4px_rgba(0,0,0,0.1)] rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Enter your email" required>
-                    <button type="submit" class="w-full bg-blue-900 text-white py-3 rounded-lg font-semibold shadow-[0_4px_6px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.1)] hover:shadow-[0_6px_8px_rgba(0,0,0,0.3)]">Send OTP</button>
+                    <button type="submit" class="w-full bg-blue-900 text-white py-3 rounded-lg font-semibold shadow-[0_4px_10px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.1)] hover:shadow-[0_6px_15px_rgba(0,0,0,0.4)] shadow-[0_4px_6px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.1)] hover:shadow-[0_6px_8px_rgba(0,0,0,0.3)]">Send OTP</button>
                 </form>
             </div>
 
@@ -95,7 +95,7 @@
                 <p class="text-sm text-gray-600 mb-4">Enter the OTP sent to <span id="otpEmailDisplay" class="font-semibold"></span></p>
                 <form onsubmit="verifyResetOTP(event)" class="space-y-3">
                     <input type="text" id="resetOTP" class="w-full px-4 py-3 border shadow-[inset_0_2px_4px_rgba(0,0,0,0.1)] rounded-lg text-center text-2xl tracking-widest focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="000000" maxlength="6" required>
-                    <button type="submit" class="w-full bg-blue-900 text-white py-3 rounded-lg font-semibold shadow-[0_4px_6px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.1)] hover:shadow-[0_6px_8px_rgba(0,0,0,0.3)]">Verify OTP</button>
+                    <button type="submit" class="w-full bg-blue-900 text-white py-3 rounded-lg font-semibold shadow-[0_4px_10px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.1)] hover:shadow-[0_6px_15px_rgba(0,0,0,0.4)] shadow-[0_4px_6px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.1)] hover:shadow-[0_6px_8px_rgba(0,0,0,0.3)]">Verify OTP</button>
                 </form>
             </div>
 
@@ -400,3 +400,4 @@
     </script>
 </body>
 </html>
+
