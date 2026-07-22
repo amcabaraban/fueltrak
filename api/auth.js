@@ -1115,6 +1115,22 @@ app.delete('/api/users/:id', authenticate, authorize('dispatcher','management'),
     res.json({ status: 'success', message: 'User deleted' });
   } catch (error) { res.status(400).json({ error: error.message }); }
 });
+
+app.post('/api/auth/first-login-setup', authenticate, async (req, res) => {
+  try {
+    const { password, terms_accepted } = req.body;
+    if (!terms_accepted) return res.status(400).json({ error: 'You must accept the Terms & Conditions' });
+    const pwdCheck = validatePassword(password);
+    if (!pwdCheck.valid) return res.status(400).json({ error: pwdCheck.error });
+    
+    const hashedPassword = await bcrypt.hash(password, 12);
+    await pool.execute('UPDATE users SET password = ?, first_login = 0, terms_accepted = 1 WHERE id = ?', [hashedPassword, req.user.id]);
+    
+    const token = jwt.sign({ id: req.user.id, role: req.user.role }, process.env.JWT_SECRET, { expiresIn: '24h' });
+    res.json({ status: 'success', message: 'Setup complete', token, user: { id: req.user.id, email: req.user.email, role: req.user.role } });
+  } catch (error) { res.status(400).json({ error: error.message }); }
+});
+
 // ============ PAGE ROUTES ============
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'index.html')));
 app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'dashboard.html')));
