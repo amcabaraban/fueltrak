@@ -148,6 +148,15 @@ const authorize = (...roles) => (req, res, next) => {
   next();
 };
 
+function validatePassword(password) {
+  if (!password || password.length < 8) return { valid: false, error: 'Password must be at least 8 characters' };
+  if (!/[A-Z]/.test(password)) return { valid: false, error: 'Password must contain at least one capital letter' };
+  if (!/[a-z]/.test(password)) return { valid: false, error: 'Password must contain at least one lowercase letter' };
+  if (!/[0-9]/.test(password)) return { valid: false, error: 'Password must contain at least one number' };
+  if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) return { valid: false, error: 'Password must contain at least one special character' };
+  return { valid: true };
+}
+
 function validatePasswordComplexity(password) {
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
     return passwordRegex.test(password);
@@ -172,22 +181,6 @@ app.post('/api/auth/register', async (req, res) => {
     otpCache.set(email, otp);
     await sendOTPEmail(email, '', otp, 'verification');
     res.status(201).json({ status: 'success', message: 'Registration successful. Check console for OTP.', email, otp });
-  } catch (error) { res.status(400).json({ error: error.message }); }
-});
-
-app.post('/api/auth/first-login-setup', authenticate, async (req, res) => {
-  try {
-    const { password, terms_accepted } = req.body;
-    if (!terms_accepted) return res.status(400).json({ error: 'You must accept the Terms & Conditions' });
-    const pwdCheck = validatePassword(password);
-    if (!pwdCheck.valid) return res.status(400).json({ error: pwdCheck.error });
-    
-    const hashedPassword = await bcrypt.hash(password, 12);
-    await pool.execute('UPDATE users SET password = ?, first_login = 0, terms_accepted = 1 WHERE id = ?', [hashedPassword, req.user.id]);
-    
-    const token = jwt.sign({ id: req.user.id, role: req.user.role }, process.env.JWT_SECRET, { expiresIn: '24h' });
-    await logAudit(req.user.id, "FIRST_LOGIN_SETUP", "users", req.user.id, {});
-    res.json({ status: 'success', message: 'Setup complete', token, user: { id: req.user.id, email: req.user.email, role: req.user.role } });
   } catch (error) { res.status(400).json({ error: error.message }); }
 });
 
