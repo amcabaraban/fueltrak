@@ -1065,7 +1065,57 @@ app.post('/api/admin/cleanup-loading', authenticate, authorize('dispatcher','man
     await pool.execute("DELETE FROM authority_to_load");
     res.json({ status: 'success', message: 'All loading records deleted' });
   } catch (error) { res.status(400).json({ error: error.message }); }
-});// ============ PAGE ROUTES ============
+});// ============ USER MANAGEMENT ============
+app.get('/api/users', authenticate, authorize('dispatcher','management'), async (req, res) => {
+  try {
+    const [users] = await pool.execute("SELECT id, email, role, mobile, company_name, is_active, is_verified, last_login, createdAt FROM users ORDER BY role, email");
+    res.json({ status: 'success', data: users });
+  } catch (error) { res.status(500).json({ error: error.message }); }
+});
+
+app.post('/api/users', authenticate, authorize('dispatcher','management'), async (req, res) => {
+  try {
+    const { email, password, mobile, company_name, role } = req.body;
+    if (!email || !password || !role) return res.status(400).json({ error: 'Email, password, and role are required' });
+    const pwdCheck = validatePassword(password);
+    if (!pwdCheck.valid) return res.status(400).json({ error: pwdCheck.error });
+    const [existing] = await pool.execute('SELECT id FROM users WHERE email = ?', [email]);
+    if (existing.length) return res.status(400).json({ error: 'Email already registered' });
+    const hashedPassword = await bcrypt.hash(password, 12);
+    await pool.execute('INSERT INTO users (email, password, mobile, company_name, role, is_verified, is_active, createdAt, updatedAt) VALUES (?,?,?,?,?,1,1,NOW(),NOW())',
+      [email, hashedPassword, mobile || null, company_name || null, role]);
+    await logAudit(req.user.id, "CREATE_USER", "users", 0, {email, role});
+    res.status(201).json({ status: 'success', message: 'User created' });
+  } catch (error) { res.status(400).json({ error: error.message }); }
+});
+
+app.put('/api/users/:id', authenticate, authorize('dispatcher','management'), async (req, res) => {
+  try {
+    const { email, mobile, company_name, role, password, is_active } = req.body;
+    let query = 'UPDATE users SET email=?, mobile=?, company_name=?, role=?, is_active=?';
+    let params = [email, mobile || null, company_name || null, role, is_active !== undefined ? is_active : 1];
+    if (password) {
+      const pwdCheck = validatePassword(password);
+      if (!pwdCheck.valid) return res.status(400).json({ error: pwdCheck.error });
+      const hashed = await bcrypt.hash(password, 12);
+      query += ', password=?';
+      params.push(hashed);
+    }
+    params.push(req.params.id);
+    await pool.execute(query + ' WHERE id = ?', params);
+    await logAudit(req.user.id, "UPDATE_USER", "users", req.params.id, {email});
+    res.json({ status: 'success', message: 'User updated' });
+  } catch (error) { res.status(400).json({ error: error.message }); }
+});
+
+app.delete('/api/users/:id', authenticate, authorize('dispatcher','management'), async (req, res) => {
+  try {
+    await pool.execute("DELETE FROM users WHERE id = ?", [req.params.id]);
+    await logAudit(req.user.id, "DELETE_USER", "users", req.params.id, {});
+    res.json({ status: 'success', message: 'User deleted' });
+  } catch (error) { res.status(400).json({ error: error.message }); }
+});
+// ============ PAGE ROUTES ============
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'index.html')));
 app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'dashboard.html')));
 app.get('/dashboard.html', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'dashboard.html')));
@@ -1078,9 +1128,12 @@ app.get('/atl.html', (req, res) => res.sendFile(path.join(__dirname, '..', 'publ
 app.get('/trucks', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'trucks.html')));
 app.get('/ttsd-checklist', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'ttsd-checklist.html')));
 app.get('/tutorial', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'tutorial.html')));
+app.get('/users', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'users.html')));
 app.get('/audit-logs', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'audit-logs.html')));
 
 module.exports = app;
+
+
 
 
 
