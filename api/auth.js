@@ -1129,10 +1129,10 @@ app.get('/trucks', (req, res) => res.sendFile(path.join(__dirname, '..', 'public
 app.get('/ttsd-checklist', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'ttsd-checklist.html')));
 app.get('/tutorial', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'tutorial.html')));
 app.get('/users', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'users.html')));
-app.get('/users', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'users.html')));
 app.get('/audit-logs', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'audit-logs.html')));
 
 module.exports = app;
+
 
 
 
