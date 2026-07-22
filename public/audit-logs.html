@@ -100,6 +100,8 @@
         document.getElementById('logCount').innerHTML='Page '+logPage+' of '+tp+' ('+allLogs.length+' records) <button onclick="logPage=1;renderLogPage()" class="px-2 py-1 border rounded text-xs">First</button> <button onclick="if(logPage>1){logPage--;renderLogPage()}" class="px-2 py-1 border rounded text-xs">Prev</button> <button onclick="if(logPage<tp){logPage++;renderLogPage()}" class="px-2 py-1 border rounded text-xs">Next</button> <button onclick="logPage=tp;renderLogPage()" class="px-2 py-1 border rounded text-xs">Last</button>';
     }
 
+function openTab(tab){document.getElementById('dashboardView').classList.add('hidden');['tabVerify','tabLoading','tabTrucks','tabClients'].forEach(t=>document.getElementById(t).classList.add('hidden'));var el=document.getElementById('tab'+tab.charAt(0).toUpperCase()+tab.slice(1));if(el)el.classList.remove('hidden');try{if(tab==='verify')loadPending();if(tab==='loading')loadApproved();if(tab==='trucks')loadTrucks();if(tab==='clients')loadClients()}catch(e){}}
+
     var currentChatUser=null,currentChatName='',chatInterval=null,contactList=[];
     async function openChat(){document.getElementById('chatWidget').classList.remove('hidden');document.getElementById('chatButton').classList.add('hidden');loadContactList();}
     function showContactList(){document.getElementById('contactList').classList.remove('hidden');document.getElementById('chatBody').classList.add('hidden');document.getElementById('chatInputArea').classList.add('hidden');document.getElementById('chatTitle').textContent='Chat';currentChatUser=null;loadContactList();}

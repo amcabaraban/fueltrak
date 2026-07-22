@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -150,6 +150,8 @@
         if(data.status==='success'){cell.textContent=field==='tps_count'?parseInt(newVal):newVal;cell.classList.add('bg-green-100');setTimeout(function(){cell.classList.remove('bg-green-100');},1000);}
         else{alert(data.error||'Error updating');}
     }
+
+function openTab(tab){document.getElementById('dashboardView').classList.add('hidden');['tabVerify','tabLoading','tabTrucks','tabClients'].forEach(t=>document.getElementById(t).classList.add('hidden'));var el=document.getElementById('tab'+tab.charAt(0).toUpperCase()+tab.slice(1));if(el)el.classList.remove('hidden');try{if(tab==='verify')loadPending();if(tab==='loading')loadApproved();if(tab==='trucks')loadTrucks();if(tab==='clients')loadClients()}catch(e){}}
 
     var currentChatUser=null,currentChatName='',chatInterval=null,contactList=[];
 async function openChat(){document.getElementById('chatWidget').classList.remove('hidden');document.getElementById('chatButton').classList.add('hidden');loadContactList();}
