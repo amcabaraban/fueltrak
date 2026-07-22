@@ -26,7 +26,7 @@
     <!-- Desktop Sidebar -->
     <div class="fixed left-0 top-0 h-full w-14 md:w-48 bg-blue-900 text-white z-40 pt-16 overflow-y-auto no-print" id="sidebar">
         <a href="/dashboard" class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap"><i class="fas fa-tachometer-alt w-6 text-center"></i><span class="hidden md:inline ml-2">Dashboard</span></a>
-        <a href="#" onclick="openTab('clients');return false;" class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap" title="Clients">
+        <a href="#" href="/dashboard" class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap" title="Clients">
             <i class="fas fa-users w-6 text-center"></i><span class="hidden md:inline ml-2">Clients</span>
         </a>
         <a href="/reports" class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap"><i class="fas fa-chart-bar w-6 text-center"></i><span class="hidden md:inline ml-2">Reports</span></a>
@@ -100,7 +100,7 @@
         document.getElementById('logCount').innerHTML='Page '+logPage+' of '+tp+' ('+allLogs.length+' records) <button onclick="logPage=1;renderLogPage()" class="px-2 py-1 border rounded text-xs">First</button> <button onclick="if(logPage>1){logPage--;renderLogPage()}" class="px-2 py-1 border rounded text-xs">Prev</button> <button onclick="if(logPage<tp){logPage++;renderLogPage()}" class="px-2 py-1 border rounded text-xs">Next</button> <button onclick="logPage=tp;renderLogPage()" class="px-2 py-1 border rounded text-xs">Last</button>';
     }
 
-function openTab(tab){document.getElementById('dashboardView').classList.add('hidden');['tabVerify','tabLoading','tabTrucks','tabClients'].forEach(t=>document.getElementById(t).classList.add('hidden'));var el=document.getElementById('tab'+tab.charAt(0).toUpperCase()+tab.slice(1));if(el)el.classList.remove('hidden');try{if(tab==='verify')loadPending();if(tab==='loading')loadApproved();if(tab==='trucks')loadTrucks();if(tab==='clients')loadClients()}catch(e){}}
+    function openTab(tab){document.getElementById('dashboardView').classList.add('hidden');['tabVerify','tabLoading','tabTrucks','tabClients'].forEach(t=>document.getElementById(t).classList.add('hidden'));var el=document.getElementById('tab'+tab.charAt(0).toUpperCase()+tab.slice(1));if(el)el.classList.remove('hidden');try{if(tab==='verify')loadPending();if(tab==='loading')loadApproved();if(tab==='trucks')loadTrucks();if(tab==='clients')loadClients()}catch(e){}}
 
     var currentChatUser=null,currentChatName='',chatInterval=null,contactList=[];
     async function openChat(){document.getElementById('chatWidget').classList.remove('hidden');document.getElementById('chatButton').classList.add('hidden');loadContactList();}
@@ -134,6 +134,7 @@ function openTab(tab){document.getElementById('dashboardView').classList.add('hi
     <i class="fas fa-comments"></i>
 </button></body>
 </html>
+
 
 
 
