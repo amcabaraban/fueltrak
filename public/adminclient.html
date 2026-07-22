@@ -107,10 +107,49 @@ async function editClient(id){var r=await fetch('/api/clients/'+id,{headers:{'Au
 async function saveClient(e){e.preventDefault();var id=document.getElementById('editClientId').value;var body={email:document.getElementById('clientEmail').value,mobile:document.getElementById('clientMobile').value,company_name:document.getElementById('clientCompany').value};var pw=document.getElementById('clientPassword').value;if(pw)body.password=pw;var url=id?'/api/clients/'+id:'/api/clients';var method=id?'PUT':'POST';var r=await fetch(url,{method,headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify(body)});var d=await r.json();if(d.status==='success'){closeModal();loadClients();}else alert(d.error||'Error');}
 async function toggleClient(id){await fetch('/api/clients/'+id+'/toggle-status',{method:'PATCH',headers:{'Authorization':'Bearer '+token}});loadClients();}
 async function deleteClient(id,email){if(!confirm('Delete client '+email+'?'))return;var r=await fetch('/api/clients/'+id,{method:'DELETE',headers:{'Authorization':'Bearer '+token}});var d=await r.json();if(d.status==='success')loadClients();else alert(d.error||'Cannot delete');}
+function openCalc(){document.getElementById('calcWidget').classList.remove('hidden');document.getElementById('calcButton').classList.add('hidden');}
+function closeCalc(){document.getElementById('calcWidget').classList.add('hidden');document.getElementById('calcButton').classList.remove('hidden');}
+function toggleCalc(){}
+var calcExpr='';
+function calcInput(v){calcExpr+=v;document.getElementById('calcDisplay').value=calcExpr;}
+function calcClear(){calcExpr='';document.getElementById('calcDisplay').value='0';}
+function calcResult(){try{var r=eval(calcExpr.replace(/×/g,'*').replace(/÷/g,'/').replace(/-/g,'-'));document.getElementById('calcDisplay').value=Number(r.toFixed(4));calcExpr=String(r);}catch(e){document.getElementById('calcDisplay').value='Error';calcExpr='';}}
 async function logout(){try{await fetch('/api/auth/logout',{method:'POST',headers:{'Authorization':'Bearer '+localStorage.getItem('fueltrak_token')}})}catch(e){}localStorage.clear();window.location.href='/'}
 loadClients();
 </script>
-</body>
+<!-- Floating Calculator -->
+<div id="calcWidget" class="hidden fixed bottom-20 right-4 z-50 w-72 bg-white rounded-xl shadow-2xl border">
+    <div class="bg-blue-900 text-white p-3 rounded-t-xl flex justify-between items-center cursor-pointer" onclick="toggleCalc()">
+        <span><i class="fas fa-calculator mr-2"></i>Calculator</span>
+        <button onclick="event.stopPropagation();closeCalc()" class="text-white">&times;</button>
+    </div>
+    <div class="p-3">
+        <input type="text" id="calcDisplay" class="w-full px-3 py-2 border rounded text-right text-xl font-mono mb-2" readonly value="0">
+        <div class="grid grid-cols-4 gap-1">
+            <button onclick="calcInput('7')" class="bg-gray-100 hover:bg-gray-200 py-2 rounded font-semibold">7</button>
+            <button onclick="calcInput('8')" class="bg-gray-100 hover:bg-gray-200 py-2 rounded font-semibold">8</button>
+            <button onclick="calcInput('9')" class="bg-gray-100 hover:bg-gray-200 py-2 rounded font-semibold">9</button>
+            <button onclick="calcInput('/')" class="bg-orange-100 hover:bg-orange-200 py-2 rounded font-semibold text-orange-700">÷</button>
+            <button onclick="calcInput('4')" class="bg-gray-100 hover:bg-gray-200 py-2 rounded font-semibold">4</button>
+            <button onclick="calcInput('5')" class="bg-gray-100 hover:bg-gray-200 py-2 rounded font-semibold">5</button>
+            <button onclick="calcInput('6')" class="bg-gray-100 hover:bg-gray-200 py-2 rounded font-semibold">6</button>
+            <button onclick="calcInput('*')" class="bg-orange-100 hover:bg-orange-200 py-2 rounded font-semibold text-orange-700">×</button>
+            <button onclick="calcInput('1')" class="bg-gray-100 hover:bg-gray-200 py-2 rounded font-semibold">1</button>
+            <button onclick="calcInput('2')" class="bg-gray-100 hover:bg-gray-200 py-2 rounded font-semibold">2</button>
+            <button onclick="calcInput('3')" class="bg-gray-100 hover:bg-gray-200 py-2 rounded font-semibold">3</button>
+            <button onclick="calcInput('-')" class="bg-orange-100 hover:bg-orange-200 py-2 rounded font-semibold text-orange-700">-</button>
+            <button onclick="calcInput('0')" class="bg-gray-100 hover:bg-gray-200 py-2 rounded font-semibold">0</button>
+            <button onclick="calcInput('.')" class="bg-gray-100 hover:bg-gray-200 py-2 rounded font-semibold">.</button>
+            <button onclick="calcResult()" class="bg-blue-900 text-white hover:bg-blue-800 py-2 rounded font-semibold">=</button>
+            <button onclick="calcInput('+')" class="bg-orange-100 hover:bg-orange-200 py-2 rounded font-semibold text-orange-700">+</button>
+        </div>
+        <button onclick="calcClear()" class="w-full mt-1 bg-red-100 hover:bg-red-200 py-1 rounded text-red-700 text-sm">Clear</button>
+    </div>
+</div>
+<button onclick="openCalc()" class="fixed bottom-20 right-4 z-50 bg-green-600 text-white p-3 rounded-full shadow-lg hover:bg-green-700" id="calcButton">
+    <i class="fas fa-calculator"></i>
+</button></body>
 </html>
+
 
 
