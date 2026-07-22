@@ -19,6 +19,8 @@
     { "src": "/users", "dest": "/api/auth.js" },
     { "src": "/tutorial", "dest": "/api/auth.js" },
     { "src": "/", "dest": "/api/auth.js" },
+    { "src": "/first-login", "dest": "/api/auth.js" },
+    { "src": "/terms", "dest": "/api/auth.js" },
     { "src": "/(.*)", "dest": "/public/" }
   ]
 }

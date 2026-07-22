@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -191,7 +191,12 @@
                     body: JSON.stringify({ email, password })
                 });
                 const data = await res.json();
-
+                
+                if (data.status === 'first_login') {
+                    localStorage.setItem('fueltrak_temp_token', data.token);
+                    window.location.href = '/first-login?token=' + data.token;
+                    return;
+                }
                 if (data.status === 'success') {
                     // Check role matches selected tab
                     if (selectedRole === 'client' && data.user.role !== 'client') {

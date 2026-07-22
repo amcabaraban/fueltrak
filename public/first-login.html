@@ -11,57 +11,65 @@
 <body class="bg-gray-50 min-h-screen flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-8">
         <div class="text-center mb-6">
-            <div class="bg-blue-900 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div class="bg-blue-900 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
                 <i class="fas fa-shield-alt text-3xl text-yellow-400"></i>
             </div>
             <h1 class="text-2xl font-bold text-blue-900">Welcome to FuelTrak!</h1>
             <p class="text-gray-500 text-sm mt-1">First-time login setup required</p>
         </div>
 
-        <!-- Step 1: Accept Terms -->
         <div id="step1">
-            <h2 class="font-bold text-lg mb-3">Step 1: Accept Terms & Conditions</h2>
-            <div class="bg-gray-50 rounded-lg p-4 mb-4 h-48 overflow-y-auto text-xs text-gray-600 leading-relaxed border">
+            <h2 class="font-bold text-lg mb-3"><i class="fas fa-file-contract mr-2 text-blue-600"></i>Step 1: Accept Terms</h2>
+            <div class="bg-gray-50 rounded-lg p-4 mb-4 h-40 overflow-y-auto text-xs text-gray-600 leading-relaxed border">
                 <p class="font-bold mb-2">TERMS AND CONDITIONS</p>
-                <p>By using FuelTrak, you agree to:</p>
+                <p>By using FuelTrak Logistics Management System, you agree to:</p>
                 <ul class="list-disc pl-4 mt-2 space-y-1">
                     <li>Maintain confidentiality of your login credentials</li>
-                    <li>Submit accurate ATL information</li>
-                    <li>Comply with the Data Privacy Act (RA 10173)</li>
-                    <li>Not misuse or manipulate the system</li>
+                    <li>Submit accurate and truthful ATL information</li>
+                    <li>Comply with the Data Privacy Act of 2012 (RA 10173)</li>
+                    <li>Not misuse, manipulate, or disrupt the system</li>
                     <li>Accept that violations may result in account suspension</li>
                 </ul>
-                <p class="mt-2">Full terms available at <a href="/terms" target="_blank" class="text-blue-600 underline">Terms & Conditions</a></p>
+                <p class="mt-2">Full terms: <a href="/terms" target="_blank" class="text-blue-600 underline">Terms & Conditions</a></p>
             </div>
             <label class="flex items-center mb-4 cursor-pointer">
                 <input type="checkbox" id="acceptTerms" class="w-4 h-4 mr-2">
                 <span class="text-sm">I have read and agree to the Terms & Conditions</span>
             </label>
-            <button onclick="goToStep2()" id="btnStep1" class="w-full bg-blue-900 text-white py-3 rounded-lg font-semibold disabled:opacity-50" disabled>Next: Change Password</button>
+            <button onclick="goToStep2()" id="btnStep1" class="w-full bg-blue-900 text-white py-3 rounded-lg font-semibold disabled:opacity-50 shadow-md" disabled>Next: Change Password</button>
         </div>
 
-        <!-- Step 2: Change Password -->
         <div id="step2" class="hidden">
-            <h2 class="font-bold text-lg mb-3">Step 2: Change Your Password</h2>
+            <h2 class="font-bold text-lg mb-3"><i class="fas fa-lock mr-2 text-blue-600"></i>Step 2: Change Password</h2>
             <p class="text-sm text-gray-500 mb-4">For security, you must change your password before using the system.</p>
             <form onsubmit="changePassword(event)">
                 <div class="mb-3">
                     <label class="text-xs font-semibold">New Password</label>
-                    <input type="password" id="newPassword" class="w-full px-3 py-2 border rounded" required minlength="8" placeholder="Min 8 chars, 1 uppercase, 1 number, 1 symbol">
+                    <input type="password" id="newPassword" class="w-full px-3 py-2 border rounded shadow-inner" required minlength="8" placeholder="Min 8 chars, 1 uppercase, 1 number, 1 symbol">
                 </div>
                 <div class="mb-3">
                     <label class="text-xs font-semibold">Confirm Password</label>
-                    <input type="password" id="confirmPassword" class="w-full px-3 py-2 border rounded" required>
+                    <input type="password" id="confirmPassword" class="w-full px-3 py-2 border rounded shadow-inner" required>
                 </div>
-                <p class="text-xs text-gray-400 mb-3">Requirements: 8+ characters, uppercase letter, lowercase letter, number, special character (!@#$%^&*)</p>
-                <button type="submit" class="w-full bg-blue-900 text-white py-3 rounded-lg font-semibold">Set Password & Continue</button>
+                <div class="bg-blue-50 rounded-lg p-3 mb-4 text-xs text-gray-600">
+                    <p class="font-semibold mb-1">Password Requirements:</p>
+                    <ul class="list-disc pl-4 space-y-1">
+                        <li>At least 8 characters</li>
+                        <li>One uppercase letter (A-Z)</li>
+                        <li>One lowercase letter (a-z)</li>
+                        <li>One number (0-9)</li>
+                        <li>One special character (!@#$%^&*)</li>
+                    </ul>
+                </div>
+                <button type="submit" class="w-full bg-blue-900 text-white py-3 rounded-lg font-semibold shadow-md hover:shadow-lg">Set Password & Continue</button>
             </form>
             <div id="pwdMsg" class="mt-3 text-sm text-center hidden"></div>
         </div>
     </div>
 
     <script>
-        const token = new URLSearchParams(window.location.search).get('token');
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token');
         if (!token) window.location.replace('/');
         
         document.getElementById('acceptTerms').addEventListener('change', function() {

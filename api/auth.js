@@ -53,6 +53,7 @@ async function sendFreeSMS(mobile, otp) {
   }
   return false;
 }
+
 const tokenBlacklist = new Set();
 setInterval(() => { tokenBlacklist.forEach(t => { try { jwt.verify(t, process.env.JWT_SECRET ); } catch(e) { tokenBlacklist.delete(t); } }); }, 3600000);
 
@@ -82,6 +83,22 @@ const pool = mysql.createPool({
   ssl: { rejectUnauthorized: false },
   waitForConnections: true,
   connectionLimit: 10
+});
+
+app.post('/api/auth/first-login-setup', authenticate, async (req, res) => {
+  try {
+    const { password, terms_accepted } = req.body;
+    if (!terms_accepted) return res.status(400).json({ error: 'You must accept the Terms & Conditions' });
+    const pwdCheck = validatePassword(password);
+    if (!pwdCheck.valid) return res.status(400).json({ error: pwdCheck.error });
+    
+    const hashedPassword = await bcrypt.hash(password, 12);
+    await pool.execute('UPDATE users SET password = ?, first_login = 0, terms_accepted = 1 WHERE id = ?', [hashedPassword, req.user.id]);
+    
+    const token = jwt.sign({ id: req.user.id, role: req.user.role }, process.env.JWT_SECRET, { expiresIn: '24h' });
+    await logAudit(req.user.id, "FIRST_LOGIN_SETUP", "users", req.user.id, {});
+    res.json({ status: 'success', message: 'Setup complete', token, user: { id: req.user.id, email: req.user.email, role: req.user.role } });
+  } catch (error) { res.status(400).json({ error: error.message }); }
 });
 
 // ============ INPUT VALIDATION ============
@@ -229,24 +246,48 @@ app.post('/api/auth/resend-otp', async (req, res) => {
 app.post('/api/auth/login', async (req, res) => {
   try {
     const { email, password } = req.body;
-    // Check lockout
+    if (!validateEmail(email)) return res.status(400).json({ error: 'Invalid email format' });
+    
     const lockout = await checkLockout(email);
-    if (lockout.locked) {
-      return res.status(429).json({ error: `Account locked. Try again in ${lockout.minutesLeft} minutes.` });
-    }
+    if (lockout.locked) return res.status(429).json({ error: `Account locked. Try again in ${lockout.minutesLeft} minutes.` });
+    
     const [users] = await pool.execute('SELECT * FROM users WHERE email = ?', [email]);
-    if (!users.length) return res.status(401).json({ error: 'Invalid credentials' });
+    if (!users.length) { recordFailedAttempt(email); return res.status(401).json({ error: 'Invalid credentials' }); }
+    
     const user = users[0];
     if (!user.is_verified) return res.status(401).json({ error: 'Please verify your email first' });
     if (!user.is_active) return res.status(403).json({ error: 'Account deactivated' });
+    
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(401).json({ error: 'Invalid credentials' });
-    const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET , { expiresIn: '24h' });
-    if (user.current_token) {
-      try { jwt.verify(user.current_token, process.env.JWT_SECRET ); return res.json({ status: 'existing_session', message: 'Already logged in on another device.', user: { id: user.id, email: user.email, role: user.role } }); } catch(e) {}
+    if (!isMatch) { recordFailedAttempt(email); return res.status(401).json({ error: 'Invalid credentials' }); }
+    
+    resetAttempts(email);
+    
+    // Check if first login - force password change and terms acceptance
+    if (user.first_login === 1) {
+      const tempToken = jwt.sign({ id: user.id, role: user.role, firstLogin: true }, process.env.JWT_SECRET, { expiresIn: '15m' });
+      return res.json({ 
+        status: 'first_login',
+        token: tempToken,
+        message: 'First login - please set your password and accept terms.'
+      });
     }
+    
+    const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '24h' });
+    
+    if (user.current_token) {
+      try {
+        jwt.verify(user.current_token, process.env.JWT_SECRET);
+        await pool.execute('UPDATE users SET current_token = NULL WHERE id = ?', [user.id]);
+      } catch(e) {}
+    }
+    
+    const device = getDeviceInfo(req);
+    await sendDeviceNotification(email, device, 'new_login');
+    
     await pool.execute('UPDATE users SET current_token = ?, last_login = NOW() WHERE id = ?', [token, user.id]);
     await logAudit(user.id, "LOGIN", "users", user.id, {email: user.email});
+    
     res.json({ status: 'success', token, user: { id: user.id, email: user.email, role: user.role, mobile: user.mobile, company_name: user.company_name } });
   } catch (error) { res.status(500).json({ error: 'Internal server error' }); }
 });
@@ -896,7 +937,7 @@ app.post('/api/clients', authenticate, authorize('dispatcher', 'management'), as
     const [existing] = await pool.execute('SELECT id FROM users WHERE email = ?', [email]);
     if (existing.length) return res.status(400).json({ error: 'Email already registered' });
     const hashedPassword = await bcrypt.hash(password, 12);
-    await pool.execute('INSERT INTO users (email, password, mobile, company_name, role, is_verified, is_active, createdAt, updatedAt) VALUES (?,?,?,?,?,1,1,NOW(),NOW())',      [email, hashedPassword, mobile, company_name || null, 'client']);
+    await pool.execute('INSERT INTO users (email, password, mobile, company_name, role, is_verified, is_active, createdAt, updatedAt) VALUES (?,?,?,?,?,1,1,1,NOW(),NOW())',      [email, hashedPassword, mobile, company_name || null, 'client']);
     await logAudit(req.user.id, "CREATE_CLIENT", "users", 0, {email});
     res.status(201).json({ status: 'success', message: 'Client created' });
   } catch (error) { res.status(400).json({ error: error.message }); }
@@ -1082,12 +1123,15 @@ app.post('/api/users', authenticate, authorize('dispatcher','management'), async
     const [existing] = await pool.execute('SELECT id FROM users WHERE email = ?', [email]);
     if (existing.length) return res.status(400).json({ error: 'Email already registered' });
     const hashedPassword = await bcrypt.hash(password, 12);
-    await pool.execute('INSERT INTO users (email, password, mobile, company_name, role, is_verified, is_active, createdAt, updatedAt) VALUES (?,?,?,?,?,1,1,NOW(),NOW())',
+    await pool.execute('INSERT INTO users (email, password, mobile, company_name, role, is_verified, is_active, first_login, createdAt, updatedAt) VALUES (?,?,?,?,?,1,1,NOW(),NOW())',
       [email, hashedPassword, mobile || null, company_name || null, role]);
     await logAudit(req.user.id, "CREATE_USER", "users", 0, {email, role});
     res.status(201).json({ status: 'success', message: 'User created' });
   } catch (error) { res.status(400).json({ error: error.message }); }
 });
+
+app.get('/first-login', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'first-login.html')));
+app.get('/terms', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'terms.html')));
 
 app.put('/api/users/:id', authenticate, authorize('dispatcher','management'), async (req, res) => {
   try {
@@ -1119,6 +1163,7 @@ app.delete('/api/users/:id', authenticate, authorize('dispatcher','management'),
     res.json({ status: 'success', message: 'User deleted' });
   } catch (error) { res.status(400).json({ error: error.message }); }
 });
+
 app.post('/api/auth/first-login-setup', authenticate, async (req, res) => {
   try {
     const { password, terms_accepted } = req.body;
@@ -1133,6 +1178,8 @@ app.post('/api/auth/first-login-setup', authenticate, async (req, res) => {
     res.json({ status: 'success', message: 'Setup complete', token, user: { id: req.user.id, email: req.user.email, role: req.user.role } });
   } catch (error) { res.status(400).json({ error: error.message }); }
 });
+
+
 
 // ============ PAGE ROUTES ============
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'index.html')));
