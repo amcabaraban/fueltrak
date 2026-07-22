@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -59,7 +59,7 @@
         </div>
         <p class="text-sm text-gray-500 mb-2" id="recordCount"></p>
         <div class="bg-white rounded-xl shadow-[0_4px_15px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.5)] overflow-hidden">
-            <div class="table-wrap"><table class="w-full text-sm"><thead class="bg-gray-50 border-b"><tr><th class="py-3 px-3 text-left">Make</th><th class="py-3 px-3 text-left">Plate No</th><th class="py-3 px-3 text-left">Driver</th><th class="py-3 px-3 text-left">Hauler/Customer</th><th class="py-3 px-3 text-center">COTs</th><th class="py-3 px-3 text-right">Capacity (KL)</th><th class="py-3 px-3 text-center">TPS Count</th></tr></thead><tbody id="truckBody"><tr><td colspan="7" class="text-center py-8 text-gray-500">Loading...</td></tr></tbody></table></div>
+            <div class="table-wrap"><table class="w-full text-sm"><thead class="bg-gray-50 border-b"><tr><th class="py-3 px-3 text-left">Make</th><th class="py-3 px-3 text-left">Plate No</th><th class="py-3 px-3 text-left">Driver</th><th class="py-3 px-3 text-left">Hauler/Customer</th><th class="py-3 px-3 text-center">COTs</th><th class="py-3 px-3 text-right">Capacity (KL)</th><th class="py-3 px-3 text-center">TPS Count</th><th class="py-3 px-3 text-center">Actions</th></tr></thead><tbody id="truckBody"><tr><td colspan="8" class="text-center py-8 text-gray-500">Loading...</td></tr></tbody></table></div>
         </div>
         <div class="px-4 py-3 border-t flex justify-between items-center bg-white rounded-b-xl">
             <div class="text-sm text-gray-500" id="pageInfo"></div>
@@ -110,19 +110,19 @@
             var totalCap=cots.reduce(function(s,v){return s+parseFloat(v);},0);
             var capKL=totalCap>0?Math.round(totalCap/1000):0;
             return'<tr class="border-b hover:bg-gray-50">'+
-                '<td class="py-2 px-3 cursor-pointer hover:bg-yellow-50" onclick="editTruck('+t.id+',\'truck_make\',this)">'+(t.truck_make||'-')+'</td>'+
+                '<td class="py-2 px-3 " onclick="editTruck('+t.id+',\'truck_make\',this)">'+(t.truck_make||'-')+'</td>'+
                 '<td class="py-2 px-3 font-semibold">'+t.plate_no+'</td>'+
-                '<td class="py-2 px-3 cursor-pointer hover:bg-yellow-50" onclick="editTruck('+t.id+',\'driver_name\',this)">'+(t.driver_name||'-').replace(/"/g,'')+'</td>'+
-                '<td class="py-2 px-3 cursor-pointer hover:bg-yellow-50" onclick="editTruck('+t.id+',\'hauler_name\',this)">'+(t.hauler_name||'-')+'</td>'+
+                '<td class="py-2 px-3 " onclick="editTruck('+t.id+',\'driver_name\',this)">'+(t.driver_name||'-').replace(/"/g,'')+'</td>'+
+                '<td class="py-2 px-3 " onclick="editTruck('+t.id+',\'hauler_name\',this)">'+(t.hauler_name||'-')+'</td>'+
                 '<td class="py-2 px-3 text-center">'+cots.length+'</td>'+
                 '<td class="py-2 px-3 text-right font-bold">'+capKL.toLocaleString()+' KL</td>'+
-                '<td class="py-2 px-3 text-center cursor-pointer hover:bg-yellow-50" onclick="editTruck('+t.id+',\'tps_count\',this)">'+(t.tps_count||0)+'</td>'+
+                '<td class="py-2 px-3 text-center " onclick="editTruck('+t.id+',\'tps_count\',this)">'+(t.tps_count||0)+'</td>'+
                 '<td class="py-2 px-3"><div class="flex space-x-2 justify-center">' +
                 '<button onclick="editTruck('+t.id+',\'truck_make\',this)" class="text-blue-600"><i class="fas fa-edit"></i></button>' +
                 '<button onclick="deleteTruck('+t.id+',\''+t.plate_no+'\')" class="text-red-600"><i class="fas fa-trash"></i></button>' +
                 '</div></td>'
                 '</tr>';
-        }).join('')||'<tr><td colspan="7" class="text-center py-8 text-gray-500">No trucks found</td></tr>';
+        }).join('')||'<tr><td colspan="8" class="text-center py-8 text-gray-500">No trucks found</td></tr>';
 
         var pagHTML='';
         pagHTML+='<button onclick="changePage('+(currentPage-1)+')" class="px-2 py-1 border rounded text-xs '+(currentPage===1?'text-gray-300 cursor-not-allowed':'hover:bg-gray-100')+'" '+(currentPage===1?'disabled':'')+'><i class="fas fa-chevron-left"></i></button>';
@@ -172,7 +172,7 @@ async function deleteTruck(id, plate) {
     }
 }
 
-function openTab(tab){document.getElementById('dashboardView').classList.add('hidden');['tabVerify','tabLoading','tabTrucks','tabClients'].forEach(t=>document.getElementById(t).classList.add('hidden'));var el=document.getElementById('tab'+tab.charAt(0).toUpperCase()+tab.slice(1));if(el)el.classList.remove('hidden');try{if(tab==='verify')loadPending();if(tab==='loading')loadApproved();if(tab==='trucks')loadTrucks();if(tab==='clients')loadClients()}catch(e){}}
+}
 
     var currentChatUser=null,currentChatName='',chatInterval=null,contactList=[];
 async function openChat(){document.getElementById('chatWidget').classList.remove('hidden');document.getElementById('chatButton').classList.add('hidden');loadContactList();}
@@ -204,6 +204,7 @@ async function logout(){try{await fetch('/api/auth/logout',{method:'POST',header
     <i class="fas fa-comments"></i>
 </button></body>
 </html>
+
 
 
 
