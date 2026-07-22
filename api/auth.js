@@ -1161,18 +1161,37 @@ app.post('/api/auth/first-login-setup', authenticate, async (req, res) => {
   try {
     const { password, terms_accepted } = req.body;
     if (!terms_accepted) return res.status(400).json({ error: 'You must accept the Terms & Conditions' });
+    
     const pwdCheck = validatePassword(password);
     if (!pwdCheck.valid) return res.status(400).json({ error: pwdCheck.error });
     
     const hashedPassword = await bcrypt.hash(password, 12);
-    await pool.execute('UPDATE users SET password = ?, first_login = 0, terms_accepted = 1 WHERE id = ?', [hashedPassword, req.user.id]);
+    await pool.execute('UPDATE users SET password = ?, first_login = 0, terms_accepted = 1, is_verified = 1 WHERE id = ?', [hashedPassword, req.user.id]);
+    
+    // Generate OTP and send verification email to client
+    const otp = generateOTP();
+    otpCache.set(req.user.email, otp);
+    await sendOTPEmail(req.user.email, '', otp, 'verification');
+    
+    // Notify admin about first login
+    const [admins] = await pool.execute("SELECT email FROM users WHERE role IN ('dispatcher','management') LIMIT 1");
+    if (admins.length > 0 && process.env.SMTP_USER) {
+      try {
+        await transporter.sendMail({
+          from: '"FuelTrak Security" <' + process.env.SMTP_USER + '>',
+          to: admins[0].email,
+          subject: 'FuelTrak - Client First Login Completed',
+          html: '<div style="font-family:Arial;max-width:500px;margin:auto;padding:20px;border:1px solid #ddd;border-radius:10px"><h2 style="color:#38a169">✅ Client Setup Complete</h2><p><b>Client:</b> ' + req.user.email + '</p><p><b>Company:</b> ' + (req.user.company_name || 'N/A') + '</p><p>Has accepted Terms & Conditions and changed their password.</p><p style="color:#999;font-size:12px">Time: ' + new Date().toLocaleString() + '</p></div>'
+        });
+      } catch(e) {}
+    }
     
     const token = jwt.sign({ id: req.user.id, role: req.user.role }, process.env.JWT_SECRET, { expiresIn: '24h' });
-    res.json({ status: 'success', message: 'Setup complete', token, user: { id: req.user.id, email: req.user.email, role: req.user.role } });
+    await logAudit(req.user.id, "FIRST_LOGIN_SETUP", "users", req.user.id, {});
+    
+    res.json({ status: 'success', message: 'Setup complete! Check your email for verification.', token, user: { id: req.user.id, email: req.user.email, role: req.user.role } });
   } catch (error) { res.status(400).json({ error: error.message }); }
 });
-
-
 
 // ============ ADD FIRST_LOGIN COLUMN ============
 app.post('/api/admin/add-first-login-column', authenticate, authorize('dispatcher','management'), async (req, res) => {
