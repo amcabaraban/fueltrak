@@ -518,42 +518,37 @@ app.put('/api/dispatch/update-tps/:id', authenticate, authorize('dispatcher', 'm
 app.get('/api/dispatch/truck-stats', authenticate, authorize('dispatcher', 'management'), async (req, res) => {
   try {
     const [truckCounts] = await pool.execute('SELECT COUNT(*) as total, SUM(CASE WHEN is_active = 1 THEN 1 ELSE 0 END) as active, SUM(CASE WHEN is_active = 0 THEN 1 ELSE 0 END) as inactive, COALESCE(SUM(total_capacity), 0) as totalCapacity FROM trucks');
-    const [docCounts] = await pool.execute(`
-      SELECT 
-        document_type,
-        SUM(CASE WHEN expiry_date >= NOW() THEN 1 ELSE 0 END) as valid,
-        SUM(CASE WHEN expiry_date < NOW() THEN 1 ELSE 0 END) as expired
-      FROM truck_documents 
-      WHERE document_type IN ('lto_registration','fire_permit','dost_calibration')
-      GROUP BY document_type
+    
+    // Count trucks with all 3 valid documents
+    const [validCount] = await pool.execute(`
+      SELECT COUNT(DISTINCT t.id) as count FROM trucks t 
+      INNER JOIN truck_documents td1 ON t.id = td1.truck_id AND td1.document_type = 'lto_registration' AND td1.expiry_date >= NOW()
+      INNER JOIN truck_documents td2 ON t.id = td2.truck_id AND td2.document_type = 'fire_permit' AND td2.expiry_date >= NOW()
+      INNER JOIN truck_documents td3 ON t.id = td3.truck_id AND td3.document_type = 'dost_calibration' AND td3.expiry_date >= NOW()
     `);
     
-    const docBreakdown = { lto: { valid: 0, expired: 0, missing: 0 }, fire: { valid: 0, expired: 0, missing: 0 }, dost: { valid: 0, expired: 0, missing: 0 } };
-    docCounts.forEach(d => {
-      const key = d.document_type === 'lto_registration' ? 'lto' : d.document_type === 'fire_permit' ? 'fire' : 'dost';
-      docBreakdown[key].valid = d.valid || 0;
-      docBreakdown[key].expired = d.expired || 0;
-      docBreakdown[key].missing = (truckCounts[0].total * 3) - (d.valid + d.expired);
-    });
-    
-    // Count trucks with all valid docs
-    const [validTruckCount] = await pool.execute(`
-      SELECT COUNT(*) as count FROM trucks t 
-      WHERE t.is_active = 1 
-      AND (SELECT COUNT(*) FROM truck_documents WHERE truck_id = t.id AND expiry_date >= NOW()) = 3
+    // Count trucks with at least 1 expired document
+    const [expiredCount] = await pool.execute(`
+      SELECT COUNT(DISTINCT t.id) as count FROM trucks t
+      INNER JOIN truck_documents td ON t.id = td.truck_id AND td.expiry_date < NOW()
     `);
     
     const total = truckCounts[0].total;
-    const withValidDocs = validTruckCount[0].count;
-    const withExpiredDocs = total - withValidDocs;
+    const withValidDocs = validCount[0].count;
+    const withExpiredDocs = expiredCount[0].count;
     
-    res.json({ status: 'success', data: {
-      total, active: truckCounts[0].active, inactive: truckCounts[0].inactive,
-      withExpiredDocs, withValidDocs, expiringSoon: 0,
-      totalCapacity: truckCounts[0].totalCapacity,
-      documentBreakdown: docBreakdown,
-      trucksNeedingAttention: []
-    }});
+    // Document breakdown by type
+    const [ltoCounts] = await pool.execute(`SELECT SUM(CASE WHEN expiry_date >= NOW() THEN 1 ELSE 0 END) as valid, SUM(CASE WHEN expiry_date < NOW() THEN 1 ELSE 0 END) as expired FROM truck_documents WHERE document_type = 'lto_registration'`);
+    const [fireCounts] = await pool.execute(`SELECT SUM(CASE WHEN expiry_date >= NOW() THEN 1 ELSE 0 END) as valid, SUM(CASE WHEN expiry_date < NOW() THEN 1 ELSE 0 END) as expired FROM truck_documents WHERE document_type = 'fire_permit'`);
+    const [dostCounts] = await pool.execute(`SELECT SUM(CASE WHEN expiry_date >= NOW() THEN 1 ELSE 0 END) as valid, SUM(CASE WHEN expiry_date < NOW() THEN 1 ELSE 0 END) as expired FROM truck_documents WHERE document_type = 'dost_calibration'`);
+    
+    const docBreakdown = {
+      lto: { valid: ltoCounts[0].valid || 0, expired: ltoCounts[0].expired || 0, missing: total - (ltoCounts[0].valid + ltoCounts[0].expired) },
+      fire: { valid: fireCounts[0].valid || 0, expired: fireCounts[0].expired || 0, missing: total - (fireCounts[0].valid + fireCounts[0].expired) },
+      dost: { valid: dostCounts[0].valid || 0, expired: dostCounts[0].expired || 0, missing: total - (dostCounts[0].valid + dostCounts[0].expired) }
+    };
+    
+    res.json({ status: 'success', data: { total, active: truckCounts[0].active, inactive: truckCounts[0].inactive, withExpiredDocs, withValidDocs, expiringSoon: 0, totalCapacity: truckCounts[0].totalCapacity, documentBreakdown: docBreakdown, trucksNeedingAttention: [] }});
   } catch (error) { res.status(500).json({ error: error.message }); }
 });
 
