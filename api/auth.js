@@ -1119,10 +1119,6 @@ app.delete('/api/users/:id', authenticate, authorize('dispatcher','management'),
     res.json({ status: 'success', message: 'User deleted' });
   } catch (error) { res.status(400).json({ error: error.message }); }
 });
-    res.json({ status: 'success', message: 'User deleted' });
-  } catch (error) { res.status(400).json({ error: error.message }); }
-});
-
 app.post('/api/auth/first-login-setup', authenticate, async (req, res) => {
   try {
     const { password, terms_accepted } = req.body;
