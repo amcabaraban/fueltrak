@@ -697,9 +697,23 @@ app.post('/api/truck-documents/:truckId', authenticate, authorize('dispatcher', 
   } catch (error) { res.status(400).json({ error: error.message }); }
 });
 
-// ============ TRUCK DELETE ============
 app.delete('/api/trucks/delete/:id', authenticate, authorize('dispatcher','management'), async (req, res) => {
   try {
+    // First check if this is a masterlist ID or trucks ID
+    const [master] = await pool.execute('SELECT plate_no FROM truck_masterlist WHERE id = ?', [req.params.id]);
+    if (master.length > 0) {
+      const plateNo = master[0].plate_no;
+      // Delete from trucks table by plate_no
+      const [truck] = await pool.execute('SELECT id FROM trucks WHERE plate_no = ?', [plateNo]);
+      if (truck.length > 0) {
+        await pool.execute('DELETE FROM truck_documents WHERE truck_id = ?', [truck[0].id]);
+        await pool.execute('DELETE FROM trucks WHERE plate_no = ?', [plateNo]);
+      }
+      await pool.execute('DELETE FROM truck_masterlist WHERE id = ?', [req.params.id]);
+      await logAudit(req.user.id, "DELETE_TRUCK", "trucks", req.params.id, {plate_no: plateNo});
+      return res.json({ status: 'success', message: 'Truck deleted from all tables' });
+    }
+    // Try trucks table
     const [truck] = await pool.execute('SELECT plate_no FROM trucks WHERE id = ?', [req.params.id]);
     if (!truck.length) return res.status(404).json({ error: 'Truck not found' });
     const plateNo = truck[0].plate_no;
@@ -707,7 +721,7 @@ app.delete('/api/trucks/delete/:id', authenticate, authorize('dispatcher','manag
     await pool.execute('DELETE FROM trucks WHERE id = ?', [req.params.id]);
     await pool.execute('DELETE FROM truck_masterlist WHERE plate_no = ?', [plateNo]);
     await logAudit(req.user.id, "DELETE_TRUCK", "trucks", req.params.id, {plate_no: plateNo});
-    res.json({ status: 'success', message: 'Truck, documents, and masterlist entry deleted' });
+    res.json({ status: 'success', message: 'Truck deleted from all tables' });
   } catch (error) { res.status(400).json({ error: error.message }); }
 });
 
