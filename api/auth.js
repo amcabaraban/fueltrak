@@ -639,8 +639,8 @@ app.post('/api/client/submit-atl', authenticate, authorize('client'), async (req
     if (existing.length) return res.status(400).json({ error: 'You already have a pending ATL for this truck' });
     const atlCode = await generateATLCode(company || req.user.company_name);
     await pool.execute(
-      `INSERT INTO authority_to_load (atl_code, client_id, truck_id, company, so_number, volume, hauler, plate_no, driver_name, contact_number, has_si, scheduled_date, remarks, special_instructions, status, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`
-      [atlCode, req.user.id, truckId, company || req.user.company_name || '', so_number, volume || null, hauler || '', plateNo || '', driver || '', contact_number || null, has_si || false, scheduled_date || new Date().toISOString().split('T')[0], remarks || '', special_instructions || null, 'pending']
+      `INSERT INTO authority_to_load (atl_code, client_id, truck_id, company, so_number, volume, hauler, plate_no, driver_name, contact_number, has_si, scheduled_date, remarks, special_instructions, status, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', NOW())`,
+      [atlCode, req.user.id, truckId, company || req.user.company_name || '', so_number, volume || null, hauler || '', plateNo || '', driver || '', contact_number || null, has_si || false, scheduled_date || new Date().toISOString().split('T')[0], remarks || '', special_instructions || null]
     );
     res.status(201).json({ status: 'success', message: 'ATL ' + atlCode + ' Submitted!', data: { atl_code: atlCode } });
   } catch (error) { res.status(400).json({ error: error.message }); }
