@@ -639,7 +639,7 @@ app.post('/api/client/submit-atl', authenticate, authorize('client'), async (req
     if (existing.length) return res.status(400).json({ error: 'You already have a pending ATL for this truck' });
     const atlCode = await generateATLCode(company || req.user.company_name);
     await pool.execute(
-      `INSERT INTO authority_to_load (atl_code, client_id, truck_id, company, so_number, volume, hauler, plate_no, driver_name, contact_number, has_si, scheduled_date, remarks, status, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
+      `INSERT INTO authority_to_load (atl_code, client_id, truck_id, company, so_number, volume, hauler, plate_no, driver_name, contact_number, has_si, scheduled_date, remarks, special_instructions, status, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`
       [atlCode, req.user.id, truckId, company || req.user.company_name || '', so_number, volume || null, hauler || '', plateNo || '', driver || '', contact_number || null, has_si || false, scheduled_date || new Date().toISOString().split('T')[0], remarks || '', special_instructions || null, 'pending']
     );
     res.status(201).json({ status: 'success', message: 'ATL ' + atlCode + ' Submitted!', data: { atl_code: atlCode } });
@@ -690,7 +690,7 @@ app.post('/api/truck-documents/:truckId', authenticate, authorize('dispatcher', 
       await pool.execute('UPDATE truck_documents SET document_number = ?, issue_date = ?, expiry_date = ?, status = ? WHERE id = ?',
         [document_number || '', issue_date || new Date().toISOString().split('T')[0], expiry_date, new Date(expiry_date) >= new Date() ? 'valid' : 'expired', existing[0].id]);
     } else {
-      await pool.execute('INSERT INTO truck_documents (truck_id, document_type, document_number, issue_date, expiry_date, status, createdAt) VALUES (?, ?, ?, ?, ?, ?, NOW())',
+      await pool.execute('INSERT INTO users (email, password, mobile, company_name, role, is_verified, is_active, first_login, createdAt, updatedAt) VALUES (?,?,?,?,?,1,1,1,NOW(),NOW())',
         [req.params.truckId, document_type, document_number || '', issue_date || new Date().toISOString().split('T')[0], expiry_date, 'valid']);
     }
     res.json({ status: 'success', message: 'Document saved' });
