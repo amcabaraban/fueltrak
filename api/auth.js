@@ -690,7 +690,7 @@ app.post('/api/truck-documents/:truckId', authenticate, authorize('dispatcher', 
       await pool.execute('UPDATE truck_documents SET document_number = ?, issue_date = ?, expiry_date = ?, status = ? WHERE id = ?',
         [document_number || '', issue_date || new Date().toISOString().split('T')[0], expiry_date, new Date(expiry_date) >= new Date() ? 'valid' : 'expired', existing[0].id]);
     } else {
-      await pool.execute('INSERT INTO users (email, password, mobile, company_name, role, is_verified, is_active, first_login, createdAt, updatedAt) VALUES (?,?,?,?,?,1,1,1,NOW(),NOW())',
+      await pool.execute('INSERT INTO truck_documents (truck_id, document_type, document_number, issue_date, expiry_date, status, createdAt) VALUES (?, ?, ?, ?, ?, ?, NOW())',
         [req.params.truckId, document_type, document_number || '', issue_date || new Date().toISOString().split('T')[0], expiry_date, 'valid']);
     }
     res.json({ status: 'success', message: 'Document saved' });
@@ -1231,18 +1231,20 @@ app.post('/api/auth/verify-first-login-otp', async (req, res) => {
 // ============ ADD FIRST_LOGIN COLUMN ============
 app.post('/api/admin/add-first-login-column', authenticate, authorize('dispatcher','management'), async (req, res) => {
   try {
-    await pool.execute("ALTER TABLE users ADD COLUMN first_login TINYINT DEFAULT 0");
-    await pool.execute("ALTER TABLE users ADD COLUMN terms_accepted TINYINT DEFAULT 0");
     await pool.execute("ALTER TABLE authority_to_load ADD COLUMN special_instructions TEXT");
-    res.json({ status: 'success', message: 'Columns added' });
+    res.json({ status: 'success', message: 'special_instructions column added' });
   } catch (error) {
     if (error.code === 'ER_DUP_FIELDNAME') {
-      res.json({ status: 'success', message: 'Columns already exist' });
+      res.json({ status: 'success', message: 'Column already exists' });
     } else {
-      res.status(400).json({ error: error.message });
+      // Try with IGNORE
+      try { await pool.execute("ALTER TABLE authority_to_load ADD COLUMN special_instructions TEXT"); res.json({ status: 'success' }); }
+      catch(e) { res.status(400).json({ error: error.message }); }
     }
   }
-});// ============ PAGE ROUTES ============
+});
+
+// ============ PAGE ROUTES ============
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'index.html')));
 app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'dashboard.html')));
 app.get('/dashboard.html', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'dashboard.html')));
