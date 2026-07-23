@@ -156,7 +156,7 @@
     }
 
 async function deleteTruck(id, plate) {
-    if (!confirm('DELETE truck ' + plate + '?\n\nThis will permanently delete the truck and ALL its documents (LTO, Fire, DOST).\n\nThis action CANNOT be undone!')) return;
+    if (!confirm('DELETE truck ' + plate + '?\n\nThis will permanently delete the truck and ALL its documents.\n\nThis action CANNOT be undone!')) return;
     if (!confirm('FINAL CONFIRMATION: Delete ' + plate + ' and all documents?')) return;
     
     var res = await fetch('/api/trucks/delete/' + id, {
@@ -166,7 +166,7 @@ async function deleteTruck(id, plate) {
     var data = await res.json();
     if (data.status === 'success') {
         alert(data.message);
-        loadTrucks();
+        loadTrucks(); // <-- This should refresh the list
     } else {
         alert(data.error || 'Error deleting truck');
     }
