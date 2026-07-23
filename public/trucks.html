@@ -56,6 +56,7 @@
                 <input type="text" id="searchInput" placeholder="Search plate, driver, hauler..." class="px-3 py-2 border rounded text-sm w-64" oninput="currentPage=1;loadTrucks()">
                 <button onclick="showAddTruck()" class="bg-green-600 text-white px-4 py-2 rounded text-sm no-print"><i class="fas fa-plus mr-1"></i>Add Truck</button>
                 <button onclick="window.print()" class="bg-blue-600 text-white px-4 py-2 rounded text-sm no-print"><i class="fas fa-print mr-1"></i>Print</button>
+                <button onclick="exportCSV()" class="bg-green-600 text-white px-4 py-2 rounded text-sm no-print"><i class="fas fa-download mr-1"></i>Export CSV</button>
             </div>
         </div>
         <p class="text-sm text-gray-500 mb-2" id="recordCount"></p>
@@ -236,6 +237,18 @@ async function saveTruck(e){
     var data=await res.json();
     if(data.status==='success'){closeAddTruck();loadTrucks();alert('Truck added!');}
     else{alert(data.error||'Error');}
+}
+
+function exportCSV(){
+    var csv='Make,Plate No,Driver,Hauler,COT1,COT2,COT3,COT4,COT5,COT6,COT7,COT8,COT9,COT10,Total Capacity,TPS Count\n';
+    allTrucks.forEach(function(t){
+        csv+='"'+t.truck_make+'","'+t.plate_no+'","'+(t.driver_name||'').replace(/"/g,'')+'","'+(t.hauler_name||'')+'","'+t.cot1+'","'+t.cot2+'","'+t.cot3+'","'+t.cot4+'","'+t.cot5+'","'+t.cot6+'","'+t.cot7+'","'+t.cot8+'","'+t.cot9+'","'+t.cot10+'","'+t.total_capacity+'","'+t.tps_count+'"\n';
+    });
+    var blob=new Blob([csv],{type:'text/csv'});
+    var a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download='truck-masterlist-'+new Date().toISOString().split('T')[0]+'.csv';
+    a.click();
 }
 
 var currentChatUser=null,currentChatName='',chatInterval=null,contactList=[];
