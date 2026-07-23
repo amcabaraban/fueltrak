@@ -697,6 +697,17 @@ app.post('/api/truck-documents/:truckId', authenticate, authorize('dispatcher', 
   } catch (error) { res.status(400).json({ error: error.message }); }
 });
 
+// ============ TRUCK DELETE ============
+app.delete('/api/trucks/delete/:id', authenticate, authorize('dispatcher','management'), async (req, res) => {
+  try {
+    const [truck] = await pool.execute('SELECT plate_no FROM trucks WHERE id = ?', [req.params.id]);
+    if (!truck.length) return res.status(404).json({ error: 'Truck not found' });
+    await pool.execute('DELETE FROM truck_documents WHERE truck_id = ?', [req.params.id]);
+    await pool.execute('DELETE FROM trucks WHERE id = ?', [req.params.id]);
+    await logAudit(req.user.id, "DELETE_TRUCK", "trucks", req.params.id, {plate_no: truck[0].plate_no});
+    res.json({ status: 'success', message: 'Truck and documents deleted' });
+  } catch (error) { res.status(400).json({ error: error.message }); }
+});
 // ============ TRUCK MASTERLIST ============
 app.get('/api/truck-masterlist', authenticate, async (req, res) => {
   try {
@@ -1262,6 +1273,7 @@ app.get('/adminclient', (req, res) => res.sendFile(path.join(__dirname, '..', 'p
 app.get('/audit-logs', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'audit-logs.html')));
 
 module.exports = app;
+
 
 
 
