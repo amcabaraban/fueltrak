@@ -749,7 +749,7 @@ app.get('/api/truck-masterlist-all', authenticate, async (req, res) => {
 
 app.put('/api/update-truck-masterlist/:id', authenticate, authorize('dispatcher', 'management'), async (req, res) => {
   try {
-    const allowed = ['truck_make', 'driver_name', 'hauler_name', 'tps_count'];
+    const allowed = ['truck_make', 'driver_name', 'hauler_name', 'tps_count', 'plate_no', 'cot1', 'cot2', 'cot3', 'cot4', 'cot5', 'cot6', 'cot7', 'cot8', 'cot9', 'cot10', 'total_capacity'];
     const updates = [];
     const params = [];
     for (const key in req.body) {
@@ -1290,6 +1290,7 @@ app.get('/adminclient', (req, res) => res.sendFile(path.join(__dirname, '..', 'p
 app.get('/audit-logs', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'audit-logs.html')));
 
 module.exports = app;
+
 
 
 
