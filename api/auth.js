@@ -702,6 +702,19 @@ app.delete('/api/trucks/delete/:id', authenticate, authorize('dispatcher','manag
   try {
     const [truck] = await pool.execute('SELECT plate_no FROM trucks WHERE id = ?', [req.params.id]);
     if (!truck.length) return res.status(404).json({ error: 'Truck not found' });
+    const plateNo = truck[0].plate_no;
+    
+    // Delete documents
+    await pool.execute('DELETE FROM truck_documents WHERE truck_id = ?', [req.params.id]);
+    // Delete truck from trucks table
+    await pool.execute('DELETE FROM trucks WHERE id = ?', [req.params.id]);
+    // Delete from masterlist
+    await pool.execute('DELETE FROM truck_masterlist WHERE plate_no = ?', [plateNo]);
+    
+    await logAudit(req.user.id, "DELETE_TRUCK", "trucks", req.params.id, {plate_no: plateNo});
+    res.json({ status: 'success', message: 'Truck, documents, and masterlist entry deleted' });
+  } catch (error) { res.status(400).json({ error: error.message }); }
+});
     await pool.execute('DELETE FROM truck_documents WHERE truck_id = ?', [req.params.id]);
     await pool.execute('DELETE FROM trucks WHERE id = ?', [req.params.id]);
     await logAudit(req.user.id, "DELETE_TRUCK", "trucks", req.params.id, {plate_no: truck[0].plate_no});
@@ -1273,6 +1286,7 @@ app.get('/adminclient', (req, res) => res.sendFile(path.join(__dirname, '..', 'p
 app.get('/audit-logs', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'audit-logs.html')));
 
 module.exports = app;
+
 
 
 
