@@ -602,7 +602,7 @@ app.get('/api/client/verify-truck/:plateNo', authenticate, authorize('client'), 
 
 app.post('/api/client/submit-atl', authenticate, authorize('client'), async (req, res) => {
   try {
-    const { truck_id, plate_no, volume, driver_name, hauler_name, remarks, company, so_number, scheduled_date, contact_number, has_si } = req.body;
+    const { truck_id, plate_no, volume, driver_name, hauler_name, remarks, company, so_number, scheduled_date, contact_number, has_si, special_instructions } = req.body;
     let truckId = truck_id;
     let plateNo = plate_no;
     let driver = driver_name;
