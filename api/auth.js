@@ -640,7 +640,7 @@ app.post('/api/client/submit-atl', authenticate, authorize('client'), async (req
     const atlCode = await generateATLCode(company || req.user.company_name);
     await pool.execute(
       `INSERT INTO authority_to_load (atl_code, client_id, truck_id, company, so_number, volume, hauler, plate_no, driver_name, contact_number, has_si, scheduled_date, remarks, status, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
-      [atlCode, req.user.id, truckId, company || req.user.company_name || '', so_number, volume || null, hauler || '', plateNo || '', driver || '', contact_number || null, has_si || false, scheduled_date || new Date().toISOString().split('T')[0], remarks || '', 'pending']
+      [atlCode, req.user.id, truckId, company || req.user.company_name || '', so_number, volume || null, hauler || '', plateNo || '', driver || '', contact_number || null, has_si || false, scheduled_date || new Date().toISOString().split('T')[0], remarks || '', special_instructions || null, 'pending']
     );
     res.status(201).json({ status: 'success', message: 'ATL ' + atlCode + ' Submitted!', data: { atl_code: atlCode } });
   } catch (error) { res.status(400).json({ error: error.message }); }
@@ -1233,6 +1233,7 @@ app.post('/api/admin/add-first-login-column', authenticate, authorize('dispatche
   try {
     await pool.execute("ALTER TABLE users ADD COLUMN first_login TINYINT DEFAULT 0");
     await pool.execute("ALTER TABLE users ADD COLUMN terms_accepted TINYINT DEFAULT 0");
+    await pool.execute("ALTER TABLE authority_to_load ADD COLUMN special_instructions TEXT");
     res.json({ status: 'success', message: 'Columns added' });
   } catch (error) {
     if (error.code === 'ER_DUP_FIELDNAME') {
