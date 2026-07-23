@@ -54,6 +54,7 @@
             <h1 class="text-3xl font-bold">Truck Masterlist</h1>
             <div class="flex gap-2">
                 <input type="text" id="searchInput" placeholder="Search plate, driver, hauler..." class="px-3 py-2 border rounded text-sm w-64" oninput="currentPage=1;loadTrucks()">
+                <button onclick="showAddTruck()" class="bg-green-600 text-white px-4 py-2 rounded text-sm no-print"><i class="fas fa-plus mr-1"></i>Add Truck</button>
                 <button onclick="window.print()" class="bg-blue-600 text-white px-4 py-2 rounded text-sm no-print"><i class="fas fa-print mr-1"></i>Print</button>
             </div>
         </div>
@@ -75,6 +76,36 @@
     <a href="/trucks" class="active"><i class="fas fa-truck"></i><span>Trucks</span></a>
     <a href="/docs-report"><i class="fas fa-file-alt"></i><span>Docs</span></a><a href="/users"><i class="fas fa-users-cog"></i><span>Users</span></a>
     <button onclick="logout()"><i class="fas fa-sign-out-alt"></i><span>Logout</span></button>
+</div>
+
+<div id="addTruckModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[80vh] overflow-y-auto p-6">
+        <div class="flex justify-between mb-4"><h3 class="text-lg font-bold">Add New Truck</h3><button onclick="closeAddTruck()" class="text-2xl">&times;</button></div>
+        <form onsubmit="saveTruck(event)" class="space-y-3">
+            <div class="grid grid-cols-2 gap-3">
+                <div><label class="text-xs font-semibold">Plate No *</label><input type="text" id="newPlate" class="w-full px-2 py-1.5 border rounded text-sm" required></div>
+                <div><label class="text-xs font-semibold">Make *</label><input type="text" id="newMake" class="w-full px-2 py-1.5 border rounded text-sm" required></div>
+                <div><label class="text-xs font-semibold">Driver</label><input type="text" id="newDriver" class="w-full px-2 py-1.5 border rounded text-sm"></div>
+                <div><label class="text-xs font-semibold">Hauler</label><input type="text" id="newHauler" class="w-full px-2 py-1.5 border rounded text-sm"></div>
+                <div><label class="text-xs font-semibold">TPS Count</label><input type="number" id="newTps" class="w-full px-2 py-1.5 border rounded text-sm" value="0"></div>
+            </div>
+            <div><label class="text-xs font-semibold mb-1">Compartment Capacities (Liters)</label>
+                <div class="grid grid-cols-5 gap-1">
+                    <input type="number" id="cot1" placeholder="COT1" class="w-full px-1 py-1 border rounded text-xs">
+                    <input type="number" id="cot2" placeholder="COT2" class="w-full px-1 py-1 border rounded text-xs">
+                    <input type="number" id="cot3" placeholder="COT3" class="w-full px-1 py-1 border rounded text-xs">
+                    <input type="number" id="cot4" placeholder="COT4" class="w-full px-1 py-1 border rounded text-xs">
+                    <input type="number" id="cot5" placeholder="COT5" class="w-full px-1 py-1 border rounded text-xs">
+                    <input type="number" id="cot6" placeholder="COT6" class="w-full px-1 py-1 border rounded text-xs">
+                    <input type="number" id="cot7" placeholder="COT7" class="w-full px-1 py-1 border rounded text-xs">
+                    <input type="number" id="cot8" placeholder="COT8" class="w-full px-1 py-1 border rounded text-xs">
+                    <input type="number" id="cot9" placeholder="COT9" class="w-full px-1 py-1 border rounded text-xs">
+                    <input type="number" id="cot10" placeholder="COT10" class="w-full px-1 py-1 border rounded text-xs">
+                </div>
+            </div>
+            <button type="submit" class="w-full bg-blue-900 text-white py-2 rounded font-semibold">Save Truck</button>
+        </form>
+    </div>
 </div>
 
 <script>
@@ -172,6 +203,41 @@ async function deleteTruck(id, plate) {
     }
 }
 
+function showAddTruck(){
+    ['newPlate','newMake','newDriver','newHauler','newTps','cot1','cot2','cot3','cot4','cot5','cot6','cot7','cot8','cot9','cot10'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('addTruckModal').classList.remove('hidden');
+}
+function closeAddTruck(){document.getElementById('addTruckModal').classList.add('hidden');}
+async function saveTruck(e){
+    e.preventDefault();
+    var body={
+        plate_no:document.getElementById('newPlate').value.toUpperCase(),
+        truck_make:document.getElementById('newMake').value,
+        driver_name:document.getElementById('newDriver').value,
+        hauler_name:document.getElementById('newHauler').value,
+        tps_count:parseInt(document.getElementById('newTps').value)||0,
+        cot1:document.getElementById('cot1').value||'0',
+        cot2:document.getElementById('cot2').value||'0',
+        cot3:document.getElementById('cot3').value||'0',
+        cot4:document.getElementById('cot4').value||'0',
+        cot5:document.getElementById('cot5').value||'0',
+        cot6:document.getElementById('cot6').value||'0',
+        cot7:document.getElementById('cot7').value||'0',
+        cot8:document.getElementById('cot8').value||'0',
+        cot9:document.getElementById('cot9').value||'0',
+        cot10:document.getElementById('cot10').value||'0',
+        total_capacity:'0'
+    };
+    var res=await fetch('/api/truck-masterlist-add',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+        body:JSON.stringify(body)
+    });
+    var data=await res.json();
+    if(data.status==='success'){closeAddTruck();loadTrucks();alert('Truck added!');}
+    else{alert(data.error||'Error');}
+}
+
 var currentChatUser=null,currentChatName='',chatInterval=null,contactList=[];
 async function openChat(){document.getElementById('chatWidget').classList.remove('hidden');document.getElementById('chatButton').classList.add('hidden');loadContactList();}
 function showContactList(){document.getElementById('contactList').classList.remove('hidden');document.getElementById('chatBody').classList.add('hidden');document.getElementById('chatInputArea').classList.add('hidden');document.getElementById('chatTitle').textContent='Chat';currentChatUser=null;loadContactList();}
@@ -239,7 +305,8 @@ async function logout(){try{await fetch('/api/auth/logout',{method:'POST',header
 </div>
 <button onclick="openCalc()" class="fixed bottom-20 right-4 z-50 bg-green-600 text-white p-3 rounded-full shadow-lg hover:bg-green-700" id="calcButton">
     <i class="fas fa-calculator"></i>
-</button></body>
+</button>
+</body>
 </html>
 
 

@@ -762,6 +762,17 @@ app.put('/api/update-truck-masterlist/:id', authenticate, authorize('dispatcher'
   } catch (error) { res.status(400).json({ error: error.message }); }
 });
 
+app.post('/api/truck-masterlist-add', authenticate, authorize('dispatcher','management'), async (req, res) => {
+  try {
+    const { plate_no, truck_make, driver_name, hauler_name, tps_count, cot1, cot2, cot3, cot4, cot5, cot6, cot7, cot8, cot9, cot10, total_capacity } = req.body;
+    await pool.execute(
+      'INSERT INTO truck_masterlist (plate_no, truck_make, driver_name, hauler_name, tps_count, cot1, cot2, cot3, cot4, cot5, cot6, cot7, cot8, cot9, cot10, total_capacity) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
+      [plate_no.toUpperCase(), truck_make, driver_name, hauler_name, tps_count, cot1, cot2, cot3, cot4, cot5, cot6, cot7, cot8, cot9, cot10, total_capacity]
+    );
+    res.json({ status: 'success', message: 'Truck added to masterlist' });
+  } catch (error) { res.status(400).json({ error: error.message }); }
+});
+
 // ============ CHAT ============
 app.get('/api/chat-list', authenticate, async (req, res) => {
   try {
