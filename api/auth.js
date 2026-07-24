@@ -849,7 +849,7 @@ app.get('/api/reports/filters', authenticate, authorize('dispatcher', 'managemen
 app.get('/api/reports/summary', authenticate, authorize('dispatcher', 'management'), async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
-    let query = "SELECT * FROM authority_to_load WHERE status IN ('completed','cancelled','dispatched')";
+    let query = "SELECT * FROM authority_to_load WHERE status IN ('completed','cancelled','dispatched','rejected')";
     const params = [];
     if (startDate) { query += ' AND (DATE(completed_date) >= ? OR DATE(createdAt) >= ? OR DATE(scheduled_date) >= ?)'; params.push(startDate, startDate, startDate); }
 if (endDate) { query += ' AND (DATE(completed_date) <= ? OR DATE(createdAt) <= ? OR DATE(scheduled_date) <= ?)'; params.push(endDate, endDate, endDate); }
