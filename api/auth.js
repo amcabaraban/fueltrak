@@ -775,23 +775,24 @@ app.post('/api/truck-masterlist-add', authenticate, authorize('dispatcher','mana
 
 
 // ============ MASTERLIST BULK UPLOAD ============
+// ============ MASTERLIST BULK UPLOAD ============
 app.post('/api/truck-masterlist-clear', authenticate, authorize('dispatcher','management'), async (req, res) => {
   try {
     await pool.execute('DELETE FROM truck_masterlist');
     await pool.execute('DELETE FROM truck_documents');
     await pool.execute('DELETE FROM trucks');
-    res.json({ status: 'success', message: 'Masterlist cleared' });
+    res.json({ status: 'success', message: 'All tables cleared' });
   } catch (error) { res.status(400).json({ error: error.message }); }
 });
 
 app.post('/api/truck-masterlist-bulk', authenticate, authorize('dispatcher','management'), async (req, res) => {
   try {
-    const { trucks } = req.body; // Array of truck objects
+    const { trucks } = req.body;
     let count = 0;
     for (const t of trucks) {
       await pool.execute(
         'INSERT INTO truck_masterlist (truck_make, plate_no, driver_name, hauler_name, cot1, cot2, cot3, cot4, cot5, cot6, cot7, cot8, cot9, cot10, total_capacity, tps_count) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
-        [t.truck_make||'', t.plate_no, t.driver_name||'', t.hauler_name||'', t.cot1||'0', t.cot2||'0', t.cot3||'0', t.cot4||'0', t.cot5||'0', t.cot6||'0', t.cot7||'0', t.cot8||'0', t.cot9||'0', t.cot10||'0', t.total_capacity||'0', t.tps_count||0]
+        [t.truck_make||'', t.plate_no||'', t.driver_name||'', t.hauler_name||'', t.cot1||'0', t.cot2||'0', t.cot3||'0', t.cot4||'0', t.cot5||'0', t.cot6||'0', t.cot7||'0', t.cot8||'0', t.cot9||'0', t.cot10||'0', t.total_capacity||'0', t.tps_count||0]
       );
       count++;
     }
