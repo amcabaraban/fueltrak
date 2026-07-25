@@ -185,6 +185,7 @@
                 console.log('Dedicated endpoint failed, trying fallback...');
             }
             
+            // In sales-orders.html, update the fallback API call
             // Fallback: try the existing clients API
             try {
                 var d = await api('/clients');

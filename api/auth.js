@@ -1723,6 +1723,57 @@ app.put('/api/sales-orders/sync-company-names', authenticate, authorize('dispatc
   } catch (error) { res.status(400).json({ error: error.message }); }
 });
 
+// ============ CLIENT SALES ORDERS ============
+app.get('/api/client/sales-orders', authenticate, authorize('client'), async (req, res) => {
+  try {
+    // Get SOs owned by this client + multi-client SOs they're allocated to
+    const [orders] = await pool.execute(`
+      SELECT DISTINCT so.*, 
+        COALESCE(
+          (SELECT SUM(atl.volume) FROM authority_to_load atl 
+           WHERE atl.so_number = so.so_number 
+           AND atl.client_id = ? 
+           AND atl.status NOT IN ('cancelled','rejected')
+          ), 0
+        ) as client_used_volume,
+        COALESCE(
+          (SELECT SUM(atl.volume) FROM authority_to_load atl 
+           WHERE atl.so_number = so.so_number 
+           AND atl.status NOT IN ('cancelled','rejected')
+          ), 0
+        ) as total_used_volume
+      FROM sales_orders so
+      LEFT JOIN sales_order_clients soc ON so.id = soc.sales_order_id
+      WHERE so.client_id = ? OR soc.client_id = ?
+      ORDER BY so.createdAt DESC
+    `, [req.user.id, req.user.id, req.user.id]);
+    
+    // Format the response
+    var result = orders.map(function(so) {
+      var totalVol = parseFloat(so.total_volume) || 0;
+      var usedVol = so.is_multi_client ? parseFloat(so.total_used_volume) : parseFloat(so.client_used_volume);
+      
+      return {
+        id: so.id,
+        so_number: so.so_number,
+        total_volume: totalVol,
+        used_volume: usedVol,
+        remaining_volume: Math.max(0, totalVol - usedVol),
+        status: so.status,
+        is_multi_client: so.is_multi_client == 1,
+        company_name: so.company_name,
+        notes: so.notes,
+        createdAt: so.createdAt
+      };
+    });
+    
+    res.json({ status: 'success', data: result });
+  } catch (error) {
+    console.error('Client SO error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // ============ PAGE ROUTES ============
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'index.html')));
 app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'dashboard.html')));
