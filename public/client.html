@@ -549,10 +549,12 @@
           document.getElementById('hauler').value = truck.hauler_name || '';
       }
       if (truck.total_capacity) {
-            var capLiters = parseFloat(truck.total_capacity) || 0;
-            capacityHint.textContent = 'Max capacity: ' + Math.round(capLiters).toLocaleString() + ' L';
-            volumeInput.max = capLiters;
-        }
+          // Masterlist stores capacity in kiloliters (kL)
+          // Convert to liters: 1 kL = 1,000 L
+          var capLiters = (parseFloat(truck.total_capacity) || 0) * 1000;
+          capacityHint.textContent = 'Max capacity: ' + Math.round(capLiters).toLocaleString() + ' L';
+          volumeInput.max = capLiters;
+      }
       } else {
       truckVerified = false;
       currentTruckId = null;
