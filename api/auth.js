@@ -540,39 +540,128 @@ app.get('/api/client/dashboard', authenticate, authorize('client'), async (req, 
 
 app.get('/api/client/verify-truck/:plateNo', authenticate, authorize('client'), async (req, res) => {
   try {
-    const plateNo = req.params.plateNo.toUpperCase();
+    // Decode URL-encoded plate number and clean it up
+    const plateNo = decodeURIComponent(req.params.plateNo).toUpperCase().trim();
+    console.log('Verifying plate:', plateNo);
+    
+    // Search in trucks table first
     const [trucks] = await pool.execute('SELECT * FROM trucks WHERE plate_no = ? AND is_active = 1', [plateNo]);
+    
     if (trucks.length > 0) {
       const truck = trucks[0];
+      
+      // Get truck documents
       const [docs] = await pool.execute('SELECT * FROM truck_documents WHERE truck_id = ?', [truck.id]);
-      const docStatus = {}; let allValid = true;
+      
+      // Build document status
+      const docStatus = {};
+      let allValid = true;
+      
       if (docs.length === 0) {
-        ['lto_registration','fire_permit','dost_calibration'].forEach(type => {
+        // No documents - assume not required
+        ['lto_registration', 'fire_permit', 'dost_calibration'].forEach(type => {
           docStatus[type] = { status: 'not_required', valid: true, days_remaining: 999 };
         });
       } else {
-        ['lto_registration','fire_permit','dost_calibration'].forEach(type => {
+        ['lto_registration', 'fire_permit', 'dost_calibration'].forEach(type => {
           const doc = docs.find(d => d.document_type === type);
-          const days = doc ? Math.ceil((new Date(doc.expiry_date) - new Date()) / 86400000) : -1;
-          docStatus[type] = { status: days < 0 ? 'expired' : days <= 30 ? 'expiring_soon' : 'valid', valid: days >= 0, days_remaining: days };
-          if (days < 0) allValid = false;
+          if (doc) {
+            const days = Math.ceil((new Date(doc.expiry_date) - new Date()) / 86400000);
+            docStatus[type] = {
+              status: days < 0 ? 'expired' : days <= 30 ? 'expiring_soon' : 'valid',
+              valid: days >= 0,
+              days_remaining: days,
+              expiry_date: doc.expiry_date,
+              document_number: doc.document_number || ''
+            };
+            if (days < 0) allValid = false;
+          } else {
+            docStatus[type] = { status: 'missing', valid: true, days_remaining: -1 };
+          }
         });
       }
+      
+      // Refresh driver/hauler from masterlist if available
       const [masterRefresh] = await pool.execute('SELECT * FROM truck_masterlist WHERE plate_no = ?', [plateNo]);
       const freshDriver = (masterRefresh.length > 0 ? masterRefresh[0].driver_name : truck.driver_name) || truck.driver_name;
       const freshHauler = (masterRefresh.length > 0 ? masterRefresh[0].hauler_name : truck.hauler_name) || truck.hauler_name;
-      return res.json({ status: 'success', data: { truck: { id: truck.id, plate_no: truck.plate_no, make: truck.make, driver_name: freshDriver, hauler_name: freshHauler, total_capacity: truck.total_capacity }, documents: docStatus, can_proceed: allValid } });
+      
+      return res.json({
+        status: 'success',
+        data: {
+          truck: {
+            id: truck.id,
+            plate_no: truck.plate_no,
+            make: truck.make || 'Unknown',
+            driver_name: freshDriver ? freshDriver.replace(/"/g, '') : '',
+            hauler_name: freshHauler || '',
+            total_capacity: truck.total_capacity || 0
+          },
+          documents: docStatus,
+          can_proceed: allValid
+        }
+      });
     }
+    
+    // Not in trucks table - check masterlist
     const [master] = await pool.execute('SELECT * FROM truck_masterlist WHERE plate_no = ?', [plateNo]);
+    
     if (master.length > 0) {
+      const m = master[0];
+      
+      // Calculate total capacity from COT compartments
+      const cotTotal = [m.cot1, m.cot2, m.cot3, m.cot4, m.cot5, m.cot6, m.cot7, m.cot8, m.cot9, m.cot10]
+        .reduce((sum, val) => sum + parseFloat(val || 0), 0);
+      const totalCapacity = parseFloat(m.total_capacity) || cotTotal || 0;
+      
+      // Create truck record from masterlist
       const [newTruck] = await pool.execute(
         'INSERT INTO trucks (plate_no, make, driver_name, hauler_name, total_capacity, is_active, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, 1, NOW(), NOW())',
-        [master[0].plate_no, master[0].truck_make || 'Unknown', (master[0].driver_name || '').replace(/"/g, ''), master[0].hauler_name || '', master[0].total_capacity || 0]
+        [
+          m.plate_no,
+          m.truck_make || 'Unknown',
+          (m.driver_name || '').replace(/"/g, ''),
+          m.hauler_name || '',
+          totalCapacity
+        ]
       );
-      return res.json({ status: 'success', data: { truck: { id: newTruck.insertId, plate_no: master[0].plate_no, make: master[0].truck_make, driver_name: master[0].driver_name, hauler_name: master[0].hauler_name, total_capacity: parseFloat(master[0].total_capacity) || [master[0].cot1,master[0].cot2,master[0].cot3,master[0].cot4,master[0].cot5,master[0].cot6,master[0].cot7,master[0].cot8,master[0].cot9,master[0].cot10].reduce((s,v)=>s+parseFloat(v||0),0) }, documents: { lto_registration: { status: 'not_required', valid: true, days_remaining: 999 }, fire_permit: { status: 'not_required', valid: true, days_remaining: 999 }, dost_calibration: { status: 'not_required', valid: true, days_remaining: 999 } }, can_proceed: true } });
+      
+      return res.json({
+        status: 'success',
+        data: {
+          truck: {
+            id: newTruck.insertId,
+            plate_no: m.plate_no,
+            make: m.truck_make || 'Unknown',
+            driver_name: (m.driver_name || '').replace(/"/g, ''),
+            hauler_name: m.hauler_name || '',
+            total_capacity: totalCapacity
+          },
+          documents: {
+            lto_registration: { status: 'not_required', valid: true, days_remaining: 999 },
+            fire_permit: { status: 'not_required', valid: true, days_remaining: 999 },
+            dost_calibration: { status: 'not_required', valid: true, days_remaining: 999 }
+          },
+          can_proceed: true
+        }
+      });
     }
-    res.status(404).json({ error: 'Truck not found', can_proceed: false });
-  } catch (error) { res.status(500).json({ error: error.message }); }
+    
+    // Truck not found anywhere
+    res.status(404).json({
+      status: 'error',
+      error: 'Truck not found in database',
+      can_proceed: false
+    });
+    
+  } catch (error) {
+    console.error('Verify truck error:', error);
+    res.status(500).json({ 
+      status: 'error',
+      error: error.message,
+      can_proceed: false 
+    });
+  }
 });
 
 app.post('/api/client/submit-atl', authenticate, authorize('client'), async (req, res) => {
