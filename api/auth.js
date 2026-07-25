@@ -21,7 +21,6 @@ const transporter = nodemailer.createTransport({
   auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
 });
 async function sendOTPEmail(email, mobile, otp, type) {
-  // Send SMS and Email simultaneously
   if (mobile && mobile.length > 5) { sendFreeSMS(mobile, otp).catch(e => {}); }
   
   if (!process.env.SMTP_USER) { console.log('[DEV] OTP for ' + email + ': ' + otp); return; }
@@ -70,7 +69,6 @@ const limiter = rateLimit({
   
 });
 app.use("/api/", limiter);
-// Skip rate limiting for chat endpoints
 app.use('/api/chat', (req, res, next) => next());
 app.use('/api/chat-list', (req, res, next) => next());
 
@@ -107,7 +105,6 @@ const authLimiter = rateLimit({
   
 });
 
-// Apply strict rate limit to auth routes
 app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/register', authLimiter);
 app.use('/api/auth/forgot-password', authLimiter);
@@ -168,7 +165,6 @@ app.post('/api/auth/register', async (req, res) => {
     const { email, password, mobile, company_name } = req.body;
     const mobileRegex = /^(09\d{9}|\+639\d{9})$/;
     if (!mobileRegex.test(mobile)) return res.status(400).json({ error: 'Invalid mobile format' });
-    // --- NEW: BACKEND PASSWORD COMPLEXITY CHECK ---
     if (!validatePasswordComplexity(password)) {
         return res.status(400).json({ error: 'Password must have 8+ chars, 1 uppercase, 1 lowercase, 1 number, and 1 symbol.' });
     }
@@ -185,7 +181,7 @@ app.post('/api/auth/register', async (req, res) => {
 });
 
 // ============ ACCOUNT LOCKOUT ============
-const loginAttempts = new Map(); // In-memory store (use DB for production)
+const loginAttempts = new Map();
 
 function getLoginKey(email) {
   return 'login_' + email.toLowerCase();
@@ -256,7 +252,6 @@ app.post('/api/auth/login', async (req, res) => {
     
     resetAttempts(email);
     
-    // Check if first login - force password change and terms acceptance
     if (user.first_login === 1) {
       const tempToken = jwt.sign({ id: user.id, role: user.role, firstLogin: true }, process.env.JWT_SECRET, { expiresIn: '15m' });
       return res.json({ 
@@ -306,8 +301,6 @@ app.post('/api/auth/forgot-password', async (req, res) => {
     if (!users.length) return res.status(404).json({ error: 'Email not found' });
     const otp = generateOTP();
     otpCache.set('reset_' + email, otp);
-
-    
     await sendOTPEmail(email, '', otp, 'reset');
     res.json({ status: 'success', message: 'OTP sent. Check console.', otp });
   } catch (error) { res.status(500).json({ error: error.message }); }
@@ -352,7 +345,6 @@ app.post('/api/sync-masterlist', authenticate, authorize('dispatcher', 'manageme
     let errors = [];
     for (const m of masterlist) {
       try {
-        // Trim plate_no to 20 chars max
         const plateNo = (m.plate_no || '').substring(0, 20).toUpperCase();
         await pool.execute(
           'INSERT INTO trucks (plate_no, make, driver_name, hauler_name, total_capacity, is_active, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, 1, NOW(), NOW())',
@@ -498,25 +490,10 @@ app.post('/api/dispatch/handle-cancellation/:id', authenticate, authorize('dispa
   } catch (error) { res.status(400).json({ error: error.message }); }
 });
 
-app.put('/api/dispatch/update-si/:id', authenticate, authorize('dispatcher', 'management'), async (req, res) => {
-  try {
-    await pool.execute('UPDATE authority_to_load SET has_si = ? WHERE id = ?', [req.body.has_si, req.params.id]);
-    res.json({ status: 'success' });
-  } catch (error) { res.status(400).json({ error: error.message }); }
-});
-
-app.put('/api/dispatch/update-tps/:id', authenticate, authorize('dispatcher', 'management'), async (req, res) => {
-  try {
-    const tpsUpdates = []; const tpsParams = []; if (req.body.tps_start !== undefined) { tpsUpdates.push('tps_start = ?'); tpsParams.push(req.body.tps_start); } if (req.body.tps_end !== undefined) { tpsUpdates.push('tps_end = ?'); tpsParams.push(req.body.tps_end); } if (tpsUpdates.length > 0) { tpsParams.push(req.params.id); await pool.execute('UPDATE authority_to_load SET ' + tpsUpdates.join(', ') + ' WHERE id = ?', tpsParams); }
-    res.json({ status: 'success' });
-  } catch (error) { res.status(400).json({ error: error.message }); }
-});
-
 app.get('/api/dispatch/truck-stats', authenticate, authorize('dispatcher', 'management'), async (req, res) => {
   try {
     const [truckCounts] = await pool.execute('SELECT COUNT(*) as total, SUM(CASE WHEN is_active = 1 THEN 1 ELSE 0 END) as active, SUM(CASE WHEN is_active = 0 THEN 1 ELSE 0 END) as inactive, COALESCE(SUM(total_capacity), 0) as totalCapacity FROM trucks');
     
-    // Count trucks with all 3 valid documents
     const [validCount] = await pool.execute(`
       SELECT COUNT(DISTINCT t.id) as count FROM trucks t 
       INNER JOIN truck_documents td1 ON t.id = td1.truck_id AND td1.document_type = 'lto_registration' AND td1.expiry_date >= NOW()
@@ -524,7 +501,6 @@ app.get('/api/dispatch/truck-stats', authenticate, authorize('dispatcher', 'mana
       INNER JOIN truck_documents td3 ON t.id = td3.truck_id AND td3.document_type = 'dost_calibration' AND td3.expiry_date >= NOW()
     `);
     
-    // Count trucks with at least 1 expired document
     const [expiredCount] = await pool.execute(`
       SELECT COUNT(DISTINCT t.id) as count FROM trucks t
       INNER JOIN truck_documents td ON t.id = td.truck_id AND td.expiry_date < NOW()
@@ -534,7 +510,6 @@ app.get('/api/dispatch/truck-stats', authenticate, authorize('dispatcher', 'mana
     const withValidDocs = validCount[0].count;
     const withExpiredDocs = expiredCount[0].count;
     
-    // Document breakdown by type
     const [ltoCounts] = await pool.execute(`SELECT SUM(CASE WHEN expiry_date >= NOW() THEN 1 ELSE 0 END) as valid, SUM(CASE WHEN expiry_date < NOW() THEN 1 ELSE 0 END) as expired FROM truck_documents WHERE document_type = 'lto_registration'`);
     const [fireCounts] = await pool.execute(`SELECT SUM(CASE WHEN expiry_date >= NOW() THEN 1 ELSE 0 END) as valid, SUM(CASE WHEN expiry_date < NOW() THEN 1 ELSE 0 END) as expired FROM truck_documents WHERE document_type = 'fire_permit'`);
     const [dostCounts] = await pool.execute(`SELECT SUM(CASE WHEN expiry_date >= NOW() THEN 1 ELSE 0 END) as valid, SUM(CASE WHEN expiry_date < NOW() THEN 1 ELSE 0 END) as expired FROM truck_documents WHERE document_type = 'dost_calibration'`);
@@ -699,11 +674,9 @@ app.post('/api/truck-documents/:truckId', authenticate, authorize('dispatcher', 
 
 app.delete('/api/trucks/delete/:id', authenticate, authorize('dispatcher','management'), async (req, res) => {
   try {
-    // First check if this is a masterlist ID or trucks ID
     const [master] = await pool.execute('SELECT plate_no FROM truck_masterlist WHERE id = ?', [req.params.id]);
     if (master.length > 0) {
       const plateNo = master[0].plate_no;
-      // Delete from trucks table by plate_no
       const [truck] = await pool.execute('SELECT id FROM trucks WHERE plate_no = ?', [plateNo]);
       if (truck.length > 0) {
         await pool.execute('DELETE FROM truck_documents WHERE truck_id = ?', [truck[0].id]);
@@ -713,7 +686,6 @@ app.delete('/api/trucks/delete/:id', authenticate, authorize('dispatcher','manag
       await logAudit(req.user.id, "DELETE_TRUCK", "trucks", req.params.id, {plate_no: plateNo});
       return res.json({ status: 'success', message: 'Truck deleted from all tables' });
     }
-    // Try trucks table
     const [truck] = await pool.execute('SELECT plate_no FROM trucks WHERE id = ?', [req.params.id]);
     if (!truck.length) return res.status(404).json({ error: 'Truck not found' });
     const plateNo = truck[0].plate_no;
@@ -740,6 +712,7 @@ app.get('/api/truck-masterlist/:plateNo', authenticate, async (req, res) => {
     else { res.json({ status: 'error', message: 'Truck not found' }); }
   } catch (error) { res.status(500).json({ error: error.message }); }
 });
+
 app.get('/api/truck-masterlist-all', authenticate, async (req, res) => {
   try {
     const [rows] = await pool.execute('SELECT * FROM truck_masterlist ORDER BY plate_no ASC');
@@ -773,8 +746,6 @@ app.post('/api/truck-masterlist-add', authenticate, authorize('dispatcher','mana
   } catch (error) { res.status(400).json({ error: error.message }); }
 });
 
-
-// ============ MASTERLIST BULK UPLOAD ============
 // ============ MASTERLIST BULK UPLOAD ============
 app.post('/api/truck-masterlist-clear', authenticate, authorize('dispatcher','management'), async (req, res) => {
   try {
@@ -828,6 +799,19 @@ app.post('/api/chat', authenticate, async (req, res) => {
   } catch (error) { res.status(400).json({ error: error.message }); }
 });
 
+app.get('/api/chat/unread', authenticate, async (req, res) => {
+  try {
+    const [result] = await pool.execute(
+      `SELECT COUNT(*) as unread FROM chat_messages 
+       WHERE receiver_id = ? AND created_at > COALESCE(
+         (SELECT last_read FROM chat_reads WHERE user_id = ?), '1970-01-01'
+       )`,
+      [req.user.id, req.user.id]
+    );
+    res.json({ status: 'success', unread: result[0].unread });
+  } catch (error) { res.status(500).json({ error: error.message }); }
+});
+
 app.get('/api/demo-credentials', async (req, res) => {
   try {
     const [users] = await pool.execute("SELECT email, role FROM users WHERE email IN (?, ?, ?)", ['admin@fueltrak.com', 'dispatcher@fueltrak.com', 'client1@hauler.com']);
@@ -852,7 +836,7 @@ app.get('/api/reports/summary', authenticate, authorize('dispatcher', 'managemen
     let query = "SELECT * FROM authority_to_load WHERE status IN ('completed','cancelled','dispatched','rejected')";
     const params = [];
     if (startDate) { query += ' AND (DATE(completed_date) >= ? OR DATE(createdAt) >= ? OR DATE(scheduled_date) >= ?)'; params.push(startDate, startDate, startDate); }
-if (endDate) { query += ' AND (DATE(completed_date) <= ? OR DATE(createdAt) <= ? OR DATE(scheduled_date) <= ?)'; params.push(endDate, endDate, endDate); }
+    if (endDate) { query += ' AND (DATE(completed_date) <= ? OR DATE(createdAt) <= ? OR DATE(scheduled_date) <= ?)'; params.push(endDate, endDate, endDate); }
     query += ' ORDER BY createdAt DESC';
     const [atls] = await pool.execute(query, params);
     const result = [];
@@ -1077,7 +1061,6 @@ app.post('/api/migrate', authenticate, authorize('dispatcher','management'), asy
   res.json({ status: 'success', message: `Created: ${created}, Skipped: ${skipped}, Failed: ${failed}`, results });
 });
 
-// Add to api/auth.js before module.exports
 app.post('/api/sync-truck-capacities', authenticate, authorize('dispatcher','management'), async (req, res) => {
   try {
     const { batch = 0 } = req.body;
@@ -1116,20 +1099,6 @@ app.get('/api/atl/summary', authenticate, async (req, res) => {
   } catch (error) { res.status(500).json({ error: error.message }); }
 });
 
-// Get unread message count for current user
-app.get('/api/chat/unread', authenticate, async (req, res) => {
-  try {
-    const [result] = await pool.execute(
-      `SELECT COUNT(*) as unread FROM chat_messages 
-       WHERE receiver_id = ? AND created_at > COALESCE(
-         (SELECT last_read FROM chat_reads WHERE user_id = ?), '1970-01-01'
-       )`,
-      [req.user.id, req.user.id]
-    );
-    res.json({ status: 'success', unread: result[0].unread });
-  } catch (error) { res.status(500).json({ error: error.message }); }
-});
-
 app.put('/api/dispatch/update-so/:id', authenticate, authorize('dispatcher','management'), async (req, res) => {
   try {
     await pool.execute('UPDATE authority_to_load SET so_number = ? WHERE id = ?', [req.body.so_number, req.params.id]);
@@ -1157,7 +1126,9 @@ app.post('/api/admin/cleanup-loading', authenticate, authorize('dispatcher','man
     await pool.execute("DELETE FROM authority_to_load");
     res.json({ status: 'success', message: 'All loading records deleted' });
   } catch (error) { res.status(400).json({ error: error.message }); }
-});// ============ USER MANAGEMENT ============
+});
+
+// ============ USER MANAGEMENT ============
 app.get('/api/users', authenticate, authorize('dispatcher','management'), async (req, res) => {
   try {
     const [users] = await pool.execute("SELECT id, email, role, mobile, company_name, is_active, is_verified, last_login, createdAt FROM users ORDER BY role, email");
@@ -1174,15 +1145,12 @@ app.post('/api/users', authenticate, authorize('dispatcher','management'), async
     const [existing] = await pool.execute('SELECT id FROM users WHERE email = ?', [email]);
     if (existing.length) return res.status(400).json({ error: 'Email already registered' });
     const hashedPassword = await bcrypt.hash(password, 12);
-    await pool.execute('INSERT INTO users (email, password, mobile, company_name, role, is_verified, is_active, first_login, createdAt, updatedAt) VALUES (?,?,?,?,?,1,1,NOW(),NOW())',
+    await pool.execute('INSERT INTO users (email, password, mobile, company_name, role, is_verified, is_active, createdAt, updatedAt) VALUES (?,?,?,?,?,1,1,NOW(),NOW())',
       [email, hashedPassword, mobile || null, company_name || null, role]);
     await logAudit(req.user.id, "CREATE_USER", "users", 0, {email, role});
     res.status(201).json({ status: 'success', message: 'User created' });
   } catch (error) { res.status(400).json({ error: error.message }); }
 });
-
-app.get('/first-login', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'first-login.html')));
-app.get('/terms', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'terms.html')));
 
 app.put('/api/users/:id', authenticate, authorize('dispatcher','management'), async (req, res) => {
   try {
@@ -1225,14 +1193,11 @@ app.post('/api/auth/first-login-setup', authenticate, async (req, res) => {
     
     const hashedPassword = await bcrypt.hash(password, 12);
     await pool.execute('UPDATE users SET password = ?, terms_accepted = 1 WHERE id = ?', [hashedPassword, req.user.id]);
-    // Keep first_login = 1 until OTP verified
     
-    // Generate OTP and send verification email
     const otp = generateOTP();
     otpCache.set(req.user.email, otp);
     await sendOTPEmail(req.user.email, '', otp, 'verification');
     
-    // Notify admin
     const [admins] = await pool.execute("SELECT email FROM users WHERE role IN ('dispatcher','management') LIMIT 1");
     if (admins.length > 0 && process.env.SMTP_USER) {
       try {
@@ -1267,10 +1232,8 @@ app.post('/api/auth/verify-first-login-otp', async (req, res) => {
     otpCache.del(email);
     await pool.execute('UPDATE users SET is_verified = 1, first_login = 0 WHERE email = ?', [email]);
     
-    // Generate real token
     const token = jwt.sign({ id: users[0].id, role: users[0].role }, process.env.JWT_SECRET, { expiresIn: '24h' });
     
-    // Notify admin of completion
     const [admins] = await pool.execute("SELECT email FROM users WHERE role IN ('dispatcher','management') LIMIT 1");
     if (admins.length > 0 && process.env.SMTP_USER) {
       try {
@@ -1294,7 +1257,7 @@ app.post('/api/auth/verify-first-login-otp', async (req, res) => {
   } catch (error) { res.status(400).json({ error: error.message }); }
 });
 
-// ============ ADD FIRST_LOGIN COLUMN ============
+// ============ ADD COLUMN MIGRATION ============
 app.post('/api/admin/add-first-login-column', authenticate, authorize('dispatcher','management'), async (req, res) => {
   try {
     await pool.execute("ALTER TABLE authority_to_load ADD COLUMN special_instructions TEXT");
@@ -1303,7 +1266,6 @@ app.post('/api/admin/add-first-login-column', authenticate, authorize('dispatche
     if (error.code === 'ER_DUP_FIELDNAME') {
       res.json({ status: 'success', message: 'Column already exists' });
     } else {
-      // Try with IGNORE
       try { await pool.execute("ALTER TABLE authority_to_load ADD COLUMN special_instructions TEXT"); res.json({ status: 'success' }); }
       catch(e) { res.status(400).json({ error: error.message }); }
     }
@@ -1311,128 +1273,75 @@ app.post('/api/admin/add-first-login-column', authenticate, authorize('dispatche
 });
 
 // ============ SALES ORDER MIGRATION ============
-app.post('/api/admin/create-so-table', authenticate, authorize('dispatcher','management'), async (req, res) => {
+app.get('/api/admin/create-so-table', authenticate, authorize('dispatcher','management'), async (req, res) => {
   try {
-    await pool.execute(`
-      CREATE TABLE IF NOT EXISTS sales_orders (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        so_number VARCHAR(50) NOT NULL,
-        client_id INT NOT NULL,
-        company_name VARCHAR(100),
-        total_volume DECIMAL(12,2) DEFAULT 0,
-        used_volume DECIMAL(12,2) DEFAULT 0,
-        is_multi_client TINYINT(1) DEFAULT 0,
-        status ENUM('active','completed','cancelled') DEFAULT 'active',
-        notes TEXT,
-        created_by INT,
-        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        UNIQUE KEY unique_so_client (so_number, client_id),
-        INDEX idx_so_number (so_number),
-        INDEX idx_client_id (client_id),
-        INDEX idx_status (status),
-        FOREIGN KEY (client_id) REFERENCES users(id) ON DELETE CASCADE
-      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
-    `);
-    
-    await pool.execute(`
-      CREATE TABLE IF NOT EXISTS sales_order_clients (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        sales_order_id INT NOT NULL,
-        client_id INT NOT NULL,
-        company_name VARCHAR(100),
-        allocated_volume DECIMAL(12,2) DEFAULT 0,
-        used_volume DECIMAL(12,2) DEFAULT 0,
-        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (sales_order_id) REFERENCES sales_orders(id) ON DELETE CASCADE,
-        FOREIGN KEY (client_id) REFERENCES users(id) ON DELETE CASCADE,
-        UNIQUE KEY unique_so_allocation (sales_order_id, client_id)
-      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
-    `);
-    
+    await pool.execute(`CREATE TABLE IF NOT EXISTS sales_orders (id INT AUTO_INCREMENT PRIMARY KEY, so_number VARCHAR(50) NOT NULL, client_id INT NOT NULL, company_name VARCHAR(100), total_volume DECIMAL(12,2) DEFAULT 0, used_volume DECIMAL(12,2) DEFAULT 0, is_multi_client TINYINT(1) DEFAULT 0, status ENUM('active','completed','cancelled') DEFAULT 'active', notes TEXT, created_by INT, createdAt DATETIME DEFAULT CURRENT_TIMESTAMP, updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, UNIQUE KEY unique_so_client (so_number, client_id), INDEX idx_so_number (so_number), INDEX idx_client_id (client_id), INDEX idx_status (status), FOREIGN KEY (client_id) REFERENCES users(id) ON DELETE CASCADE) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
+    await pool.execute(`CREATE TABLE IF NOT EXISTS sales_order_clients (id INT AUTO_INCREMENT PRIMARY KEY, sales_order_id INT NOT NULL, client_id INT NOT NULL, company_name VARCHAR(100), allocated_volume DECIMAL(12,2) DEFAULT 0, used_volume DECIMAL(12,2) DEFAULT 0, createdAt DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (sales_order_id) REFERENCES sales_orders(id) ON DELETE CASCADE, FOREIGN KEY (client_id) REFERENCES users(id) ON DELETE CASCADE, UNIQUE KEY unique_so_allocation (sales_order_id, client_id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
     try { await pool.execute('CREATE INDEX idx_atl_so_number ON authority_to_load(so_number)'); } catch(e) {}
-    
     res.json({ status: 'success', message: 'Sales Order tables created' });
   } catch (error) { res.status(400).json({ error: error.message }); }
 });
 
 // ============ SALES ORDERS API ============
 
+// SPECIFIC routes BEFORE parameterized routes
+
+// Get clients list for SO dropdown
+app.get('/api/sales-orders/clients-list', authenticate, authorize('dispatcher','management'), async (req, res) => {
+  try {
+    const [clients] = await pool.execute("SELECT id, email, company_name FROM users WHERE role = 'client' AND is_active = 1 ORDER BY company_name ASC");
+    res.json({ status: 'success', data: clients });
+  } catch (error) { res.status(500).json({ error: error.message }); }
+});
+
+// Validate SO for client
+app.get('/api/sales-orders/validate', authenticate, async (req, res) => {
+  try {
+    const { so_number, client_id } = req.query;
+    if (!so_number) return res.status(400).json({ error: 'SO Number required' });
+    const [orders] = await pool.execute(`SELECT so.*, u.company_name as client_company FROM sales_orders so JOIN users u ON so.client_id = u.id WHERE so.so_number = ? AND so.status = 'active'`, [so_number]);
+    if (!orders.length) return res.json({ status: 'error', valid: false, message: 'Sales Order not found or inactive' });
+    const order = orders[0];
+    let belongsToClient = order.client_id == client_id;
+    if (!belongsToClient && order.is_multi_client) {
+      const [allocCheck] = await pool.execute('SELECT id FROM sales_order_clients WHERE sales_order_id = ? AND client_id = ?', [order.id, client_id]);
+      belongsToClient = allocCheck.length > 0;
+    }
+    if (!belongsToClient) return res.json({ status: 'error', valid: false, message: 'SO does not belong to your account', so_owner: order.client_company });
+    const [atlUsage] = await pool.execute(`SELECT COALESCE(SUM(volume), 0) as used FROM authority_to_load WHERE so_number = ? AND status NOT IN ('cancelled','rejected')`, [so_number]);
+    const total = parseFloat(order.total_volume) || 0;
+    const used = parseFloat(atlUsage[0].used) || 0;
+    res.json({ status: 'success', valid: true, data: { so_id: order.id, so_number: order.so_number, total_volume: total, used_volume: used, remaining_volume: Math.max(0, total - used), is_multi_client: order.is_multi_client, owner_company: order.client_company } });
+  } catch (error) { res.status(500).json({ error: error.message }); }
+});
+
+// Sync company names
+app.put('/api/sales-orders/sync-company-names', authenticate, authorize('dispatcher','management'), async (req, res) => {
+  try {
+    await pool.execute(`UPDATE sales_orders so JOIN users u ON so.client_id = u.id SET so.company_name = u.company_name WHERE u.company_name IS NOT NULL AND u.company_name != ''`);
+    await pool.execute(`UPDATE sales_order_clients soc JOIN users u ON soc.client_id = u.id SET soc.company_name = u.company_name WHERE u.company_name IS NOT NULL AND u.company_name != ''`);
+    res.json({ status: 'success', message: 'Company names synced' });
+  } catch (error) { res.status(400).json({ error: error.message }); }
+});
+
 // Get all sales orders
 app.get('/api/sales-orders', authenticate, authorize('dispatcher','management'), async (req, res) => {
   try {
     const { search, client_id, status } = req.query;
-    let query = `SELECT so.*, u.company_name as client_company, u.email as client_email 
-                 FROM sales_orders so 
-                 JOIN users u ON so.client_id = u.id WHERE 1=1`;
+    let query = `SELECT so.*, u.company_name as client_company, u.email as client_email FROM sales_orders so JOIN users u ON so.client_id = u.id WHERE 1=1`;
     let params = [];
-    
     if (search) { query += ' AND (so.so_number LIKE ? OR so.company_name LIKE ?)'; params.push('%'+search+'%', '%'+search+'%'); }
     if (client_id) { query += ' AND so.client_id = ?'; params.push(client_id); }
     if (status) { query += ' AND so.status = ?'; params.push(status); }
-    
     query += ' ORDER BY so.createdAt DESC LIMIT 200';
-    
     const [orders] = await pool.execute(query, params);
-    
-    // Get allocations and ATL usage for each order
     const result = [];
     for (const order of orders) {
-      const [allocations] = await pool.execute(
-        `SELECT soc.*, u.company_name, u.email FROM sales_order_clients soc 
-         JOIN users u ON soc.client_id = u.id WHERE soc.sales_order_id = ?`, [order.id]
-      );
-      
-      // Calculate used volume from ATLs
-      const [atlUsage] = await pool.execute(
-        `SELECT COALESCE(SUM(volume), 0) as used_volume FROM authority_to_load 
-         WHERE so_number = ? AND client_id = ? AND status NOT IN ('cancelled','rejected')`,
-        [order.so_number, order.client_id]
-      );
-      
-      let multiClientUsage = 0;
-      if (order.is_multi_client) {
-        const [mcUsage] = await pool.execute(
-          `SELECT COALESCE(SUM(volume), 0) as used_volume FROM authority_to_load 
-           WHERE so_number = ? AND status NOT IN ('cancelled','rejected')`,
-          [order.so_number]
-        );
-        multiClientUsage = mcUsage[0].used_volume;
-      }
-      
-      result.push({ 
-        ...order, 
-        allocations, 
-        used_volume: parseFloat(atlUsage[0].used_volume),
-        multi_client_used_volume: parseFloat(multiClientUsage)
-      });
+      const [allocations] = await pool.execute(`SELECT soc.*, u.company_name, u.email FROM sales_order_clients soc JOIN users u ON soc.client_id = u.id WHERE soc.sales_order_id = ?`, [order.id]);
+      const [atlUsage] = await pool.execute(`SELECT COALESCE(SUM(volume), 0) as used FROM authority_to_load WHERE so_number = ? AND status NOT IN ('cancelled','rejected')`, [order.so_number]);
+      result.push({ ...order, allocations, used_volume: parseFloat(atlUsage[0].used) });
     }
-    
     res.json({ status: 'success', data: result });
-  } catch (error) { res.status(500).json({ error: error.message }); }
-});
-
-// Get single sales order
-app.get('/api/sales-orders/:id', authenticate, authorize('dispatcher','management'), async (req, res) => {
-  try {
-    const [orders] = await pool.execute(
-      `SELECT so.*, u.company_name as client_company, u.email as client_email 
-       FROM sales_orders so JOIN users u ON so.client_id = u.id WHERE so.id = ?`, [req.params.id]
-    );
-    if (!orders.length) return res.status(404).json({ error: 'Not found' });
-    
-    const order = orders[0];
-    const [allocations] = await pool.execute(
-      `SELECT soc.*, u.company_name, u.email FROM sales_order_clients soc 
-       JOIN users u ON soc.client_id = u.id WHERE soc.sales_order_id = ?`, [order.id]
-    );
-    
-    const [atls] = await pool.execute(
-      `SELECT id, atl_code, company, plate_no, volume, status, client_id, createdAt 
-       FROM authority_to_load WHERE so_number = ? ORDER BY createdAt DESC`, [order.so_number]
-    );
-    
-    res.json({ status: 'success', data: { ...order, allocations, atls } });
   } catch (error) { res.status(500).json({ error: error.message }); }
 });
 
@@ -1441,41 +1350,36 @@ app.post('/api/sales-orders', authenticate, authorize('dispatcher','management')
   try {
     const { so_number, client_id, company_name, total_volume, is_multi_client, notes, allocations } = req.body;
     if (!so_number || !client_id) return res.status(400).json({ error: 'SO Number and Client required' });
-    
-    // Check duplicate
     const [existing] = await pool.execute('SELECT id FROM sales_orders WHERE so_number = ? AND client_id = ?', [so_number, client_id]);
     if (existing.length) return res.status(400).json({ error: 'SO already exists for this client' });
-    
     let company = company_name;
-    if (!company) {
-      const [client] = await pool.execute('SELECT company_name FROM users WHERE id = ?', [client_id]);
-      company = client.length ? client[0].company_name : '';
-    }
-    
-    const [result] = await pool.execute(
-      `INSERT INTO sales_orders (so_number, client_id, company_name, total_volume, is_multi_client, notes, created_by) 
-       VALUES (?,?,?,?,?,?,?)`,
-      [so_number, client_id, company, total_volume||0, is_multi_client?1:0, notes||null, req.user.id]
-    );
-    
-    const soId = result.insertId;
-    
-    // Handle multi-client allocations
+    if (!company) { const [c] = await pool.execute('SELECT company_name FROM users WHERE id = ?', [client_id]); company = c.length ? c[0].company_name : ''; }
+    const [result] = await pool.execute(`INSERT INTO sales_orders (so_number, client_id, company_name, total_volume, is_multi_client, notes, created_by) VALUES (?,?,?,?,?,?,?)`, [so_number, client_id, company, total_volume||0, is_multi_client?1:0, notes||null, req.user.id]);
     if (is_multi_client && allocations && allocations.length) {
       for (const alloc of allocations) {
         if (alloc.client_id && alloc.allocated_volume > 0) {
           const [ac] = await pool.execute('SELECT company_name FROM users WHERE id = ?', [alloc.client_id]);
-          await pool.execute(
-            `INSERT INTO sales_order_clients (sales_order_id, client_id, company_name, allocated_volume) VALUES (?,?,?,?)`,
-            [soId, alloc.client_id, ac.length ? ac[0].company_name : '', alloc.allocated_volume]
-          );
+          await pool.execute(`INSERT INTO sales_order_clients (sales_order_id, client_id, company_name, allocated_volume) VALUES (?,?,?,?)`, [result.insertId, alloc.client_id, ac.length?ac[0].company_name:'', alloc.allocated_volume]);
         }
       }
     }
-    
-    await logAudit(req.user.id, "CREATE_SO", "sales_orders", soId, { so_number, client_id });
-    res.status(201).json({ status: 'success', message: 'Sales Order created', data: { id: soId, so_number } });
+    await logAudit(req.user.id, "CREATE_SO", "sales_orders", result.insertId, { so_number, client_id });
+    res.status(201).json({ status: 'success', message: 'Sales Order created', data: { id: result.insertId, so_number } });
   } catch (error) { res.status(400).json({ error: error.message }); }
+});
+
+// PARAMETERIZED routes AFTER specific routes
+
+// Get single sales order
+app.get('/api/sales-orders/:id', authenticate, authorize('dispatcher','management'), async (req, res) => {
+  try {
+    const [orders] = await pool.execute(`SELECT so.*, u.company_name as client_company, u.email as client_email FROM sales_orders so JOIN users u ON so.client_id = u.id WHERE so.id = ?`, [req.params.id]);
+    if (!orders.length) return res.status(404).json({ error: 'Not found' });
+    const order = orders[0];
+    const [allocations] = await pool.execute(`SELECT soc.*, u.company_name, u.email FROM sales_order_clients soc JOIN users u ON soc.client_id = u.id WHERE soc.sales_order_id = ?`, [order.id]);
+    const [atls] = await pool.execute(`SELECT id, atl_code, company, plate_no, volume, status, client_id, createdAt FROM authority_to_load WHERE so_number = ? ORDER BY createdAt DESC`, [order.so_number]);
+    res.json({ status: 'success', data: { ...order, allocations, atls } });
+  } catch (error) { res.status(500).json({ error: error.message }); }
 });
 
 // Update sales order
@@ -1484,26 +1388,16 @@ app.put('/api/sales-orders/:id', authenticate, authorize('dispatcher','managemen
     const { total_volume, is_multi_client, notes, status, allocations } = req.body;
     const [ex] = await pool.execute('SELECT * FROM sales_orders WHERE id = ?', [req.params.id]);
     if (!ex.length) return res.status(404).json({ error: 'Not found' });
-    
-    await pool.execute(
-      `UPDATE sales_orders SET total_volume=?, is_multi_client=?, notes=?, status=? WHERE id=?`,
-      [total_volume||ex[0].total_volume, is_multi_client!==undefined?(is_multi_client?1:0):ex[0].is_multi_client,
-       notes||ex[0].notes, status||ex[0].status, req.params.id]
-    );
-    
+    await pool.execute(`UPDATE sales_orders SET total_volume=?, is_multi_client=?, notes=?, status=? WHERE id=?`, [total_volume||ex[0].total_volume, is_multi_client!==undefined?(is_multi_client?1:0):ex[0].is_multi_client, notes||ex[0].notes, status||ex[0].status, req.params.id]);
     if (allocations && allocations.length) {
       await pool.execute('DELETE FROM sales_order_clients WHERE sales_order_id = ?', [req.params.id]);
       for (const alloc of allocations) {
         if (alloc.client_id && alloc.allocated_volume > 0) {
           const [ac] = await pool.execute('SELECT company_name FROM users WHERE id = ?', [alloc.client_id]);
-          await pool.execute(
-            `INSERT INTO sales_order_clients (sales_order_id, client_id, company_name, allocated_volume) VALUES (?,?,?,?)`,
-            [req.params.id, alloc.client_id, ac.length?ac[0].company_name:'', alloc.allocated_volume]
-          );
+          await pool.execute(`INSERT INTO sales_order_clients (sales_order_id, client_id, company_name, allocated_volume) VALUES (?,?,?,?)`, [req.params.id, alloc.client_id, ac.length?ac[0].company_name:'', alloc.allocated_volume]);
         }
       }
     }
-    
     res.json({ status: 'success', message: 'Updated' });
   } catch (error) { res.status(400).json({ error: error.message }); }
 });
@@ -1513,268 +1407,42 @@ app.delete('/api/sales-orders/:id', authenticate, authorize('dispatcher','manage
   try {
     const [ex] = await pool.execute('SELECT so_number FROM sales_orders WHERE id = ?', [req.params.id]);
     if (!ex.length) return res.status(404).json({ error: 'Not found' });
-    
-    // Check if SO is used in any ATL
-    const [atlCheck] = await pool.execute(
-      'SELECT COUNT(*) as count FROM authority_to_load WHERE so_number = ? AND status NOT IN ("cancelled","rejected")',
-      [ex[0].so_number]
-    );
-    if (atlCheck[0].count > 0) {
-      return res.status(400).json({ error: 'Cannot delete: SO is used in ' + atlCheck[0].count + ' active ATLs' });
-    }
-    
+    const [atlCheck] = await pool.execute('SELECT COUNT(*) as count FROM authority_to_load WHERE so_number = ? AND status NOT IN ("cancelled","rejected")', [ex[0].so_number]);
+    if (atlCheck[0].count > 0) return res.status(400).json({ error: 'Cannot delete: SO is used in ' + atlCheck[0].count + ' active ATLs' });
     await pool.execute('DELETE FROM sales_order_clients WHERE sales_order_id = ?', [req.params.id]);
     await pool.execute('DELETE FROM sales_orders WHERE id = ?', [req.params.id]);
-    
     res.json({ status: 'success', message: 'Deleted' });
-  } catch (error) { res.status(400).json({ error: error.message }); }
-});
-
-// Validate SO for client
-app.get('/api/sales-orders/validate', authenticate, async (req, res) => {
-  try {
-    const { so_number, client_id, company } = req.query;
-    if (!so_number) return res.status(400).json({ error: 'SO Number required' });
-    
-    // Find SO
-    const [orders] = await pool.execute(
-      `SELECT so.*, u.company_name as client_company 
-       FROM sales_orders so JOIN users u ON so.client_id = u.id 
-       WHERE so.so_number = ? AND so.status = 'active'`, [so_number]
-    );
-    
-    if (!orders.length) {
-      return res.json({ status: 'error', valid: false, message: 'Sales Order not found or inactive' });
-    }
-    
-    const order = orders[0];
-    
-    // Check if SO belongs to this client or is multi-client with this client
-    let belongsToClient = order.client_id == client_id;
-    
-    if (!belongsToClient && order.is_multi_client) {
-      const [allocCheck] = await pool.execute(
-        'SELECT id FROM sales_order_clients WHERE sales_order_id = ? AND client_id = ?',
-        [order.id, client_id]
-      );
-      belongsToClient = allocCheck.length > 0;
-    }
-    
-    if (!belongsToClient) {
-      return res.json({ 
-        status: 'error', 
-        valid: false, 
-        message: 'SO does not belong to your account',
-        so_owner: order.client_company
-      });
-    }
-    
-    // Calculate remaining volume
-    const [atlUsage] = await pool.execute(
-      `SELECT COALESCE(SUM(volume), 0) as used_volume FROM authority_to_load 
-       WHERE so_number = ? AND status NOT IN ('cancelled','rejected')`,
-      [so_number]
-    );
-    
-    const totalVolume = parseFloat(order.total_volume) || 0;
-    const usedVolume = parseFloat(atlUsage[0].used_volume) || 0;
-    const remaining = totalVolume - usedVolume;
-    
-    res.json({
-      status: 'success',
-      valid: true,
-      data: {
-        so_id: order.id,
-        so_number: order.so_number,
-        total_volume: totalVolume,
-        used_volume: usedVolume,
-        remaining_volume: Math.max(0, remaining),
-        is_multi_client: order.is_multi_client,
-        owner_company: order.client_company
-      }
-    });
-  } catch (error) { res.status(500).json({ error: error.message }); }
-});
-
-// ============ API ROUTES MUST COME FIRST ============
-
-// Sales Orders API
-app.get('/api/sales-orders/clients-list', authenticate, authorize('dispatcher','management'), async (req, res) => {
-  try {
-    const [clients] = await pool.execute(
-      "SELECT id, email, company_name FROM users WHERE role = 'client' AND is_active = 1 ORDER BY company_name"
-    );
-    res.json({ status: 'success', data: clients });
-  } catch (error) { 
-    console.error('Error loading clients:', error);
-    res.status(500).json({ error: error.message }); 
-  }
-});
-
-app.get('/api/sales-orders/validate', authenticate, async (req, res) => {
-  try {
-    const { so_number, client_id, company } = req.query;
-    if (!so_number) return res.status(400).json({ error: 'SO Number required' });
-    
-    const [orders] = await pool.execute(
-      `SELECT so.*, u.company_name as client_company 
-       FROM sales_orders so JOIN users u ON so.client_id = u.id 
-       WHERE so.so_number = ? AND so.status = 'active'`, [so_number]
-    );
-    
-    if (!orders.length) {
-      return res.json({ status: 'error', valid: false, message: 'Sales Order not found or inactive' });
-    }
-    
-    const order = orders[0];
-    let belongsToClient = order.client_id == client_id;
-    
-    if (!belongsToClient && order.is_multi_client) {
-      const [allocCheck] = await pool.execute(
-        'SELECT id FROM sales_order_clients WHERE sales_order_id = ? AND client_id = ?',
-        [order.id, client_id]
-      );
-      belongsToClient = allocCheck.length > 0;
-    }
-    
-    if (!belongsToClient) {
-      return res.json({ 
-        status: 'error', valid: false, 
-        message: 'SO does not belong to your account',
-        so_owner: order.client_company
-      });
-    }
-    
-    const [atlUsage] = await pool.execute(
-      `SELECT COALESCE(SUM(volume), 0) as used_volume FROM authority_to_load 
-       WHERE so_number = ? AND status NOT IN ('cancelled','rejected')`,
-      [so_number]
-    );
-    
-    const totalVolume = parseFloat(order.total_volume) || 0;
-    const usedVolume = parseFloat(atlUsage[0].used_volume) || 0;
-    const remaining = totalVolume - usedVolume;
-    
-    res.json({
-      status: 'success', valid: true,
-      data: {
-        so_id: order.id, so_number: order.so_number,
-        total_volume: totalVolume, used_volume: usedVolume,
-        remaining_volume: Math.max(0, remaining),
-        is_multi_client: order.is_multi_client,
-        owner_company: order.client_company
-      }
-    });
-  } catch (error) { res.status(500).json({ error: error.message }); }
-});
-
-app.get('/api/sales-orders', authenticate, authorize('dispatcher','management'), async (req, res) => {
-  // ... sales orders list endpoint
-});
-
-app.get('/api/sales-orders/:id', authenticate, authorize('dispatcher','management'), async (req, res) => {
-  // ... single sales order endpoint
-});
-
-app.post('/api/sales-orders', authenticate, authorize('dispatcher','management'), async (req, res) => {
-  // ... create sales order endpoint
-});
-
-app.put('/api/sales-orders/:id', authenticate, authorize('dispatcher','management'), async (req, res) => {
-  // ... update sales order endpoint
-});
-
-app.delete('/api/sales-orders/:id', authenticate, authorize('dispatcher','management'), async (req, res) => {
-  // ... delete sales order endpoint
-});
-
-// ============ MIGRATION ENDPOINTS ============
-app.get('/api/admin/create-so-table', authenticate, authorize('dispatcher','management'), async (req, res) => {
-  // ... migration endpoint
-});
-
-// ============ PAGE ROUTES (MUST BE AFTER API ROUTES) ============
-app.get('/sales-orders', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'sales-orders.html')));
-
-// ============ CATCH-ALL (MUST BE LAST) ============
-app.get('/(.*)', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'index.html')));
-
-
-// Add this endpoint to update SO company names when client changes their company
-app.put('/api/sales-orders/sync-company-names', authenticate, authorize('dispatcher','management'), async (req, res) => {
-  try {
-    // Update main SO company names
-    await pool.execute(`
-      UPDATE sales_orders so 
-      JOIN users u ON so.client_id = u.id 
-      SET so.company_name = u.company_name 
-      WHERE u.company_name IS NOT NULL AND u.company_name != ''
-    `);
-    
-    // Update allocation company names
-    await pool.execute(`
-      UPDATE sales_order_clients soc 
-      JOIN users u ON soc.client_id = u.id 
-      SET soc.company_name = u.company_name 
-      WHERE u.company_name IS NOT NULL AND u.company_name != ''
-    `);
-    
-    res.json({ status: 'success', message: 'Company names synced' });
   } catch (error) { res.status(400).json({ error: error.message }); }
 });
 
 // ============ CLIENT SALES ORDERS ============
 app.get('/api/client/sales-orders', authenticate, authorize('client'), async (req, res) => {
   try {
-    // Get SOs owned by this client + multi-client SOs they're allocated to
     const [orders] = await pool.execute(`
       SELECT DISTINCT so.*, 
-        COALESCE(
-          (SELECT SUM(atl.volume) FROM authority_to_load atl 
-           WHERE atl.so_number = so.so_number 
-           AND atl.client_id = ? 
-           AND atl.status NOT IN ('cancelled','rejected')
-          ), 0
-        ) as client_used_volume,
-        COALESCE(
-          (SELECT SUM(atl.volume) FROM authority_to_load atl 
-           WHERE atl.so_number = so.so_number 
-           AND atl.status NOT IN ('cancelled','rejected')
-          ), 0
-        ) as total_used_volume
+        COALESCE((SELECT SUM(atl.volume) FROM authority_to_load atl WHERE atl.so_number = so.so_number AND atl.client_id = ? AND atl.status NOT IN ('cancelled','rejected')), 0) as client_used_volume,
+        COALESCE((SELECT SUM(atl.volume) FROM authority_to_load atl WHERE atl.so_number = so.so_number AND atl.status NOT IN ('cancelled','rejected')), 0) as total_used_volume
       FROM sales_orders so
       LEFT JOIN sales_order_clients soc ON so.id = soc.sales_order_id
       WHERE so.client_id = ? OR soc.client_id = ?
       ORDER BY so.createdAt DESC
     `, [req.user.id, req.user.id, req.user.id]);
     
-    // Format the response
-    var result = orders.map(function(so) {
-      var totalVol = parseFloat(so.total_volume) || 0;
-      var usedVol = so.is_multi_client ? parseFloat(so.total_used_volume) : parseFloat(so.client_used_volume);
-      
-      return {
-        id: so.id,
-        so_number: so.so_number,
-        total_volume: totalVol,
-        used_volume: usedVol,
-        remaining_volume: Math.max(0, totalVol - usedVol),
-        status: so.status,
-        is_multi_client: so.is_multi_client == 1,
-        company_name: so.company_name,
-        notes: so.notes,
-        createdAt: so.createdAt
-      };
-    });
+    const result = orders.map(so => ({
+      id: so.id, so_number: so.so_number,
+      total_volume: parseFloat(so.total_volume) || 0,
+      used_volume: so.is_multi_client ? parseFloat(so.total_used_volume) : parseFloat(so.client_used_volume),
+      remaining_volume: Math.max(0, (parseFloat(so.total_volume)||0) - (so.is_multi_client ? parseFloat(so.total_used_volume) : parseFloat(so.client_used_volume))),
+      status: so.status, is_multi_client: so.is_multi_client == 1,
+      company_name: so.company_name, notes: so.notes, createdAt: so.createdAt
+    }));
     
     res.json({ status: 'success', data: result });
-  } catch (error) {
-    console.error('Client SO error:', error);
-    res.status(500).json({ error: error.message });
-  }
+  } catch (error) { res.status(500).json({ error: error.message }); }
 });
 
 // ============ PAGE ROUTES ============
+app.get('/sales-orders', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'sales-orders.html')));
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'index.html')));
 app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'dashboard.html')));
 app.get('/dashboard.html', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'dashboard.html')));
@@ -1790,21 +1458,7 @@ app.get('/tutorial', (req, res) => res.sendFile(path.join(__dirname, '..', 'publ
 app.get('/users', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'users.html')));
 app.get('/adminclient', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'adminclient.html')));
 app.get('/audit-logs', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'audit-logs.html')));
+app.get('/first-login', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'first-login.html')));
+app.get('/terms', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'terms.html')));
 
 module.exports = app;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
