@@ -1608,6 +1608,29 @@ app.get('/api/sales-orders/clients-list', authenticate, authorize('dispatcher','
 
 app.get('/sales-orders', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'sales-orders.html')));
 
+// Add this endpoint to update SO company names when client changes their company
+app.put('/api/sales-orders/sync-company-names', authenticate, authorize('dispatcher','management'), async (req, res) => {
+  try {
+    // Update main SO company names
+    await pool.execute(`
+      UPDATE sales_orders so 
+      JOIN users u ON so.client_id = u.id 
+      SET so.company_name = u.company_name 
+      WHERE u.company_name IS NOT NULL AND u.company_name != ''
+    `);
+    
+    // Update allocation company names
+    await pool.execute(`
+      UPDATE sales_order_clients soc 
+      JOIN users u ON soc.client_id = u.id 
+      SET soc.company_name = u.company_name 
+      WHERE u.company_name IS NOT NULL AND u.company_name != ''
+    `);
+    
+    res.json({ status: 'success', message: 'Company names synced' });
+  } catch (error) { res.status(400).json({ error: error.message }); }
+});
+
 // ============ PAGE ROUTES ============
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'index.html')));
 app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'dashboard.html')));

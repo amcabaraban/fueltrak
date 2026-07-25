@@ -169,23 +169,60 @@
             return await r.json();
         }
 
-        // Load clients list
+        // Load clients list with fallback
         async function loadClientsList() {
-            var d = await api('/sales-orders/clients-list');
-            if (d.status === 'success') {
-                allClients = d.data;
-                var select = document.getElementById('soClientId');
-                select.innerHTML = '<option value="">Select Client...</option>' +
-                    d.data.map(c => '<option value="' + c.id + '">' + (c.company_name || c.email) + ' (' + c.email + ')</option>').join('');
-                
-                // Also populate allocation client dropdowns
-                document.querySelectorAll('.alloc-client-select').forEach(function(sel) {
-                    if (sel.options.length <= 1) {
-                        sel.innerHTML = '<option value="">Select...</option>' +
-                            d.data.map(c => '<option value="' + c.id + '">' + (c.company_name || c.email) + '</option>').join('');
-                    }
-                });
+            console.log('Loading clients list...');
+            
+            // Try the dedicated endpoint first
+            try {
+                var d = await api('/sales-orders/clients-list');
+                if (d.status === 'success' && d.data && d.data.length > 0) {
+                    allClients = d.data;
+                    populateClientDropdown(allClients);
+                    return;
+                }
+            } catch(e) {
+                console.log('Dedicated endpoint failed, trying fallback...');
             }
+            
+            // Fallback: try the existing clients API
+            try {
+                var d = await api('/clients');
+                if (d.status === 'success' && d.data && d.data.length > 0) {
+                    allClients = d.data.map(function(c) {
+                        return { id: c.id, email: c.email, company_name: c.company_name };
+                    });
+                    populateClientDropdown(allClients);
+                    console.log('Loaded ' + allClients.length + ' clients via fallback');
+                    return;
+                }
+            } catch(e) {
+                console.error('Fallback also failed:', e);
+            }
+            
+            // If all fails
+            document.getElementById('soClientId').innerHTML = '<option value="">Error loading clients - check console</option>';
+        }
+
+        function populateClientDropdown(clients) {
+            var select = document.getElementById('soClientId');
+            var options = '<option value="">Select Client...</option>';
+            
+            clients.forEach(function(c) {
+                var displayName = c.company_name || c.email || 'Unknown';
+                options += '<option value="' + c.id + '">' + displayName + ' (' + (c.email || 'N/A') + ')</option>';
+            });
+            
+            select.innerHTML = options;
+            
+            // Also update any existing allocation dropdowns
+            document.querySelectorAll('.alloc-client-select').forEach(function(sel) {
+                sel.innerHTML = '<option value="">Select Client...</option>' +
+                    clients.map(function(c) {
+                        var displayName = c.company_name || c.email || 'Unknown';
+                        return '<option value="' + c.id + '">' + displayName + '</option>';
+                    }).join('');
+            });
         }
 
         // Load sales orders
