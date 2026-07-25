@@ -10,6 +10,7 @@
     { "src": "/favicon.ico", "dest": "/public/favicon.ico" },
     { "src": "/dashboard", "dest": "/api/auth.js" },
     { "src": "/client", "dest": "/api/auth.js" },
+    { "src": "/sales-orders", "dest": "/api/auth.js" },
     { "src": "/reports", "dest": "/api/auth.js" },
     { "src": "/docs-report", "dest": "/api/auth.js" },
     { "src": "/adminclient", "dest": "/api/auth.js" },
