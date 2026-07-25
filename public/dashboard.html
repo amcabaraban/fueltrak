@@ -209,25 +209,24 @@ async function loadDashboard(){
 
 var _allDocRecords = [];
 var _currentDocFilter = 'all';
+var _currentSearchTerm = '';
 
 async function showDocReport(filter, title) {
     document.getElementById('docReportModal').classList.remove('hidden');
     document.getElementById('docReportTitle').innerHTML = '<i class="fas fa-file-alt mr-2 text-blue-600"></i>' + title + ' - Document Report';
     document.getElementById('docReportBody').innerHTML = '<tr><td colspan="7" class="text-center py-12 text-gray-400"><i class="fas fa-spinner fa-spin text-2xl mb-2 block"></i>Loading document data...</td></tr>';
+    document.getElementById('docNoResults').classList.add('hidden');
     document.body.style.overflow = 'hidden';
+    
+    // Clear search
+    document.getElementById('docSearchInput').value = '';
+    document.getElementById('docSearchClear').classList.add('hidden');
+    _currentSearchTerm = '';
     
     _currentDocFilter = filter;
     
     // Highlight active filter button
-    document.querySelectorAll('.doc-filter-btn').forEach(function(btn) {
-        btn.classList.remove('bg-blue-100', 'text-blue-700', 'font-semibold');
-        btn.classList.add('bg-gray-100', 'text-gray-600');
-    });
-    var activeBtn = document.getElementById('docFilter' + filter.charAt(0).toUpperCase() + filter.slice(1));
-    if (activeBtn) {
-        activeBtn.classList.remove('bg-gray-100', 'text-gray-600');
-        activeBtn.classList.add('bg-blue-100', 'text-blue-700', 'font-semibold');
-    }
+    updateDocFilterButtons(filter);
     
     try {
         var r = await fetch(API + '/docs-report/summary', {
@@ -236,19 +235,24 @@ async function showDocReport(filter, title) {
         var d = await r.json();
         if (d.status === 'success') {
             _allDocRecords = d.data.records;
-            applyDocFilter(filter);
+            applyDocFilters();
         } else {
             document.getElementById('docReportBody').innerHTML = '<tr><td colspan="7" class="text-center py-12 text-red-400">Error loading data</td></tr>';
+            document.getElementById('docReportCount').textContent = '0 trucks';
         }
     } catch(e) {
         document.getElementById('docReportBody').innerHTML = '<tr><td colspan="7" class="text-center py-12 text-red-400">Error: ' + e.message + '</td></tr>';
+        document.getElementById('docReportCount').textContent = 'Error';
     }
 }
 
 function filterDocReport(filter) {
     _currentDocFilter = filter;
-    
-    // Update filter buttons
+    updateDocFilterButtons(filter);
+    applyDocFilters();
+}
+
+function updateDocFilterButtons(filter) {
     document.querySelectorAll('.doc-filter-btn').forEach(function(btn) {
         btn.classList.remove('bg-blue-100', 'text-blue-700', 'font-semibold');
         btn.classList.add('bg-gray-100', 'text-gray-600');
@@ -258,13 +262,40 @@ function filterDocReport(filter) {
         activeBtn.classList.remove('bg-gray-100', 'text-gray-600');
         activeBtn.classList.add('bg-blue-100', 'text-blue-700', 'font-semibold');
     }
-    
-    applyDocFilter(filter);
 }
 
-function applyDocFilter(filter) {
+function applyDocSearch() {
+    var searchInput = document.getElementById('docSearchInput');
+    var clearBtn = document.getElementById('docSearchClear');
+    
+    _currentSearchTerm = searchInput.value.toLowerCase().trim();
+    
+    // Show/hide clear button
+    if (_currentSearchTerm.length > 0) {
+        clearBtn.classList.remove('hidden');
+    } else {
+        clearBtn.classList.add('hidden');
+    }
+    
+    // Apply filters with debounce-like behavior (already handled by oninput)
+    applyDocFilters();
+}
+
+function clearDocSearch() {
+    document.getElementById('docSearchInput').value = '';
+    document.getElementById('docSearchClear').classList.add('hidden');
+    _currentSearchTerm = '';
+    applyDocFilters();
+    // Focus back on search input
+    document.getElementById('docSearchInput').focus();
+}
+
+function applyDocFilters() {
     var filtered = [];
+    var searchTerm = _currentSearchTerm;
+    
     _allDocRecords.forEach(function(rec) {
+        // Apply status filter
         var vl = rec.lto_expiry && new Date(rec.lto_expiry) >= new Date();
         var vf = rec.fire_expiry && new Date(rec.fire_expiry) >= new Date();
         var vd = rec.dost_expiry && new Date(rec.dost_expiry) >= new Date();
@@ -275,34 +306,91 @@ function applyDocFilter(filter) {
         var ae = el || ef || ed;
         var am = !rec.lto_expiry || !rec.fire_expiry || !rec.dost_expiry;
         
-        if (filter === 'all' || 
-            (filter === 'valid' && av) || 
-            (filter === 'expired' && ae) || 
-            (filter === 'missing' && am)) {
-            filtered.push(rec);
+        var passesFilter = _currentDocFilter === 'all' || 
+                          (_currentDocFilter === 'valid' && av) || 
+                          (_currentDocFilter === 'expired' && ae) || 
+                          (_currentDocFilter === 'missing' && am);
+        
+        if (!passesFilter) return;
+        
+        // Apply search filter (incremental search)
+        if (searchTerm) {
+            var plateMatch = (rec.plate_no || '').toLowerCase().includes(searchTerm);
+            var driverMatch = (rec.driver_name || '').toLowerCase().includes(searchTerm);
+            var haulerMatch = (rec.hauler_name || '').toLowerCase().includes(searchTerm);
+            var makeMatch = (rec.make || '').toLowerCase().includes(searchTerm);
+            
+            if (!plateMatch && !driverMatch && !haulerMatch && !makeMatch) return;
+            
+            // Highlight matching text
+            rec._highlight = {
+                plate: plateMatch,
+                driver: driverMatch,
+                hauler: haulerMatch,
+                make: makeMatch
+            };
+        } else {
+            rec._highlight = null;
         }
+        
+        filtered.push(rec);
     });
     
     document.getElementById('docReportCount').textContent = filtered.length + ' truck' + (filtered.length !== 1 ? 's' : '');
     
-    if (!filtered.length) {
-        document.getElementById('docReportBody').innerHTML = '<tr><td colspan="7" class="text-center py-12 text-gray-400"><i class="fas fa-inbox text-3xl mb-2 block"></i>No matching records found</td></tr>';
-        return;
-    }
+    // Show/hide no results message and table
+    var tableBody = document.getElementById('docReportBody');
+    var noResults = document.getElementById('docNoResults');
     
-    var h = '';
-    filtered.forEach(function(rec) {
-        h += '<tr class="border-b hover:bg-gray-50 transition">' +
-             '<td class="py-2 px-3 font-semibold text-blue-900">' + (rec.plate_no || 'N/A') + '</td>' +
-             '<td class="py-2 px-3">' + (rec.driver_name || '-') + '</td>' +
-             '<td class="py-2 px-3">' + (rec.hauler_name || '-') + '</td>' +
-             '<td class="py-2 px-3 text-center">' + getDocStatus(rec.lto_expiry) + '</td>' +
-             '<td class="py-2 px-3 text-center">' + getDocStatus(rec.fire_expiry) + '</td>' +
-             '<td class="py-2 px-3 text-center">' + getDocStatus(rec.dost_expiry) + '</td>' +
-             '<td class="py-2 px-3 text-center text-xs text-gray-500">' + (rec.make || '-') + '</td>' +
-             '</tr>';
-    });
-    document.getElementById('docReportBody').innerHTML = h;
+    if (!filtered.length) {
+        tableBody.innerHTML = '';
+        noResults.classList.remove('hidden');
+        if (searchTerm) {
+            noResults.querySelector('p').textContent = 'No trucks match "' + searchTerm + '"';
+        } else {
+            noResults.querySelector('p').textContent = 'No trucks match the selected filter';
+        }
+    } else {
+        noResults.classList.add('hidden');
+        var h = '';
+        filtered.forEach(function(rec) {
+            var plateDisplay = highlightText(rec.plate_no || 'N/A', rec._highlight && rec._highlight.plate, searchTerm);
+            var driverDisplay = highlightText(rec.driver_name || '-', rec._highlight && rec._highlight.driver, searchTerm);
+            var haulerDisplay = highlightText(rec.hauler_name || '-', rec._highlight && rec._highlight.hauler, searchTerm);
+            var makeDisplay = highlightText(rec.make || '-', rec._highlight && rec._highlight.make, searchTerm);
+            
+            h += '<tr class="border-b hover:bg-gray-50 transition">' +
+                 '<td class="py-2 px-3 font-semibold">' + plateDisplay + '</td>' +
+                 '<td class="py-2 px-3">' + driverDisplay + '</td>' +
+                 '<td class="py-2 px-3">' + haulerDisplay + '</td>' +
+                 '<td class="py-2 px-3 text-center">' + getDocStatus(rec.lto_expiry) + '</td>' +
+                 '<td class="py-2 px-3 text-center">' + getDocStatus(rec.fire_expiry) + '</td>' +
+                 '<td class="py-2 px-3 text-center">' + getDocStatus(rec.dost_expiry) + '</td>' +
+                 '<td class="py-2 px-3 text-center text-xs">' + makeDisplay + '</td>' +
+                 '</tr>';
+        });
+        tableBody.innerHTML = h;
+    }
+}
+
+function highlightText(text, isMatch, searchTerm) {
+    if (!isMatch || !searchTerm || !text) return escapeHtml(text);
+    
+    var escaped = escapeHtml(text);
+    var searchEscaped = escapeHtml(searchTerm);
+    var regex = new RegExp('(' + searchEscaped.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
+    return escaped.replace(regex, '<mark class="bg-yellow-200 rounded px-0.5">$1</mark>');
+}
+
+function escapeHtml(text) {
+    var map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return String(text).replace(/[&<>"']/g, function(m) { return map[m]; });
 }
 
 function getDocStatus(exp) {
@@ -316,9 +404,13 @@ function getDocStatus(exp) {
 function closeDocReport() {
     document.getElementById('docReportModal').classList.add('hidden');
     document.body.style.overflow = '';
+    // Clear search when closing
+    document.getElementById('docSearchInput').value = '';
+    document.getElementById('docSearchClear').classList.add('hidden');
+    _currentSearchTerm = '';
 }
 
-// Add click-outside-to-close functionality
+// Add click-outside-to-close and ESC key functionality
 document.addEventListener('DOMContentLoaded', function() {
     var docModal = document.getElementById('docReportModal');
     if (docModal) {
@@ -328,7 +420,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// Add ESC key to close modal (add to existing keydown handler or create new one)
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
         var docModal = document.getElementById('docReportModal');
@@ -476,14 +567,37 @@ document.addEventListener('keydown',function(e){if(document.getElementById('calc
                 <i class="fas fa-times"></i>
             </button>
         </div>
-        <div class="p-3 bg-gray-50 border-b flex flex-wrap gap-2 items-center">
-            <span class="text-xs text-gray-500">Quick Filters:</span>
-            <button onclick="filterDocReport('all')" class="doc-filter-btn px-3 py-1 rounded-full text-xs bg-blue-100 text-blue-700 hover:bg-blue-200 transition font-semibold" id="docFilterAll">All</button>
-            <button onclick="filterDocReport('valid')" class="doc-filter-btn px-3 py-1 rounded-full text-xs bg-gray-100 text-gray-600 hover:bg-green-100 hover:text-green-700 transition" id="docFilterValid">Valid</button>
-            <button onclick="filterDocReport('expired')" class="doc-filter-btn px-3 py-1 rounded-full text-xs bg-gray-100 text-gray-600 hover:bg-red-100 hover:text-red-700 transition" id="docFilterExpired">Expired</button>
-            <button onclick="filterDocReport('missing')" class="doc-filter-btn px-3 py-1 rounded-full text-xs bg-gray-100 text-gray-600 hover:bg-yellow-100 hover:text-yellow-700 transition" id="docFilterMissing">Missing</button>
-            <span class="text-xs text-gray-400 ml-auto" id="docReportCount"></span>
+        
+        <!-- Enhanced Filter Bar with Search -->
+        <div class="p-3 bg-gray-50 border-b space-y-2">
+            <!-- Search Row -->
+            <div class="flex items-center gap-2">
+                <div class="relative flex-1">
+                    <i class="fas fa-search absolute left-3 top-2.5 text-gray-400 text-sm"></i>
+                    <input type="text" id="docSearchInput" 
+                           class="w-full pl-9 pr-10 py-2 border border-gray-300 rounded-lg text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition"
+                           placeholder="Search by plate number, driver name, or hauler..."
+                           oninput="applyDocSearch()"
+                           autocomplete="off">
+                    <button id="docSearchClear" 
+                            class="hidden absolute right-2 top-2 text-gray-400 hover:text-gray-600"
+                            onclick="clearDocSearch()">
+                        <i class="fas fa-times-circle"></i>
+                    </button>
+                </div>
+                <span class="text-xs text-gray-400 whitespace-nowrap" id="docReportCount">0 trucks</span>
+            </div>
+            
+            <!-- Filter Buttons Row -->
+            <div class="flex flex-wrap gap-2 items-center">
+                <span class="text-xs text-gray-500">Status:</span>
+                <button onclick="filterDocReport('all')" class="doc-filter-btn px-3 py-1 rounded-full text-xs bg-blue-100 text-blue-700 hover:bg-blue-200 transition font-semibold" id="docFilterAll">All</button>
+                <button onclick="filterDocReport('valid')" class="doc-filter-btn px-3 py-1 rounded-full text-xs bg-gray-100 text-gray-600 hover:bg-green-100 hover:text-green-700 transition" id="docFilterValid">Valid</button>
+                <button onclick="filterDocReport('expired')" class="doc-filter-btn px-3 py-1 rounded-full text-xs bg-gray-100 text-gray-600 hover:bg-red-100 hover:text-red-700 transition" id="docFilterExpired">Expired</button>
+                <button onclick="filterDocReport('missing')" class="doc-filter-btn px-3 py-1 rounded-full text-xs bg-gray-100 text-gray-600 hover:bg-yellow-100 hover:text-yellow-700 transition" id="docFilterMissing">Missing</button>
+            </div>
         </div>
+        
         <div class="overflow-auto flex-1 p-4">
             <table class="w-full text-sm border rounded-lg">
                 <thead class="bg-gray-100 sticky top-0">
@@ -503,7 +617,14 @@ document.addEventListener('keydown',function(e){if(document.getElementById('calc
                     </td></tr>
                 </tbody>
             </table>
+            <!-- No Results Message -->
+            <div id="docNoResults" class="hidden text-center py-12 text-gray-400">
+                <i class="fas fa-search text-3xl mb-2 block"></i>
+                <p>No trucks match your search</p>
+                <p class="text-xs mt-1">Try a different plate number, driver, or hauler</p>
+            </div>
         </div>
+        
         <div class="p-3 border-t bg-gray-50 flex justify-between items-center">
             <span class="text-xs text-gray-400">Click outside or press ESC to close</span>
             <button onclick="closeDocReport()" class="bg-blue-900 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-800 transition">
@@ -512,5 +633,6 @@ document.addEventListener('keydown',function(e){if(document.getElementById('calc
         </div>
     </div>
 </div>
+
 </body>
 </html>
