@@ -1596,17 +1596,109 @@ app.get('/api/sales-orders/validate', authenticate, async (req, res) => {
   } catch (error) { res.status(500).json({ error: error.message }); }
 });
 
-// Get clients list for SO form
+// ============ API ROUTES MUST COME FIRST ============
+
+// Sales Orders API
 app.get('/api/sales-orders/clients-list', authenticate, authorize('dispatcher','management'), async (req, res) => {
   try {
     const [clients] = await pool.execute(
       "SELECT id, email, company_name FROM users WHERE role = 'client' AND is_active = 1 ORDER BY company_name"
     );
     res.json({ status: 'success', data: clients });
+  } catch (error) { 
+    console.error('Error loading clients:', error);
+    res.status(500).json({ error: error.message }); 
+  }
+});
+
+app.get('/api/sales-orders/validate', authenticate, async (req, res) => {
+  try {
+    const { so_number, client_id, company } = req.query;
+    if (!so_number) return res.status(400).json({ error: 'SO Number required' });
+    
+    const [orders] = await pool.execute(
+      `SELECT so.*, u.company_name as client_company 
+       FROM sales_orders so JOIN users u ON so.client_id = u.id 
+       WHERE so.so_number = ? AND so.status = 'active'`, [so_number]
+    );
+    
+    if (!orders.length) {
+      return res.json({ status: 'error', valid: false, message: 'Sales Order not found or inactive' });
+    }
+    
+    const order = orders[0];
+    let belongsToClient = order.client_id == client_id;
+    
+    if (!belongsToClient && order.is_multi_client) {
+      const [allocCheck] = await pool.execute(
+        'SELECT id FROM sales_order_clients WHERE sales_order_id = ? AND client_id = ?',
+        [order.id, client_id]
+      );
+      belongsToClient = allocCheck.length > 0;
+    }
+    
+    if (!belongsToClient) {
+      return res.json({ 
+        status: 'error', valid: false, 
+        message: 'SO does not belong to your account',
+        so_owner: order.client_company
+      });
+    }
+    
+    const [atlUsage] = await pool.execute(
+      `SELECT COALESCE(SUM(volume), 0) as used_volume FROM authority_to_load 
+       WHERE so_number = ? AND status NOT IN ('cancelled','rejected')`,
+      [so_number]
+    );
+    
+    const totalVolume = parseFloat(order.total_volume) || 0;
+    const usedVolume = parseFloat(atlUsage[0].used_volume) || 0;
+    const remaining = totalVolume - usedVolume;
+    
+    res.json({
+      status: 'success', valid: true,
+      data: {
+        so_id: order.id, so_number: order.so_number,
+        total_volume: totalVolume, used_volume: usedVolume,
+        remaining_volume: Math.max(0, remaining),
+        is_multi_client: order.is_multi_client,
+        owner_company: order.client_company
+      }
+    });
   } catch (error) { res.status(500).json({ error: error.message }); }
 });
 
+app.get('/api/sales-orders', authenticate, authorize('dispatcher','management'), async (req, res) => {
+  // ... sales orders list endpoint
+});
+
+app.get('/api/sales-orders/:id', authenticate, authorize('dispatcher','management'), async (req, res) => {
+  // ... single sales order endpoint
+});
+
+app.post('/api/sales-orders', authenticate, authorize('dispatcher','management'), async (req, res) => {
+  // ... create sales order endpoint
+});
+
+app.put('/api/sales-orders/:id', authenticate, authorize('dispatcher','management'), async (req, res) => {
+  // ... update sales order endpoint
+});
+
+app.delete('/api/sales-orders/:id', authenticate, authorize('dispatcher','management'), async (req, res) => {
+  // ... delete sales order endpoint
+});
+
+// ============ MIGRATION ENDPOINTS ============
+app.get('/api/admin/create-so-table', authenticate, authorize('dispatcher','management'), async (req, res) => {
+  // ... migration endpoint
+});
+
+// ============ PAGE ROUTES (MUST BE AFTER API ROUTES) ============
 app.get('/sales-orders', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'sales-orders.html')));
+
+// ============ CATCH-ALL (MUST BE LAST) ============
+app.get('/(.*)', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'index.html')));
+
 
 // Add this endpoint to update SO company names when client changes their company
 app.put('/api/sales-orders/sync-company-names', authenticate, authorize('dispatcher','management'), async (req, res) => {
