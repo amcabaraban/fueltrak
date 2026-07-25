@@ -1310,6 +1310,304 @@ app.post('/api/admin/add-first-login-column', authenticate, authorize('dispatche
   }
 });
 
+// ============ SALES ORDER MIGRATION ============
+app.post('/api/admin/create-so-table', authenticate, authorize('dispatcher','management'), async (req, res) => {
+  try {
+    await pool.execute(`
+      CREATE TABLE IF NOT EXISTS sales_orders (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        so_number VARCHAR(50) NOT NULL,
+        client_id INT NOT NULL,
+        company_name VARCHAR(100),
+        total_volume DECIMAL(12,2) DEFAULT 0,
+        used_volume DECIMAL(12,2) DEFAULT 0,
+        is_multi_client TINYINT(1) DEFAULT 0,
+        status ENUM('active','completed','cancelled') DEFAULT 'active',
+        notes TEXT,
+        created_by INT,
+        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        UNIQUE KEY unique_so_client (so_number, client_id),
+        INDEX idx_so_number (so_number),
+        INDEX idx_client_id (client_id),
+        INDEX idx_status (status),
+        FOREIGN KEY (client_id) REFERENCES users(id) ON DELETE CASCADE
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `);
+    
+    await pool.execute(`
+      CREATE TABLE IF NOT EXISTS sales_order_clients (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        sales_order_id INT NOT NULL,
+        client_id INT NOT NULL,
+        company_name VARCHAR(100),
+        allocated_volume DECIMAL(12,2) DEFAULT 0,
+        used_volume DECIMAL(12,2) DEFAULT 0,
+        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (sales_order_id) REFERENCES sales_orders(id) ON DELETE CASCADE,
+        FOREIGN KEY (client_id) REFERENCES users(id) ON DELETE CASCADE,
+        UNIQUE KEY unique_so_allocation (sales_order_id, client_id)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `);
+    
+    try { await pool.execute('CREATE INDEX idx_atl_so_number ON authority_to_load(so_number)'); } catch(e) {}
+    
+    res.json({ status: 'success', message: 'Sales Order tables created' });
+  } catch (error) { res.status(400).json({ error: error.message }); }
+});
+
+// ============ SALES ORDERS API ============
+
+// Get all sales orders
+app.get('/api/sales-orders', authenticate, authorize('dispatcher','management'), async (req, res) => {
+  try {
+    const { search, client_id, status } = req.query;
+    let query = `SELECT so.*, u.company_name as client_company, u.email as client_email 
+                 FROM sales_orders so 
+                 JOIN users u ON so.client_id = u.id WHERE 1=1`;
+    let params = [];
+    
+    if (search) { query += ' AND (so.so_number LIKE ? OR so.company_name LIKE ?)'; params.push('%'+search+'%', '%'+search+'%'); }
+    if (client_id) { query += ' AND so.client_id = ?'; params.push(client_id); }
+    if (status) { query += ' AND so.status = ?'; params.push(status); }
+    
+    query += ' ORDER BY so.createdAt DESC LIMIT 200';
+    
+    const [orders] = await pool.execute(query, params);
+    
+    // Get allocations and ATL usage for each order
+    const result = [];
+    for (const order of orders) {
+      const [allocations] = await pool.execute(
+        `SELECT soc.*, u.company_name, u.email FROM sales_order_clients soc 
+         JOIN users u ON soc.client_id = u.id WHERE soc.sales_order_id = ?`, [order.id]
+      );
+      
+      // Calculate used volume from ATLs
+      const [atlUsage] = await pool.execute(
+        `SELECT COALESCE(SUM(volume), 0) as used_volume FROM authority_to_load 
+         WHERE so_number = ? AND client_id = ? AND status NOT IN ('cancelled','rejected')`,
+        [order.so_number, order.client_id]
+      );
+      
+      let multiClientUsage = 0;
+      if (order.is_multi_client) {
+        const [mcUsage] = await pool.execute(
+          `SELECT COALESCE(SUM(volume), 0) as used_volume FROM authority_to_load 
+           WHERE so_number = ? AND status NOT IN ('cancelled','rejected')`,
+          [order.so_number]
+        );
+        multiClientUsage = mcUsage[0].used_volume;
+      }
+      
+      result.push({ 
+        ...order, 
+        allocations, 
+        used_volume: parseFloat(atlUsage[0].used_volume),
+        multi_client_used_volume: parseFloat(multiClientUsage)
+      });
+    }
+    
+    res.json({ status: 'success', data: result });
+  } catch (error) { res.status(500).json({ error: error.message }); }
+});
+
+// Get single sales order
+app.get('/api/sales-orders/:id', authenticate, authorize('dispatcher','management'), async (req, res) => {
+  try {
+    const [orders] = await pool.execute(
+      `SELECT so.*, u.company_name as client_company, u.email as client_email 
+       FROM sales_orders so JOIN users u ON so.client_id = u.id WHERE so.id = ?`, [req.params.id]
+    );
+    if (!orders.length) return res.status(404).json({ error: 'Not found' });
+    
+    const order = orders[0];
+    const [allocations] = await pool.execute(
+      `SELECT soc.*, u.company_name, u.email FROM sales_order_clients soc 
+       JOIN users u ON soc.client_id = u.id WHERE soc.sales_order_id = ?`, [order.id]
+    );
+    
+    const [atls] = await pool.execute(
+      `SELECT id, atl_code, company, plate_no, volume, status, client_id, createdAt 
+       FROM authority_to_load WHERE so_number = ? ORDER BY createdAt DESC`, [order.so_number]
+    );
+    
+    res.json({ status: 'success', data: { ...order, allocations, atls } });
+  } catch (error) { res.status(500).json({ error: error.message }); }
+});
+
+// Create sales order
+app.post('/api/sales-orders', authenticate, authorize('dispatcher','management'), async (req, res) => {
+  try {
+    const { so_number, client_id, company_name, total_volume, is_multi_client, notes, allocations } = req.body;
+    if (!so_number || !client_id) return res.status(400).json({ error: 'SO Number and Client required' });
+    
+    // Check duplicate
+    const [existing] = await pool.execute('SELECT id FROM sales_orders WHERE so_number = ? AND client_id = ?', [so_number, client_id]);
+    if (existing.length) return res.status(400).json({ error: 'SO already exists for this client' });
+    
+    let company = company_name;
+    if (!company) {
+      const [client] = await pool.execute('SELECT company_name FROM users WHERE id = ?', [client_id]);
+      company = client.length ? client[0].company_name : '';
+    }
+    
+    const [result] = await pool.execute(
+      `INSERT INTO sales_orders (so_number, client_id, company_name, total_volume, is_multi_client, notes, created_by) 
+       VALUES (?,?,?,?,?,?,?)`,
+      [so_number, client_id, company, total_volume||0, is_multi_client?1:0, notes||null, req.user.id]
+    );
+    
+    const soId = result.insertId;
+    
+    // Handle multi-client allocations
+    if (is_multi_client && allocations && allocations.length) {
+      for (const alloc of allocations) {
+        if (alloc.client_id && alloc.allocated_volume > 0) {
+          const [ac] = await pool.execute('SELECT company_name FROM users WHERE id = ?', [alloc.client_id]);
+          await pool.execute(
+            `INSERT INTO sales_order_clients (sales_order_id, client_id, company_name, allocated_volume) VALUES (?,?,?,?)`,
+            [soId, alloc.client_id, ac.length ? ac[0].company_name : '', alloc.allocated_volume]
+          );
+        }
+      }
+    }
+    
+    await logAudit(req.user.id, "CREATE_SO", "sales_orders", soId, { so_number, client_id });
+    res.status(201).json({ status: 'success', message: 'Sales Order created', data: { id: soId, so_number } });
+  } catch (error) { res.status(400).json({ error: error.message }); }
+});
+
+// Update sales order
+app.put('/api/sales-orders/:id', authenticate, authorize('dispatcher','management'), async (req, res) => {
+  try {
+    const { total_volume, is_multi_client, notes, status, allocations } = req.body;
+    const [ex] = await pool.execute('SELECT * FROM sales_orders WHERE id = ?', [req.params.id]);
+    if (!ex.length) return res.status(404).json({ error: 'Not found' });
+    
+    await pool.execute(
+      `UPDATE sales_orders SET total_volume=?, is_multi_client=?, notes=?, status=? WHERE id=?`,
+      [total_volume||ex[0].total_volume, is_multi_client!==undefined?(is_multi_client?1:0):ex[0].is_multi_client,
+       notes||ex[0].notes, status||ex[0].status, req.params.id]
+    );
+    
+    if (allocations && allocations.length) {
+      await pool.execute('DELETE FROM sales_order_clients WHERE sales_order_id = ?', [req.params.id]);
+      for (const alloc of allocations) {
+        if (alloc.client_id && alloc.allocated_volume > 0) {
+          const [ac] = await pool.execute('SELECT company_name FROM users WHERE id = ?', [alloc.client_id]);
+          await pool.execute(
+            `INSERT INTO sales_order_clients (sales_order_id, client_id, company_name, allocated_volume) VALUES (?,?,?,?)`,
+            [req.params.id, alloc.client_id, ac.length?ac[0].company_name:'', alloc.allocated_volume]
+          );
+        }
+      }
+    }
+    
+    res.json({ status: 'success', message: 'Updated' });
+  } catch (error) { res.status(400).json({ error: error.message }); }
+});
+
+// Delete sales order
+app.delete('/api/sales-orders/:id', authenticate, authorize('dispatcher','management'), async (req, res) => {
+  try {
+    const [ex] = await pool.execute('SELECT so_number FROM sales_orders WHERE id = ?', [req.params.id]);
+    if (!ex.length) return res.status(404).json({ error: 'Not found' });
+    
+    // Check if SO is used in any ATL
+    const [atlCheck] = await pool.execute(
+      'SELECT COUNT(*) as count FROM authority_to_load WHERE so_number = ? AND status NOT IN ("cancelled","rejected")',
+      [ex[0].so_number]
+    );
+    if (atlCheck[0].count > 0) {
+      return res.status(400).json({ error: 'Cannot delete: SO is used in ' + atlCheck[0].count + ' active ATLs' });
+    }
+    
+    await pool.execute('DELETE FROM sales_order_clients WHERE sales_order_id = ?', [req.params.id]);
+    await pool.execute('DELETE FROM sales_orders WHERE id = ?', [req.params.id]);
+    
+    res.json({ status: 'success', message: 'Deleted' });
+  } catch (error) { res.status(400).json({ error: error.message }); }
+});
+
+// Validate SO for client
+app.get('/api/sales-orders/validate', authenticate, async (req, res) => {
+  try {
+    const { so_number, client_id, company } = req.query;
+    if (!so_number) return res.status(400).json({ error: 'SO Number required' });
+    
+    // Find SO
+    const [orders] = await pool.execute(
+      `SELECT so.*, u.company_name as client_company 
+       FROM sales_orders so JOIN users u ON so.client_id = u.id 
+       WHERE so.so_number = ? AND so.status = 'active'`, [so_number]
+    );
+    
+    if (!orders.length) {
+      return res.json({ status: 'error', valid: false, message: 'Sales Order not found or inactive' });
+    }
+    
+    const order = orders[0];
+    
+    // Check if SO belongs to this client or is multi-client with this client
+    let belongsToClient = order.client_id == client_id;
+    
+    if (!belongsToClient && order.is_multi_client) {
+      const [allocCheck] = await pool.execute(
+        'SELECT id FROM sales_order_clients WHERE sales_order_id = ? AND client_id = ?',
+        [order.id, client_id]
+      );
+      belongsToClient = allocCheck.length > 0;
+    }
+    
+    if (!belongsToClient) {
+      return res.json({ 
+        status: 'error', 
+        valid: false, 
+        message: 'SO does not belong to your account',
+        so_owner: order.client_company
+      });
+    }
+    
+    // Calculate remaining volume
+    const [atlUsage] = await pool.execute(
+      `SELECT COALESCE(SUM(volume), 0) as used_volume FROM authority_to_load 
+       WHERE so_number = ? AND status NOT IN ('cancelled','rejected')`,
+      [so_number]
+    );
+    
+    const totalVolume = parseFloat(order.total_volume) || 0;
+    const usedVolume = parseFloat(atlUsage[0].used_volume) || 0;
+    const remaining = totalVolume - usedVolume;
+    
+    res.json({
+      status: 'success',
+      valid: true,
+      data: {
+        so_id: order.id,
+        so_number: order.so_number,
+        total_volume: totalVolume,
+        used_volume: usedVolume,
+        remaining_volume: Math.max(0, remaining),
+        is_multi_client: order.is_multi_client,
+        owner_company: order.client_company
+      }
+    });
+  } catch (error) { res.status(500).json({ error: error.message }); }
+});
+
+// Get clients list for SO form
+app.get('/api/sales-orders/clients-list', authenticate, authorize('dispatcher','management'), async (req, res) => {
+  try {
+    const [clients] = await pool.execute(
+      "SELECT id, email, company_name FROM users WHERE role = 'client' AND is_active = 1 ORDER BY company_name"
+    );
+    res.json({ status: 'success', data: clients });
+  } catch (error) { res.status(500).json({ error: error.message }); }
+});
+
+app.get('/sales-orders', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'sales-orders.html')));
+
 // ============ PAGE ROUTES ============
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'index.html')));
 app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'dashboard.html')));
