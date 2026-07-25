@@ -591,6 +591,20 @@
     return; 
    }
    
+   // In client.html, add SO validation before submission
+  async function validateSalesOrder(soNumber) {
+      if (!soNumber) return { valid: true }; // Allow empty SO
+      
+      try {
+          var res = await fetch(API + '/sales-orders/validate?so_number=' + encodeURIComponent(soNumber) + 
+                              '&client_id=' + user.id + '&company=' + encodeURIComponent(document.getElementById('company').value));
+          var data = await res.json();
+          return data;
+      } catch(e) {
+          return { valid: false, message: 'Connection error' };
+      }
+  }
+
    const hasSI = document.querySelector('input[name="siOption"]:checked')?.value === 'yes';
    
    // Confirmation prompt

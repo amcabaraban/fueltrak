@@ -3,180 +3,1061 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FuelTrak - User Tutorial</title>
+    <title>FuelTrak - Complete Client Tutorial (Standalone)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
     <style>
-        .step-card{transition:all 0.3s ease}.step-card:hover{transform:translateY(-3px)}
-        @media print{nav,.no-print{display:none!important}}
-        @media(max-width:767px){body{padding-bottom:70px}}
-        .mobile-bottom-nav{display:flex;position:fixed;bottom:0;left:0;right:0;background:#1e3a5f;color:white;z-index:50;justify-content:space-around;padding:6px 0;box-shadow:0 -2px 10px rgba(0,0,0,0.3)}
-        .mobile-bottom-nav a,.mobile-bottom-nav button{display:flex;flex-direction:column;align-items:center;color:#93a3bc;font-size:10px;text-decoration:none;padding:4px;background:none;border:none;cursor:pointer}
-        .mobile-bottom-nav a i,.mobile-bottom-nav button i{font-size:18px;margin-bottom:2px}
-        @media(min-width:768px){.mobile-bottom-nav{display:none!important}}
+        /* ============ ANIMATIONS ============ */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px) }
+            to { opacity: 1; transform: translateY(0) }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0 }
+            to { opacity: 1 }
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1) }
+            50% { transform: scale(1.03) }
+        }
+        @keyframes checkBounce {
+            0% { transform: scale(0) }
+            60% { transform: scale(1.2) }
+            100% { transform: scale(1) }
+        }
+        @keyframes slideRight {
+            from { opacity: 0; transform: translateX(-20px) }
+            to { opacity: 1; transform: translateX(0) }
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px) }
+            to { opacity: 1; transform: translateY(0) }
+        }
+        @keyframes glow {
+            0%, 100% { box-shadow: 0 0 5px rgba(59, 130, 246, 0.3) }
+            50% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.6) }
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0) }
+            25% { transform: translateX(-5px) }
+            75% { transform: translateX(5px) }
+        }
+        @keyframes popIn {
+            from { opacity: 0; transform: scale(0.8) }
+            to { opacity: 1; transform: scale(1) }
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) }
+            50% { transform: translateY(-10px) }
+        }
+        @keyframes otpGlow {
+            0%, 100% { box-shadow: 0 0 10px rgba(16, 185, 129, 0.3); border-color: #10b981 }
+            50% { box-shadow: 0 0 25px rgba(16, 185, 129, 0.7); border-color: #059669 }
+        }
+        @keyframes termsAccepted {
+            0% { transform: scale(1); background: #f0fdf4 }
+            50% { transform: scale(1.05); background: #dcfce7 }
+            100% { transform: scale(1); background: #f0fdf4 }
+        }
+        @keyframes credentialsPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4) }
+            70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0) }
+        }
+        @keyframes copyFeedback {
+            0% { opacity: 0; transform: translateY(10px) }
+            50% { opacity: 1; transform: translateY(0) }
+            100% { opacity: 0; transform: translateY(-10px) }
+        }
+
+        .animate-fade-up { animation: fadeInUp 0.5s ease-out }
+        .animate-fade-in { animation: fadeIn 0.5s ease-out }
+        .animate-pulse { animation: pulse 2s infinite }
+        .animate-check { animation: checkBounce 0.5s ease-out }
+        .animate-slide { animation: slideRight 0.4s ease-out }
+        .animate-slide-up { animation: slideUp 0.6s ease-out }
+        .animate-glow { animation: glow 2s infinite }
+        .animate-shake { animation: shake 0.5s ease-out }
+        .animate-pop { animation: popIn 0.3s ease-out }
+        .animate-float { animation: float 3s ease-in-out infinite }
+        .animate-otp-glow { animation: otpGlow 1.5s infinite }
+        .animate-terms-accepted { animation: termsAccepted 0.5s ease-out }
+        .animate-credentials-pulse { animation: credentialsPulse 2s infinite }
+        .animate-copy-feedback { animation: copyFeedback 1.5s ease-out forwards }
+
+        /* ============ INPUT STYLES ============ */
+        .tutorial-input {
+            transition: all 0.3s ease;
+            border: 2px solid #e5e7eb;
+        }
+        .tutorial-input:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            outline: none;
+        }
+        .tutorial-input.filled {
+            border-color: #10b981;
+            background: #f0fdf4;
+        }
+        .tutorial-input.error {
+            border-color: #ef4444;
+            background: #fef2f2;
+            animation: shake 0.5s ease-out;
+        }
+
+        /* ============ TOOLTIP STYLES ============ */
+        .tooltip-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+        .tooltip-wrapper .tooltip-content {
+            visibility: hidden;
+            width: 280px;
+            background: #1e3a5f;
+            color: #fff;
+            text-align: left;
+            border-radius: 8px;
+            padding: 12px;
+            position: absolute;
+            z-index: 10;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -140px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 13px;
+            line-height: 1.5;
+            pointer-events: none;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        .tooltip-wrapper .tooltip-content::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #1e3a5f transparent transparent transparent;
+        }
+        .tooltip-wrapper:hover .tooltip-content {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        /* ============ PROGRESS ============ */
+        .progress-bar {
+            transition: width 0.5s ease;
+        }
+        .step-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin: 0 4px;
+            transition: all 0.3s ease;
+        }
+        .step-indicator.active {
+            background: #1e3a5f;
+            transform: scale(1.5);
+        }
+        .step-indicator.done {
+            background: #10b981;
+        }
+        .step-indicator.pending {
+            background: #d1d5db;
+        }
+
+        /* ============ SIDEBAR ============ */
+        .sidebar-step {
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+        }
+        .sidebar-step.active {
+            border-left-color: #1e3a5f;
+            background: #eff6ff;
+            font-weight: bold;
+        }
+        .sidebar-step.completed {
+            border-left-color: #10b981;
+            color: #10b981;
+        }
+
+        /* ============ MODAL ============ */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-box {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            max-width: 700px;
+            width: 90%;
+            animation: popIn 0.3s ease-out;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        /* ============ OTP DISPLAY ============ */
+        .otp-display-box {
+            background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+            border: 3px dashed #10b981;
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            animation: otpGlow 1.5s infinite;
+        }
+        .otp-code {
+            font-size: 36px;
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+            letter-spacing: 12px;
+            color: #059669;
+            text-shadow: 0 2px 4px rgba(5, 150, 105, 0.2);
+        }
+
+        /* ============ CREDENTIALS BOX ============ */
+        .credentials-box {
+            background: linear-gradient(135deg, #eff6ff, #dbeafe);
+            border: 2px solid #3b82f6;
+            border-radius: 12px;
+            padding: 16px;
+            animation: credentialsPulse 2s infinite;
+        }
+        .credential-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            transition: all 0.2s ease;
+        }
+        .credential-row:hover {
+            background: #f0f9ff;
+        }
+        .credential-value {
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            color: #1e40af;
+            font-size: 14px;
+        }
+        .copy-btn {
+            cursor: pointer;
+            transition: all 0.2s ease;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            background: #3b82f6;
+            color: white;
+            border: none;
+        }
+        .copy-btn:hover {
+            background: #2563eb;
+            transform: scale(1.05);
+        }
+        .copy-btn.copied {
+            background: #10b981;
+        }
+
+        /* ============ TERMS SCROLLABLE ============ */
+        .terms-scroll {
+            max-height: 350px;
+            overflow-y: auto;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 16px;
+            background: #fafafa;
+        }
+
+        /* ============ MOBILE ============ */
+        @media(max-width:767px) {
+            body { padding-bottom: 70px }
+            .tooltip-wrapper .tooltip-content {
+                width: 200px;
+                margin-left: -100px;
+                font-size: 11px;
+            }
+            .step-card {
+                padding: 12px !important;
+            }
+            .otp-code {
+                font-size: 28px;
+                letter-spacing: 8px;
+            }
+            .terms-scroll {
+                max-height: 250px;
+            }
+            .credential-value {
+                font-size: 12px;
+            }
+        }
+
+        /* ============ PRINT ============ */
+        @media print {
+            nav, .no-print, #progressSection, .sidebar-container {
+                display: none !important;
+            }
+            .step-card {
+                break-inside: avoid;
+                box-shadow: none !important;
+                border: 1px solid #ddd !important;
+            }
+            .otp-display-box, .credentials-box {
+                border: 2px dashed #10b981 !important;
+                animation: none !important;
+            }
+        }
+
+        /* ============ SCROLLBAR ============ */
+        ::-webkit-scrollbar { width: 6px }
+        ::-webkit-scrollbar-track { background: #f1f5f9 }
+        ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 3px }
+        ::-webkit-scrollbar-thumb:hover { background: #64748b }
+
+        .step-complete-text {
+            text-decoration: line-through;
+            color: #10b981;
+        }
+        
+        .tutorial-badge {
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            color: #1e3a5f;
+            font-weight: bold;
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 20px;
+            display: inline-block;
+            animation: float 3s ease-in-out infinite;
+        }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
+    
+    <!-- ==================== NAVIGATION BAR ==================== -->
     <nav class="bg-gradient-to-r from-blue-900 to-blue-800 text-white shadow-xl sticky top-0 z-50 no-print">
         <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
-            <div class="flex items-center space-x-3"><div class="bg-white/20 p-2 rounded-lg"><i class="fas fa-book text-2xl text-yellow-400"></i></div><div><span class="font-bold text-lg">FuelTrak Tutorial</span></div></div>
-            <div class="flex items-center space-x-3"><a href="/" class="bg-white/20 px-4 py-2 rounded text-sm hover:bg-white/30">Login</a><button onclick="window.print()" class="bg-green-500/80 hover:bg-green-500 px-4 py-2 rounded text-sm"><i class="fas fa-print mr-1"></i>Print</button></div>
+            <div class="flex items-center space-x-3">
+                <div class="bg-white/20 p-2 rounded-lg">
+                    <i class="fas fa-book-reader text-2xl text-yellow-400"></i>
+                </div>
+                <div>
+                    <span class="font-bold text-lg">FuelTrak Client Tutorial</span>
+                    <p class="text-xs text-blue-200">Complete Standalone Guide</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-3">
+                <button onclick="window.print()" class="bg-green-500/80 hover:bg-green-500 px-4 py-2 rounded text-sm transition">
+                    <i class="fas fa-print mr-1"></i>Print Guide
+                </button>
+                <button onclick="resetTutorial()" class="bg-white/20 hover:bg-white/30 px-4 py-2 rounded text-sm transition">
+                    <i class="fas fa-redo mr-1"></i>Restart
+                </button>
+            </div>
         </div>
     </nav>
 
-    <div class="max-w-5xl mx-auto px-4 py-8">
-        <div class="text-center mb-8"><h1 class="text-3xl font-bold text-blue-900 mb-2">FuelTrak User Guide</h1><p class="text-gray-500">Complete tutorial for Admin, Dispatcher, and Client users</p></div>
+    <!-- ==================== PROGRESS SECTION ==================== -->
+    <div id="progressSection" class="bg-white shadow-sm sticky top-16 z-40 no-print">
+        <div class="max-w-4xl mx-auto px-4 py-2">
+            <div class="flex justify-between text-xs text-gray-500 mb-1">
+                <span id="stepLabel">Step 1 of 9</span>
+                <span id="progressPercent">0%</span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-2">
+                <div id="progressFill" class="progress-bar bg-blue-900 h-2 rounded-full" style="width:0%"></div>
+            </div>
+            <div class="flex justify-center mt-2 space-x-1">
+                <span class="step-indicator active" id="dot1"></span>
+                <span class="step-indicator pending" id="dot2"></span>
+                <span class="step-indicator pending" id="dot3"></span>
+                <span class="step-indicator pending" id="dot4"></span>
+                <span class="step-indicator pending" id="dot5"></span>
+                <span class="step-indicator pending" id="dot6"></span>
+                <span class="step-indicator pending" id="dot7"></span>
+                <span class="step-indicator pending" id="dot8"></span>
+                <span class="step-indicator pending" id="dot9"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== MAIN CONTENT ==================== -->
+    <div class="max-w-5xl mx-auto px-4 py-6 flex gap-6">
         
-        <div class="flex mb-8 no-print">
-            <button onclick="showTab('admin')" id="adminTab" class="flex-1 py-3 rounded-l-lg font-semibold bg-blue-900 text-white">Admin / Dispatcher</button>
-            <button onclick="showTab('client')" id="clientTab" class="flex-1 py-3 rounded-r-lg font-semibold bg-gray-200 text-gray-700">Client</button>
+        <!-- SIDEBAR -->
+        <div class="hidden lg:block w-56 flex-shrink-0 no-print sidebar-container">
+            <div class="bg-white rounded-xl shadow-lg p-4 sticky top-40">
+                <h3 class="font-bold text-blue-900 mb-3 text-sm">
+                    <i class="fas fa-list-ol mr-1"></i> Tutorial Steps
+                </h3>
+                <div class="space-y-1">
+                    <div class="sidebar-step active px-3 py-2 rounded text-sm cursor-pointer" onclick="jumpToStep(1)" id="side1">
+                        <i class="fas fa-key text-xs mr-1"></i> 1. Login Credentials
+                    </div>
+                    <div class="sidebar-step px-3 py-2 rounded text-sm cursor-pointer" onclick="jumpToStep(2)" id="side2">
+                        <i class="fas fa-lock text-xs mr-1"></i> 2. Terms & Password
+                    </div>
+                    <div class="sidebar-step px-3 py-2 rounded text-sm cursor-pointer" onclick="jumpToStep(3)" id="side3">
+                        <i class="fas fa-envelope text-xs mr-1"></i> 3. OTP Verification
+                    </div>
+                    <div class="sidebar-step px-3 py-2 rounded text-sm cursor-pointer" onclick="jumpToStep(4)" id="side4">
+                        <i class="fas fa-tachometer-alt text-xs mr-1"></i> 4. Dashboard
+                    </div>
+                    <div class="sidebar-step px-3 py-2 rounded text-sm cursor-pointer" onclick="jumpToStep(5)" id="side5">
+                        <i class="fas fa-building text-xs mr-1"></i> 5. ATL - Company
+                    </div>
+                    <div class="sidebar-step px-3 py-2 rounded text-sm cursor-pointer" onclick="jumpToStep(6)" id="side6">
+                        <i class="fas fa-truck text-xs mr-1"></i> 6. ATL - Truck
+                    </div>
+                    <div class="sidebar-step px-3 py-2 rounded text-sm cursor-pointer" onclick="jumpToStep(7)" id="side7">
+                        <i class="fas fa-check-circle text-xs mr-1"></i> 7. Review & Submit
+                    </div>
+                    <div class="sidebar-step px-3 py-2 rounded text-sm cursor-pointer" onclick="jumpToStep(8)" id="side8">
+                        <i class="fas fa-chart-bar text-xs mr-1"></i> 8. Reports
+                    </div>
+                    <div class="sidebar-step px-3 py-2 rounded text-sm cursor-pointer" onclick="jumpToStep(9)" id="side9">
+                        <i class="fas fa-file-contract text-xs mr-1"></i> 9. Full Terms
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <!-- ADMIN/DISPATCHER TUTORIAL -->
-        <div id="adminContent">
-            <div class="bg-white rounded-2xl shadow-lg p-6 mb-8">
-                <h2 class="text-2xl font-bold text-blue-900 mb-4"><i class="fas fa-tachometer-alt mr-2"></i>Dashboard Overview</h2>
-                <p class="text-gray-600 mb-4">The dashboard gives you a real-time overview of all operations with quick action buttons.</p>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="step-card bg-blue-50 p-4 rounded-lg border border-blue-200"><h3 class="font-bold text-blue-900"><span class="bg-blue-900 text-white px-2 py-0.5 rounded text-xs mr-2">1</span>Stats Cards</h3><p class="text-sm text-gray-600">View Pending, Approved, Loading, Completed counts. Today's volume in kL.</p></div>
-                    <div class="step-card bg-green-50 p-4 rounded-lg border border-green-200"><h3 class="font-bold text-green-900"><span class="bg-green-900 text-white px-2 py-0.5 rounded text-xs mr-2">2</span>Fleet Stats</h3><p class="text-sm text-gray-600">Total trucks, valid documents, expired documents at a glance.</p></div>
-                    <div class="step-card bg-purple-50 p-4 rounded-lg border border-purple-200"><h3 class="font-bold text-purple-900"><span class="bg-purple-900 text-white px-2 py-0.5 rounded text-xs mr-2">3</span>Document Status</h3><p class="text-sm text-gray-600">LTO, Fire Permit, DOST Calibration progress bars with percentages.</p></div>
-                    <div class="step-card bg-orange-50 p-4 rounded-lg border border-orange-200"><h3 class="font-bold text-orange-900"><span class="bg-orange-900 text-white px-2 py-0.5 rounded text-xs mr-2">4</span>Quick Actions</h3><p class="text-sm text-gray-600">One-click access to Verify ATL, Loading, Trucks, Clients, Reports, and more.</p></div>
+        <!-- CONTENT AREA -->
+        <div class="flex-1 min-w-0">
+            
+            <!-- HEADER -->
+            <div class="text-center mb-6 animate-fade-up">
+                <h1 class="text-3xl font-bold text-blue-900 mb-2">Complete Client Walkthrough</h1>
+                <p class="text-gray-500">Follow each step and practice with live input fields</p>
+                <div class="flex justify-center items-center space-x-2 mt-2 flex-wrap gap-y-1">
+                    <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">💡 Hover over elements for tips</span>
+                    <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">⌨️ Press Enter to advance</span>
+                    <span class="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">🖱️ Click sidebar to jump</span>
+                    <span class="tutorial-badge">FOR TUTORIAL ONLY</span>
                 </div>
             </div>
 
-            <div class="bg-white rounded-2xl shadow-lg p-6 mb-8">
-                <h2 class="text-2xl font-bold text-blue-900 mb-4"><i class="fas fa-clipboard-check mr-2"></i>Verify ATL (Approve/Reject)</h2>
-                <ol class="space-y-3 text-gray-600">
-                    <li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">1</span>Click <b>Verify ATL</b> on the dashboard Quick Actions.</li>
-                    <li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">2</span>Use the <b>search bar</b> to find specific ATLs by plate, company, or ATL code.</li>
-                    <li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">3</span>Review the ATL details: Company, SO#, Date, Volume, Driver.</li>
-                    <li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">4</span>Click <b>Approve</b> (green) or <b>Reject</b> (red). Add optional remarks.</li>
-                </ol>
+            <!-- ============ STEP 1: LOGIN ============ -->
+            <div id="step1" class="bg-white rounded-2xl shadow-lg p-6 mb-4 step-card animate-slide-up">
+                <div class="flex items-center mb-4">
+                    <span class="bg-blue-900 text-white w-10 h-10 rounded-full inline-flex items-center justify-center mr-3 font-bold">1</span>
+                    <h2 class="text-xl font-bold text-blue-900">Enter Login Credentials</h2>
+                    <span class="ml-auto text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded font-semibold">Required Step</span>
+                </div>
+                <p class="text-gray-600 mb-4">Your administrator provides your email and temporary password. Enter them on the login page at <b>https://fueltrak-seven.vercel.app</b></p>
+
+                <!-- SAMPLE CREDENTIALS BOX -->
+                <div class="max-w-sm mx-auto mb-4">
+                    <div class="credentials-box animate-credentials-pulse">
+                        <div class="flex items-center justify-between mb-2">
+                            <p class="text-xs font-bold text-blue-900">
+                                <i class="fas fa-key mr-1"></i> SAMPLE CREDENTIALS FOR TUTORIAL
+                            </p>
+                            <span class="tutorial-badge text-xs">Practice Only</span>
+                        </div>
+                        
+                        <div class="credential-row">
+                            <div class="flex items-center space-x-2">
+                                <i class="fas fa-envelope text-blue-500 text-sm"></i>
+                                <span class="text-xs text-gray-600">Email:</span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <span class="credential-value" id="sampleEmail">client1@hauler.com</span>
+                                <button class="copy-btn" onclick="copyCredential('sampleEmail', this)" title="Copy email">
+                                    <i class="fas fa-copy"></i> Copy
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="credential-row">
+                            <div class="flex items-center space-x-2">
+                                <i class="fas fa-lock text-blue-500 text-sm"></i>
+                                <span class="text-xs text-gray-600">Password:</span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <span class="credential-value" id="samplePassword">Temp@2026</span>
+                                <button class="copy-btn" onclick="copyCredential('samplePassword', this)" title="Copy password">
+                                    <i class="fas fa-copy"></i> Copy
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <p class="text-xs text-blue-700 mt-2 text-center">
+                            ⚠️ These are <b>sample credentials</b> for tutorial practice only.
+                        </p>
+                        <p class="text-xs text-blue-600 text-center">
+                            In the actual application, credentials are provided by your administrator.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- COPY FEEDBACK -->
+                <div id="copyFeedback" class="text-center text-sm text-green-600 font-bold hidden animate-copy-feedback"></div>
+
+                <div class="max-w-sm mx-auto bg-gray-50 rounded-xl p-5 border">
+                    <div class="mb-3 tooltip-wrapper w-full">
+                        <label class="block text-xs font-semibold text-gray-700 mb-1">Email Address</label>
+                        <input type="email" id="s1Email" class="tutorial-input w-full px-3 py-2.5 border rounded-lg text-sm" 
+                               placeholder="your@email.com" oninput="checkStep1()" autocomplete="off">
+                        <span class="tooltip-content">
+                            👆 <b>Email Field:</b> Type the email address given by your administrator.<br>
+                            <i class="text-yellow-300">Try the sample credentials above for practice.</i>
+                        </span>
+                    </div>
+                    <div class="mb-4 tooltip-wrapper w-full">
+                        <label class="block text-xs font-semibold text-gray-700 mb-1">Password</label>
+                        <div class="relative">
+                            <input type="password" id="s1Pass" class="tutorial-input w-full px-3 py-2.5 border rounded-lg text-sm" 
+                                   placeholder="Enter password" oninput="checkStep1()" autocomplete="off">
+                            <i class="fas fa-eye absolute right-3 top-3 text-gray-400 cursor-pointer hover:text-gray-600" 
+                               onclick="togglePassword('s1Pass', this)"></i>
+                        </div>
+                        <span class="tooltip-content">
+                            👆 <b>Password Field:</b> Enter the temporary password provided by admin.<br>
+                            <i class="text-yellow-300">Use the sample password above to practice.</i>
+                        </span>
+                    </div>
+                    <div class="tooltip-wrapper w-full">
+                        <button onclick="completeStep(1)" id="s1Btn" 
+                                class="w-full bg-blue-900 text-white py-2.5 rounded-lg font-semibold opacity-50 cursor-not-allowed transition" disabled>
+                            <i class="fas fa-sign-in-alt mr-2"></i>Login
+                        </button>
+                        <span class="tooltip-content">
+                            👆 <b>Login Button:</b> After entering correct credentials, click Login to proceed to the dashboard.<br>
+                            <i class="text-red-300">⚠️ Wrong credentials show an error message.</i>
+                        </span>
+                    </div>
+                </div>
+                <div id="s1Msg" class="mt-3 text-center text-sm hidden"></div>
             </div>
 
-            <div class="bg-white rounded-2xl shadow-lg p-6 mb-8">
-                <h2 class="text-2xl font-bold text-blue-900 mb-4"><i class="fas fa-truck-loading mr-2"></i>Loading Management</h2>
-                <ol class="space-y-3 text-gray-600">
-                    <li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">1</span>Click <b>Loading</b> on the dashboard.</li>
-                    <li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">2</span><b>Approved - Waiting</b>: Click <b>Start</b> to begin loading.</li>
-                    <li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">3</span><b>Ongoing Loading</b>: Monitor active loads. Click <b>Done</b> to complete.</li>
-                    <li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">4</span>Enter Actual Volume when completing. Confirm to finalize.</li>
-                </ol>
+            <!-- ============ STEP 2: FIRST LOGIN SETUP (WITH TERMS) ============ -->
+            <div id="step2" class="bg-white rounded-2xl shadow-lg p-6 mb-4 step-card hidden">
+                <div class="flex items-center mb-4">
+                    <span class="bg-blue-900 text-white w-10 h-10 rounded-full inline-flex items-center justify-center mr-3 font-bold">2</span>
+                    <h2 class="text-xl font-bold text-blue-900">Accept Terms & Set Password</h2>
+                    <span class="ml-auto text-xs bg-red-100 text-red-800 px-2 py-1 rounded font-semibold">First Login Only</span>
+                </div>
+                <p class="text-gray-600 mb-4">On your very first login, you must <b>accept the Terms & Conditions</b> and set a new password.</p>
+
+                <div class="max-w-lg mx-auto bg-gray-50 rounded-xl p-5 border space-y-3">
+                    
+                    <!-- TERMS & CONDITIONS SUMMARY -->
+                    <div class="tooltip-wrapper w-full">
+                        <div class="bg-white rounded-lg border p-3" id="termsPreviewBox">
+                            <div class="flex items-center justify-between mb-2">
+                                <p class="text-sm font-bold text-blue-900">
+                                    <i class="fas fa-file-contract mr-1"></i> Terms & Conditions Summary
+                                </p>
+                                <button onclick="openTermsModal()" class="text-xs text-blue-600 hover:underline">
+                                    <i class="fas fa-expand mr-1"></i>View Full Terms
+                                </button>
+                            </div>
+                            <div class="text-xs text-gray-600 space-y-1.5">
+                                <p><b>1. Acceptance:</b> By using FuelTrak, you agree to these terms.</p>
+                                <p><b>2. User Accounts:</b> You are responsible for your login credentials.</p>
+                                <p><b>3. ATL Submission:</b> All submissions must be accurate and truthful.</p>
+                                <p><b>4. Data Privacy:</b> We comply with Data Privacy Act (RA 10173).</p>
+                                <p><b>5. System Usage:</b> No unauthorized access or data manipulation.</p>
+                                <p class="text-blue-600 cursor-pointer hover:underline" onclick="openTermsModal()">
+                                    <i class="fas fa-arrow-right mr-1"></i>Click here to read the complete Terms & Conditions
+                                </p>
+                            </div>
+                        </div>
+                        <span class="tooltip-content">
+                            👆 <b>Terms Summary:</b> A summary of the key points. Click "View Full Terms" to read the complete document.
+                        </span>
+                    </div>
+
+                    <!-- ACCEPT CHECKBOX -->
+                    <div class="tooltip-wrapper w-full">
+                        <label class="flex items-center cursor-pointer bg-green-50 rounded-lg p-2 border border-green-200" id="termsCheckLabel">
+                            <input type="checkbox" id="s2Terms" class="w-4 h-4 mr-2" onchange="checkStep2()">
+                            <span class="text-sm font-semibold text-green-800">
+                                <i class="fas fa-check-circle mr-1"></i> I have read and agree to the Terms & Conditions
+                            </span>
+                        </label>
+                        <span class="tooltip-content">
+                            👆 <b>Terms Checkbox:</b> You must read and accept the Terms & Conditions before using the system.
+                        </span>
+                    </div>
+
+                    <!-- NEW PASSWORD -->
+                    <div class="tooltip-wrapper w-full">
+                        <input type="password" id="s2Pass" class="tutorial-input w-full px-3 py-2.5 border rounded-lg text-sm" 
+                               placeholder="New password (8+ chars, 1 upper, 1 number, 1 symbol)" oninput="checkStep2()" autocomplete="off">
+                        <span class="tooltip-content">
+                            👆 <b>New Password Requirements:</b><br>
+                            • At least 8 characters<br>
+                            • One uppercase letter (A-Z)<br>
+                            • One lowercase letter (a-z)<br>
+                            • One number (0-9)<br>
+                            • One symbol (!@#$%^&*)<br>
+                            <i class="text-green-300">✅ Valid: Client@2024</i><br>
+                            <i class="text-red-300">❌ Invalid: password</i>
+                        </span>
+                    </div>
+
+                    <!-- CONFIRM PASSWORD -->
+                    <div class="tooltip-wrapper w-full">
+                        <input type="password" id="s2Confirm" class="tutorial-input w-full px-3 py-2.5 border rounded-lg text-sm" 
+                               placeholder="Confirm new password" oninput="checkStep2()" autocomplete="off">
+                        <span class="tooltip-content">
+                            👆 <b>Confirm Password:</b> Re-type your new password exactly. Both must match.<br>
+                            <i class="text-red-300">⚠️ Red border = passwords don't match</i>
+                        </span>
+                    </div>
+                    <div id="s2PassMatch" class="text-xs hidden"></div>
+
+                    <!-- SET PASSWORD BUTTON -->
+                    <div class="tooltip-wrapper w-full">
+                        <button onclick="completeStep(2)" id="s2Btn" 
+                                class="w-full bg-blue-900 text-white py-2.5 rounded-lg font-semibold opacity-50 cursor-not-allowed transition" disabled>
+                            Set Password & Continue
+                        </button>
+                        <span class="tooltip-content">
+                            👆 <b>Set Password Button:</b> After accepting terms and setting a valid matching password, click here to save.
+                        </span>
+                    </div>
+                </div>
+                <div id="s2Msg" class="mt-3 text-center text-sm hidden"></div>
             </div>
 
-            <div class="bg-white rounded-2xl shadow-lg p-6 mb-8">
-                <h2 class="text-2xl font-bold text-blue-900 mb-4"><i class="fas fa-truck mr-2"></i>Truck Masterlist</h2>
-                <ol class="space-y-3 text-gray-600">
-                    <li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">1</span>Click <b>Truck Masterlist</b> to view all 656 trucks.</li>
-                    <li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">2</span>Search by plate number, driver, or hauler.</li>
-                    <li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">3</span><b>Click any field</b> (Make, Driver, Hauler, TPS) to edit inline.</li>
-                    <li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">4</span>Changes save automatically to the database.</li>
-                </ol>
+            <!-- ============ STEP 3: OTP VERIFICATION ============ -->
+            <div id="step3" class="bg-white rounded-2xl shadow-lg p-6 mb-4 step-card hidden">
+                <div class="flex items-center mb-4">
+                    <span class="bg-blue-900 text-white w-10 h-10 rounded-full inline-flex items-center justify-center mr-3 font-bold">3</span>
+                    <h2 class="text-xl font-bold text-blue-900">Verify Email with OTP</h2>
+                    <span class="ml-auto tutorial-badge">FOR TUTORIAL ONLY</span>
+                </div>
+                <p class="text-gray-600 mb-4">Check your email for a 6-digit OTP code and enter it below. This verifies your email ownership.</p>
+                
+                <!-- SAMPLE OTP DISPLAY BOX -->
+                <div class="max-w-sm mx-auto mb-4">
+                    <div class="otp-display-box animate-otp-glow">
+                        <p class="text-xs font-semibold text-green-800 mb-2">
+                            <i class="fas fa-info-circle mr-1"></i> 
+                            SAMPLE OTP FOR TUTORIAL
+                        </p>
+                        <p class="otp-code" id="sampleOTP">482915</p>
+                        <p class="text-xs text-green-700 mt-2">
+                            ⚠️ This is a <b>simulated OTP</b> for tutorial practice only.
+                        </p>
+                        <p class="text-xs text-green-600 mt-1">
+                            In the <b>actual application</b>, a unique OTP is sent to your official email address.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="max-w-xs mx-auto bg-gray-50 rounded-xl p-5 border text-center">
+                    <div class="tooltip-wrapper w-full">
+                        <input type="text" id="s3OTP" class="tutorial-input w-full px-4 py-3 border rounded-lg text-center text-2xl tracking-widest font-mono" 
+                               placeholder="000000" maxlength="6" oninput="checkStep3()" autocomplete="off">
+                        <span class="tooltip-content">
+                            👆 <b>OTP Input:</b> Enter the 6-digit code shown above.<br>
+                            <i class="text-yellow-300">In production: Code is sent to your email.</i>
+                        </span>
+                    </div>
+                    <button onclick="completeStep(3)" id="s3Btn" 
+                            class="w-full bg-blue-900 text-white py-2.5 rounded-lg font-semibold mt-3 opacity-50 cursor-not-allowed transition" disabled>
+                        Verify OTP
+                    </button>
+                    <div class="mt-3 text-xs text-gray-400 space-y-1">
+                        <p>
+                            Didn't receive code? 
+                            <a href="javascript:void(0)" onclick="resendOTP()" class="text-blue-600 hover:underline">Resend OTP</a>
+                        </p>
+                        <p class="text-yellow-600">
+                            <i class="fas fa-exclamation-triangle mr-1"></i>
+                            In production, OTP is sent to your <b>registered email</b>
+                        </p>
+                    </div>
+                </div>
+                <div id="s3Msg" class="mt-3 text-center text-sm hidden"></div>
             </div>
 
-            <div class="bg-white rounded-2xl shadow-lg p-6 mb-8">
-                <h2 class="text-2xl font-bold text-blue-900 mb-4"><i class="fas fa-users mr-2"></i>Client Management</h2>
-                <ol class="space-y-3 text-gray-600">
-                    <li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">1</span>Click <b>Clients</b> from sidebar or Quick Actions.</li>
-                    <li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">2</span>Click <b>+ Add Client</b> to create new client account.</li>
-                    <li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">3</span>Edit, deactivate, or delete clients using the action buttons.</li>
-                </ol>
+            <!-- ============ STEP 4: DASHBOARD ============ -->
+            <div id="step4" class="bg-white rounded-2xl shadow-lg p-6 mb-4 step-card hidden">
+                <div class="flex items-center mb-4">
+                    <span class="bg-blue-900 text-white w-10 h-10 rounded-full inline-flex items-center justify-center mr-3 font-bold">4</span>
+                    <h2 class="text-xl font-bold text-blue-900">Explore Your Dashboard</h2>
+                </div>
+                <p class="text-gray-600 mb-4">After login, you see your Dashboard with ATL statistics and navigation buttons.</p>
+                
+                <p class="text-sm font-semibold text-gray-700 mb-2">📊 Statistics Cards:</p>
+                <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-4">
+                    <div class="tooltip-wrapper">
+                        <div class="bg-blue-50 p-3 rounded text-center border border-blue-200">
+                            <p class="text-2xl font-bold text-blue-900">5</p><p class="text-xs text-gray-600">Total ATLs</p>
+                        </div>
+                        <span class="tooltip-content">👆 Shows total number of ATLs you've submitted</span>
+                    </div>
+                    <div class="tooltip-wrapper">
+                        <div class="bg-yellow-50 p-3 rounded text-center border border-yellow-200">
+                            <p class="text-2xl font-bold text-yellow-700">2</p><p class="text-xs text-gray-600">Pending</p>
+                        </div>
+                        <span class="tooltip-content">👆 ATLs awaiting admin approval</span>
+                    </div>
+                    <div class="tooltip-wrapper">
+                        <div class="bg-blue-50 p-3 rounded text-center border border-blue-200">
+                            <p class="text-2xl font-bold text-blue-700">1</p><p class="text-xs text-gray-600">Approved</p>
+                        </div>
+                        <span class="tooltip-content">👆 ATLs approved and ready for loading</span>
+                    </div>
+                    <div class="tooltip-wrapper">
+                        <div class="bg-orange-50 p-3 rounded text-center border border-orange-200">
+                            <p class="text-2xl font-bold text-orange-700">1</p><p class="text-xs text-gray-600">Dispatched</p>
+                        </div>
+                        <span class="tooltip-content">👆 ATLs currently being loaded at the depot</span>
+                    </div>
+                    <div class="tooltip-wrapper">
+                        <div class="bg-green-50 p-3 rounded text-center border border-green-200">
+                            <p class="text-2xl font-bold text-green-700">1</p><p class="text-xs text-gray-600">Completed</p>
+                        </div>
+                        <span class="tooltip-content">👆 ATLs that finished loading successfully</span>
+                    </div>
+                </div>
+                
+                <p class="text-sm font-semibold text-gray-700 mb-2">🧭 Navigation Buttons (Header):</p>
+                <div class="flex flex-wrap gap-2 mb-3">
+                    <span class="tooltip-wrapper"><button class="bg-blue-900 text-white px-3 py-1 rounded text-sm">Dashboard</button><span class="tooltip-content">👆 Returns to this statistics overview page</span></span>
+                    <span class="tooltip-wrapper"><button class="bg-blue-900 text-white px-3 py-1 rounded text-sm animate-pulse">New ATL</button><span class="tooltip-content">👆 Opens the form to submit a new Authority to Load.</span></span>
+                    <span class="tooltip-wrapper"><button class="bg-blue-900 text-white px-3 py-1 rounded text-sm">My ATLs</button><span class="tooltip-content">👆 View all your submitted ATLs with their status.</span></span>
+                    <span class="tooltip-wrapper"><button class="bg-blue-900 text-white px-3 py-1 rounded text-sm">Reports</button><span class="tooltip-content">👆 Generate and export reports with filters.</span></span>
+                    <span class="tooltip-wrapper"><button class="bg-red-500 text-white px-3 py-1 rounded text-sm">Logout</button><span class="tooltip-content">👆 Securely exit the system.</span></span>
+                </div>
+                
+                <button onclick="completeStep(4)" class="w-full bg-blue-900 text-white py-2.5 rounded-lg font-semibold hover:bg-blue-800 transition">
+                    I understand my dashboard →
+                </button>
+                <div id="s4Msg" class="mt-3 text-center text-sm hidden"></div>
             </div>
 
-            <div class="bg-white rounded-2xl shadow-lg p-6 mb-8">
-                <h2 class="text-2xl font-bold text-blue-900 mb-4"><i class="fas fa-chart-bar mr-2"></i>Reports & Analytics</h2>
-                <ol class="space-y-3 text-gray-600">
-                    <li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">1</span>Filter by date range, status, client, or truck.</li>
-                    <li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">2</span><b>Click SI cell</b> to toggle With SI / No SI.</li>
-                    <li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">3</span><b>Click Printed WC</b> to edit withdrawal certificate number.</li>
-                    <li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">4</span>Enter TPS From/To series directly in the table.</li>
-                    <li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">5</span>Click <b>Export CSV</b> to download or <b>Print</b> for hard copy.</li>
-                </ol>
+            <!-- ============ STEPS 5-9: Same as before ============ -->
+            <!-- STEP 5: ATL COMPANY DETAILS -->
+            <div id="step5" class="bg-white rounded-2xl shadow-lg p-6 mb-4 step-card hidden">
+                <div class="flex items-center mb-4"><span class="bg-blue-900 text-white w-10 h-10 rounded-full inline-flex items-center justify-center mr-3 font-bold">5</span><h2 class="text-xl font-bold text-blue-900">Submit ATL - Company Details</h2></div>
+                <p class="text-gray-600 mb-4">Click <b>New ATL</b> in the header to open the submission form. Fill in these required fields:</p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-lg">
+                    <div class="tooltip-wrapper"><label class="block text-xs font-semibold text-gray-700">Company <span class="text-red-500">*</span></label><input type="text" id="s5Company" class="tutorial-input w-full px-3 py-2 border rounded-lg text-sm" placeholder="e.g., HAYYA" oninput="checkStep5()" autocomplete="off"><span class="tooltip-content">👆 <b>Company:</b> Your company or business name.</span></div>
+                    <div class="tooltip-wrapper"><label class="block text-xs font-semibold text-gray-700">SO Number <span class="text-red-500">*</span></label><input type="text" id="s5SO" class="tutorial-input w-full px-3 py-2 border rounded-lg text-sm" placeholder="e.g., 2026-001" oninput="checkStep5()" autocomplete="off"><span class="tooltip-content">👆 <b>SO Number:</b> Sales Order reference number.</span></div>
+                    <div class="tooltip-wrapper"><label class="block text-xs font-semibold text-gray-700">Scheduled Date <span class="text-red-500">*</span></label><input type="date" id="s5Date" class="tutorial-input w-full px-3 py-2 border rounded-lg text-sm filled"><span class="tooltip-content">👆 <b>Scheduled Date:</b> Defaults to today.</span></div>
+                    <div class="tooltip-wrapper"><label class="block text-xs font-semibold text-gray-700">Volume in Liters <span class="text-red-500">*</span></label><input type="number" id="s5Vol" class="tutorial-input w-full px-3 py-2 border rounded-lg text-sm" placeholder="e.g., 20000" oninput="checkStep5()" autocomplete="off"><span class="tooltip-content">👆 <b>Volume:</b> Must not exceed truck capacity.</span></div>
+                </div>
+                <div class="mt-3 max-w-lg tooltip-wrapper"><label class="text-xs font-semibold text-gray-700">Sales Invoice</label><div class="flex space-x-6 mt-1"><label class="flex items-center cursor-pointer"><input type="radio" name="s5SI" value="yes" class="mr-2"> With SI</label><label class="flex items-center cursor-pointer"><input type="radio" name="s5SI" value="no" checked class="mr-2"> No SI</label></div><span class="tooltip-content">👆 Select "With SI" if you have a Sales Invoice.</span></div>
+                <div class="tooltip-wrapper mt-3 max-w-lg w-full"><button onclick="completeStep(5)" id="s5Btn" class="w-full bg-blue-900 text-white py-2.5 rounded-lg font-semibold opacity-50 cursor-not-allowed transition" disabled>Continue →</button></div>
+                <div id="s5Msg" class="mt-3 text-center text-sm hidden"></div>
             </div>
 
-            <div class="bg-white rounded-2xl shadow-lg p-6 mb-8">
-                <h2 class="text-2xl font-bold text-blue-900 mb-4"><i class="fas fa-file-alt mr-2"></i>Document Compliance Report</h2>
-                <p class="text-gray-600">View all truck documents (LTO, Fire Permit, DOST) with expiry dates. Filter by document type and status. Edit expiry dates inline and save directly.</p>
+            <!-- STEP 6: ATL TRUCK & DRIVER -->
+            <div id="step6" class="bg-white rounded-2xl shadow-lg p-6 mb-4 step-card hidden">
+                <div class="flex items-center mb-4"><span class="bg-blue-900 text-white w-10 h-10 rounded-full inline-flex items-center justify-center mr-3 font-bold">6</span><h2 class="text-xl font-bold text-blue-900">Submit ATL - Truck & Driver</h2></div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-lg">
+                    <div class="tooltip-wrapper"><label class="block text-xs font-semibold text-gray-700">Hauler <span class="text-red-500">*</span></label><input type="text" id="s6Hauler" class="tutorial-input w-full px-3 py-2 border rounded-lg text-sm" placeholder="e.g., RMCC" oninput="checkStep6()" autocomplete="off"></div>
+                    <div class="tooltip-wrapper"><label class="block text-xs font-semibold text-gray-700">Plate Number <span class="text-red-500">*</span></label><input type="text" id="s6Plate" class="tutorial-input w-full px-3 py-2 border rounded-lg text-sm uppercase" placeholder="e.g., ABC 123" onblur="simVerify()" oninput="checkStep6()" autocomplete="off"></div>
+                    <div id="s6TruckStatus" class="col-span-2 text-xs"></div>
+                    <div class="tooltip-wrapper"><label class="block text-xs font-semibold text-gray-700">Driver's Name <span class="text-red-500">*</span></label><input type="text" id="s6Driver" class="tutorial-input w-full px-3 py-2 border rounded-lg text-sm" placeholder="Auto-filled or type name" oninput="checkStep6()" autocomplete="off"></div>
+                    <div class="tooltip-wrapper"><label class="block text-xs font-semibold text-gray-700">Contact Number <span class="text-red-500">*</span></label><input type="text" id="s6Contact" class="tutorial-input w-full px-3 py-2 border rounded-lg text-sm" placeholder="e.g., 09171234567" oninput="checkStep6()" autocomplete="off"></div>
+                </div>
+                <div class="tooltip-wrapper mt-3 max-w-lg w-full"><label class="block text-xs font-semibold text-gray-700">Special Instructions (Optional)</label><textarea id="s6Special" class="tutorial-input w-full px-3 py-2 border rounded-lg text-sm" rows="2" placeholder="Any special notes..."></textarea></div>
+                <div class="tooltip-wrapper mt-3 max-w-lg w-full"><button onclick="completeStep(6)" id="s6Btn" class="w-full bg-blue-900 text-white py-2.5 rounded-lg font-semibold opacity-50 cursor-not-allowed transition" disabled>Review & Submit →</button></div>
+                <div id="s6Msg" class="mt-3 text-center text-sm hidden"></div>
             </div>
 
-            <div class="bg-white rounded-2xl shadow-lg p-6 mb-8">
-                <h2 class="text-2xl font-bold text-blue-900 mb-4"><i class="fas fa-comments mr-2"></i>Chat Feature</h2>
-                <ol class="space-y-3 text-gray-600">
-                    <li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">1</span>Click the <b>blue chat bubble</b> (bottom-right) on any admin page.</li>
-                    <li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">2</span>Select a client from the list to start chatting.</li>
-                    <li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">3</span>Chat is available globally across all admin pages.</li>
-                </ol>
+            <!-- STEP 7: REVIEW & SUBMIT -->
+            <div id="step7" class="bg-white rounded-2xl shadow-lg p-6 mb-4 step-card hidden">
+                <div class="flex items-center mb-4"><span class="bg-blue-900 text-white w-10 h-10 rounded-full inline-flex items-center justify-center mr-3 font-bold">7</span><h2 class="text-xl font-bold text-blue-900">Review & Confirm Submission</h2></div>
+                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4 text-sm"><p class="font-bold mb-2">📋 Confirmation Popup shows:</p><ul class="list-disc pl-4 space-y-1 text-gray-600 columns-2"><li>Company name</li><li>SO Number</li><li>Plate Number</li><li>Volume</li><li>Driver name</li><li>Hauler</li><li>Contact</li><li>Date</li><li>SI status</li><li>Instructions</li></ul></div>
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4 text-sm"><p class="font-bold text-blue-900">ℹ️ After submission:</p><ul class="list-disc pl-4 space-y-1 text-gray-600"><li>ATL Code generated: <span class="font-mono text-blue-900 font-bold">HAY-000000025</span></li><li>Status: <b>Pending</b> admin approval</li></ul></div>
+                <div class="tooltip-wrapper w-full"><button onclick="simulateSubmitATL()" class="w-full bg-green-600 text-white py-3 rounded-lg font-semibold animate-pulse hover:bg-green-700 transition"><i class="fas fa-paper-plane mr-2"></i>Simulate: Submit ATL</button></div>
+                <div id="s7Msg" class="mt-3 text-center text-sm hidden"></div>
+            </div>
+
+            <!-- STEP 8: REPORTS -->
+            <div id="step8" class="bg-white rounded-2xl shadow-lg p-6 mb-4 step-card hidden">
+                <div class="flex items-center mb-4"><span class="bg-blue-900 text-white w-10 h-10 rounded-full inline-flex items-center justify-center mr-3 font-bold">8</span><h2 class="text-xl font-bold text-blue-900">View & Export Reports</h2></div>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-lg mb-4">
+                    <div><label class="text-xs font-semibold">Start Date</label><input type="date" id="s8Start" class="tutorial-input w-full px-2 py-1.5 border rounded text-xs filled"></div>
+                    <div><label class="text-xs font-semibold">End Date</label><input type="date" id="s8End" class="tutorial-input w-full px-2 py-1.5 border rounded text-xs filled"></div>
+                    <div><label class="text-xs font-semibold">Status</label><select id="s8Status" class="tutorial-input w-full px-2 py-1.5 border rounded text-xs" onchange="updateReportPreview()"><option value="">All</option><option>Completed</option><option>Cancelled</option><option>Dispatched</option><option>Pending</option><option>Approved</option></select></div>
+                </div>
+                <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 mb-4">
+                    <div class="bg-white p-2 rounded shadow text-center border"><p class="text-lg font-bold" id="rptRecords">12</p><p class="text-xs text-gray-500">Records</p></div>
+                    <div class="bg-green-50 p-2 rounded shadow text-center border"><p class="text-lg font-bold text-green-700" id="rptCompleted">8</p><p class="text-xs text-gray-500">Completed</p></div>
+                    <div class="bg-red-50 p-2 rounded shadow text-center border"><p class="text-lg font-bold text-red-700" id="rptCancelled">1</p><p class="text-xs text-gray-500">Cancelled</p></div>
+                    <div class="bg-yellow-50 p-2 rounded shadow text-center border"><p class="text-lg font-bold text-yellow-700" id="rptPending">3</p><p class="text-xs text-gray-500">Pending</p></div>
+                    <div class="bg-blue-50 p-2 rounded shadow text-center border"><p class="text-lg font-bold text-blue-700" id="rptVolume">156kL</p><p class="text-xs text-gray-500">Total Vol</p></div>
+                </div>
+                <div class="overflow-x-auto mb-4 border rounded-lg"><table class="w-full text-xs"><thead class="bg-gray-100"><tr><th class="py-2 px-2 border">ATL Code</th><th class="py-2 px-2 border">SO #</th><th class="py-2 px-2 border">Plate</th><th class="py-2 px-2 border">Volume</th><th class="py-2 px-2 border">Status</th><th class="py-2 px-2 border">Date</th></tr></thead><tbody><tr class="hover:bg-gray-50"><td class="py-1.5 px-2 border font-mono text-blue-900">HAY-000000001</td><td class="py-1.5 px-2 border">2026-001</td><td class="py-1.5 px-2 border">ABC 123</td><td class="py-1.5 px-2 border text-right">20,000</td><td class="py-1.5 px-2 border text-center"><span class="bg-green-100 text-green-800 px-1.5 rounded text-xs">Completed</span></td><td class="py-1.5 px-2 border">7/24/2026</td></tr><tr class="hover:bg-gray-50"><td class="py-1.5 px-2 border font-mono text-blue-900">FUE-000000002</td><td class="py-1.5 px-2 border">2026-002</td><td class="py-1.5 px-2 border">DEF 456</td><td class="py-1.5 px-2 border text-right">40,000</td><td class="py-1.5 px-2 border text-center"><span class="bg-orange-100 text-orange-800 px-1.5 rounded text-xs">Dispatched</span></td><td class="py-1.5 px-2 border">7/25/2026</td></tr></tbody></table></div>
+                <div class="flex gap-3 max-w-lg"><button onclick="simulatePrint()" class="flex-1 bg-blue-600 text-white py-2.5 rounded-lg font-semibold hover:bg-blue-700"><i class="fas fa-print mr-2"></i>Print</button><button onclick="simulateExport()" class="flex-1 bg-green-600 text-white py-2.5 rounded-lg font-semibold hover:bg-green-700"><i class="fas fa-download mr-2"></i>Export CSV</button></div>
+                <div class="tooltip-wrapper mt-3 max-w-lg w-full"><button onclick="completeStep(8)" id="s8Btn" class="w-full bg-blue-900 text-white py-2.5 rounded-lg font-semibold hover:bg-blue-800">Finish Tutorial →</button></div>
+                <div id="s8Msg" class="mt-3 text-center text-sm hidden"></div>
+            </div>
+
+            <!-- STEP 9: FULL TERMS & CONDITIONS -->
+            <div id="step9" class="bg-white rounded-2xl shadow-lg p-6 mb-4 step-card hidden">
+                <div class="flex items-center mb-4"><span class="bg-blue-900 text-white w-10 h-10 rounded-full inline-flex items-center justify-center mr-3 font-bold">9</span><h2 class="text-xl font-bold text-blue-900">Full Terms & Conditions</h2><span class="ml-auto text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded font-semibold">Reference</span></div>
+                <p class="text-gray-600 mb-4">Complete FuelTrak Logistics Management System Terms and Conditions. Last updated: July 2026</p>
+                <div class="terms-scroll space-y-5 text-sm text-gray-700 leading-relaxed">
+                    <div><h3 class="text-base font-bold text-blue-900 mb-2">1. Acceptance of Terms</h3><p>By accessing and using FuelTrak Logistics Management System ("FuelTrak"), you agree to be bound by these Terms and Conditions. If you do not agree, please do not use the system.</p></div>
+                    <div><h3 class="text-base font-bold text-blue-900 mb-2">2. User Accounts</h3><p>You are responsible for maintaining the confidentiality of your login credentials. You must change your password upon first login. You are fully responsible for all activities that occur under your account.</p><p class="mt-1">Accounts are assigned to specific individuals and cannot be shared. If you suspect unauthorized access, notify your administrator immediately.</p></div>
+                    <div><h3 class="text-base font-bold text-blue-900 mb-2">3. Authority to Load (ATL) Submission</h3><p>All ATL submissions must be accurate and truthful. Submitting false information may result in account suspension. You are responsible for verifying truck details before submission.</p><p class="mt-1">Submitting an ATL for a truck that already has a pending or approved ATL is prohibited. Volume must not exceed the truck's verified capacity.</p></div>
+                    <div><h3 class="text-base font-bold text-blue-900 mb-2">4. Data Privacy</h3><p>FuelTrak complies with the Data Privacy Act of 2012 (RA 10173). Your personal information is used solely for system operations and will not be shared with third parties without consent.</p><p class="mt-1">We implement reasonable security measures to protect your data from unauthorized access, alteration, or disclosure.</p></div>
+                    <div><h3 class="text-base font-bold text-blue-900 mb-2">5. System Usage</h3><p>You agree not to misuse the system, including but not limited to: unauthorized access, data manipulation, or any activity that disrupts system operations.</p><p class="mt-1">Automated scripts, bots, or any form of automated data extraction is strictly prohibited.</p></div>
+                    <div><h3 class="text-base font-bold text-blue-900 mb-2">6. Limitation of Liability</h3><p>FuelTrak is provided "as is" without warranties of any kind. The system owners are not liable for any damages arising from system use or inability to use the system.</p></div>
+                    <div><h3 class="text-base font-bold text-blue-900 mb-2">7. Termination</h3><p>We reserve the right to suspend or terminate accounts that violate these terms without prior notice.</p></div>
+                    <div><h3 class="text-base font-bold text-blue-900 mb-2">8. Changes to Terms</h3><p>We may update these terms at any time. Continued use of the system after changes constitutes acceptance of the new terms.</p></div>
+                    <div><h3 class="text-base font-bold text-blue-900 mb-2">9. Contact Information</h3><p>For questions or concerns: <b>kitrol.dispatcher@gmail.com</b></p></div>
+                </div>
+                <div class="mt-4 text-center"><button onclick="completeStep(9)" class="bg-blue-900 text-white px-6 py-2.5 rounded-lg font-semibold hover:bg-blue-800 transition"><i class="fas fa-check mr-2"></i> I've Read the Terms</button></div>
+                <div id="s9Msg" class="mt-3 text-center text-sm hidden"></div>
+            </div>
+
+            <!-- ============ COMPLETION ============ -->
+            <div id="complete" class="bg-gradient-to-br from-green-400 to-emerald-600 text-white rounded-2xl shadow-lg p-8 text-center hidden animate-pop">
+                <div class="text-6xl mb-4">🎉</div>
+                <h2 class="text-3xl font-bold mb-2">Tutorial Complete!</h2>
+                <p class="text-lg mb-6">You now know how to use the FuelTrak Client Portal</p>
+                <div class="bg-white/20 rounded-xl p-4 mb-6 max-w-md mx-auto">
+                    <p class="font-bold mb-3">✅ Skills Learned:</p>
+                    <div class="grid grid-cols-2 gap-2 text-left text-sm">
+                        <div>✅ Login to your account</div><div>✅ Accept Terms & set password</div>
+                        <div>✅ Verify email with OTP</div><div>✅ Navigate the dashboard</div>
+                        <div>✅ Submit a new ATL</div><div>✅ Verify truck details</div>
+                        <div>✅ Review before submitting</div><div>✅ View and export reports</div>
+                        <div>✅ Read full Terms & Conditions</div>
+                    </div>
+                </div>
+                <div class="space-x-3">
+                    <button onclick="resetTutorial()" class="inline-block bg-white text-green-700 px-6 py-3 rounded-lg font-bold hover:bg-gray-100 transition"><i class="fas fa-redo mr-1"></i> Restart</button>
+                    <button onclick="window.print()" class="inline-block bg-white/30 text-white px-6 py-3 rounded-lg font-bold hover:bg-white/40 transition"><i class="fas fa-print mr-1"></i> Print</button>
+                </div>
             </div>
         </div>
-
-        <!-- CLIENT TUTORIAL -->
-        <div id="clientContent" class="hidden">
-            <div class="bg-white rounded-2xl shadow-lg p-6 mb-8">
-                <h2 class="text-2xl font-bold text-blue-900 mb-4"><i class="fas fa-tachometer-alt mr-2"></i>Client Dashboard</h2>
-                <p class="text-gray-600">View your ATL summary: Total, Dispatched, Pending, Approved, and Cancelled counts. See recent ATL codes.</p>
-            </div>
-
-            <div class="bg-white rounded-2xl shadow-lg p-6 mb-8">
-                <h2 class="text-2xl font-bold text-blue-900 mb-4"><i class="fas fa-plus-circle mr-2"></i>Submit New ATL</h2>
-                <ol class="space-y-3 text-gray-600">
-                    <li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">1</span>Click <b>New ATL</b> button in the header.</li>
-                    <li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">2</span>Enter <b>Company</b>, <b>SO Number</b> (optional), <b>Scheduled Date</b>, <b>Volume (Liters)</b>.</li>
-                    <li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">3</span>Select <b>With SI</b> or <b>No SI</b> (Sales Invoice).</li>
-                    <li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">4</span>Enter <b>Plate Number</b> - it auto-verifies the truck and fills driver/hauler details.</li>
-                    <li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">5</span>Review all details in the confirmation popup, then click <b>OK</b> to submit.</li>
-                    <li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">6</span>An <b>ATL Code</b> (e.g., AMC-000000001) is auto-generated.</li>
-                </ol>
-                <div class="bg-yellow-50 border border-yellow-200 p-3 rounded mt-4 text-sm"><i class="fas fa-lightbulb text-yellow-600 mr-2"></i><b>Tip:</b> You cannot submit a new ATL for a truck that already has a pending or approved ATL.</div>
-            </div>
-
-            <div class="bg-white rounded-2xl shadow-lg p-6 mb-8">
-                <h2 class="text-2xl font-bold text-blue-900 mb-4"><i class="fas fa-list mr-2"></i>My ATLs (History)</h2>
-                <ol class="space-y-3 text-gray-600">
-                    <li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">1</span>View all your submitted ATLs with status badges.</li>
-                    <li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">2</span>Use <b>search</b> and <b>status filter</b> to find ATLs.</li>
-                    <li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">3</span>Click <b>View</b> for full details, <b>Cancel</b> on pending/approved ATLs.</li>
-                </ol>
-            </div>
-
-            <div class="bg-white rounded-2xl shadow-lg p-6 mb-8">
-                <h2 class="text-2xl font-bold text-blue-900 mb-4"><i class="fas fa-chart-bar mr-2"></i>Client Reports</h2>
-                <ol class="space-y-3 text-gray-600">
-                    <li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">1</span>View your ATL history with date and status filters.</li>
-                    <li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">2</span>Summary cards show records, dispatched, failed, pending, total volume.</li>
-                    <li class="flex items-start"><span class="bg-blue-900 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">3</span>Click <b>Print</b> or <b>Export CSV</b> to download.</li>
-                </ol>
-            </div>
-
-            <div class="bg-white rounded-2xl shadow-lg p-6 mb-8">
-                <h2 class="text-2xl font-bold text-blue-900 mb-4"><i class="fas fa-comments mr-2"></i>Chat with Admin</h2>
-                <p class="text-gray-600">Click the <b>blue chat bubble</b> (bottom-right corner) to message the admin/dispatcher directly. Chat is available on all client pages.</p>
-            </div>
-        </div>
-
-    <!-- Mobile Bottom Navigation -->
-    <div class="mobile-bottom-nav">
-        <a href="/dashboard"><i class="fas fa-tachometer-alt"></i><span>Home</span></a>
-        <a href="/reports"><i class="fas fa-chart-bar"></i><span>Reports</span></a>
-        <a href="/trucks"><i class="fas fa-truck"></i><span>Trucks</span></a>
-        <a href="/docs-report"><i class="fas fa-file-alt"></i><span>Docs</span></a>
     </div>
 
+    <!-- ==================== TERMS MODAL ==================== -->
+    <div id="termsModal" class="modal-overlay hidden">
+        <div class="modal-box">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-bold text-blue-900"><i class="fas fa-file-contract mr-2"></i>Terms & Conditions</h2>
+                <button onclick="closeTermsModal()" class="text-gray-400 hover:text-gray-600 text-xl"><i class="fas fa-times"></i></button>
+            </div>
+            <p class="text-xs text-gray-500 mb-4">Last updated: July 2026</p>
+            <div class="terms-scroll space-y-5 text-sm text-gray-700 leading-relaxed">
+                <div><h3 class="text-base font-bold text-blue-900 mb-2">1. Acceptance of Terms</h3><p>By accessing and using FuelTrak Logistics Management System ("FuelTrak"), you agree to be bound by these Terms and Conditions. If you do not agree, please do not use the system.</p></div>
+                <div><h3 class="text-base font-bold text-blue-900 mb-2">2. User Accounts</h3><p>You are responsible for maintaining the confidentiality of your login credentials. You must change your password upon first login. You are fully responsible for all activities that occur under your account.</p><p class="mt-1">Accounts are assigned to specific individuals and cannot be shared.</p></div>
+                <div><h3 class="text-base font-bold text-blue-900 mb-2">3. Authority to Load (ATL) Submission</h3><p>All ATL submissions must be accurate and truthful. Submitting false information may result in account suspension.</p></div>
+                <div><h3 class="text-base font-bold text-blue-900 mb-2">4. Data Privacy</h3><p>FuelTrak complies with the Data Privacy Act of 2012 (RA 10173).</p></div>
+                <div><h3 class="text-base font-bold text-blue-900 mb-2">5. System Usage</h3><p>You agree not to misuse the system.</p></div>
+                <div><h3 class="text-base font-bold text-blue-900 mb-2">6. Limitation of Liability</h3><p>FuelTrak is provided "as is" without warranties.</p></div>
+                <div><h3 class="text-base font-bold text-blue-900 mb-2">7. Termination</h3><p>We reserve the right to suspend or terminate accounts that violate these terms.</p></div>
+                <div><h3 class="text-base font-bold text-blue-900 mb-2">8. Changes to Terms</h3><p>We may update these terms at any time.</p></div>
+                <div><h3 class="text-base font-bold text-blue-900 mb-2">9. Contact Information</h3><p>For questions: <b>kitrol.dispatcher@gmail.com</b></p></div>
+            </div>
+            <div class="mt-4 flex justify-end"><button onclick="closeTermsModal()" class="bg-blue-900 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-800 transition">Close</button></div>
+        </div>
+    </div>
+
+    <!-- ==================== CONFIRMATION MODAL ==================== -->
+    <div id="confirmModal" class="modal-overlay hidden">
+        <div class="modal-box">
+            <div class="text-center mb-3"><i class="fas fa-clipboard-check text-4xl text-green-600"></i></div>
+            <h3 class="font-bold text-lg mb-3 text-center">📋 Confirm ATL Submission</h3>
+            <div class="text-sm space-y-1.5 mb-4 bg-gray-50 rounded-lg p-3">
+                <div class="flex justify-between"><span class="text-gray-500">Company:</span><b>HAYYA</b></div>
+                <div class="flex justify-between"><span class="text-gray-500">SO Number:</span><b>2026-001</b></div>
+                <div class="flex justify-between"><span class="text-gray-500">Date:</span><b id="modalDate">--</b></div>
+                <div class="flex justify-between"><span class="text-gray-500">Volume:</span><b>20,000 Liters</b></div>
+                <div class="flex justify-between"><span class="text-gray-500">Hauler:</span><b>RMCC</b></div>
+                <div class="flex justify-between"><span class="text-gray-500">Plate:</span><b>ABC 123</b></div>
+                <div class="flex justify-between"><span class="text-gray-500">Driver:</span><b>Juan Dela Cruz</b></div>
+                <div class="flex justify-between"><span class="text-gray-500">Contact:</span><b>09171234567</b></div>
+                <div class="flex justify-between"><span class="text-gray-500">SI:</span><b>No</b></div>
+                <div class="flex justify-between"><span class="text-gray-500">Instructions:</span><b>N/A</b></div>
+            </div>
+            <p class="text-xs text-center text-gray-400 mb-3">⚠️ Please verify all details before confirming</p>
+            <div class="flex space-x-2">
+                <button onclick="closeModal()" class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg font-semibold hover:bg-gray-400 transition">Cancel</button>
+                <button onclick="confirmSubmit()" class="flex-1 bg-green-600 text-white py-2 rounded-lg font-semibold hover:bg-green-700 transition"><i class="fas fa-check mr-1"></i> OK - Submit</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== SCRIPTS ==================== -->
     <script>
-        function showTab(role){
-            if(role==='admin'){
-                document.getElementById('adminContent').classList.remove('hidden');
-                document.getElementById('clientContent').classList.add('hidden');
-                document.getElementById('adminTab').className='flex-1 py-3 rounded-l-lg font-semibold bg-blue-900 text-white';
-                document.getElementById('clientTab').className='flex-1 py-3 rounded-r-lg font-semibold bg-gray-200 text-gray-700';
-            } else {
-                document.getElementById('adminContent').classList.add('hidden');
-                document.getElementById('clientContent').classList.remove('hidden');
-                document.getElementById('adminTab').className='flex-1 py-3 rounded-l-lg font-semibold bg-gray-200 text-gray-700';
-                document.getElementById('clientTab').className='flex-1 py-3 rounded-r-lg font-semibold bg-blue-900 text-white';
+        var currentStep = 1;
+        var totalSteps = 9;
+        var SAMPLE_OTP = "482915";
+        var SAMPLE_EMAIL = "client1@hauler.com";
+        var SAMPLE_PASSWORD = "Temp@2026";
+
+        function init() {
+            var today = new Date().toISOString().split('T')[0];
+            setValue('s5Date', today);
+            setValue('s8Start', today);
+            setValue('s8End', today);
+            updateModalDate();
+            updateProgress(1);
+            
+            var confirmModal = document.getElementById('confirmModal');
+            if (confirmModal) confirmModal.addEventListener('click', function(e) { if (e.target === confirmModal) closeModal(); });
+            
+            var termsModal = document.getElementById('termsModal');
+            if (termsModal) termsModal.addEventListener('click', function(e) { if (e.target === termsModal) closeTermsModal(); });
+            
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA' && currentStep <= totalSteps) {
+                    var btnId = '';
+                    if (currentStep <= 3) btnId = 's' + currentStep + 'Btn';
+                    else if (currentStep === 5) btnId = 's5Btn';
+                    else if (currentStep === 6) btnId = 's6Btn';
+                    if (btnId) { var btn = document.getElementById(btnId); if (btn && !btn.disabled) completeStep(currentStep); }
+                    else if (currentStep === 4 || currentStep === 7 || currentStep === 8 || currentStep === 9) completeStep(currentStep);
+                }
+                if (e.key === 'Escape') { closeModal(); closeTermsModal(); }
+            });
+        }
+
+        function setValue(id, value) { var el = document.getElementById(id); if (el) el.value = value; }
+        function updateModalDate() { var el = document.getElementById('modalDate'); if (el) el.textContent = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }); }
+
+        // ============ COPY CREDENTIALS ============
+        function copyCredential(elementId, button) {
+            var text = document.getElementById(elementId).textContent;
+            navigator.clipboard.writeText(text).then(function() {
+                // Show feedback
+                var feedback = document.getElementById('copyFeedback');
+                feedback.textContent = '✅ Copied: ' + text;
+                feedback.className = 'text-center text-sm text-green-600 font-bold animate-copy-feedback';
+                feedback.classList.remove('hidden');
+                
+                // Change button appearance
+                button.classList.add('copied');
+                button.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                
+                // Reset after 2 seconds
+                setTimeout(function() {
+                    feedback.classList.add('hidden');
+                    button.classList.remove('copied');
+                    button.innerHTML = '<i class="fas fa-copy"></i> Copy';
+                }, 2000);
+            }).catch(function() {
+                // Fallback for older browsers
+                var feedback = document.getElementById('copyFeedback');
+                feedback.textContent = '📋 Manually copy: ' + text;
+                feedback.className = 'text-center text-sm text-yellow-600 font-bold animate-copy-feedback';
+                feedback.classList.remove('hidden');
+                setTimeout(function() { feedback.classList.add('hidden'); }, 3000);
+            });
+        }
+
+        function togglePassword(inputId, icon) {
+            var input = document.getElementById(inputId);
+            if (!input) return;
+            input.type = input.type === 'password' ? 'text' : 'password';
+            icon.classList.toggle('fa-eye');
+            icon.classList.toggle('fa-eye-slash');
+        }
+
+        function jumpToStep(n) {
+            if (n < 1 || n > totalSteps) return;
+            for (var i = 1; i <= totalSteps; i++) { var step = document.getElementById('step' + i); if (step) step.classList.add('hidden'); }
+            var complete = document.getElementById('complete'); if (complete) complete.classList.add('hidden');
+            var target = document.getElementById('step' + n);
+            if (target) { target.classList.remove('hidden'); target.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+            currentStep = n;
+            updateProgress(currentStep);
+        }
+
+        function updateProgress(step) {
+            var pct = Math.round((step / totalSteps) * 100);
+            var pf = document.getElementById('progressFill'); if (pf) pf.style.width = pct + '%';
+            var pp = document.getElementById('progressPercent'); if (pp) pp.textContent = pct + '%';
+            var sl = document.getElementById('stepLabel'); if (sl) sl.textContent = 'Step ' + step + ' of ' + totalSteps;
+            for (var i = 1; i <= totalSteps; i++) {
+                var dot = document.getElementById('dot' + i); if (!dot) continue;
+                dot.className = 'step-indicator';
+                if (i < step) dot.classList.add('done'); else if (i === step) dot.classList.add('active'); else dot.classList.add('pending');
+            }
+            for (var i = 1; i <= totalSteps; i++) {
+                var side = document.getElementById('side' + i); if (!side) continue;
+                side.className = 'sidebar-step px-3 py-2 rounded text-sm cursor-pointer';
+                if (i < step) side.classList.add('completed'); else if (i === step) side.classList.add('active');
             }
         }
+
+        function completeStep(n) {
+            var msg = document.getElementById('s' + n + 'Msg');
+            if (msg) { msg.innerHTML = '<i class="fas fa-check-circle mr-1"></i> Complete!'; msg.className = 'mt-3 text-center text-sm text-green-600 font-bold animate-pop'; msg.classList.remove('hidden'); }
+            var stepEl = document.getElementById('step' + n);
+            if (stepEl) { var h2 = stepEl.querySelector('h2'); if (h2) h2.classList.add('step-complete-text'); }
+            setTimeout(function() {
+                if (n < totalSteps) {
+                    if (stepEl) stepEl.classList.add('hidden');
+                    var nextStep = document.getElementById('step' + (n + 1));
+                    if (nextStep) { nextStep.classList.remove('hidden'); nextStep.classList.add('animate-slide-up'); nextStep.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+                    currentStep = n + 1;
+                } else {
+                    if (stepEl) stepEl.classList.add('hidden');
+                    var complete = document.getElementById('complete');
+                    if (complete) { complete.classList.remove('hidden'); complete.scrollIntoView({ behavior: 'smooth' }); }
+                    currentStep = totalSteps;
+                }
+                updateProgress(currentStep);
+            }, 600);
+        }
+
+        function resetTutorial() {
+            currentStep = 1;
+            for (var i = 1; i <= totalSteps; i++) {
+                var el = document.getElementById('step' + i); var msg = document.getElementById('s' + i + 'Msg');
+                if (msg) msg.classList.add('hidden');
+                if (el) { if (i === 1) el.classList.remove('hidden'); else el.classList.add('hidden'); var h2 = el.querySelector('h2'); if (h2) h2.classList.remove('step-complete-text'); }
+            }
+            var complete = document.getElementById('complete'); if (complete) complete.classList.add('hidden');
+            var step1 = document.getElementById('step1'); if (step1) step1.scrollIntoView({ behavior: 'smooth' });
+            updateProgress(1);
+            ['s1Email','s1Pass','s2Pass','s2Confirm','s3OTP','s5Company','s5SO','s5Vol','s6Hauler','s6Plate','s6Driver','s6Contact','s6Special'].forEach(function(id) { var el = document.getElementById(id); if (el) { el.value = ''; el.classList.remove('filled','error'); } });
+            var s2Terms = document.getElementById('s2Terms'); if (s2Terms) s2Terms.checked = false;
+            var s6TruckStatus = document.getElementById('s6TruckStatus'); if (s6TruckStatus) s6TruckStatus.innerHTML = '';
+            var s2PassMatch = document.getElementById('s2PassMatch'); if (s2PassMatch) s2PassMatch.classList.add('hidden');
+            var s7Msg = document.getElementById('s7Msg'); if (s7Msg) s7Msg.classList.add('hidden');
+            var copyFeedback = document.getElementById('copyFeedback'); if (copyFeedback) copyFeedback.classList.add('hidden');
+            ['s1Btn','s2Btn','s3Btn','s5Btn','s6Btn'].forEach(function(id) { var btn = document.getElementById(id); if (btn) { btn.disabled = true; btn.className = btn.className.replace('hover:bg-blue-800 cursor-pointer animate-glow','') + ' opacity-50 cursor-not-allowed'; } });
+            var today = new Date().toISOString().split('T')[0]; setValue('s5Date', today); setValue('s8Start', today); setValue('s8End', today);
+            updateReportPreview();
+            // Reset copy buttons
+            document.querySelectorAll('.copy-btn').forEach(function(btn) { btn.classList.remove('copied'); btn.innerHTML = '<i class="fas fa-copy"></i> Copy'; });
+        }
+
+        function checkStep1() { var email=document.getElementById('s1Email'),pass=document.getElementById('s1Pass'),btn=document.getElementById('s1Btn'); if(!email||!pass||!btn)return; var e=email.value,p=pass.value,ok=e.includes('@')&&e.includes('.')&&p.length>3; btn.disabled=!ok; btn.className=ok?'w-full bg-blue-900 text-white py-2.5 rounded-lg font-semibold hover:bg-blue-800 cursor-pointer animate-glow transition':'w-full bg-blue-900 text-white py-2.5 rounded-lg font-semibold opacity-50 cursor-not-allowed transition'; if(e.includes('@'))email.classList.add('filled');else email.classList.remove('filled'); if(p.length>3)pass.classList.add('filled');else pass.classList.remove('filled'); }
+        function checkStep2() { var terms=document.getElementById('s2Terms'),pass=document.getElementById('s2Pass'),confirm=document.getElementById('s2Confirm'),matchEl=document.getElementById('s2PassMatch'),btn=document.getElementById('s2Btn'); if(!terms||!pass||!confirm||!btn)return; var t=terms.checked,p=pass.value,c=confirm.value,hu=/[A-Z]/.test(p),hl=/[a-z]/.test(p),hn=/[0-9]/.test(p),hs=/[!@#$%^&*]/.test(p),il=p.length>=8; if(matchEl){if(c.length>0&&p!==c){matchEl.textContent='❌ Passwords do not match';matchEl.className='text-xs text-red-600';matchEl.classList.remove('hidden');confirm.classList.add('error');confirm.classList.remove('filled')}else if(c.length>0&&p===c){matchEl.textContent='✅ Passwords match';matchEl.className='text-xs text-green-600';matchEl.classList.remove('hidden');confirm.classList.remove('error');confirm.classList.add('filled')}else{matchEl.classList.add('hidden');confirm.classList.remove('error','filled')}} var ok=t&&il&&hu&&hl&&hn&&hs&&p===c; btn.disabled=!ok; btn.className=ok?'w-full bg-blue-900 text-white py-2.5 rounded-lg font-semibold hover:bg-blue-800 cursor-pointer transition':'w-full bg-blue-900 text-white py-2.5 rounded-lg font-semibold opacity-50 cursor-not-allowed transition'; if(il&&hu&&hl&&hn&&hs)pass.classList.add('filled');else pass.classList.remove('filled'); }
+        function checkStep3() { var otp=document.getElementById('s3OTP'),btn=document.getElementById('s3Btn'); if(!otp||!btn)return; var o=otp.value,ok=o.length===6&&/^\d+$/.test(o); btn.disabled=!ok; btn.className=ok?'w-full bg-blue-900 text-white py-2.5 rounded-lg font-semibold hover:bg-blue-800 cursor-pointer transition':'w-full bg-blue-900 text-white py-2.5 rounded-lg font-semibold opacity-50 cursor-not-allowed transition'; if(ok)otp.classList.add('filled');else otp.classList.remove('filled'); }
+        function checkStep5() { var c=document.getElementById('s5Company'),s=document.getElementById('s5SO'),v=document.getElementById('s5Vol'),btn=document.getElementById('s5Btn'); if(!c||!s||!v||!btn)return; var cv=c.value,sv=s.value,vv=v.value,ok=cv.length>0&&sv.length>0&&vv>0; btn.disabled=!ok; btn.className=ok?'w-full bg-blue-900 text-white py-2.5 rounded-lg font-semibold hover:bg-blue-800 cursor-pointer transition':'w-full bg-blue-900 text-white py-2.5 rounded-lg font-semibold opacity-50 cursor-not-allowed transition'; if(cv)c.classList.add('filled');else c.classList.remove('filled'); if(sv)s.classList.add('filled');else s.classList.remove('filled'); if(vv>0)v.classList.add('filled');else v.classList.remove('filled'); }
+        function checkStep6() { var h=document.getElementById('s6Hauler'),p=document.getElementById('s6Plate'),d=document.getElementById('s6Driver'),c=document.getElementById('s6Contact'),btn=document.getElementById('s6Btn'); if(!h||!p||!d||!c||!btn)return; var hv=h.value,pv=p.value,dv=d.value,cv=c.value,ok=hv.length>0&&pv.length>2&&dv.length>0&&cv.length>9; btn.disabled=!ok; btn.className=ok?'w-full bg-blue-900 text-white py-2.5 rounded-lg font-semibold hover:bg-blue-800 cursor-pointer animate-glow transition':'w-full bg-blue-900 text-white py-2.5 rounded-lg font-semibold opacity-50 cursor-not-allowed transition'; if(hv)h.classList.add('filled'); if(pv.length>2)p.classList.add('filled'); if(dv)d.classList.add('filled'); if(cv.length>9)c.classList.add('filled'); }
+        function simVerify() { var plate=document.getElementById('s6Plate'),status=document.getElementById('s6TruckStatus'),driver=document.getElementById('s6Driver'),hauler=document.getElementById('s6Hauler'); if(!plate||!status)return; if(plate.value.length>2){status.innerHTML='<span class="text-green-600 font-semibold animate-pop">✅ Truck verified!</span> <span class="text-gray-600">Max capacity: <b>30,000 L</b> | Driver: <b>Juan Dela Cruz</b> | Hauler: <b>RMCC</b></span>'; if(driver){driver.value='Juan Dela Cruz';driver.classList.add('filled')} if(hauler){hauler.value='RMCC';hauler.classList.add('filled')} checkStep6(); }else{status.innerHTML='<span class="text-red-600">⚠️ Please enter a valid plate number</span>'} }
+        function updateReportPreview() { var s=(document.getElementById('s8Status')||{}).value||''; s=s.toLowerCase(); var d={records:'12',completed:'8',cancelled:'1',pending:'3',volume:'156kL'}; if(s==='completed')d={records:'8',completed:'8',cancelled:'0',pending:'0',volume:'120kL'}; else if(s==='cancelled')d={records:'1',completed:'0',cancelled:'1',pending:'0',volume:'10kL'}; else if(s==='pending')d={records:'3',completed:'0',cancelled:'0',pending:'3',volume:'26kL'}; ['rptRecords','rptCompleted','rptCancelled','rptPending','rptVolume'].forEach(function(id,i){ var el=document.getElementById(id); if(el)el.textContent=[d.records,d.completed,d.cancelled,d.pending,d.volume][i]; }); }
+        function simulatePrint() { var m=document.getElementById('s8Msg'); if(!m)return; m.innerHTML='<i class="fas fa-print mr-1"></i> Opening print dialog...'; m.className='mt-3 text-center text-sm text-blue-600 font-semibold animate-pop'; m.classList.remove('hidden'); setTimeout(function(){m.classList.add('hidden')},2000); }
+        function simulateExport() { var m=document.getElementById('s8Msg'); if(!m)return; m.innerHTML='<i class="fas fa-download mr-1"></i> Downloading report-'+new Date().toISOString().split('T')[0]+'.csv...'; m.className='mt-3 text-center text-sm text-green-600 font-semibold animate-pop'; m.classList.remove('hidden'); setTimeout(function(){m.classList.add('hidden')},2000); }
+        function resendOTP() { SAMPLE_OTP=String(Math.floor(100000+Math.random()*900000)); var d=document.getElementById('sampleOTP'); if(d){d.textContent=SAMPLE_OTP;d.classList.remove('animate-pop');void d.offsetWidth;d.classList.add('animate-pop')} alert('🔄 New sample OTP: '+SAMPLE_OTP+'\n\n⚠️ REMINDER: In the actual application, OTP is sent to your registered email.\nThis is for tutorial purposes only.'); }
+        function openTermsModal() { var m=document.getElementById('termsModal'); if(m){m.classList.remove('hidden');document.body.style.overflow='hidden'} }
+        function closeTermsModal() { var m=document.getElementById('termsModal'); if(m){m.classList.add('hidden');document.body.style.overflow=''} }
+        function simulateSubmitATL() { var m=document.getElementById('confirmModal'); if(!m)return; updateModalDate(); m.classList.remove('hidden'); document.body.style.overflow='hidden'; }
+        function closeModal() { var m=document.getElementById('confirmModal'); if(m){m.classList.add('hidden');document.body.style.overflow=''} }
+        function confirmSubmit() { closeModal(); var msg=document.getElementById('s7Msg'); if(!msg)return; msg.innerHTML='<div class="animate-check inline-block text-2xl mb-1">✅</div><b>ATL Submitted!</b><br><span class="font-mono text-blue-900 text-lg">Code: HAY-000000025</span><br><span class="text-gray-500">Status: Pending Admin Approval</span>'; msg.className='mt-3 text-center text-sm text-green-600 animate-pop'; msg.classList.remove('hidden'); setTimeout(function(){completeStep(7)},2000); }
+
+        window.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
 </html>
