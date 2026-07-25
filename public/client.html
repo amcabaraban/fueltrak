@@ -121,12 +121,19 @@
        <label class="block text-xs font-semibold text-gray-700 mb-1.5">Hauler <span class="text-red-500">*</span></label>
        <input type="text" id="hauler" class="w-full px-3 py-2.5 border shadow-[inset_0_2px_4px_rgba(0,0,0,0.1)] border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" required>
       </div>
-      <div>
-       <label class="block text-xs font-semibold text-gray-700 mb-1.5">Plate Number <span class="text-red-500">*</span></label>
-       <input type="text" id="plateNo" class="w-full px-3 py-2.5 border shadow-[inset_0_2px_4px_rgba(0,0,0,0.1)] border-gray-300 rounded-lg uppercase focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" required onblur="verifyTruck()">
-       <div id="truckStatus" class="mt-1 text-xs hidden"></div>
+      <div class="relative">
+        <label class="block text-xs font-semibold text-gray-700 mb-1.5">Plate Number <span class="text-red-500">*</span></label>
+          <input type="text" id="plateNo" 
+                  class="w-full px-3 py-2.5 border shadow-[inset_0_2px_4px_rgba(0,0,0,0.1)] border-gray-300 rounded-lg uppercase focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" 
+                  required 
+                  oninput="debouncedVerifyTruck()" 
+                  onfocus="showPlateSuggestions()"
+                  onblur="hidePlateSuggestions()"
+                  onkeydown="handlePlateKeydown(event)"
+                  autocomplete="off">
+          <div id="truckStatus" class="mt-1 text-xs hidden"></div>
+        <div id="plateSuggestions" class="hidden absolute z-10 bg-white border border-gray-300 rounded-lg shadow-lg max-h-48 overflow-y-auto w-full mt-1"></div>
       </div>
-     </div>
      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
       <div>
        <label class="block text-xs font-semibold text-gray-700 mb-1.5">Driver's Name <span class="text-red-500">*</span></label>
@@ -233,6 +240,12 @@
  </button>
 
  <script>
+    // Add at the top of your script with other variables
+  let truckVerified = false, currentTruckId = null, allClientATLs = [];
+  let verifyTimeout = null;
+  let allPlateNumbers = []; // Cache for plate number suggestions
+  let selectedSuggestionIndex = -1;
+
   const API = '/api';
   const token = localStorage.getItem('fueltrak_token');
   const user = JSON.parse(localStorage.getItem('fueltrak_user') || '{}');
@@ -250,8 +263,6 @@
   document.getElementById('welcomeDate').textContent = new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
   document.getElementById('scheduledDate').value = new Date().toISOString().split('T')[0];
   document.getElementById('atlMessage').classList.add('hidden');
-
-  let truckVerified = false, currentTruckId = null, allClientATLs = [];
 
   async function api(url, method = 'GET', body = null) {
    const opts = { 
@@ -309,89 +320,254 @@
    }
   }
 
-  async function verifyTruck() {
-   const plate = document.getElementById('plateNo').value.toUpperCase();
-   const statusDiv = document.getElementById('truckStatus');
-   const submitBtn = document.getElementById('submitBtn');
-   const capacityHint = document.getElementById('capacityHint');
-   const volumeInput = document.getElementById('volume');
-   
-   if (!plate) { 
-    statusDiv.classList.add('hidden'); 
-    submitBtn.disabled = true;
-    currentTruckId = null;
-    return; 
-   }
-   
-   try {
-    const data = await api('/client/verify-truck/' + encodeURIComponent(plate));
-    
-    if (data.status === 'success' && data.data) {
-     var truck = data.data.truck;
-     var canProceed = data.data.can_proceed;
-     var documents = data.data.documents || {};
-     
-     // Check if truck has an ID (exists in trucks table)
-     if (!truck.id && truck.masterlist) {
-      truckVerified = false;
-      currentTruckId = null;
-      submitBtn.disabled = true;
-      statusDiv.innerHTML = '<span class="text-red-600">? Truck not registered in system. Please use a registered truck or contact admin.</span>';
-      statusDiv.classList.remove('hidden');
-      return;
-     }
-     
-     if (!truck.id) {
-      truckVerified = false;
-      currentTruckId = null;
-      submitBtn.disabled = true;
-      statusDiv.innerHTML = '<span class="text-red-600">? Truck not found</span>';
-      statusDiv.classList.remove('hidden');
-      return;
-     }
-     
-     // Check for expired documents
-     var expiredDocs = [];
-     if (documents.lto_registration && documents.lto_registration.status === 'expired') expiredDocs.push('LTO Registration');
-     if (documents.fire_permit && documents.fire_permit.status === 'expired') expiredDocs.push('Fire Permit');
-     if (documents.dost_calibration && documents.dost_calibration.status === 'expired') expiredDocs.push('DOST Calibration');
-     
-     if (expiredDocs.length > 0) {
-      alert('WARNING: This truck has expired documents:\n\n' + expiredDocs.join('\n') + '\n\nProceed with caution.');
-     }
-     
-     truckVerified = canProceed;
-     currentTruckId = truck.id;
-     submitBtn.disabled = !canProceed;
-     
-     if (canProceed) {
-      statusDiv.innerHTML = '<span class="text-green-600">? Truck verified - ID: ' + truck.id + '</span>';
-     } else {
-      statusDiv.innerHTML = '<span class="text-red-600">? Documents expired</span>';
-     }
-     statusDiv.classList.remove('hidden');
-     
-     if (truck && truck.driver_name) document.getElementById('driverName').value = truck.driver_name;
-     if (truck && truck.hauler_name) document.getElementById('hauler').value = truck.hauler_name || '';
-     if (truck && truck.total_capacity) {
-          var capKL = parseFloat(truck.total_capacity) || 0;
-          var capLiters = capKL < 100 ? capKL * 1000 : capKL; // If small number, assume KL and convert
-          document.getElementById('capacityHint').textContent = 'Max capacity: ' + Math.round(capLiters).toLocaleString() + ' L';
-          document.getElementById('volume').max = capLiters;
+  // ============ PLATE NUMBER INCREMENTAL SEARCH ============
+  function debouncedVerifyTruck() {
+      // Clear previous timeout
+      if (verifyTimeout) clearTimeout(verifyTimeout);
+      
+      var plate = document.getElementById('plateNo').value.toUpperCase();
+      
+      // If empty or less than 2 characters, hide status and suggestions
+      if (!plate || plate.length < 2) {
+          document.getElementById('truckStatus').classList.add('hidden');
+          document.getElementById('plateSuggestions').classList.add('hidden');
+          document.getElementById('submitBtn').disabled = true;
+          currentTruckId = null;
+          truckVerified = false;
+          return;
       }
-    } else {
-     truckVerified = false;
-     currentTruckId = null;
-     submitBtn.disabled = true;
-     statusDiv.innerHTML = '<span class="text-red-600">? Truck not found</span>';
-     statusDiv.classList.remove('hidden');
+      
+      // Show loading indicator
+      var statusDiv = document.getElementById('truckStatus');
+      statusDiv.innerHTML = '<span class="text-blue-600"><i class="fas fa-spinner fa-spin mr-1"></i>Searching...</span>';
+      statusDiv.classList.remove('hidden');
+      
+      // Debounce: wait 300ms after user stops typing
+      verifyTimeout = setTimeout(function() {
+          verifyTruck();
+          filterPlateSuggestions(plate);
+      }, 300);
+  }
+
+  function showPlateSuggestions() {
+      var plate = document.getElementById('plateNo').value.toUpperCase();
+      if (plate && plate.length >= 1) {
+          filterPlateSuggestions(plate);
+      }
+  }
+
+  function hidePlateSuggestions() {
+      // Delay hiding to allow click on suggestion
+      setTimeout(function() {
+          document.getElementById('plateSuggestions').classList.add('hidden');
+      }, 200);
+  }
+
+  function handlePlateKeydown(event) {
+      var suggestionsDiv = document.getElementById('plateSuggestions');
+      var suggestions = suggestionsDiv.querySelectorAll('.plate-suggestion-item');
+      
+      if (suggestions.length === 0) return;
+      
+      if (event.key === 'ArrowDown') {
+          event.preventDefault();
+          selectedSuggestionIndex = Math.min(selectedSuggestionIndex + 1, suggestions.length - 1);
+          highlightSuggestion(suggestions);
+      } else if (event.key === 'ArrowUp') {
+          event.preventDefault();
+          selectedSuggestionIndex = Math.max(selectedSuggestionIndex - 1, 0);
+          highlightSuggestion(suggestions);
+      } else if (event.key === 'Enter') {
+          if (selectedSuggestionIndex >= 0 && selectedSuggestionIndex < suggestions.length) {
+              event.preventDefault();
+              suggestions[selectedSuggestionIndex].click();
+          }
+      } else if (event.key === 'Escape') {
+          document.getElementById('plateSuggestions').classList.add('hidden');
+          selectedSuggestionIndex = -1;
+      }
+  }
+
+  function highlightSuggestion(suggestions) {
+      suggestions.forEach(function(item, index) {
+          if (index === selectedSuggestionIndex) {
+              item.classList.add('bg-blue-100');
+              item.scrollIntoView({ block: 'nearest' });
+          } else {
+              item.classList.remove('bg-blue-100');
+          }
+      });
+  }
+
+  function selectPlateSuggestion(plate, driver, hauler, capacity) {
+      document.getElementById('plateNo').value = plate;
+      document.getElementById('plateSuggestions').classList.add('hidden');
+      selectedSuggestionIndex = -1;
+      
+      // Auto-fill driver and hauler
+      if (driver) document.getElementById('driverName').value = driver;
+      if (hauler) document.getElementById('hauler').value = hauler;
+      
+      // Trigger verification immediately
+      verifyTruck();
+  }
+
+  async function filterPlateSuggestions(searchTerm) {
+      if (!searchTerm || searchTerm.length < 1) {
+          document.getElementById('plateSuggestions').classList.add('hidden');
+          return;
+      }
+      
+      // If we haven't loaded plate numbers yet, fetch them
+      if (allPlateNumbers.length === 0) {
+          try {
+              var res = await fetch(API + '/truck-masterlist', {
+                  headers: { 'Authorization': 'Bearer ' + token }
+              });
+              var data = await res.json();
+              if (data.status === 'success') {
+                  allPlateNumbers = data.data.map(function(item) {
+                      return item.plate_no || '';
+                  }).filter(function(p) { return p.length > 0; });
+              }
+          } catch(e) {
+              console.error('Error loading plate numbers:', e);
+              return;
+          }
+      }
+      
+      // Filter matching plates
+      var search = searchTerm.toUpperCase();
+      var matches = allPlateNumbers.filter(function(plate) {
+          return plate.includes(search);
+      }).slice(0, 10); // Limit to 10 suggestions
+      
+      var suggestionsDiv = document.getElementById('plateSuggestions');
+      
+      if (matches.length === 0) {
+          suggestionsDiv.classList.add('hidden');
+          return;
+      }
+      
+      // Build suggestion items
+      var html = '';
+      matches.forEach(function(plate, index) {
+          // Highlight matching part
+          var highlighted = plate.replace(
+              new RegExp('(' + search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi'),
+              '<mark class="bg-yellow-200 rounded px-0.5">$1</mark>'
+          );
+          
+          html += '<div class="plate-suggestion-item px-3 py-2 cursor-pointer hover:bg-blue-50 border-b last:border-b-0 flex items-center justify-between" ' +
+                  'onmousedown="selectPlateSuggestion(\'' + plate + '\', \'\', \'\', 0)" ' +
+                  'data-index="' + index + '">' +
+                  '<span class="font-semibold text-sm">' + highlighted + '</span>' +
+                  '<i class="fas fa-truck text-gray-400 text-xs"></i>' +
+                  '</div>';
+      });
+      
+      suggestionsDiv.innerHTML = html;
+      suggestionsDiv.classList.remove('hidden');
+      selectedSuggestionIndex = -1;
+  }
+
+  // ============ ENHANCED VERIFY TRUCK ============
+  async function verifyTruck() {
+    const plate = document.getElementById('plateNo').value.toUpperCase();
+    const statusDiv = document.getElementById('truckStatus');
+    const submitBtn = document.getElementById('submitBtn');
+    const capacityHint = document.getElementById('capacityHint');
+    const volumeInput = document.getElementById('volume');
+    
+    // Hide suggestions when verifying
+    document.getElementById('plateSuggestions').classList.add('hidden');
+    
+    if (!plate) { 
+      statusDiv.classList.add('hidden'); 
+      submitBtn.disabled = true;
+      currentTruckId = null;
+      return; 
     }
-   } catch (e) {
-    console.error('Verify truck error:', e);
-    truckVerified = false;
-    currentTruckId = null;
-    submitBtn.disabled = true;
-   }
+    
+    statusDiv.innerHTML = '<span class="text-blue-600"><i class="fas fa-spinner fa-spin mr-1"></i>Verifying...</span>';
+    statusDiv.classList.remove('hidden');
+    
+    try {
+      const data = await api('/client/verify-truck/' + encodeURIComponent(plate));
+      
+      if (data.status === 'success' && data.data) {
+      var truck = data.data.truck;
+      var canProceed = data.data.can_proceed;
+      var documents = data.data.documents || {};
+      
+      if (!truck.id) {
+        truckVerified = false;
+        currentTruckId = null;
+        submitBtn.disabled = true;
+        statusDiv.innerHTML = '<span class="text-red-600">❌ Truck not found in system</span>';
+        statusDiv.classList.remove('hidden');
+        return;
+      }
+      
+      // Check for expired documents
+      var expiredDocs = [];
+      var expiringDocs = [];
+      if (documents.lto_registration) {
+          if (documents.lto_registration.status === 'expired') expiredDocs.push('LTO Registration');
+          else if (documents.lto_registration.status === 'expiring_soon') expiringDocs.push('LTO Registration (' + documents.lto_registration.days_remaining + ' days)');
+      }
+      if (documents.fire_permit) {
+          if (documents.fire_permit.status === 'expired') expiredDocs.push('Fire Permit');
+          else if (documents.fire_permit.status === 'expiring_soon') expiringDocs.push('Fire Permit (' + documents.fire_permit.days_remaining + ' days)');
+      }
+      if (documents.dost_calibration) {
+          if (documents.dost_calibration.status === 'expired') expiredDocs.push('DOST Calibration');
+          else if (documents.dost_calibration.status === 'expiring_soon') expiringDocs.push('DOST Calibration (' + documents.dost_calibration.days_remaining + ' days)');
+      }
+      
+      var statusHTML = '';
+      if (expiredDocs.length > 0) {
+          statusHTML = '<span class="text-red-600">⚠️ Expired: ' + expiredDocs.join(', ') + '</span>';
+      } else if (expiringDocs.length > 0) {
+          statusHTML = '<span class="text-orange-600">⚠️ Expiring soon: ' + expiringDocs.join(', ') + '</span>';
+      } else {
+          statusHTML = '<span class="text-green-600">✅ Truck verified | Capacity: ' + (truck.total_capacity ? Math.round(truck.total_capacity).toLocaleString() + ' L' : 'N/A') + '</span>';
+      }
+      
+      truckVerified = canProceed !== false;
+      currentTruckId = truck.id;
+      submitBtn.disabled = !truckVerified;
+      
+      statusDiv.innerHTML = statusHTML;
+      statusDiv.classList.remove('hidden');
+      
+      // Auto-fill driver and hauler from truck data
+      if (truck.driver_name && !document.getElementById('driverName').value) {
+          document.getElementById('driverName').value = truck.driver_name;
+      }
+      if (truck.hauler_name && !document.getElementById('hauler').value) {
+          document.getElementById('hauler').value = truck.hauler_name || '';
+      }
+      if (truck.total_capacity) {
+            var capLiters = parseFloat(truck.total_capacity) || 0;
+            capacityHint.textContent = 'Max capacity: ' + Math.round(capLiters).toLocaleString() + ' L';
+            volumeInput.max = capLiters;
+        }
+      } else {
+      truckVerified = false;
+      currentTruckId = null;
+      submitBtn.disabled = true;
+      statusDiv.innerHTML = '<span class="text-red-600">❌ Truck not found in system</span>';
+      statusDiv.classList.remove('hidden');
+      }
+    } catch (e) {
+      console.error('Verify truck error:', e);
+      truckVerified = false;
+      currentTruckId = null;
+      submitBtn.disabled = true;
+      statusDiv.innerHTML = '<span class="text-red-600">❌ Connection error</span>';
+      statusDiv.classList.remove('hidden');
+    }
   }
 
   // ============ SUBMIT ATL ============
