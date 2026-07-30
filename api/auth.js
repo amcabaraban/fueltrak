@@ -488,8 +488,9 @@ app.post('/api/dispatch/verify/:id', authenticate, authorize('dispatcher', 'mana
     await pool.execute('UPDATE authority_to_load SET status = ?, verified_by = ?, remarks = ? WHERE id = ?', [status, req.user.id, remarks || null, req.params.id]);
     const [updated] = await pool.execute('SELECT * FROM authority_to_load WHERE id = ?', [req.params.id]);
     serverCache.del('dispatch_enhanced_stats');
-  serverCache.del('dispatch_truck_stats');
-  res.json({ status: 'success', data: updated[0] 
+    serverCache.del('dispatch_truck_stats');
+    res.json({ status: 'success', data: updated[0] });
+  } catch (error) { res.status(400).json({ error: error.message }); }
 });
 
 app.post('/api/dispatch/start-loading/:id', authenticate, authorize('dispatcher', 'management'), async (req, res) => {
@@ -497,7 +498,9 @@ app.post('/api/dispatch/start-loading/:id', authenticate, authorize('dispatcher'
     await pool.execute("UPDATE authority_to_load SET status = 'dispatched', dispatch_date = NOW() WHERE id = ?", [req.params.id]);
     const [updated] = await pool.execute('SELECT * FROM authority_to_load WHERE id = ?', [req.params.id]);
     serverCache.del('dispatch_enhanced_stats');
-  res.json({ status: 'success', message: 'Loading started', data: updated[0] });
+    res.json({ status: 'success', message: 'Loading started', data: updated[0] });
+  } catch (error) { res.status(400).json({ error: error.message }); }
+});
 
 app.post('/api/dispatch/complete-loading/:id', authenticate, authorize('dispatcher', 'management'), async (req, res) => {
   try {
@@ -506,8 +509,10 @@ app.post('/api/dispatch/complete-loading/:id', authenticate, authorize('dispatch
       [req.user.id, actual_volume || null, remarks || 'Loading completed', printed_wc || null, req.params.id]);
     const [updated] = await pool.execute('SELECT * FROM authority_to_load WHERE id = ?', [req.params.id]);
     serverCache.del('dispatch_enhanced_stats');
-  serverCache.del('dispatch_truck_stats');
-  res.json({ status: 'success', data: updated[0] });
+    serverCache.del('dispatch_truck_stats');
+    res.json({ status: 'success', data: updated[0] });
+  } catch (error) { res.status(400).json({ error: error.message }); }
+});
 
 app.put('/api/dispatch/update-wc/:id', authenticate, authorize('dispatcher', 'management'), async (req, res) => {
   try {
@@ -761,10 +766,10 @@ app.post('/api/client/submit-atl', authenticate, authorize('client'), async (req
       const [trucks] = await pool.execute('SELECT * FROM trucks WHERE id = ? AND is_active = 1', [truckId]);
       if (!trucks.length) return res.status(404).json({ error: 'Truck not found' });
       plateNo = trucks[0].plate_no;
-        if (!driver) driver = trucks[0].driver_name;
-        if (!hauler) hauler = trucks[0].hauler_name;
-        const [masterUpdate] = await pool.execute('SELECT * FROM truck_masterlist WHERE plate_no = ?', [plateNo.toUpperCase()]);
-        if (masterUpdate.length > 0) { if (!driver) driver = masterUpdate[0].driver_name; if (!hauler) hauler = masterUpdate[0].hauler_name; }
+      if (!driver) driver = trucks[0].driver_name;
+      if (!hauler) hauler = trucks[0].hauler_name;
+      const [masterUpdate] = await pool.execute('SELECT * FROM truck_masterlist WHERE plate_no = ?', [plateNo.toUpperCase()]);
+      if (masterUpdate.length > 0) { if (!driver) driver = masterUpdate[0].driver_name; if (!hauler) hauler = masterUpdate[0].hauler_name; }
     } else if (plateNo) {
       const [trucks] = await pool.execute('SELECT * FROM trucks WHERE plate_no = ? AND is_active = 1', [plateNo.toUpperCase()]);
       if (trucks.length > 0) {
@@ -795,11 +800,11 @@ app.post('/api/client/submit-atl', authenticate, authorize('client'), async (req
     serverCache.del('dispatch_enhanced_stats');
     serverCache.del('dispatch_truck_stats');
     clearCache('client_dashboard_' + req.user.id);
-  
-  res.status(201).json({ status: 'success', message: 'ATL ' + atlCode + ' Submitted!', data: { atl_code: atlCode } 
+    res.status(201).json({ status: 'success', message: 'ATL ' + atlCode + ' Submitted!', data: { atl_code: atlCode } });
+  } catch (error) { res.status(400).json({ error: error.message }); }
 });
 
-// Cache static pages for 1 hour
+// ============ STATIC FILES (Place just before module.exports) ============
 app.use('/public', express.static(path.join(__dirname, '..', 'public'), {
   maxAge: '1h',
   setHeaders: function(res, path) {
@@ -1640,7 +1645,9 @@ app.post('/api/sales-orders', authenticate, authorize('dispatcher','management')
     }
     await logAudit(req.user.id, "CREATE_SO", "sales_orders", result.insertId, { so_number, client_id });
     clearCache('sales_orders');
-  res.status(201).json({ status: 'success', message: 'Sales Order created', data: { id: result.insertId, so_number } });
+    res.status(201).json({ status: 'success', message: 'Sales Order created', data: { id: result.insertId, so_number } });
+  } catch (error) { res.status(400).json({ error: error.message }); }
+});
 
 // PARAMETERIZED routes AFTER specific routes
 
@@ -1673,7 +1680,9 @@ app.put('/api/sales-orders/:id', authenticate, authorize('dispatcher','managemen
       }
     }
     clearCache('sales_orders');
-  res.json({ status: 'success', message: 'Updated' });
+    res.json({ status: 'success', message: 'Updated' });
+  } catch (error) { res.status(400).json({ error: error.message }); }
+});
 
 // Delete sales order
 app.delete('/api/sales-orders/:id', authenticate, authorize('dispatcher','management'), async (req, res) => {
