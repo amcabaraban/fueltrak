@@ -149,27 +149,7 @@ setInterval(() => { tokenBlacklist.forEach(t => { try { jwt.verify(t, process.en
 
 app.set('trust proxy', 1);
 app.use(express.json({ limit: "10kb" }));
-app.use(helmet({ 
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.tailwindcss.com", "https://cdnjs.cloudflare.com"],
-      styleSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com"],
-      fontSrc: ["'self'", "https://cdnjs.cloudflare.com"],
-      imgSrc: ["'self'", "data:"],
-      connectSrc: ["'self'", "https://fueltraksystem.vercel.app"]
-    }
-  },
-  hsts: {
-    maxAge: 31536000,
-    includeSubDomains: true,
-    preload: true
-  },
-  frameguard: { action: 'deny' },
-  hidePoweredBy: true,
-  noSniff: true,
-  xssFilter: true
-}));
+app.use(helmet({ contentSecurityPolicy: false }));
 app.use(compression());
 app.use(cors({ origin: [
     'https://fueltraksystem.vercel.app',   // New primary URL
