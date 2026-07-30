@@ -80,8 +80,51 @@ const pool = mysql.createPool({
   database: process.env.DB_NAME,
   ssl: { rejectUnauthorized: false },
   waitForConnections: true,
-  connectionLimit: 10
+  connectionLimit: 25,        // Increased from 10
+  queueLimit: 0,
+  enableKeepAlive: true,      // Keep connections alive
+  keepAliveInitialDelay: 10000, // 10 seconds
+  connectTimeout: 10000,       // 10 second timeout
+  acquireTimeout: 15000,       // 15 second acquire timeout
+  timeout: 60000,              // 60 second idle timeout
+  charset: 'utf8mb4'
 });
+
+// Handle pool errors
+pool.on('error', function(err) {
+  console.error('Database pool error:', err.message);
+});
+
+// ============ SERVER CACHE ============
+const serverCache = new NodeCache({ stdTTL: 60, checkperiod: 120 }); // 60 second default TTL
+
+// Cache middleware helper
+function cacheResponse(key, ttlSeconds = 60) {
+  return async (req, res, next) => {
+    const cached = serverCache.get(key);
+    if (cached) {
+      return res.json(cached);
+    }
+    
+    // Store original res.json to intercept
+    const originalJson = res.json.bind(res);
+    res.json = function(data) {
+      if (data.status === 'success') {
+        serverCache.set(key, data, ttlSeconds);
+      }
+      return originalJson(data);
+    };
+    next();
+  };
+}
+
+// Clear cache helper
+function clearCache(pattern) {
+  const keys = serverCache.keys();
+  keys.forEach(key => {
+    if (key.includes(pattern)) serverCache.del(key);
+  });
+}
 
 // ============ INPUT VALIDATION ============
 function validateEmail(email) {
@@ -158,6 +201,56 @@ function validatePasswordComplexity(password) {
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
     return passwordRegex.test(password);
 }
+
+// ============ PERFORMANCE INDEXES ============
+app.get('/api/admin/optimize-database', authenticate, authorize('dispatcher','management'), async (req, res) => {
+  const indexes = [
+    // Authority to Load indexes
+    { name: 'idx_atl_status_client', sql: 'CREATE INDEX idx_atl_status_client ON authority_to_load(status, client_id)' },
+    { name: 'idx_atl_client_created', sql: 'CREATE INDEX idx_atl_client_created ON authority_to_load(client_id, createdAt DESC)' },
+    { name: 'idx_atl_truck_status', sql: 'CREATE INDEX idx_atl_truck_status ON authority_to_load(truck_id, status)' },
+    { name: 'idx_atl_so_status', sql: 'CREATE INDEX idx_atl_so_status ON authority_to_load(so_number, status)' },
+    { name: 'idx_atl_dispatch_date', sql: 'CREATE INDEX idx_atl_dispatch_date ON authority_to_load(dispatch_date)' },
+    { name: 'idx_atl_scheduled_date', sql: 'CREATE INDEX idx_atl_scheduled_date ON authority_to_load(scheduled_date)' },
+    
+    // Truck indexes
+    { name: 'idx_trucks_plate_active', sql: 'CREATE INDEX idx_trucks_plate_active ON trucks(plate_no, is_active)' },
+    
+    // Document indexes
+    { name: 'idx_docs_truck_type_expiry', sql: 'CREATE INDEX idx_docs_truck_type_expiry ON truck_documents(truck_id, document_type, expiry_date)' },
+    
+    // Sales Order indexes
+    { name: 'idx_so_client_status', sql: 'CREATE INDEX idx_so_client_status ON sales_orders(client_id, status)' },
+    { name: 'idx_soc_so_client', sql: 'CREATE INDEX idx_soc_so_client ON sales_order_clients(sales_order_id, client_id)' },
+    
+    // Chat indexes
+    { name: 'idx_chat_receiver_created', sql: 'CREATE INDEX idx_chat_receiver_created ON chat_messages(receiver_id, created_at DESC)' },
+    
+    // Users index
+    { name: 'idx_users_role_active', sql: 'CREATE INDEX idx_users_role_active ON users(role, is_active)' },
+  ];
+
+  let created = 0, skipped = 0, failed = 0;
+  const results = [];
+
+  for (const idx of indexes) {
+    try {
+      await pool.execute(idx.sql);
+      created++;
+      results.push({ name: idx.name, status: 'created' });
+    } catch (e) {
+      if (e.code === 'ER_DUP_KEYNAME') {
+        skipped++;
+        results.push({ name: idx.name, status: 'exists' });
+      } else {
+        failed++;
+        results.push({ name: idx.name, status: 'error', error: e.message });
+      }
+    }
+  }
+
+  res.json({ status: 'success', message: `Created: ${created}, Skipped: ${skipped}, Failed: ${failed}`, results });
+});
 
 // ============ AUTH ROUTES ============
 app.post('/api/auth/register', async (req, res) => {
@@ -372,18 +465,7 @@ app.get('/api/dispatch/dashboard', authenticate, authorize('dispatcher', 'manage
   } catch (error) { res.status(500).json({ error: error.message }); }
 });
 
-app.get('/api/dispatch/enhanced-stats', authenticate, authorize('dispatcher', 'management'), async (req, res) => {
-  try {
-    const [pending] = await pool.execute('SELECT COUNT(*) as count FROM authority_to_load WHERE status = ?', ['pending']);
-    const [approved] = await pool.execute('SELECT COUNT(*) as count FROM authority_to_load WHERE status = ?', ['approved']);
-    const [loading] = await pool.execute('SELECT COUNT(*) as count FROM authority_to_load WHERE status = ?', ['dispatched']);
-    const [completed] = await pool.execute('SELECT COUNT(*) as count FROM authority_to_load WHERE status = ?', ['completed']);
-    const today = new Date().toISOString().split('T')[0];
-    const [loadedToday] = await pool.execute("SELECT COUNT(*) as count FROM authority_to_load WHERE status IN ('dispatched','completed') AND DATE(dispatch_date) = ?", [today]);
-    const [volumeRows] = await pool.execute("SELECT COALESCE(SUM(atl.volume),0) as totalVolume, COALESCE(SUM(CASE WHEN DATE(atl.dispatch_date) = ? THEN atl.volume ELSE 0 END),0) as todayVolume FROM authority_to_load atl WHERE atl.status IN ('dispatched','completed')", [today]);
-    res.json({ status: 'success', data: { pending: pending[0].count, approved: approved[0].count, loading: loading[0].count, completed: completed[0].count, loadedToday: loadedToday[0].count, totalVolume: volumeRows[0].totalVolume || 0, todayVolume: volumeRows[0].todayVolume || 0, totalBackload: 0, todayBackload: 0 }});
-  } catch (error) { res.status(500).json({ error: error.message }); }
-});
+
 
 app.get('/api/dispatch/pending', authenticate, authorize('dispatcher', 'management'), async (req, res) => {
   try {
@@ -405,17 +487,17 @@ app.post('/api/dispatch/verify/:id', authenticate, authorize('dispatcher', 'mana
     if (!status) return res.status(400).json({ error: 'Invalid action' });
     await pool.execute('UPDATE authority_to_load SET status = ?, verified_by = ?, remarks = ? WHERE id = ?', [status, req.user.id, remarks || null, req.params.id]);
     const [updated] = await pool.execute('SELECT * FROM authority_to_load WHERE id = ?', [req.params.id]);
-    res.json({ status: 'success', data: updated[0] });
-  } catch (error) { res.status(400).json({ error: error.message }); }
+    serverCache.del('dispatch_enhanced_stats');
+  serverCache.del('dispatch_truck_stats');
+  res.json({ status: 'success', data: updated[0] 
 });
 
 app.post('/api/dispatch/start-loading/:id', authenticate, authorize('dispatcher', 'management'), async (req, res) => {
   try {
     await pool.execute("UPDATE authority_to_load SET status = 'dispatched', dispatch_date = NOW() WHERE id = ?", [req.params.id]);
     const [updated] = await pool.execute('SELECT * FROM authority_to_load WHERE id = ?', [req.params.id]);
-    res.json({ status: 'success', message: 'Loading started', data: updated[0] });
-  } catch (error) { res.status(400).json({ error: error.message }); }
-});
+    serverCache.del('dispatch_enhanced_stats');
+  res.json({ status: 'success', message: 'Loading started', data: updated[0] });
 
 app.post('/api/dispatch/complete-loading/:id', authenticate, authorize('dispatcher', 'management'), async (req, res) => {
   try {
@@ -423,9 +505,9 @@ app.post('/api/dispatch/complete-loading/:id', authenticate, authorize('dispatch
     await pool.execute("UPDATE authority_to_load SET status = 'completed', completed_date = NOW(), completed_by = ?, actual_volume = ?, remarks = ?, printed_wc = ? WHERE id = ?",
       [req.user.id, actual_volume || null, remarks || 'Loading completed', printed_wc || null, req.params.id]);
     const [updated] = await pool.execute('SELECT * FROM authority_to_load WHERE id = ?', [req.params.id]);
-    res.json({ status: 'success', data: updated[0] });
-  } catch (error) { res.status(400).json({ error: error.message }); }
-});
+    serverCache.del('dispatch_enhanced_stats');
+  serverCache.del('dispatch_truck_stats');
+  res.json({ status: 'success', data: updated[0] });
 
 app.put('/api/dispatch/update-wc/:id', authenticate, authorize('dispatcher', 'management'), async (req, res) => {
   try {
@@ -490,51 +572,55 @@ app.post('/api/dispatch/handle-cancellation/:id', authenticate, authorize('dispa
   } catch (error) { res.status(400).json({ error: error.message }); }
 });
 
-app.get('/api/dispatch/truck-stats', authenticate, authorize('dispatcher', 'management'), async (req, res) => {
-  try {
-    const [truckCounts] = await pool.execute('SELECT COUNT(*) as total, SUM(CASE WHEN is_active = 1 THEN 1 ELSE 0 END) as active, SUM(CASE WHEN is_active = 0 THEN 1 ELSE 0 END) as inactive, COALESCE(SUM(total_capacity), 0) as totalCapacity FROM trucks');
-    
-    const [validCount] = await pool.execute(`
-      SELECT COUNT(DISTINCT t.id) as count FROM trucks t 
-      INNER JOIN truck_documents td1 ON t.id = td1.truck_id AND td1.document_type = 'lto_registration' AND td1.expiry_date >= NOW()
-      INNER JOIN truck_documents td2 ON t.id = td2.truck_id AND td2.document_type = 'fire_permit' AND td2.expiry_date >= NOW()
-      INNER JOIN truck_documents td3 ON t.id = td3.truck_id AND td3.document_type = 'dost_calibration' AND td3.expiry_date >= NOW()
-    `);
-    
-    const [expiredCount] = await pool.execute(`
-      SELECT COUNT(DISTINCT t.id) as count FROM trucks t
-      INNER JOIN truck_documents td ON t.id = td.truck_id AND td.expiry_date < NOW()
-    `);
-    
-    const total = truckCounts[0].total;
-    const withValidDocs = validCount[0].count;
-    const withExpiredDocs = expiredCount[0].count;
-    
-    const [ltoCounts] = await pool.execute(`SELECT SUM(CASE WHEN expiry_date >= NOW() THEN 1 ELSE 0 END) as valid, SUM(CASE WHEN expiry_date < NOW() THEN 1 ELSE 0 END) as expired FROM truck_documents WHERE document_type = 'lto_registration'`);
-    const [fireCounts] = await pool.execute(`SELECT SUM(CASE WHEN expiry_date >= NOW() THEN 1 ELSE 0 END) as valid, SUM(CASE WHEN expiry_date < NOW() THEN 1 ELSE 0 END) as expired FROM truck_documents WHERE document_type = 'fire_permit'`);
-    const [dostCounts] = await pool.execute(`SELECT SUM(CASE WHEN expiry_date >= NOW() THEN 1 ELSE 0 END) as valid, SUM(CASE WHEN expiry_date < NOW() THEN 1 ELSE 0 END) as expired FROM truck_documents WHERE document_type = 'dost_calibration'`);
-    
-    const docBreakdown = {
-      lto: { valid: ltoCounts[0].valid || 0, expired: ltoCounts[0].expired || 0, missing: total - (ltoCounts[0].valid + ltoCounts[0].expired) },
-      fire: { valid: fireCounts[0].valid || 0, expired: fireCounts[0].expired || 0, missing: total - (fireCounts[0].valid + fireCounts[0].expired) },
-      dost: { valid: dostCounts[0].valid || 0, expired: dostCounts[0].expired || 0, missing: total - (dostCounts[0].valid + dostCounts[0].expired) }
-    };
-    
-    res.json({ status: 'success', data: { total, active: truckCounts[0].active, inactive: truckCounts[0].inactive, withExpiredDocs, withValidDocs, expiringSoon: 0, totalCapacity: truckCounts[0].totalCapacity, documentBreakdown: docBreakdown, trucksNeedingAttention: [] }});
-  } catch (error) { res.status(500).json({ error: error.message }); }
-});
-
 // ============ CLIENT ATL ROUTES ============
 app.get('/api/client/dashboard', authenticate, authorize('client'), async (req, res) => {
   try {
-    const [atls] = await pool.execute('SELECT * FROM authority_to_load WHERE client_id = ? ORDER BY createdAt DESC', [req.user.id]);
-    const result = [];
-    for (const atl of atls) {
-      const [trucks] = await pool.execute('SELECT * FROM trucks WHERE id = ?', [atl.truck_id]);
-      result.push({ ...atl, truck: trucks[0] || null });
-    }
-    const stats = { total: atls.length, pending: atls.filter(a => a.status === 'pending').length, approved: atls.filter(a => a.status === 'approved').length, dispatched: atls.filter(a => a.status === 'dispatched').length, completed: atls.filter(a => a.status === 'completed').length, cancelled: atls.filter(a => a.status === 'cancelled' || a.status === 'rejected').length };
-    res.json({ status: 'success', data: { stats, recent: result, recentATLs: result } });
+    const cacheKey = 'client_dashboard_' + req.user.id;
+    const cached = serverCache.get(cacheKey);
+    if (cached) return res.json(cached);
+    
+    // Optimized: single query with stats
+    const [atls] = await pool.execute(
+      `SELECT atl.*, t.plate_no as truck_plate, t.make as truck_make 
+       FROM authority_to_load atl 
+       LEFT JOIN trucks t ON atl.truck_id = t.id 
+       WHERE atl.client_id = ? 
+       ORDER BY atl.createdAt DESC LIMIT 20`,
+      [req.user.id]
+    );
+    
+    const stats = {
+      total: atls.length,
+      pending: 0, approved: 0, dispatched: 0, completed: 0, cancelled: 0
+    };
+    
+    atls.forEach(a => {
+      if (stats.hasOwnProperty(a.status)) stats[a.status]++;
+      else if (a.status === 'rejected') stats.cancelled++;
+    });
+    
+    // Get full stats count with a single query
+    const [counts] = await pool.execute(
+      `SELECT status, COUNT(*) as count FROM authority_to_load WHERE client_id = ? GROUP BY status`,
+      [req.user.id]
+    );
+    
+    counts.forEach(c => {
+      if (c.status === 'cancelled' || c.status === 'rejected') {
+        stats.cancelled = (stats.cancelled || 0) + c.count;
+      } else if (stats.hasOwnProperty(c.status)) {
+        stats[c.status] = c.count;
+      }
+    });
+    stats.total = Object.values(stats).reduce((a, b) => a + b, 0);
+    
+    const result = {
+      status: 'success',
+      data: { stats, recent: atls, recentATLs: atls }
+    };
+    
+    serverCache.set(cacheKey, result, 30); // 30 second cache
+    res.json(result);
   } catch (error) { res.status(500).json({ error: error.message }); }
 });
 
@@ -706,9 +792,24 @@ app.post('/api/client/submit-atl', authenticate, authorize('client'), async (req
       `INSERT INTO authority_to_load (atl_code, client_id, truck_id, company, so_number, volume, hauler, plate_no, driver_name, contact_number, has_si, scheduled_date, remarks, special_instructions, status, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', NOW())`,
       [atlCode, req.user.id, truckId, company || req.user.company_name || '', so_number, volume || null, hauler || '', plateNo || '', driver || '', contact_number || null, has_si || false, scheduled_date || new Date().toISOString().split('T')[0], remarks || '', special_instructions || null]
     );
-    res.status(201).json({ status: 'success', message: 'ATL ' + atlCode + ' Submitted!', data: { atl_code: atlCode } });
-  } catch (error) { res.status(400).json({ error: error.message }); }
+    serverCache.del('dispatch_enhanced_stats');
+    serverCache.del('dispatch_truck_stats');
+    clearCache('client_dashboard_' + req.user.id);
+  
+  res.status(201).json({ status: 'success', message: 'ATL ' + atlCode + ' Submitted!', data: { atl_code: atlCode } 
 });
+
+// Cache static pages for 1 hour
+app.use('/public', express.static(path.join(__dirname, '..', 'public'), {
+  maxAge: '1h',
+  setHeaders: function(res, path) {
+    if (path.endsWith('.html')) {
+      res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate');
+    } else {
+      res.setHeader('Cache-Control', 'public, max-age=3600');
+    }
+  }
+}));
 
 app.post('/api/client/cancel-atl/:id', authenticate, authorize('client'), async (req, res) => {
   try {
@@ -787,10 +888,95 @@ app.delete('/api/trucks/delete/:id', authenticate, authorize('dispatcher','manag
 });
 
 // ============ TRUCK MASTERLIST ============
+// Cache truck masterlist for 5 minutes (rarely changes)
 app.get('/api/truck-masterlist', authenticate, async (req, res) => {
   try {
+    const cacheKey = 'truck_masterlist_plates';
+    const cached = serverCache.get(cacheKey);
+    if (cached) return res.json(cached);
+    
     const [rows] = await pool.execute('SELECT plate_no FROM truck_masterlist ORDER BY plate_no ASC');
-    res.json({ status: 'success', data: rows });
+    const result = { status: 'success', data: rows };
+    serverCache.set(cacheKey, result, 300); // 5 minutes
+    res.json(result);
+  } catch (error) { res.status(500).json({ error: error.message }); }
+});
+
+// Cache dispatch enhanced stats for 30 seconds
+app.get('/api/dispatch/enhanced-stats', authenticate, authorize('dispatcher', 'management'), async (req, res) => {
+  try {
+    const cacheKey = 'dispatch_enhanced_stats';
+    const cached = serverCache.get(cacheKey);
+    if (cached) return res.json(cached);
+    
+    // Use a single optimized query instead of multiple
+    const [stats] = await pool.execute(`
+      SELECT 
+        SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending,
+        SUM(CASE WHEN status = 'approved' THEN 1 ELSE 0 END) as approved,
+        SUM(CASE WHEN status = 'dispatched' THEN 1 ELSE 0 END) as loading,
+        SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed,
+        SUM(CASE WHEN status IN ('dispatched','completed') AND DATE(dispatch_date) = CURDATE() THEN 1 ELSE 0 END) as loadedToday,
+        COALESCE(SUM(CASE WHEN status IN ('dispatched','completed') THEN volume ELSE 0 END), 0) as totalVolume,
+        COALESCE(SUM(CASE WHEN status IN ('dispatched','completed') AND DATE(dispatch_date) = CURDATE() THEN volume ELSE 0 END), 0) as todayVolume
+      FROM authority_to_load
+    `);
+    
+    const s = stats[0];
+    const result = {
+      status: 'success',
+      data: {
+        pending: s.pending, approved: s.approved, loading: s.loading,
+        completed: s.completed, loadedToday: s.loadedToday,
+        totalVolume: s.totalVolume, todayVolume: s.todayVolume,
+        totalBackload: 0, todayBackload: 0
+      }
+    };
+    
+    serverCache.set(cacheKey, result, 30); // 30 seconds
+    res.json(result);
+  } catch (error) { res.status(500).json({ error: error.message }); }
+});
+
+// Cache truck stats for 60 seconds
+app.get('/api/dispatch/truck-stats', authenticate, authorize('dispatcher', 'management'), async (req, res) => {
+  try {
+    const cacheKey = 'dispatch_truck_stats';
+    const cached = serverCache.get(cacheKey);
+    if (cached) return res.json(cached);
+    
+    // Optimized single query
+    const [stats] = await pool.execute(`
+      SELECT 
+        COUNT(*) as total,
+        SUM(is_active) as active,
+        SUM(CASE WHEN is_active = 0 THEN 1 ELSE 0 END) as inactive,
+        COALESCE(SUM(total_capacity), 0) as totalCapacity,
+        (SELECT COUNT(DISTINCT t.id) FROM trucks t 
+         INNER JOIN truck_documents td1 ON t.id = td1.truck_id AND td1.document_type = 'lto_registration' AND td1.expiry_date >= NOW()
+         INNER JOIN truck_documents td2 ON t.id = td2.truck_id AND td2.document_type = 'fire_permit' AND td2.expiry_date >= NOW()
+         INNER JOIN truck_documents td3 ON t.id = td3.truck_id AND td3.document_type = 'dost_calibration' AND td3.expiry_date >= NOW()
+        ) as withValidDocs,
+        (SELECT COUNT(DISTINCT t.id) FROM trucks t
+         INNER JOIN truck_documents td ON t.id = td.truck_id AND td.expiry_date < NOW()
+        ) as withExpiredDocs
+      FROM trucks
+    `);
+    
+    const s = stats[0];
+    const result = {
+      status: 'success',
+      data: {
+        total: s.total, active: s.active, inactive: s.inactive,
+        withExpiredDocs: s.withExpiredDocs, withValidDocs: s.withValidDocs,
+        expiringSoon: 0, totalCapacity: s.totalCapacity,
+        documentBreakdown: { lto: {}, fire: {}, dost: {} },
+        trucksNeedingAttention: []
+      }
+    };
+    
+    serverCache.set(cacheKey, result, 60);
+    res.json(result);
   } catch (error) { res.status(500).json({ error: error.message }); }
 });
 
@@ -1453,9 +1639,8 @@ app.post('/api/sales-orders', authenticate, authorize('dispatcher','management')
       }
     }
     await logAudit(req.user.id, "CREATE_SO", "sales_orders", result.insertId, { so_number, client_id });
-    res.status(201).json({ status: 'success', message: 'Sales Order created', data: { id: result.insertId, so_number } });
-  } catch (error) { res.status(400).json({ error: error.message }); }
-});
+    clearCache('sales_orders');
+  res.status(201).json({ status: 'success', message: 'Sales Order created', data: { id: result.insertId, so_number } });
 
 // PARAMETERIZED routes AFTER specific routes
 
@@ -1487,9 +1672,8 @@ app.put('/api/sales-orders/:id', authenticate, authorize('dispatcher','managemen
         }
       }
     }
-    res.json({ status: 'success', message: 'Updated' });
-  } catch (error) { res.status(400).json({ error: error.message }); }
-});
+    clearCache('sales_orders');
+  res.json({ status: 'success', message: 'Updated' });
 
 // Delete sales order
 app.delete('/api/sales-orders/:id', authenticate, authorize('dispatcher','management'), async (req, res) => {

@@ -247,38 +247,85 @@ function showView(view) {
 }
 
 // ============ DASHBOARD ============
-async function loadDashboard() {
- var data = await api('/client/dashboard');
- if (data.status === 'success') {
-  var atls = data.data.recent || [];
-  var stats = {
-   total: atls.length,
-   dispatched: atls.filter(function(a) { return a.status === 'dispatched'; }).length,
-   completed: atls.filter(function(a) { return a.status === 'completed'; }).length,
-   pending: atls.filter(function(a) { return a.status === 'pending'; }).length,
-   approved: atls.filter(function(a) { return a.status === 'approved'; }).length,
-   cancelled: atls.filter(function(a) { return a.status === 'cancelled' || a.status === 'rejected'; }).length
-  };
+//async function loadDashboard() {
+// var data = await api('/client/dashboard');
+// if (data.status === 'success') {
+//  var atls = data.data.recent || [];
+//  var stats = {
+//   total: atls.length,
+//   dispatched: atls.filter(function(a) { return a.status === 'dispatched'; }).length,
+//   completed: atls.filter(function(a) { return a.status === 'completed'; }).length,
+//   pending: atls.filter(function(a) { return a.status === 'pending'; }).length,
+//   approved: atls.filter(function(a) { return a.status === 'approved'; }).length,
+//   cancelled: atls.filter(function(a) { return a.status === 'cancelled' || a.status === 'rejected'; }).length
+//  };
   
-  document.getElementById('atlStats').innerHTML = [
-   { label: 'Total', value: stats.total, gradient: 'from-blue-400 to-blue-500' },
-   { label: 'Dispatched', value: stats.dispatched, gradient: 'from-green-400 to-green-500' },
-   { label: 'Pending', value: stats.pending, gradient: 'from-yellow-400 to-yellow-500' },
-   { label: 'Approved', value: stats.approved, gradient: 'from-indigo-400 to-indigo-500' },
-   { label: 'Cancelled', value: stats.cancelled, gradient: 'from-red-400 to-red-500' }
-  ].map(function(c) {
-   return '<div class="stat-card bg-gradient-to-br ' + c.gradient + ' text-white rounded-xl shadow-lg p-5 text-center"><p class="text-sm opacity-90">' + c.label + '</p><p class="text-3xl font-bold">' + c.value + '</p></div>';
+//  document.getElementById('atlStats').innerHTML = [
+//   { label: 'Total', value: stats.total, gradient: 'from-blue-400 to-blue-500' },
+//   { label: 'Dispatched', value: stats.dispatched, gradient: 'from-green-400 to-green-500' },
+//   { label: 'Pending', value: stats.pending, gradient: 'from-yellow-400 to-yellow-500' },
+//   { label: 'Approved', value: stats.approved, gradient: 'from-indigo-400 to-indigo-500' },
+//   { label: 'Cancelled', value: stats.cancelled, gradient: 'from-red-400 to-red-500' }
+//  ].map(function(c) {
+//   return '<div class="stat-card bg-gradient-to-br ' + c.gradient + ' text-white rounded-xl shadow-lg p-5 text-center"><p class="text-sm opacity-90">' + c.label + '</p><p class="text-3xl font-bold">' + c.value + '</p></div>';
+//  }).join('');
+  
+//  var codes = atls.slice(0, 5);
+//  if (codes.length > 0) {
+//   document.getElementById('recentATLCodes').innerHTML = '<div class="bg-white rounded-xl shadow p-6"><h3 class="font-semibold mb-3">Recent ATL Codes</h3><div class="space-y-2">' + codes.map(function(a) {
+//    var sc = a.status==='completed'?'bg-green-100 text-green-800':a.status==='dispatched'?'bg-orange-100 text-orange-800':'bg-gray-100';
+//    return '<div class="flex justify-between items-center text-sm"><span class="font-mono font-bold text-blue-900">' + (a.atl_code||'N/A') + '</span><span class="text-xs px-2 py-1 rounded ' + sc + '">' + a.status + '</span></div>';
+//   }).join('') + '</div></div>';
+//  }
+// }
+// loadClientSalesOrders();
+//}
+
+// ============ OPTIMIZED PAGE LOAD ============
+function initPage() {
+  document.getElementById('welcomeDate').textContent = new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  document.getElementById('scheduledDate').value = new Date().toISOString().split('T')[0];
+  
+  // Show skeleton immediately
+  showDashboardSkeleton();
+  
+  // Load data
+  loadDashboardOptimized();
+}
+
+function showDashboardSkeleton() {
+  document.getElementById('atlStats').innerHTML = Array(5).fill(0).map(function() {
+    return '<div class="bg-gray-200 animate-pulse rounded-xl shadow p-5 text-center"><div class="h-4 bg-gray-300 rounded w-16 mx-auto mb-2"></div><div class="h-8 bg-gray-300 rounded w-12 mx-auto"></div></div>';
   }).join('');
   
-  var codes = atls.slice(0, 5);
-  if (codes.length > 0) {
-   document.getElementById('recentATLCodes').innerHTML = '<div class="bg-white rounded-xl shadow p-6"><h3 class="font-semibold mb-3">Recent ATL Codes</h3><div class="space-y-2">' + codes.map(function(a) {
-    var sc = a.status==='completed'?'bg-green-100 text-green-800':a.status==='dispatched'?'bg-orange-100 text-orange-800':'bg-gray-100';
-    return '<div class="flex justify-between items-center text-sm"><span class="font-mono font-bold text-blue-900">' + (a.atl_code||'N/A') + '</span><span class="text-xs px-2 py-1 rounded ' + sc + '">' + a.status + '</span></div>';
-   }).join('') + '</div></div>';
+  document.getElementById('recentATLCodes').innerHTML = '<div class="bg-white rounded-xl shadow p-6"><div class="h-5 bg-gray-200 rounded w-32 mb-3 animate-pulse"></div>' + Array(3).fill(0).map(function() { return '<div class="flex justify-between items-center mb-2"><div class="h-4 bg-gray-200 rounded w-40 animate-pulse"></div><div class="h-5 bg-gray-200 rounded w-16 animate-pulse"></div></div>'; }).join('') + '</div>';
+  
+  document.getElementById('clientSOTableBody').innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-400"><i class="fas fa-spinner fa-spin mr-2"></i>Loading...</td></tr>';
+}
+
+var loadDashboard = async function() {
+  await loadDashboardOptimized();
+  loadClientSalesOrders();
+};
+
+async function loadDashboardOptimized() {
+  try {
+    var controller = new AbortController();
+    var timeoutId = setTimeout(function() { controller.abort(); }, 10000);
+    
+    var response = await fetch(API + '/client/dashboard', {
+      headers: { 'Authorization': 'Bearer ' + token },
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+    
+    var data = await response.json();
+    if (data.status === 'success') renderDashboard(data);
+  } catch(e) {
+    if (e.name === 'AbortError') {
+      document.getElementById('atlStats').innerHTML = '<div class="col-span-full text-center py-4 text-red-500"><i class="fas fa-exclamation-circle"></i> Request timed out. <button onclick="loadDashboard()" class="text-blue-600 underline">Retry</button></div>';
+    }
   }
- }
- loadClientSalesOrders();
 }
 
 // ============ CLIENT SALES ORDERS ============
