@@ -102,7 +102,6 @@ app.use(helmet({
       formAction: ["'self'"],
       baseUri: ["'self'"],
       upgradeInsecureRequests: [],
-      requireTrustedTypesFor: ["'script'"]
     }
   },
   hsts: { maxAge: 31536000, includeSubDomains: true, preload: true },
