@@ -60,7 +60,11 @@ app.set('trust proxy', 1);
 app.use(express.json({ limit: "10kb" }));
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(compression());
-app.use(cors({ origin: ['https://fueltrak-seven.vercel.app', 'http://localhost:3000'], credentials: true }));
+app.use(cors({ origin: [
+    'https://fueltraksystem.vercel.app',   // New primary URL
+    'https://fueltrak-seven.vercel.app',   // Old URL (will redirect)
+    'http://localhost:3000' 
+  ], credentials: true }));
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
