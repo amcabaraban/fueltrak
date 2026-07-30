@@ -1,3 +1,89 @@
+// ============ SECURE CONSOLE - DISABLE IN PRODUCTION ============
+if (process.env.NODE_ENV === 'production') {
+  // Store original console methods
+  const originalConsole = {
+    log: console.log,
+    warn: console.warn,
+    error: console.error,
+    info: console.info,
+    debug: console.debug
+  };
+
+  // Override to only show errors in production
+  console.log = function() {};
+  console.warn = function() {};
+  console.info = function() {};
+  console.debug = function() {};
+  
+  // Keep console.error for critical issues but sanitize
+  console.error = function(...args) {
+    // Remove sensitive data from error logs
+    const sanitized = args.map(arg => {
+      if (typeof arg === 'string') {
+        return arg
+          .replace(/password[=:]\S+/gi, 'password=***')
+          .replace(/token[=:]\S+/gi, 'token=***')
+          .replace(/secret[=:]\S+/gi, 'secret=***')
+          .replace(/API[_\s]?KEY[=:]\S+/gi, 'API_KEY=***');
+      }
+      return arg;
+    });
+    originalConsole.error.apply(console, sanitized);
+  };
+}
+
+// ============ SECURE LOGGER ============
+const logger = {
+  error: function(message, meta = {}) {
+    const timestamp = new Date().toISOString();
+    const sanitizedMeta = { ...meta };
+    // Remove sensitive fields
+    delete sanitizedMeta.password;
+    delete sanitizedMeta.token;
+    delete sanitizedMeta.otp;
+    delete sanitizedMeta.secret;
+    
+    if (process.env.NODE_ENV === 'production') {
+      // In production, only log to console.error with minimal info
+      console.error(JSON.stringify({ timestamp, level: 'error', message, meta: sanitizedMeta }));
+    } else {
+      console.error(`[${timestamp}] ERROR:`, message, sanitizedMeta);
+    }
+  },
+  
+  warn: function(message, meta = {}) {
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn(`[${new Date().toISOString()}] WARN:`, message, meta);
+    }
+  },
+  
+  info: function(message, meta = {}) {
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`[${new Date().toISOString()}] INFO:`, message, meta);
+    }
+  },
+  
+  audit: function(action, userId, details = {}) {
+    // Always log audit events (to database)
+    const sanitized = { ...details };
+    delete sanitized.password;
+    delete sanitized.token;
+    
+    if (process.env.NODE_ENV === 'production') {
+      console.error(JSON.stringify({ 
+        timestamp: new Date().toISOString(), 
+        level: 'audit', 
+        action, 
+        userId, 
+        details: sanitized 
+      }));
+    }
+    
+    // Also save to database
+    logAudit(userId, action, 'system', 0, sanitized).catch(e => {});
+  }
+};
+
 // FuelTrak API v3.0 - Email OTP + SMS
 // FuelTrak API v2.0 - COT Capacity Fix
 const express = require('express');
@@ -20,10 +106,11 @@ const transporter = nodemailer.createTransport({
   secure: false,
   auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
 });
+
 async function sendOTPEmail(email, mobile, otp, type) {
   if (mobile && mobile.length > 5) { sendFreeSMS(mobile, otp).catch(e => {}); }
   
-  if (!process.env.SMTP_USER) { console.log('[DEV] OTP for ' + email + ': ' + otp); return; }
+  if (!process.env.SMTP_USER) { logger.info('Dev OTP generated', { email: email.replace(/(.{3}).*(@.*)/, '$1***$2') }); return; }
   
   try {
     await transporter.sendMail({
@@ -32,9 +119,13 @@ async function sendOTPEmail(email, mobile, otp, type) {
       subject: type === 'reset' ? 'FuelTrak - Password Reset OTP' : 'FuelTrak - Verify Your Email',
       html: '<div style="font-family:Arial;max-width:500px;margin:auto;padding:20px;border:1px solid #ddd;border-radius:10px"><h2 style="color:#1e3a5f">FuelTrak Logistics</h2><p>Your OTP code is:</p><h1 style="color:#1e3a5f;font-size:36px;letter-spacing:5px;text-align:center">' + otp + '</h1><p>This code expires in 10 minutes.</p></div>'
     });
-    console.log('OTP emailed to ' + email);
-  } catch(e) { console.error('Email error:', e.message); console.log('[FALLBACK] OTP for ' + email + ': ' + otp); }
-}
+    logger.info('OTP emailed', { email: email.replace(/(.{3}).*(@.*)/, '$1***$2') });
+  } catch(e) { 
+  logger.error('Email send failed', { error: e.message }); 
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('[FALLBACK] OTP generated (dev only)');
+  }
+}}
 
 async function sendFreeSMS(mobile, otp) {
   if (!process.env.SMTP_USER) return false;
@@ -46,7 +137,7 @@ async function sendFreeSMS(mobile, otp) {
   for (const gw of gateways) {
     try {
       await transporter.sendMail({ from: process.env.SMTP_USER, to: gw, subject: '', text: msg });
-      console.log('Free SMS sent to ' + mobile);
+      logger.info('Free SMS sent', { mobile: mobile.replace(/(\d{3})\d{4}(\d{3})/, '$1****$2') });
       return true;
     } catch(e) {}
   }
@@ -58,7 +149,27 @@ setInterval(() => { tokenBlacklist.forEach(t => { try { jwt.verify(t, process.en
 
 app.set('trust proxy', 1);
 app.use(express.json({ limit: "10kb" }));
-app.use(helmet({ contentSecurityPolicy: false }));
+app.use(helmet({ 
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "https://cdn.tailwindcss.com", "https://cdnjs.cloudflare.com"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com"],
+      fontSrc: ["'self'", "https://cdnjs.cloudflare.com"],
+      imgSrc: ["'self'", "data:"],
+      connectSrc: ["'self'", "https://fueltraksystem.vercel.app"]
+    }
+  },
+  hsts: {
+    maxAge: 31536000,
+    includeSubDomains: true,
+    preload: true
+  },
+  frameguard: { action: 'deny' },
+  hidePoweredBy: true,
+  noSniff: true,
+  xssFilter: true
+}));
 app.use(compression());
 app.use(cors({ origin: [
     'https://fueltraksystem.vercel.app',   // New primary URL
@@ -637,7 +748,7 @@ app.get('/api/client/verify-truck/:plateNo', authenticate, authorize('client'), 
   try {
     // Decode URL-encoded plate number and clean it up
     const plateNo = decodeURIComponent(req.params.plateNo).toUpperCase().trim();
-    console.log('Verifying plate:', plateNo);
+    logger.info('Verifying plate', { plate: plateNo });
     
     // Search in trucks table first
     const [trucks] = await pool.execute('SELECT * FROM trucks WHERE plate_no = ? AND is_active = 1', [plateNo]);
@@ -750,7 +861,7 @@ app.get('/api/client/verify-truck/:plateNo', authenticate, authorize('client'), 
     });
     
   } catch (error) {
-    console.error('Verify truck error:', error);
+    logger.error('Truck verification failed', { error: error.message });
     res.status(500).json({ 
       status: 'error',
       error: error.message,
@@ -807,18 +918,6 @@ app.post('/api/client/submit-atl', authenticate, authorize('client'), async (req
     res.status(201).json({ status: 'success', message: 'ATL ' + atlCode + ' Submitted!', data: { atl_code: atlCode } });
   } catch (error) { res.status(400).json({ error: error.message }); }
 });
-
-// ============ STATIC FILES (Place just before module.exports) ============
-app.use('/public', express.static(path.join(__dirname, '..', 'public'), {
-  maxAge: '1h',
-  setHeaders: function(res, path) {
-    if (path.endsWith('.html')) {
-      res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate');
-    } else {
-      res.setHeader('Cache-Control', 'public, max-age=3600');
-    }
-  }
-}));
 
 app.post('/api/client/cancel-atl/:id', authenticate, authorize('client'), async (req, res) => {
   try {
@@ -1726,6 +1825,18 @@ app.get('/api/client/sales-orders', authenticate, authorize('client'), async (re
     res.json({ status: 'success', data: result });
   } catch (error) { res.status(500).json({ error: error.message }); }
 });
+
+// ============ STATIC FILES (Place just before module.exports) ============
+app.use('/public', express.static(path.join(__dirname, '..', 'public'), {
+  maxAge: '1h',
+  setHeaders: function(res, path) {
+    if (path.endsWith('.html')) {
+      res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate');
+    } else {
+      res.setHeader('Cache-Control', 'public, max-age=3600');
+    }
+  }
+}));
 
 // ============ PAGE ROUTES ============
 app.get('/sales-orders', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'sales-orders.html')));
