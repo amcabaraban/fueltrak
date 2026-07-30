@@ -128,6 +128,14 @@ app.use((req, res, next) => {
   res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
   res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
   res.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
+  
+  // Prevent caching of sensitive pages
+  if (req.path === '/' || req.path === '/index.html' || req.path === '/client') {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+  }
+  
   next();
 });
 
@@ -712,33 +720,138 @@ app.post('/api/auth/resend-otp', async (req, res) => {
 });
 
 app.post('/api/auth/login', async (req, res) => {
+  // Use consistent timing to prevent timing attacks
+  const startTime = Date.now();
+  
   try {
     const { email, password } = req.body;
-    if (!validateEmail(email)) return res.status(400).json({ error: 'Invalid email format' });
-    const lockout = checkLockout(email);
-    if (lockout.locked) return res.status(429).json({ error: `Account locked. Try again in ${lockout.minutesLeft} minutes.` });
-    const [users] = await pool.execute('SELECT * FROM users WHERE email = ?', [email]);
-    if (!users.length) { recordFailedAttempt(email); return res.status(401).json({ error: 'Invalid credentials' }); }
-    const user = users[0];
-    if (!user.is_verified) return res.status(401).json({ error: 'Please verify your email first' });
-    if (!user.is_active) return res.status(403).json({ error: 'Account deactivated' });
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) { recordFailedAttempt(email); return res.status(401).json({ error: 'Invalid credentials' }); }
-    resetAttempts(email);
-    if (user.first_login === 1) {
-      const tempToken = jwt.sign({ id: user.id, role: user.role, firstLogin: true }, process.env.JWT_SECRET, { expiresIn: '15m' });
-      return res.json({ status: 'first_login', token: tempToken, message: 'First login - please set your password.' });
+    
+    // Validate email format first
+    if (!email || !password) {
+      // Simulate bcrypt delay to prevent timing attacks
+      await bcrypt.compare('dummy_password', '$2a$12$dummy_hash_for_timing_attack_prevention');
+      return res.status(400).json({ error: 'Email and password are required' });
     }
-    const accessToken = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET, { expiresIn: JWT_EXPIRY });
-    const refreshToken = jwt.sign({ id: user.id, type: 'refresh' }, process.env.JWT_SECRET, { expiresIn: REFRESH_TOKEN_EXPIRY });
+    
+    if (!validateEmail(email)) {
+      await bcrypt.compare('dummy_password', '$2a$12$dummy_hash_for_timing_attack_prevention');
+      return res.status(400).json({ error: 'Invalid email format' });
+    }
+    
+    // Check lockout before any DB query
+    const lockout = checkLockout(email);
+    if (lockout.locked) {
+      return res.status(429).json({ 
+        error: 'Too many login attempts. Please try again later.',
+        retryAfter: lockout.minutesLeft * 60
+      });
+    }
+    
+    // Find user
+    const [users] = await pool.execute('SELECT * FROM users WHERE email = ?', [email]);
+    
+    // ALWAYS run bcrypt.compare even if user doesn't exist
+    // This prevents timing attacks that reveal valid emails
+    const dummyHash = '$2a$12$LJ3m4ys3GZqGqGqGqGqGqO'; // Dummy bcrypt hash
+    const user = users.length ? users[0] : null;
+    
+    // Always perform the password comparison with consistent timing
+    const passwordMatch = user 
+      ? await bcrypt.compare(password, user.password)
+      : await bcrypt.compare(password, dummyHash); // Waste time if user doesn't exist
+    
+    // Generic error message - never reveal what was wrong
+    if (!user || !passwordMatch) {
+      recordFailedAttempt(email);
+      
+      // Ensure minimum response time to prevent timing attacks
+      const elapsed = Date.now() - startTime;
+      if (elapsed < 500) {
+        await new Promise(resolve => setTimeout(resolve, 500 - elapsed));
+      }
+      
+      return res.status(401).json({ 
+        error: 'Invalid email or password',
+        // Don't reveal remaining attempts - prevents attacker from knowing when to stop
+      });
+    }
+    
+    // Check account status with same generic error
+    if (!user.is_verified || !user.is_active) {
+      // Don't reveal which check failed
+      await new Promise(resolve => setTimeout(resolve, 200));
+      return res.status(401).json({ error: 'Invalid email or password' });
+    }
+    
+    resetAttempts(email);
+    
+    // First login flow
+    if (user.first_login === 1) {
+      const tempToken = jwt.sign(
+        { id: user.id, role: user.role, firstLogin: true, iat: Math.floor(Date.now() / 1000) },
+        process.env.JWT_SECRET,
+        { expiresIn: '15m' }
+      );
+      return res.json({ 
+        status: 'first_login', 
+        token: tempToken, 
+        message: 'Please set your password and accept the terms.' 
+      });
+    }
+    
+    // Normal login
+    const accessToken = jwt.sign(
+      { id: user.id, role: user.role, iat: Math.floor(Date.now() / 1000) },
+      process.env.JWT_SECRET,
+      { expiresIn: JWT_EXPIRY }
+    );
+    
+    const refreshToken = jwt.sign(
+      { id: user.id, type: 'refresh', iat: Math.floor(Date.now() / 1000) },
+      process.env.JWT_SECRET,
+      { expiresIn: REFRESH_TOKEN_EXPIRY }
+    );
+    
+    // Invalidate old tokens
     if (user.current_token) {
       try { jwt.verify(user.current_token, process.env.JWT_SECRET); } catch (e) {}
       await pool.execute('UPDATE users SET current_token = NULL WHERE id = ?', [user.id]);
     }
+    
     await pool.execute('UPDATE users SET current_token = ?, last_login = NOW() WHERE id = ?', [accessToken, user.id]);
     await logAudit(user.id, 'LOGIN', 'users', user.id, { email: user.email });
-    res.json({ status: 'success', token: accessToken, refreshToken, user: { id: user.id, email: user.email, role: user.role, mobile: user.mobile, company_name: user.company_name } });
-  } catch (error) { res.status(500).json({ error: 'Internal server error' }); }
+    
+    // Set secure cookie with token (optional, for added security)
+    res.setHeader('Set-Cookie', [
+      `fueltrak_token=${accessToken}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=${60 * 60}`,
+      `fueltrak_refresh=${refreshToken}; HttpOnly; Secure; SameSite=Strict; Path=/api/auth/refresh; Max-Age=${7 * 24 * 60 * 60}`
+    ]);
+    
+    res.json({
+      status: 'success',
+      token: accessToken,
+      refreshToken,
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        mobile: user.mobile ? user.mobile.replace(/(\d{3})\d{4}(\d{4})/, '$1****$3') : null,
+        company_name: user.company_name
+      }
+    });
+    
+  } catch (error) {
+    // Don't leak error details
+    logger.error('Login error', { error: error.message });
+    
+    // Ensure consistent response time even on errors
+    const elapsed = Date.now() - startTime;
+    if (elapsed < 500) {
+      await new Promise(resolve => setTimeout(resolve, 500 - elapsed));
+    }
+    
+    res.status(500).json({ error: 'An error occurred. Please try again.' });
+  }
 });
 
 app.post('/api/auth/refresh', async (req, res) => {
