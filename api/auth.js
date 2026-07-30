@@ -564,6 +564,25 @@ app.use((req, res, next) => {
 });
 
 // ============================================================
+// PCI DSS COMPLIANCE HEADERS
+// ============================================================
+app.use((req, res, next) => {
+  // PCI DSS Requirement 6.4 - Security headers
+  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  
+  // Prevent clickjacking
+  res.setHeader('Content-Security-Policy', "frame-ancestors 'none'");
+  
+  // PCI DSS - Disable TLS compression (prevent CRIME attack)
+  // This is handled by Vercel's TLS configuration
+  
+  next();
+});
+
+// ============================================================
 // AUTH ROUTES
 // ============================================================
 
@@ -1764,6 +1783,7 @@ app.use('/public', express.static(path.join(__dirname, '..', 'public'), {
 
 const pageRoutes = {
   '/': 'index.html',
+  '/privacy': 'privacy.html',
   '/dashboard': 'dashboard.html',
   '/dashboard.html': 'dashboard.html',
   '/client': 'client.html',
