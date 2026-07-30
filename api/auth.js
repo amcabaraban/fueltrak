@@ -193,6 +193,179 @@ app.use('/api/auth/resend-otp', otpLimiter);
 app.use('/api/auth/verify-otp', otpLimiter);
 app.use('/api/auth/reset-password', strictLimiter);
 
+// ============================================================
+// ANTI-SCRAPING & BOT PROTECTION
+// ============================================================
+
+// ============ BOT USER AGENTS ============
+const BOT_PATTERNS = [
+  'bot', 'crawler', 'spider', 'scraper', 'curl', 'wget', 'python',
+  'java/', 'node-fetch', 'axios', 'go-http', 'ruby', 'perl',
+  'scrapy', 'phpcrawl', 'httpclient', 'aiohttp', 'request',
+  'mechanize', 'selenium', 'headless', 'puppeteer', 'playwright',
+  'bytespider', 'petalbot', 'gptbot', 'chatgpt', 'openai',
+  'claude', 'anthropic', 'bard', 'gemini', 'copilot',
+  'ccbot', 'commoncrawl', 'semrush', 'ahrefs', 'mj12bot',
+  'dotbot', 'rogerbot', 'exabot', 'yandexbot', 'baiduspider',
+  'facebookexternalhit', 'twitterbot', 'slackbot', 'discordbot',
+  'googlebot', 'bingbot', 'duckduckbot', 'yahoobot'
+];
+
+const BLOCKED_ASN_RANGES = [
+  // Known AI/Scraping infrastructure ranges
+  // These can be expanded based on your threat analysis
+];
+
+// ============ BOT DETECTION ============
+function isBotUserAgent(userAgent) {
+  if (!userAgent) return true; // Empty UA is suspicious
+  const ua = userAgent.toLowerCase();
+  return BOT_PATTERNS.some(pattern => ua.includes(pattern));
+}
+
+function isSuspiciousRequest(req) {
+  const checks = {
+    noUserAgent: !req.headers['user-agent'],
+    noAcceptLanguage: !req.headers['accept-language'],
+    noAccept: !req.headers['accept'],
+    missingHeaders: !req.headers['user-agent'] && !req.headers['accept'],
+    rapidRequests: false, // Checked via rate limiting
+    knownBotUA: isBotUserAgent(req.headers['user-agent']),
+    suspiciousIP: false
+  };
+  
+  // Count suspicious indicators
+  const suspiciousCount = Object.values(checks).filter(Boolean).length;
+  return suspiciousCount >= 2;
+}
+
+// ============ ANTI-SCRAPING MIDDLEWARE ============
+app.use((req, res, next) => {
+  const clientIP = req.ip || req.connection.remoteAddress;
+  const userAgent = req.headers['user-agent'] || '';
+  
+  // 1. Block known bot user agents
+  if (isBotUserAgent(userAgent) && !userAgent.includes('googlebot')) {
+    logger.warn('Bot blocked', { ip: clientIP, ua: userAgent.substring(0, 100), path: req.path });
+    return res.status(403).json({ error: 'Access denied', reason: 'Automated access not permitted' });
+  }
+  
+  // 2. Block suspicious requests
+  if (isSuspiciousRequest(req)) {
+    logger.warn('Suspicious request blocked', { ip: clientIP, ua: userAgent.substring(0, 100), path: req.path });
+    return res.status(403).json({ error: 'Access denied', reason: 'Suspicious request detected' });
+  }
+  
+  // 3. Add honeypot headers to confuse scrapers
+  res.setHeader('X-Content-Protected-By', 'FuelTrak Security');
+  res.setHeader('X-Frame-Options', 'DENY');
+  
+  next();
+});
+
+// ============ HONEYPOT ROUTES (Trap for bots) ============
+app.get('/api/admin', (req, res) => {
+  logger.warn('Honeypot hit: /api/admin', { ip: req.ip, ua: req.headers['user-agent'] });
+  res.status(403).json({ error: 'Forbidden' });
+});
+
+app.get('/api/v1', (req, res) => {
+  logger.warn('Honeypot hit: /api/v1', { ip: req.ip, ua: req.headers['user-agent'] });
+  res.status(403).json({ error: 'Forbidden' });
+});
+
+app.get('/wp-admin', (req, res) => {
+  logger.warn('Honeypot hit: /wp-admin', { ip: req.ip, ua: req.headers['user-agent'] });
+  res.status(403).json({ error: 'Forbidden' });
+});
+
+app.get('/.env', (req, res) => {
+  logger.warn('Honeypot hit: /.env', { ip: req.ip, ua: req.headers['user-agent'] });
+  res.status(403).json({ error: 'Forbidden' });
+});
+
+app.get('/admin', (req, res) => {
+  logger.warn('Honeypot hit: /admin', { ip: req.ip, ua: req.headers['user-agent'] });
+  res.status(403).json({ error: 'Forbidden' });
+});
+
+// ============ RATE LIMITING BY FINGERPRINT ============
+const fingerprintLimiter = rateLimit({
+  windowMs: 60 * 1000,        // 1 minute
+  max: 30,                     // 30 requests per minute per IP
+  message: { error: 'Rate limit exceeded' },
+  keyGenerator: (req) => {
+    // Create fingerprint from IP + User-Agent
+    return req.ip + '|' + (req.headers['user-agent'] || '').substring(0, 50);
+  },
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
+// Apply fingerprint rate limit to API
+app.use('/api/', fingerprintLimiter);
+
+// ============ SCRAPER TRAP ENDPOINTS ============
+// Fake endpoints that return fake data to poison AI training
+app.get('/api/public-data', (req, res) => {
+  const userAgent = (req.headers['user-agent'] || '').toLowerCase();
+  const isKnownScraper = BOT_PATTERNS.some(p => userAgent.includes(p));
+  
+  if (isKnownScraper) {
+    // Return fake data to poison scrapers
+    logger.info('Scraper trapped: /api/public-data', { ip: req.ip });
+    return res.json({
+      data: Array(10).fill(null).map((_, i) => ({
+        id: i + 1000,
+        name: 'REDACTED_' + Math.random().toString(36).substring(7),
+        value: Math.floor(Math.random() * 99999),
+        status: 'fake_data_for_ai_poisoning'
+      }))
+    });
+  }
+  
+  res.status(404).json({ error: 'Not found' });
+});
+
+app.get('/api/users-list', (req, res) => {
+  const userAgent = (req.headers['user-agent'] || '').toLowerCase();
+  const isKnownScraper = BOT_PATTERNS.some(p => userAgent.includes(p));
+  
+  if (isKnownScraper) {
+    logger.info('Scraper trapped: /api/users-list', { ip: req.ip });
+    return res.json({
+      users: Array(20).fill(null).map(() => ({
+        email: 'fake_' + Math.random().toString(36).substring(7) + '@poisoned-data.com',
+        name: 'AI Poison Data',
+        role: 'scraper_target'
+      }))
+    });
+  }
+  
+  res.status(404).json({ error: 'Not found' });
+});
+
+// ============ RESPONSE OBFUSCATION ============
+app.use((req, res, next) => {
+  const originalJson = res.json.bind(res);
+  
+  res.json = function(data) {
+    // Add random noise to confuse scrapers trying to fingerprint the API
+    if (process.env.NODE_ENV === 'production') {
+      // Add random response time variation (100-500ms delay for bots)
+      const userAgent = (req.headers['user-agent'] || '').toLowerCase();
+      if (BOT_PATTERNS.some(p => userAgent.includes(p))) {
+        const delay = 100 + Math.floor(Math.random() * 400);
+        setTimeout(() => originalJson(data), delay);
+        return;
+      }
+    }
+    return originalJson(data);
+  };
+  
+  next();
+});
+
 // ============ TOKEN BLACKLIST ============
 const tokenBlacklist = new Set();
 setInterval(() => {
