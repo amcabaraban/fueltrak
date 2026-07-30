@@ -136,17 +136,37 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "'unsafe-hashes'", "https://cdn.tailwindcss.com", "https://cdnjs.cloudflare.com"],
-      scriptSrcAttr: ["'self'", "'unsafe-inline'", "'unsafe-hashes'"],
-      styleSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com"],
+      scriptSrc: [
+        "'self'",
+        "'unsafe-inline'",
+        "'unsafe-eval'",
+        "https://cdn.tailwindcss.com",
+        "https://cdnjs.cloudflare.com"
+      ],
+      scriptSrcAttr: [
+        "'self'",
+        "'unsafe-inline'",
+        "'unsafe-hashes'"
+      ],
+      styleSrc: [
+        "'self'",
+        "'unsafe-inline'",
+        "https://cdnjs.cloudflare.com"
+      ],
       styleSrcAttr: ["'self'", "'unsafe-inline'"],
       imgSrc: ["'self'", "data:", "https:"],
-      connectSrc: ["'self'", "https://fueltraksystem.vercel.app", "https://fueltrak-seven.vercel.app"],
+      connectSrc: [
+        "'self'",
+        "https://fueltraksystem.vercel.app",
+        "https://fueltrak-seven.vercel.app"
+      ],
       fontSrc: ["'self'", "https://cdnjs.cloudflare.com"],
       objectSrc: ["'none'"],
       frameAncestors: ["'none'"],
       formAction: ["'self'"],
-      upgradeInsecureRequests: []
+      baseUri: ["'self'"],
+      upgradeInsecureRequests: [],
+      requireTrustedTypesFor: ["'script'"]
     }
   },
   hsts: { maxAge: 31536000, includeSubDomains: true, preload: true },
