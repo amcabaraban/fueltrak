@@ -31,6 +31,9 @@
         <a href="/adminclient" class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap shadow-[inset_0_2px_4px_rgba(255,255,255,0.1),inset_0_-2px_4px_rgba(0,0,0,0.2)]" title="Clients">
             <i class="fas fa-users w-6 text-center"></i><span class="hidden md:inline ml-2">Clients</span>
         </a>
+        <a href="/sales-orders" class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap shadow-[inset_0_2px_4px_rgba(255,255,255,0.1),inset_0_-2px_4px_rgba(0,0,0,0.2)]">
+            <i class="fas fa-file-invoice w-6 text-center"></i><span class="hidden md:inline ml-2">Sales Orders</span>
+        </a>
         <a href="/reports" class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap shadow-[inset_0_2px_4px_rgba(255,255,255,0.1),inset_0_-2px_4px_rgba(0,0,0,0.2)]"><i class="fas fa-chart-bar w-6 text-center"></i><span class="hidden md:inline ml-2">Reports</span></a>
         <a href="/trucks" class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap shadow-[inset_0_2px_4px_rgba(255,255,255,0.1),inset_0_-2px_4px_rgba(0,0,0,0.2)]"><i class="fas fa-truck w-6 text-center"></i><span class="hidden md:inline ml-2">Truck Masterlist</span></a>
         <a href="/docs-report" class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap shadow-[inset_0_2px_4px_rgba(255,255,255,0.1),inset_0_-2px_4px_rgba(0,0,0,0.2)]"><i class="fas fa-file-alt w-6 text-center"></i><span class="hidden md:inline ml-2">Doc Report</span></a>
@@ -148,7 +151,7 @@ function toggleCalc(){}
 var calcExpr='';
 function calcInput(v){calcExpr+=v;document.getElementById('calcDisplay').value=calcExpr;}
 function calcClear(){calcExpr='';document.getElementById('calcDisplay').value='0';}
-function calcResult(){try{var r=eval(calcExpr.replace(/×/g,'*').replace(/÷/g,'/').replace(/-/g,'-'));document.getElementById('calcDisplay').value=Number(r.toFixed(4));calcExpr=String(r);}catch(e){document.getElementById('calcDisplay').value='Error';calcExpr='';}}
+function calcResult(){try{var r=eval(calcExpr.replace(/ï¿½/g,'*').replace(/ï¿½/g,'/').replace(/-/g,'-'));document.getElementById('calcDisplay').value=Number(r.toFixed(4));calcExpr=String(r);}catch(e){document.getElementById('calcDisplay').value='Error';calcExpr='';}}
 async function logout(){try{await fetch('/api/auth/logout',{method:'POST',headers:{'Authorization':'Bearer '+localStorage.getItem('fueltrak_token')}})}catch(e){}localStorage.clear();window.location.href='/'}
 loadUsers();
 </script>
@@ -164,11 +167,11 @@ loadUsers();
             <button onclick="calcInput('7')" class="bg-gray-100 hover:bg-gray-200 py-2 rounded font-semibold">7</button>
             <button onclick="calcInput('8')" class="bg-gray-100 hover:bg-gray-200 py-2 rounded font-semibold">8</button>
             <button onclick="calcInput('9')" class="bg-gray-100 hover:bg-gray-200 py-2 rounded font-semibold">9</button>
-            <button onclick="calcInput('/')" class="bg-orange-100 hover:bg-orange-200 py-2 rounded font-semibold text-orange-700">÷</button>
+            <button onclick="calcInput('/')" class="bg-orange-100 hover:bg-orange-200 py-2 rounded font-semibold text-orange-700">ï¿½</button>
             <button onclick="calcInput('4')" class="bg-gray-100 hover:bg-gray-200 py-2 rounded font-semibold">4</button>
             <button onclick="calcInput('5')" class="bg-gray-100 hover:bg-gray-200 py-2 rounded font-semibold">5</button>
             <button onclick="calcInput('6')" class="bg-gray-100 hover:bg-gray-200 py-2 rounded font-semibold">6</button>
-            <button onclick="calcInput('*')" class="bg-orange-100 hover:bg-orange-200 py-2 rounded font-semibold text-orange-700">×</button>
+            <button onclick="calcInput('*')" class="bg-orange-100 hover:bg-orange-200 py-2 rounded font-semibold text-orange-700">ï¿½</button>
             <button onclick="calcInput('1')" class="bg-gray-100 hover:bg-gray-200 py-2 rounded font-semibold">1</button>
             <button onclick="calcInput('2')" class="bg-gray-100 hover:bg-gray-200 py-2 rounded font-semibold">2</button>
             <button onclick="calcInput('3')" class="bg-gray-100 hover:bg-gray-200 py-2 rounded font-semibold">3</button>
