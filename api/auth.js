@@ -518,6 +518,154 @@ function recordFailedAttempt(email) {
 function resetAttempts(email) { loginAttempts.delete(getLoginKey(email)); }
 
 // ============================================================
+// WEB APPLICATION FIREWALL (WAF)
+// ============================================================
+
+// ============ SQL INJECTION DETECTION ============
+const SQLI_PATTERNS = [
+  /(\b(SELECT|INSERT|UPDATE|DELETE|DROP|UNION|ALTER|CREATE|TRUNCATE|EXEC|EXECUTE)\b)/i,
+  /(\b(OR|AND)\b\s+\d+\s*=\s*\d+)/i,
+  /(\b(OR|AND)\b\s+'[^']*'\s*=\s*'[^']*')/i,
+  /(--|#|\/\*|\*\/|;)/,
+  /(\bWAITFOR\b|\bDELAY\b|\bSLEEP\b)/i,
+  /(\bINFORMATION_SCHEMA\b|\bMYSQL\b|\bPG_\b)/i,
+];
+
+// ============ XSS DETECTION ============
+const XSS_PATTERNS = [
+  /<script\b[^>]*>/i,
+  /<\/script\b[^>]*>/i,
+  /javascript\s*:/i,
+  /on\w+\s*=/i,
+  /<iframe\b[^>]*>/i,
+  /<embed\b[^>]*>/i,
+  /<object\b[^>]*>/i,
+  /%3Cscript%3E/i,
+  /&#x3C;script&#x3E;/i,
+  /eval\s*\(/i,
+  /document\.cookie/i,
+  /document\.write/i,
+];
+
+// ============ PATH TRAVERSAL DETECTION ============
+const PATH_TRAVERSAL_PATTERNS = [
+  /\.\.\//,
+  /\.\.\\/,
+  /\/etc\/passwd/,
+  /\/etc\/shadow/,
+  /\/proc\/self/,
+  /\/windows\/win\.ini/,
+  /\/\.env/,
+  /\/\.git/,
+  /\/\.svn/,
+  /\/\.htaccess/,
+  /\/wp-admin/,
+  /\/wp-content/,
+  /\/wp-includes/,
+  /\/xmlrpc\.php/,
+];
+
+// ============ COMMAND INJECTION DETECTION ============
+const CMD_INJECTION_PATTERNS = [
+  /[;&|`$](\s*(ls|cat|rm|wget|curl|nc|ncat|bash|sh|cmd|powershell)\b)/i,
+  /\/bin\/(bash|sh|zsh)/i,
+  /C:\\Windows\\System32/i,
+  /%00/,
+  /\b(ping|tracert|nslookup)\b\s+-/i,
+];
+
+// ============ SCANNER DETECTION ============
+const SCANNER_PATTERNS = [
+  /nikto/i, /nessus/i, /burpsuite/i, /sqlmap/i,
+  /acunetix/i, /appscan/i, /netsparker/i, /zap/i,
+  /masscan/i, /nmap/i, /gobuster/i, /dirbuster/i,
+  /wfuzz/i, /ffuf/i, /hydra/i, /medusa/i,
+];
+
+// ============ WAF FUNCTION ============
+function detectWAFViolation(req) {
+  const checks = [
+    { name: 'SQLi', patterns: SQLI_PATTERNS },
+    { name: 'XSS', patterns: XSS_PATTERNS },
+    { name: 'PathTraversal', patterns: PATH_TRAVERSAL_PATTERNS },
+    { name: 'CmdInjection', patterns: CMD_INJECTION_PATTERNS },
+    { name: 'Scanner', patterns: SCANNER_PATTERNS },
+  ];
+
+  const url = req.originalUrl || req.url || '';
+  const query = JSON.stringify(req.query || {});
+  const body = JSON.stringify(req.body || {});
+  const userAgent = (req.headers['user-agent'] || '');
+  const referer = (req.headers['referer'] || '');
+
+  const checkStrings = [url, query, body, userAgent, referer];
+
+  for (const check of checks) {
+    for (const pattern of check.patterns) {
+      for (const str of checkStrings) {
+        if (pattern.test(str)) {
+          return { blocked: true, type: check.name, pattern: pattern.toString() };
+        }
+      }
+    }
+  }
+
+  return { blocked: false };
+}
+
+// ============ WAF MIDDLEWARE ============
+const wafBlacklist = new Map(); // Track blocked IPs
+const WAF_BLOCK_DURATION = 15 * 60 * 1000; // 15 minutes
+
+app.use((req, res, next) => {
+  const clientIP = req.ip || req.connection.remoteAddress;
+
+  // Check if IP is already blocked
+  const blockedUntil = wafBlacklist.get(clientIP);
+  if (blockedUntil && Date.now() < blockedUntil) {
+    return res.status(403).json({ error: 'Access denied by WAF' });
+  }
+
+  // Run WAF detection
+  const result = detectWAFViolation(req);
+
+  if (result.blocked) {
+    // Log the attack attempt
+    logger.warn('WAF blocked request', {
+      ip: clientIP,
+      type: result.type,
+      path: req.path,
+      ua: (req.headers['user-agent'] || '').substring(0, 100)
+    });
+
+    // Block repeat offenders
+    const violations = (wafViolations.get(clientIP) || 0) + 1;
+    wafViolations.set(clientIP, violations);
+
+    if (violations >= 3) {
+      wafBlacklist.set(clientIP, Date.now() + WAF_BLOCK_DURATION);
+      logger.error('IP blacklisted by WAF', { ip: clientIP, violations });
+    }
+
+    // Clean up old entries periodically
+    if (wafViolations.size > 1000) {
+      wafViolations.clear();
+      wafBlacklist.clear();
+    }
+
+    return res.status(403).json({
+      error: 'Request blocked by Web Application Firewall',
+      id: Math.random().toString(36).substring(7) // Random ID to avoid fingerprinting
+    });
+  }
+
+  next();
+});
+
+// Track WAF violations
+const wafViolations = new Map();
+
+// ============================================================
 // AUTH ROUTES
 // ============================================================
 
