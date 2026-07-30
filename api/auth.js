@@ -1,7 +1,8 @@
 // ============================================================
-// FuelTrak API v3.0 - Complete Refactored Application
+// FuelTrak API v3.0 - Production-Ready Application
 // ============================================================
 // Logistics Management System for Fuel Truck Dispatching
+// Security-hardened with rate limiting, input validation, CSP
 // ============================================================
 
 // ============ DEPENDENCIES ============
@@ -20,6 +21,14 @@ const nodemailer = require('nodemailer');
 // ============ APP INITIALIZATION ============
 const app = express();
 
+// ============ CONSTANTS ============
+const BCRYPT_ROUNDS = 12;
+const MAX_LOGIN_ATTEMPTS = 5;
+const LOCKOUT_DURATION_MS = 15 * 60 * 1000; // 15 minutes
+const JWT_EXPIRY = '1h';
+const REFRESH_TOKEN_EXPIRY = '7d';
+const ALLOWED_UPDATE_FIELDS = ['tps_start', 'tps_end', 'printed_wc', 'has_si', 'so_number'];
+
 // ============ CACHE SETUP ============
 const otpCache = new NodeCache({ stdTTL: 600 });
 const serverCache = new NodeCache({ stdTTL: 60, checkperiod: 120 });
@@ -37,9 +46,15 @@ if (process.env.NODE_ENV === 'production') {
   console.error = (...args) => {
     const sanitized = args.map(arg => {
       if (typeof arg === 'string') {
-        return arg.replace(/password[=:]\S+/gi, 'password=***')
-                  .replace(/token[=:]\S+/gi, 'token=***')
-                  .replace(/secret[=:]\S+/gi, 'secret=***');
+        return arg
+          .replace(/password[=:]\S+/gi, 'password=***')
+          .replace(/token[=:]\S+/gi, 'token=***')
+          .replace(/secret[=:]\S+/gi, 'secret=***')
+          .replace(/Bearer\s+\S+/gi, 'Bearer ***')
+          .replace(/otp[=:]\S+/gi, 'otp=***')
+          .replace(/\b\d{6}\b/g, '******')
+          .replace(/AVNS_\S+/gi, 'AVNS_***')
+          .replace(/mysql-\S+\.aivencloud\.com/gi, '***.aivencloud.com');
       }
       return arg;
     });
@@ -51,7 +66,7 @@ if (process.env.NODE_ENV === 'production') {
 const logger = {
   error: (message, meta = {}) => {
     const sanitized = { ...meta };
-    delete sanitized.password; delete sanitized.token; delete sanitized.otp;
+    delete sanitized.password; delete sanitized.token; delete sanitized.otp; delete sanitized.secret;
     if (process.env.NODE_ENV === 'production') {
       console.error(JSON.stringify({ timestamp: new Date().toISOString(), level: 'error', message, meta: sanitized }));
     } else {
@@ -103,23 +118,78 @@ pool.on('error', (err) => logger.error('Database pool error', { error: err.messa
 // ============ MIDDLEWARE ============
 app.set('trust proxy', 1);
 app.use(express.json({ limit: '10kb' }));
-app.use(helmet({ contentSecurityPolicy: false }));
-app.use(compression());
-app.use(cors({
-  origin: ['https://fueltraksystem.vercel.app', 'https://fueltrak-seven.vercel.app', 'http://localhost:3000'],
-  credentials: true
+app.use(express.urlencoded({ extended: false, limit: '10kb' }));
+
+// Security headers
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+  res.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
+  next();
+});
+
+// Helmet with CSP
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.tailwindcss.com", "https://cdnjs.cloudflare.com"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com"],
+      imgSrc: ["'self'", "data:", "https:"],
+      connectSrc: ["'self'", "https://fueltraksystem.vercel.app", "https://fueltrak-seven.vercel.app"],
+      fontSrc: ["'self'", "https://cdnjs.cloudflare.com"],
+      objectSrc: ["'none'"],
+      frameAncestors: ["'none'"],
+      formAction: ["'self'"],
+      upgradeInsecureRequests: []
+    }
+  },
+  hsts: { maxAge: 31536000, includeSubDomains: true, preload: true },
+  frameguard: { action: 'deny' },
+  hidePoweredBy: true,
+  noSniff: true,
+  xssFilter: true,
+  referrerPolicy: { policy: 'strict-origin-when-cross-origin' }
 }));
 
-const generalLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 300, message: { error: 'Too many requests' } });
-const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 20, message: { error: 'Too many attempts' } });
+app.use(compression());
+
+// CORS
+app.use(cors({
+  origin: function(origin, callback) {
+    const allowed = ['https://fueltraksystem.vercel.app', 'https://fueltrak-seven.vercel.app', 'http://localhost:3000'];
+    if (!origin || allowed.includes(origin)) {
+      callback(null, true);
+    } else {
+      logger.warn('Blocked CORS', { origin });
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  maxAge: 86400
+}));
+
+// Rate Limiters
+const generalLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 300, message: { error: 'Too many requests' }, standardHeaders: true, legacyHeaders: false });
+const apiLimiter = rateLimit({ windowMs: 60 * 1000, max: 60, message: { error: 'Rate limit exceeded' }, standardHeaders: true, legacyHeaders: false });
+const strictLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 5, message: { error: 'Too many attempts. Try later.' }, standardHeaders: true, legacyHeaders: false });
+const otpLimiter = rateLimit({ windowMs: 60 * 60 * 1000, max: 3, message: { error: 'Too many OTP requests.' }, standardHeaders: true, legacyHeaders: false });
 
 app.use('/api/', generalLimiter);
 app.use('/api/chat', (req, res, next) => next());
 app.use('/api/chat-list', (req, res, next) => next());
-app.use('/api/auth/login', authLimiter);
-app.use('/api/auth/register', authLimiter);
-app.use('/api/auth/forgot-password', authLimiter);
-app.use('/api/auth/force-login', authLimiter);
+app.use('/api/auth/login', strictLimiter);
+app.use('/api/auth/register', strictLimiter);
+app.use('/api/auth/forgot-password', strictLimiter);
+app.use('/api/auth/force-login', strictLimiter);
+app.use('/api/auth/resend-otp', otpLimiter);
+app.use('/api/auth/verify-otp', otpLimiter);
+app.use('/api/auth/reset-password', strictLimiter);
 
 // ============ TOKEN BLACKLIST ============
 const tokenBlacklist = new Set();
@@ -138,6 +208,7 @@ function clearCache(pattern) {
 function generateOTP() { return Math.floor(100000 + Math.random() * 900000).toString(); }
 function validateEmail(email) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email); }
 function sanitize(str, max = 100) { return str ? String(str).trim().substring(0, max).replace(/[<>]/g, '') : ''; }
+function maskEmail(email) { return email ? email.replace(/(.{3}).*(@.*)/, '$1***$2') : '***'; }
 
 function validatePassword(password) {
   if (!password || password.length < 8) return { valid: false, error: 'Password must be at least 8 characters' };
@@ -150,6 +221,10 @@ function validatePassword(password) {
 
 function validatePasswordComplexity(password) {
   return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/.test(password);
+}
+
+async function hashPassword(password) {
+  return await bcrypt.hash(password, BCRYPT_ROUNDS);
 }
 
 async function logAudit(userId, action, tableName, recordId, details) {
@@ -165,11 +240,22 @@ async function generateATLCode(company) {
   return prefix + '-' + String(rows[0].count + 1).padStart(9, '0');
 }
 
+// ============ INPUT VALIDATION MIDDLEWARE ============
+function validateATLInput(req, res, next) {
+  const { volume, plate_no, company } = req.body;
+  const errors = [];
+  if (volume && (isNaN(volume) || volume <= 0 || volume > 100000)) errors.push('Volume must be between 1 and 100,000 liters');
+  if (plate_no && plate_no.length > 20) errors.push('Plate number too long');
+  if (company && company.length > 100) errors.push('Company name too long');
+  if (errors.length) return res.status(400).json({ error: errors.join('. ') });
+  next();
+}
+
 // ============ EMAIL/SMS ============
 async function sendOTPEmail(email, mobile, otp, type) {
   if (mobile && mobile.length > 5) sendFreeSMS(mobile, otp).catch(() => {});
   if (!process.env.SMTP_USER) {
-    logger.info('Dev OTP', { email: email.replace(/(.{3}).*(@.*)/, '$1***$2') });
+    logger.info('Dev OTP', { email: maskEmail(email) });
     return;
   }
   try {
@@ -179,16 +265,15 @@ async function sendOTPEmail(email, mobile, otp, type) {
       subject: type === 'reset' ? 'FuelTrak - Password Reset OTP' : 'FuelTrak - Verify Your Email',
       html: `<div style="font-family:Arial;max-width:500px;margin:auto;padding:20px;border:1px solid #ddd;border-radius:10px"><h2 style="color:#1e3a5f">FuelTrak Logistics</h2><p>Your OTP code is:</p><h1 style="color:#1e3a5f;font-size:36px;letter-spacing:5px;text-align:center">${otp}</h1><p>This code expires in 10 minutes.</p></div>`
     });
-    logger.info('OTP emailed', { email: email.replace(/(.{3}).*(@.*)/, '$1***$2') });
+    logger.info('OTP emailed', { email: maskEmail(email) });
   } catch (e) {
     logger.error('Email failed', { error: e.message });
-    if (process.env.NODE_ENV !== 'production') console.log('[FALLBACK] OTP (dev only)');
   }
 }
 
 async function sendFreeSMS(mobile, otp) {
   if (!process.env.SMTP_USER) return false;
-  const gateways = [mobile.replace('+63','0') + '@txt.globe.com.ph', mobile.replace('+63','0') + '@isms.smart.com.ph'];
+  const gateways = [mobile.replace('+63', '0') + '@txt.globe.com.ph', mobile.replace('+63', '0') + '@isms.smart.com.ph'];
   for (const gw of gateways) {
     try {
       await transporter.sendMail({ from: process.env.SMTP_USER, to: gw, subject: '', text: `FuelTrak OTP: ${otp}. Expires in 10 mins.` });
@@ -206,6 +291,7 @@ const authenticate = async (req, res, next) => {
     if (!token) return res.status(401).json({ error: 'Please authenticate' });
     if (tokenBlacklist.has(token)) return res.status(401).json({ error: 'Token revoked' });
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (decoded.type === 'refresh') return res.status(401).json({ error: 'Use access token, not refresh token' });
     const [users] = await pool.execute('SELECT id, email, role, mobile, company_name, is_active FROM users WHERE id = ?', [decoded.id]);
     if (!users.length || !users[0].is_active) return res.status(401).json({ error: 'Invalid token' });
     req.user = users[0];
@@ -220,14 +306,12 @@ const authorize = (...roles) => (req, res, next) => {
 
 // ============ ACCOUNT LOCKOUT ============
 const loginAttempts = new Map();
-const MAX_ATTEMPTS = 5;
-const LOCKOUT_MS = 15 * 60 * 1000;
 
 function getLoginKey(email) { return 'login_' + email.toLowerCase(); }
 function checkLockout(email) {
   const a = loginAttempts.get(getLoginKey(email));
-  if (a && a.count >= MAX_ATTEMPTS && (Date.now() - a.lastAttempt) < LOCKOUT_MS) {
-    return { locked: true, minutesLeft: Math.ceil((LOCKOUT_MS - (Date.now() - a.lastAttempt)) / 60000) };
+  if (a && a.count >= MAX_LOGIN_ATTEMPTS && (Date.now() - a.lastAttempt) < LOCKOUT_DURATION_MS) {
+    return { locked: true, minutesLeft: Math.ceil((LOCKOUT_DURATION_MS - (Date.now() - a.lastAttempt)) / 60000) };
   }
   return { locked: false };
 }
@@ -249,13 +333,13 @@ app.post('/api/auth/register', async (req, res) => {
     if (!validatePasswordComplexity(password)) return res.status(400).json({ error: 'Password must have 8+ chars, 1 uppercase, 1 lowercase, 1 number, and 1 symbol.' });
     const [existing] = await pool.execute('SELECT id FROM users WHERE email = ?', [email]);
     if (existing.length) return res.status(400).json({ error: 'Email already registered' });
-    const hashed = await bcrypt.hash(password, 12);
+    const hashed = await hashPassword(password);
     await pool.execute('INSERT INTO users (email, password, mobile, company_name, role, is_verified, is_active, createdAt, updatedAt) VALUES (?,?,?,?,?,?,?,NOW(),NOW())',
       [email, hashed, mobile, company_name || null, 'client', false, true]);
     const otp = generateOTP();
     otpCache.set(email, otp);
     await sendOTPEmail(email, '', otp, 'verification');
-    res.status(201).json({ status: 'success', message: 'Registration successful', email, otp });
+    res.status(201).json({ status: 'success', message: 'Registration successful. Check your email for OTP.', email: maskEmail(email) });
   } catch (error) { res.status(400).json({ error: error.message }); }
 });
 
@@ -281,7 +365,7 @@ app.post('/api/auth/resend-otp', async (req, res) => {
   const otp = generateOTP();
   otpCache.set(email, otp);
   await sendOTPEmail(email, '', otp, 'verification');
-  res.json({ message: 'OTP resent', otp });
+  res.json({ status: 'success', message: 'OTP resent to your email' });
 });
 
 app.post('/api/auth/login', async (req, res) => {
@@ -302,15 +386,29 @@ app.post('/api/auth/login', async (req, res) => {
       const tempToken = jwt.sign({ id: user.id, role: user.role, firstLogin: true }, process.env.JWT_SECRET, { expiresIn: '15m' });
       return res.json({ status: 'first_login', token: tempToken, message: 'First login - please set your password.' });
     }
-    const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '24h' });
+    const accessToken = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET, { expiresIn: JWT_EXPIRY });
+    const refreshToken = jwt.sign({ id: user.id, type: 'refresh' }, process.env.JWT_SECRET, { expiresIn: REFRESH_TOKEN_EXPIRY });
     if (user.current_token) {
       try { jwt.verify(user.current_token, process.env.JWT_SECRET); } catch (e) {}
       await pool.execute('UPDATE users SET current_token = NULL WHERE id = ?', [user.id]);
     }
-    await pool.execute('UPDATE users SET current_token = ?, last_login = NOW() WHERE id = ?', [token, user.id]);
+    await pool.execute('UPDATE users SET current_token = ?, last_login = NOW() WHERE id = ?', [accessToken, user.id]);
     await logAudit(user.id, 'LOGIN', 'users', user.id, { email: user.email });
-    res.json({ status: 'success', token, user: { id: user.id, email: user.email, role: user.role, mobile: user.mobile, company_name: user.company_name } });
+    res.json({ status: 'success', token: accessToken, refreshToken, user: { id: user.id, email: user.email, role: user.role, mobile: user.mobile, company_name: user.company_name } });
   } catch (error) { res.status(500).json({ error: 'Internal server error' }); }
+});
+
+app.post('/api/auth/refresh', async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+    if (!refreshToken) return res.status(400).json({ error: 'Refresh token required' });
+    const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET);
+    if (decoded.type !== 'refresh') return res.status(400).json({ error: 'Invalid token type' });
+    const [users] = await pool.execute('SELECT id, role FROM users WHERE id = ? AND is_active = 1', [decoded.id]);
+    if (!users.length) return res.status(401).json({ error: 'User not found' });
+    const newToken = jwt.sign({ id: users[0].id, role: users[0].role }, process.env.JWT_SECRET, { expiresIn: JWT_EXPIRY });
+    res.json({ status: 'success', token: newToken });
+  } catch (error) { res.status(401).json({ error: 'Invalid refresh token' }); }
 });
 
 app.get('/api/auth/profile', authenticate, (req, res) => res.json({ status: 'success', user: req.user }));
@@ -333,11 +431,11 @@ app.post('/api/auth/forgot-password', async (req, res) => {
   try {
     const { email } = req.body;
     const [users] = await pool.execute('SELECT id FROM users WHERE email = ?', [email]);
-    if (!users.length) return res.status(404).json({ error: 'Email not found' });
+    if (!users.length) return res.json({ status: 'success', message: 'If the email exists, an OTP has been sent.' });
     const otp = generateOTP();
     otpCache.set('reset_' + email, otp);
     await sendOTPEmail(email, '', otp, 'reset');
-    res.json({ status: 'success', message: 'OTP sent', otp });
+    res.json({ status: 'success', message: 'If the email exists, an OTP has been sent.' });
   } catch (error) { res.status(500).json({ error: error.message }); }
 });
 
@@ -358,7 +456,7 @@ app.post('/api/auth/reset-password', async (req, res) => {
     if (!newPassword || !validatePasswordComplexity(newPassword)) return res.status(400).json({ error: 'Password must have 8+ chars, 1 uppercase, 1 lowercase, 1 number, and 1 symbol.' });
     const decoded = jwt.verify(resetToken, process.env.JWT_SECRET);
     if (decoded.purpose !== 'reset') return res.status(400).json({ error: 'Invalid reset token' });
-    await pool.execute('UPDATE users SET password = ? WHERE email = ?', [await bcrypt.hash(newPassword, 12), decoded.email]);
+    await pool.execute('UPDATE users SET password = ? WHERE email = ?', [await hashPassword(newPassword), decoded.email]);
     res.json({ status: 'success', message: 'Password reset' });
   } catch (error) {
     if (error.name === 'TokenExpiredError') return res.status(400).json({ error: 'Reset token expired' });
@@ -381,12 +479,12 @@ app.post('/api/auth/first-login-setup', authenticate, async (req, res) => {
     const { password, terms_accepted } = req.body;
     if (!terms_accepted) return res.status(400).json({ error: 'You must accept the Terms & Conditions' });
     if (!validatePassword(password).valid) return res.status(400).json({ error: validatePassword(password).error });
-    await pool.execute('UPDATE users SET password = ?, terms_accepted = 1 WHERE id = ?', [await bcrypt.hash(password, 12), req.user.id]);
+    await pool.execute('UPDATE users SET password = ?, terms_accepted = 1 WHERE id = ?', [await hashPassword(password), req.user.id]);
     const otp = generateOTP();
     otpCache.set(req.user.email, otp);
     await sendOTPEmail(req.user.email, '', otp, 'verification');
     await logAudit(req.user.id, 'FIRST_LOGIN_PASSWORD_CHANGED', 'users', req.user.id, {});
-    res.json({ status: 'otp_required', message: 'Password changed! Check email for OTP.', email: req.user.email });
+    res.json({ status: 'otp_required', message: 'Password changed! Check email for OTP.', email: maskEmail(req.user.email) });
   } catch (error) { res.status(400).json({ error: error.message }); }
 });
 
@@ -523,8 +621,9 @@ app.put('/api/dispatch/update-si/:id', authenticate, authorize('dispatcher', 'ma
 app.put('/api/dispatch/update-tps/:id', authenticate, authorize('dispatcher', 'management'), async (req, res) => {
   try {
     const updates = []; const params = [];
-    if (req.body.tps_start !== undefined) { updates.push('tps_start=?'); params.push(req.body.tps_start); }
-    if (req.body.tps_end !== undefined) { updates.push('tps_end=?'); params.push(req.body.tps_end); }
+    for (const [key, value] of Object.entries(req.body)) {
+      if (ALLOWED_UPDATE_FIELDS.includes(key)) { updates.push(`${key}=?`); params.push(value); }
+    }
     if (updates.length > 0) { params.push(req.params.id); await pool.execute('UPDATE authority_to_load SET ' + updates.join(',') + ' WHERE id=?', params); }
     res.json({ status: 'success' });
   } catch (error) { res.status(400).json({ error: error.message }); }
@@ -652,7 +751,7 @@ app.get('/api/client/verify-truck/:plateNo', authenticate, authorize('client'), 
   } catch (error) { res.status(500).json({ status: 'error', error: error.message, can_proceed: false }); }
 });
 
-app.post('/api/client/submit-atl', authenticate, authorize('client'), async (req, res) => {
+app.post('/api/client/submit-atl', authenticate, authorize('client'), validateATLInput, async (req, res) => {
   try {
     const { truck_id, plate_no, volume, driver_name, hauler_name, remarks, company, so_number, scheduled_date, contact_number, has_si, special_instructions } = req.body;
     let truckId = truck_id, plateNo = plate_no, driver = driver_name, hauler = hauler_name;
@@ -682,7 +781,7 @@ app.post('/api/client/submit-atl', authenticate, authorize('client'), async (req
     if (existing.length) return res.status(400).json({ error: 'You already have a pending ATL for this truck' });
     const atlCode = await generateATLCode(company || req.user.company_name);
     await pool.execute("INSERT INTO authority_to_load (atl_code, client_id, truck_id, company, so_number, volume, hauler, plate_no, driver_name, contact_number, has_si, scheduled_date, remarks, special_instructions, status, createdAt) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,'pending',NOW())",
-      [atlCode, req.user.id, truckId, company || req.user.company_name || '', so_number, volume || null, hauler || '', plateNo || '', driver || '', contact_number || null, has_si || false, scheduled_date || new Date().toISOString().split('T')[0], remarks || '', special_instructions || null]);
+      [atlCode, req.user.id, truckId, sanitize(company || req.user.company_name, 100), sanitize(so_number, 50), volume, sanitize(hauler, 100), sanitize(plateNo, 20), sanitize(driver, 100), sanitize(contact_number, 20), has_si || false, scheduled_date || new Date().toISOString().split('T')[0], sanitize(remarks, 200), sanitize(special_instructions, 500)]);
     serverCache.del('dispatch_enhanced_stats'); serverCache.del('dispatch_truck_stats'); clearCache('client_dashboard_' + req.user.id);
     res.status(201).json({ status: 'success', message: 'ATL ' + atlCode + ' Submitted!', data: { atl_code: atlCode } });
   } catch (error) { res.status(400).json({ error: error.message }); }
@@ -1159,7 +1258,7 @@ app.post('/api/clients', authenticate, authorize('dispatcher', 'management'), as
     const [existing] = await pool.execute('SELECT id FROM users WHERE email=?', [email]);
     if (existing.length) return res.status(400).json({ error: 'Email already registered' });
     await pool.execute('INSERT INTO users (email, password, mobile, company_name, role, is_verified, is_active, first_login, createdAt, updatedAt) VALUES (?,?,?,?,?,1,1,1,NOW(),NOW())',
-      [email, await bcrypt.hash(password, 12), mobile, company_name || null, 'client']);
+      [email, await hashPassword(password), mobile, company_name || null, 'client']);
     await logAudit(req.user.id, 'CREATE_CLIENT', 'users', 0, { email });
     res.status(201).json({ status: 'success', message: 'Client created' });
   } catch (error) { res.status(400).json({ error: error.message }); }
@@ -1171,7 +1270,7 @@ app.put('/api/clients/:id', authenticate, authorize('dispatcher', 'management'),
     if (email) { const [dup] = await pool.execute('SELECT id FROM users WHERE email=? AND id!=?', [email, req.params.id]); if (dup.length) return res.status(400).json({ error: 'Email already in use' }); }
     let query = 'UPDATE users SET email=?, mobile=?, company_name=?';
     let params = [email, mobile, company_name];
-    if (password && password.length >= 8) { query += ', password=?'; params.push(await bcrypt.hash(password, 12)); }
+    if (password && password.length >= 8) { query += ', password=?'; params.push(await hashPassword(password)); }
     params.push(req.params.id);
     await pool.execute(query + ' WHERE id=?', params);
     await logAudit(req.user.id, 'UPDATE_CLIENT', 'users', req.params.id, { email });
@@ -1207,7 +1306,7 @@ app.post('/api/users', authenticate, authorize('dispatcher', 'management'), asyn
     const [existing] = await pool.execute('SELECT id FROM users WHERE email=?', [email]);
     if (existing.length) return res.status(400).json({ error: 'Email already registered' });
     await pool.execute('INSERT INTO users (email, password, mobile, company_name, role, is_verified, is_active, createdAt, updatedAt) VALUES (?,?,?,?,?,1,1,NOW(),NOW())',
-      [email, await bcrypt.hash(password, 12), mobile || null, company_name || null, role]);
+      [email, await hashPassword(password), mobile || null, company_name || null, role]);
     res.status(201).json({ status: 'success', message: 'User created' });
   } catch (error) { res.status(400).json({ error: error.message }); }
 });
@@ -1217,7 +1316,7 @@ app.put('/api/users/:id', authenticate, authorize('dispatcher', 'management'), a
     const { email, mobile, company_name, role, password, is_active } = req.body;
     let query = 'UPDATE users SET email=?, mobile=?, company_name=?, role=?, is_active=?';
     let params = [email, mobile || null, company_name || null, role, is_active !== undefined ? is_active : 1];
-    if (password) { query += ', password=?'; params.push(await bcrypt.hash(password, 12)); }
+    if (password) { query += ', password=?'; params.push(await hashPassword(password)); }
     params.push(req.params.id);
     await pool.execute(query + ' WHERE id=?', params);
     res.json({ status: 'success', message: 'User updated' });
