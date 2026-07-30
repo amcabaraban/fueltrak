@@ -1129,12 +1129,33 @@ app.get('/api/reports/summary', authenticate, authorize('dispatcher', 'managemen
     query += ' ORDER BY createdAt DESC';
     const [atls] = await pool.execute(query, params);
     const result = [];
+    let totalVolume = 0, totalActualVolume = 0, completedCount = 0, cancelledCount = 0, dispatchedCount = 0;
     for (const a of atls) {
       const [trucks] = await pool.execute('SELECT plate_no, make, total_capacity FROM trucks WHERE id=?', [a.truck_id]);
       const [clients] = await pool.execute('SELECT email, company_name FROM users WHERE id=?', [a.client_id]);
+      const vol = parseFloat(a.volume) || 0;
+      const actualVol = parseFloat(a.actual_volume) || vol;
+      totalVolume += vol;
+      totalActualVolume += actualVol;
+      if (a.status === 'completed') completedCount++;
+      if (a.status === 'cancelled') cancelledCount++;
+      if (a.status === 'dispatched') dispatchedCount++;
       result.push({ ...a, truck: trucks[0] || null, client: clients[0] || null });
     }
-    res.json({ status: 'success', data: { records: result } });
+    res.json({
+      status: 'success',
+      data: {
+        records: result,
+        summary: {
+          total_records: result.length,
+          completed: completedCount,
+          cancelled: cancelledCount,
+          dispatched: dispatchedCount,
+          total_volume: totalVolume,
+          total_actual_volume: totalActualVolume
+        }
+      }
+    });
   } catch (error) { res.status(500).json({ error: error.message }); }
 });
 
