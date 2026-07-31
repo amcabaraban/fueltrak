@@ -1587,47 +1587,31 @@
         loadContactList();
       }
       async function loadContactList() {
-        try {
-            var r = await fetch('/api/chat-list', {
-                headers: {
-                    'Authorization': 'Bearer ' + token
-                }
-            });
-            var d = await r.json();
-            
-            if (d.status === 'success') {
-                contactList = d.data;
-                var h = '';
-                
-                contactList.forEach(function(c) {
-                    var name = c.company_name || c.email;
-                    var unreadCount = c.unread_count || 0;
-                    
-                    // Show badge only if unread_count > 0
-                    var badgeHtml = unreadCount > 0 
-                        ? '<span class="ml-2 px-2 py-0.5 text-xs font-bold text-white bg-red-500 rounded-full">' + (unreadCount > 99 ? '99+' : unreadCount) + '</span>'
-                        : '';
-
-                    h += '<div onclick="startChat(' + c.id + ',\'' + (c.email || c.company_name) + '\')" class="flex items-center p-3 hover:bg-gray-50 cursor-pointer border-b relative">' +
-                            '<div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">' +
-                                '<i class="fas fa-user text-blue-600 text-sm"></i>' +
-                            '</div>' +
-                            '<div class="flex-1 min-w-0">' +
-                                '<div class="flex items-center justify-between">' +
-                                    '<p class="text-sm font-semibold truncate">' + name + '</p>' +
-                                    badgeHtml +
-                                '</div>' +
-                                '<p class="text-xs text-gray-400 truncate">' + (c.email || '') + '</p>' +
-                            '</div>' +
-                        '</div>';
-                });
-                
-                document.getElementById('contactList').innerHTML = h || '<p class="p-3 text-center text-gray-400 text-sm">No contacts</p>';
-            }
-        } catch (err) {
-            console.error('Failed to load contact list:', err);
+        var r = await fetch("/api/chat-list", {
+          headers: { Authorization: "Bearer " + token },
+        });
+        var d = await r.json();
+        if (d.status === "success") {
+          contactList = d.data;
+          document.getElementById("contactList").innerHTML =
+            contactList
+              .map(function (c) {
+                return (
+                  '<div onclick="startChat(' +
+                  c.id +
+                  ",'" +
+                  (c.email || c.company_name) +
+                  '\')" class="flex items-center p-3 hover:bg-gray-50 cursor-pointer border-b"><div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3"><i class="fas fa-user text-blue-600 text-sm"></i></div><div class="flex-1"><p class="text-sm font-semibold">' +
+                  (c.company_name || c.email) +
+                  '</p><p class="text-xs text-gray-400">' +
+                  (c.email || "") +
+                  '</p></div><div class="w-2 h-2 bg-green-400 rounded-full"></div></div>'
+                );
+              })
+              .join("") ||
+            '<p class="p-3 text-center text-gray-400 text-sm">No contacts</p>';
         }
-    }
+      }
       function startChat(id, name) {
         currentChatUser = id;
         currentChatName = name;
