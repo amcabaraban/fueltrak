@@ -358,20 +358,76 @@ app.put('/api/sales-orders/:id', authenticate, authorize('dispatcher','managemen
 app.delete('/api/sales-orders/:id', authenticate, authorize('dispatcher','management'), async (req, res) => { try { const [ex]=await pool.execute('SELECT so_number FROM sales_orders WHERE id=?',[req.params.id]); if(!ex.length) return res.status(404).json({error:'Not found'}); const [ch]=await pool.execute("SELECT COUNT(*) as count FROM authority_to_load WHERE so_number=? AND status NOT IN ('cancelled','rejected')",[ex[0].so_number]); if(ch[0].count>0) return res.status(400).json({error:'Used in '+ch[0].count+' ATLs'}); await pool.execute('DELETE FROM sales_order_clients WHERE sales_order_id=?',[req.params.id]);await pool.execute('DELETE FROM sales_orders WHERE id=?',[req.params.id]); res.json({status:'success',message:'Deleted'}); } catch(e) { res.status(400).json({error:e.message}); } });
 
 // Chat
-app.get('/api/chat-list', authenticate, async (req, res) => { try { let u; if(req.user.role==='client'){[u]=await pool.execute("SELECT id,email FROM users WHERE role IN ('dispatcher','management') LIMIT 5");}else{[u]=await pool.execute("SELECT id,email FROM users WHERE role='client' ORDER BY company_name LIMIT 50");if(!u.length)[u]=await pool.execute("SELECT id,email FROM users WHERE role='client' LIMIT 50");} res.json({status:'success',data:u}); } catch(e) { res.status(500).json({error:e.message}); } });
-app.get('/api/chat/:clientId', authenticate, async (req, res) => { try { const [m]=await pool.execute('SELECT cm.*,u.email as sender_email FROM chat_messages cm JOIN users u ON cm.sender_id=u.id WHERE (cm.sender_id=? AND cm.receiver_id=?) OR (cm.sender_id=? AND cm.receiver_id=?) ORDER BY cm.created_at ASC LIMIT 50',[req.user.id,req.params.clientId,req.params.clientId,req.user.id]); res.json({status:'success',data:m}); } catch(e) { res.status(500).json({error:e.message}); } });
+app.get('/api/chat-list', authenticate, async (req, res) => {
+  try {
+    let query;
+    if (req.user.role === 'client') {
+      query = `
+        SELECT u.id, u.email, 
+               (SELECT COUNT(*) FROM chat_messages WHERE sender_id = u.id AND receiver_id = ? AND is_read = 0) as unread_count
+        FROM users u 
+        WHERE u.role IN ('dispatcher','management') 
+        LIMIT 5`;
+    } else {
+      query = `
+        SELECT u.id, u.email, 
+               (SELECT COUNT(*) FROM chat_messages WHERE sender_id = u.id AND receiver_id = ? AND is_read = 0) as unread_count
+        FROM users u 
+        WHERE u.role = 'client' 
+        ORDER BY u.company_name LIMIT 50`;
+    }
+
+    const [u] = await pool.execute(query, [req.user.id]);
+    res.json({ status: 'success', data: u });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
 app.post('/api/chat', authenticate, async (req, res) => { try { await pool.execute('INSERT INTO chat_messages (sender_id,receiver_id,message) VALUES (?,?,?)',[req.user.id,req.body.receiver_id,req.body.message]); res.json({status:'success',message:'Sent'}); } catch(e) { res.status(400).json({error:e.message}); } });
+// Fetch unread count for badge
 app.get('/api/chat/unread', authenticate, async (req, res) => {
   try {
     const [result] = await pool.execute(
-      `SELECT COUNT(*) as unread FROM chat_messages 
-       WHERE receiver_id = ? AND sender_id != ?
-       AND created_at > DATE_SUB(NOW(), INTERVAL 24 HOUR)`,
-      [req.user.id, req.user.id]
+      `SELECT COUNT(*) as unread 
+       FROM chat_messages 
+       WHERE receiver_id = ? AND is_read = 0`,
+      [req.user.id]
     );
-    res.json({ status: 'success', unread: result[0].unread || 0 });
+    res.json({ status: 'success', unread: result[0]?.unread || 0 });
   } catch (error) {
-    res.json({ status: 'success', unread: 0 });
+    res.status(500).json({ status: 'error', unread: 0, error: error.message });
+  }
+});
+
+// Fetch chat messages AND mark incoming messages as READ
+app.get('/api/chat/:clientId', authenticate, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const clientId = req.params.clientId;
+
+    // 1. Mark unread messages from this sender to current user as read
+    await pool.execute(
+      `UPDATE chat_messages 
+       SET is_read = 1 
+       WHERE sender_id = ? AND receiver_id = ? AND is_read = 0`,
+      [clientId, userId]
+    );
+
+    // 2. Fetch conversation
+    const [m] = await pool.execute(
+      `SELECT cm.*, u.email as sender_email 
+       FROM chat_messages cm 
+       JOIN users u ON cm.sender_id = u.id 
+       WHERE (cm.sender_id = ? AND cm.receiver_id = ?) 
+          OR (cm.sender_id = ? AND cm.receiver_id = ?) 
+       ORDER BY cm.created_at ASC 
+       LIMIT 50`,
+      [userId, clientId, clientId, userId]
+    );
+
+    res.json({ status: 'success', data: m });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
   }
 });
 
