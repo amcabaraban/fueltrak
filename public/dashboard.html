@@ -687,6 +687,8 @@ function updateIMUnreadBadge() {
   }
 }
 
+window.FuelTrakIM={init:async function(u,t){this.token=t;return{success:true}},getConversations:async function(){var r=await fetch('/api/chat-list',{headers:{'Authorization':'Bearer '+this.token}});var d=await r.json();return(d.data||[]).map(function(c){return{conversationID:'user_'+c.id,showName:c.company_name||c.email,latestMsg:'',unreadCount:0}})},getMessages:async function(cid){var uid=cid.replace('user_','');var r=await fetch('/api/chat/'+uid,{headers:{'Authorization':'Bearer '+this.token}});var d=await r.json();return{messageList:(d.data||[]).map(function(m){return{sendID:''+m.sender_id,text:m.message,content:m.message,sendTime:m.created_at}})}},sendMessage:async function(cid,txt){var uid=cid.replace('user_','');await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+this.token},body:JSON.stringify({receiver_id:uid,message:txt})});return{success:true}},onMessage:function(cb){this._cb=cb},logout:async function(){}};
+
 function toggleSidebar(){var s=document.getElementById("sidebar");s.classList.toggle("open");document.getElementById("sidebarOverlay").classList.toggle("hidden")}
 function openCalc(){document.getElementById('calcWidget').classList.remove('hidden');document.getElementById('calcButton').classList.add('hidden');}
 function closeCalc(){document.getElementById('calcWidget').classList.add('hidden');document.getElementById('calcButton').classList.remove('hidden');}
@@ -810,6 +812,5 @@ document.addEventListener('keydown',function(e){if(document.getElementById('calc
         </div>
     </div>
 </div>
-<script src="/openim-chat.js"></script>
 </body>
 </html>
