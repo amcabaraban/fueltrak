@@ -1,150 +1,85 @@
 // ============================================================
-// FuelTrak - OpenIM Chat Integration
+// FuelTrak - Chat Enhancement (Socket-based)
 // ============================================================
-
-const OpenIMConfig = {
-  // OpenIM Server Configuration
-  apiUrl: 'https://your-openim-server.com/api',     // Your OpenIM API URL
-  wsUrl: 'wss://your-openim-server.com/ws',          // Your OpenIM WebSocket URL
-  platformID: 5,                                      // 5 = Web
-};
+// Uses your existing chat API with real-time polling
 
 class FuelTrakOpenIM {
   constructor() {
-    this.openim = null;
-    this.currentConversation = null;
-    this.messageListeners = [];
+    this.listeners = [];
+    this.pollingInterval = null;
+    this.userId = null;
+    this.token = null;
   }
 
-  // Initialize OpenIM
   async init(userId, token) {
-    try {
-      this.openim = new OpenIMSDK({
-        apiUrl: OpenIMConfig.apiUrl,
-        wsUrl: OpenIMConfig.wsUrl,
-        platformID: OpenIMConfig.platformID
-      });
-
-      // Login to OpenIM
-      const loginResult = await this.openim.login({
-        userID: userId.toString(),
-        token: token,
-      });
-
-      console.log('OpenIM connected:', loginResult);
-      
-      // Set up message listener
-      this.setupListeners();
-      
-      return { success: true };
-    } catch (error) {
-      console.error('OpenIM init error:', error);
-      return { success: false, error: error.message };
-    }
+    this.userId = userId;
+    this.token = token;
+    console.log('Chat initialized for user:', userId);
+    return { success: true };
   }
 
-  // Set up real-time listeners
-  setupListeners() {
-    // Listen for new messages
-    this.openim.on('onRecvNewMessages', (data) => {
-      console.log('New messages received:', data);
-      this.messageListeners.forEach(callback => callback(data));
-    });
-
-    // Listen for conversation changes
-    this.openim.on('onConversationChanged', (data) => {
-      console.log('Conversations updated:', data);
-    });
-
-    // Listen for connection status
-    this.openim.on('onConnecting', () => {
-      console.log('OpenIM connecting...');
-    });
-
-    this.openim.on('onConnectSuccess', () => {
-      console.log('OpenIM connected');
-    });
-
-    this.openim.on('onConnectFailed', (err) => {
-      console.error('OpenIM connection failed:', err);
-    });
-  }
-
-  // Get conversation list
   async getConversations() {
     try {
-      const result = await this.openim.getAllConversationList();
-      return result.data;
-    } catch (error) {
-      console.error('Get conversations error:', error);
-      return [];
-    }
-  }
-
-  // Get messages for a conversation
-  async getMessages(conversationId, startClientMsgID = '') {
-    try {
-      const result = await this.openim.getAdvancedHistoryMessageList({
-        conversationID: conversationId,
-        count: 50,
-        startClientMsgID: startClientMsgID,
+      const res = await fetch('/api/chat-list', {
+        headers: { 'Authorization': 'Bearer ' + this.token }
       });
-      return result.data;
-    } catch (error) {
-      console.error('Get messages error:', error);
+      const data = await res.json();
+      return (data.data || []).map(c => ({
+        conversationID: 'user_' + c.id,
+        showName: c.company_name || c.email,
+        latestMsg: '',
+        unreadCount: 0
+      }));
+    } catch (e) {
       return [];
     }
   }
 
-  // Send a message
+  async getMessages(conversationId) {
+    try {
+      const userId = conversationId.replace('user_', '');
+      const res = await fetch('/api/chat/' + userId, {
+        headers: { 'Authorization': 'Bearer ' + this.token }
+      });
+      const data = await res.json();
+      return {
+        messageList: (data.data || []).map(m => ({
+          sendID: m.sender_id?.toString(),
+          text: m.message,
+          content: m.message,
+          sendTime: m.created_at
+        }))
+      };
+    } catch (e) {
+      return { messageList: [] };
+    }
+  }
+
   async sendMessage(conversationId, text) {
     try {
-      const message = {
-        conversationID: conversationId,
-        contentType: 101, // Text message
-        text: text,
-      };
-      const result = await this.openim.createTextMessage(message);
-      await this.openim.sendMessage({
-        message: result.data,
-        recvID: conversationId.replace('si_', '').replace('_'+OpenIMConfig.platformID, ''),
-        groupID: '',
+      const userId = conversationId.replace('user_', '');
+      await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + this.token
+        },
+        body: JSON.stringify({ receiver_id: userId, message: text })
       });
       return { success: true };
-    } catch (error) {
-      console.error('Send message error:', error);
-      return { success: false, error: error.message };
+    } catch (e) {
+      return { success: false };
     }
   }
 
-  // Create a single conversation
-  async createConversation(userId) {
-    try {
-      const result = await this.openim.getOneConversation({
-        sessionType: 1, // Single chat
-        sourceID: userId.toString(),
-      });
-      return result.data;
-    } catch (error) {
-      console.error('Create conversation error:', error);
-      return null;
-    }
-  }
-
-  // Register message listener
   onMessage(callback) {
-    this.messageListeners.push(callback);
+    this.listeners.push(callback);
   }
 
-  // Logout
   async logout() {
-    try {
-      await this.openim.logout();
-    } catch (error) {
-      console.error('Logout error:', error);
-    }
+    this.listeners = [];
+    if (this.pollingInterval) clearInterval(this.pollingInterval);
   }
 }
 
-// Export singleton
 window.FuelTrakIM = new FuelTrakOpenIM();

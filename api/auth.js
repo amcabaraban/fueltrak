@@ -214,20 +214,20 @@ app.use((req,res,next)=>{const r=detectWAF(req); if(r.blocked){logger.warn('WAF 
 // ============ OPENIM INTEGRATION ============
 app.get('/api/chat/openim-token', authenticate, async (req, res) => {
   try {
-    // Generate or fetch OpenIM token for this user
     const [users] = await pool.execute('SELECT id, email, openim_token FROM users WHERE id = ?', [req.user.id]);
     
     if (!users.length) return res.status(404).json({ error: 'User not found' });
     
     let openimToken = users[0].openim_token;
     
-    // If no token exists, generate one
+    // Generate a simple token if none exists
     if (!openimToken) {
       openimToken = jwt.sign(
-        { id: req.user.id, email: req.user.email, platform: 'openim' },
+        { id: req.user.id, email: req.user.email },
         process.env.JWT_SECRET,
         { expiresIn: '30d' }
       );
+      // Store it for future use
       await pool.execute('UPDATE users SET openim_token = ? WHERE id = ?', [openimToken, req.user.id]);
     }
     
@@ -235,9 +235,7 @@ app.get('/api/chat/openim-token', authenticate, async (req, res) => {
       status: 'success',
       data: {
         userId: req.user.id.toString(),
-        token: openimToken,
-        apiUrl: process.env.OPENIM_API_URL || 'https://your-openim-server.com/api',
-        wsUrl: process.env.OPENIM_WS_URL || 'wss://your-openim-server.com/ws'
+        token: openimToken
       }
     });
   } catch (error) {

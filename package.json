@@ -31,6 +31,8 @@
         "mysql2": "3.22.5",
         "node-cache": "^5.1.2",
         "nodemailer": "^9.0.3",
+        "open-im-sdk-wasm": "^3.8.0",
+        "openim-uniapp-polyfill": "^1.4.5",
         "pdfkit": "^0.19.1",
         "redis": "^6.1.0",
         "sequelize": "^6.37.8",
