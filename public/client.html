@@ -1695,6 +1695,7 @@
         if (chatInterval) clearInterval(chatInterval);
       }
       // Background polling for unread messages - show badge and notification
+      // Background polling - check every 30 seconds (reduced from 15)
         setInterval(async function(){
             if(document.getElementById('chatWidget').classList.contains('hidden')){
                 try {
@@ -1703,21 +1704,16 @@
                     });
                     var d = await r.json();
                     var badge = document.getElementById('unreadBadge');
+                    // Check for unread property (not data)
                     if(d.status === 'success' && d.unread > 0){
                         badge.textContent = d.unread > 9 ? '9+' : d.unread;
                         badge.classList.remove('hidden');
-                        // Show notification for background unread messages
-                        showChatNotification(
-                            'FuelTrak - New Messages',
-                            'You have ' + d.unread + ' unread message' + (d.unread > 1 ? 's' : ''),
-                            '/favicon.svg'
-                        );
                     } else {
                         badge.classList.add('hidden');
                     }
                 } catch(e) {}
             }
-        }, 15000);
+        }, 30000); // Changed from 15000 to 30000 (30 seconds)
       document.getElementById("volume").addEventListener("input", function () {
         var sb = document.getElementById("submitBtn"),
           v = parseFloat(this.value),

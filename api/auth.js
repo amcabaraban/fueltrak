@@ -140,6 +140,7 @@ app.use('/api/', generalLimiter);
 app.use('/api/', fingerprintLimiter);
 app.use('/api/chat', (req, res, next) => next());
 app.use('/api/chat-list', (req, res, next) => next());
+app.use('/api/chat/unread', (req, res, next) => next());
 app.use('/api/auth/login', strictLimiter);
 app.use('/api/auth/register', strictLimiter);
 app.use('/api/auth/forgot-password', strictLimiter);
@@ -360,7 +361,15 @@ app.delete('/api/sales-orders/:id', authenticate, authorize('dispatcher','manage
 app.get('/api/chat-list', authenticate, async (req, res) => { try { let u; if(req.user.role==='client'){[u]=await pool.execute("SELECT id,email FROM users WHERE role IN ('dispatcher','management') LIMIT 5");}else{[u]=await pool.execute("SELECT id,email FROM users WHERE role='client' ORDER BY company_name LIMIT 50");if(!u.length)[u]=await pool.execute("SELECT id,email FROM users WHERE role='client' LIMIT 50");} res.json({status:'success',data:u}); } catch(e) { res.status(500).json({error:e.message}); } });
 app.get('/api/chat/:clientId', authenticate, async (req, res) => { try { const [m]=await pool.execute('SELECT cm.*,u.email as sender_email FROM chat_messages cm JOIN users u ON cm.sender_id=u.id WHERE (cm.sender_id=? AND cm.receiver_id=?) OR (cm.sender_id=? AND cm.receiver_id=?) ORDER BY cm.created_at ASC LIMIT 50',[req.user.id,req.params.clientId,req.params.clientId,req.user.id]); res.json({status:'success',data:m}); } catch(e) { res.status(500).json({error:e.message}); } });
 app.post('/api/chat', authenticate, async (req, res) => { try { await pool.execute('INSERT INTO chat_messages (sender_id,receiver_id,message) VALUES (?,?,?)',[req.user.id,req.body.receiver_id,req.body.message]); res.json({status:'success',message:'Sent'}); } catch(e) { res.status(400).json({error:e.message}); } });
-app.get('/api/chat/unread', authenticate, async (req, res) => { try { const [r]=await pool.execute("SELECT COUNT(*) as unread FROM chat_messages WHERE receiver_id=? AND created_at>COALESCE((SELECT last_read FROM chat_reads WHERE user_id=?),'1970-01-01')",[req.user.id,req.user.id]); res.json({status:'success',unread:r[0].unread}); } catch(e) { res.status(500).json({error:e.message}); } });
+app.get('/api/chat/unread', authenticate, async (req, res) => {
+  try {
+    const [result] = await pool.execute(
+      "SELECT COUNT(*) as unread FROM chat_messages WHERE receiver_id = ? AND created_at > COALESCE((SELECT last_read FROM chat_reads WHERE user_id = ?), '1970-01-01')",
+      [req.user.id, req.user.id]
+    );
+    res.json({ status: 'success', unread: result[0].unread });
+  } catch (error) { res.status(500).json({ error: error.message }); }
+});
 
 // Reports
 app.get('/api/reports/filters', authenticate, authorize('dispatcher','management'), async (req, res) => { try { const [cl]=await pool.execute("SELECT id,email,company_name FROM users WHERE role='client'"); const [tr]=await pool.execute('SELECT id,plate_no,make FROM trucks'); res.json({status:'success',data:{clients:cl.map(c=>({id:c.id,label:(c.company_name||c.email)+' ('+c.email+')'})),trucks:tr.map(t=>({id:t.id,label:t.plate_no+' - '+t.make}))}}); } catch(e) { res.status(500).json({error:e.message}); } });
