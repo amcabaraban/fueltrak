@@ -197,23 +197,39 @@
   </div>
  </div>
 
- <!-- Chat Widget -->
- <div id="chatWidget" class="hidden fixed bottom-4 right-4 z-50 w-80 bg-white rounded-xl shadow-2xl border">
+<!-- OpenIM Chat Widget -->
+<div id="openimChatWidget" class="hidden fixed bottom-4 right-4 z-50 w-96 h-[500px] bg-white rounded-xl shadow-2xl border flex flex-col">
   <div class="bg-blue-900 text-white p-3 rounded-t-xl flex justify-between items-center">
-   <span><i class="fas fa-comments mr-2"></i><span id="chatTitle">Chat</span></span>
-   <div><button onclick="showContactList()" class="text-white mr-2 text-sm"><i class="fas fa-users"></i></button><button onclick="closeChat()" class="text-white">&times;</button></div>
+    <span><i class="fas fa-comments mr-2"></i><span id="imChatTitle">Messages</span></span>
+    <div>
+      <button onclick="IMToggleView('contacts')" class="text-white mr-2 text-sm"><i class="fas fa-users"></i></button>
+      <button onclick="closeOpenIMChat()" class="text-white">&times;</button>
+    </div>
   </div>
-  <div id="contactList" class="h-64 overflow-y-auto"><div class="p-3 text-center text-gray-400 text-sm">Loading contacts...</div></div>
-  <div id="chatBody" class="hidden h-64 overflow-y-auto p-3 space-y-2"></div>
-  <div id="chatInputArea" class="hidden p-2 border-t flex gap-2">
-   <input type="text" id="chatInput" placeholder="Type message..." class="flex-1 px-2 py-1 border rounded text-sm" onkeypress="if(event.key==='Enter')sendChat()">
-   <button onclick="sendChat()" class="bg-blue-900 text-white px-3 py-1 rounded text-sm"><i class="fas fa-paper-plane"></i></button>
+  
+  <!-- Contact List -->
+  <div id="imContactList" class="flex-1 overflow-y-auto">
+    <div class="p-3 text-center text-gray-400 text-sm">Loading contacts...</div>
   </div>
- </div>
- <button onclick="openChat()" class="fixed bottom-4 right-4 z-50 bg-blue-900 text-white p-3 rounded-full shadow-lg hover:bg-blue-800" id="chatButton">
+  
+  <!-- Chat Messages -->
+  <div id="imChatBody" class="hidden flex-1 overflow-y-auto p-3 space-y-2 bg-gray-50">
+    <div class="text-center text-gray-400 text-sm pt-10">Start the conversation!</div>
+  </div>
+  
+  <!-- Message Input -->
+  <div id="imChatInput" class="hidden p-3 border-t flex gap-2 bg-white">
+    <input type="text" id="imMessageInput" placeholder="Type message..." class="flex-1 px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500" onkeypress="if(event.key==='Enter')IMSendMessage()">
+    <button onclick="IMSendMessage()" class="bg-blue-900 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-800">
+      <i class="fas fa-paper-plane"></i>
+    </button>
+  </div>
+</div>
+
+<button onclick="openOpenIMChat()" class="fixed bottom-4 right-4 z-50 bg-blue-900 text-white p-3 rounded-full shadow-lg hover:bg-blue-800" id="imChatButton">
   <i class="fas fa-comments"></i>
-  <span id="unreadBadge" class="hidden absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">0</span>
- </button>
+  <span id="imUnreadBadge" class="hidden absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">0</span>
+</button>
 
 <script>
 const API = '/api';
@@ -753,6 +769,165 @@ function exportClientCSV() {
  var csv = 'ATL Code,SO#,Plate,Driver,Volume,SI,Status,Date\n';
  document.querySelectorAll('#reportTableBody tr').forEach(function(row) { if(row.cells.length>1){ var c=row.cells; csv+='"'+c[0].textContent+'","'+c[1].textContent+'","'+c[3].textContent+'","'+c[4].textContent+'","'+c[5].textContent+'","'+c[6].textContent+'","'+c[7].textContent+'","'+c[8].textContent+'"\n'; }});
  var blob=new Blob([csv],{type:'text/csv'}); var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='client-report-'+new Date().toISOString().split('T')[0]+'.csv'; a.click();
+}
+
+// ============ OPENIM CHAT FUNCTIONS ============
+let imInitialized = false;
+let imConversations = [];
+let imCurrentConv = null;
+let imCurrentUser = null;
+
+async function openOpenIMChat() {
+  document.getElementById('openimChatWidget').classList.remove('hidden');
+  document.getElementById('imChatButton').classList.add('hidden');
+  
+  if (!imInitialized) {
+    await initOpenIM();
+  }
+  
+  await loadIMConversations();
+  showIMContactList();
+}
+
+async function initOpenIM() {
+  try {
+    // Get OpenIM token from your API
+    const response = await fetch('/api/chat/openim-token', {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    const data = await response.json();
+    
+    if (data.status === 'success') {
+      await FuelTrakIM.init(data.data.userId, data.data.token);
+      
+      // Set up message listener
+      FuelTrakIM.onMessage((messages) => {
+        if (imCurrentUser) {
+          loadIMMessages(imCurrentUser);
+        }
+        updateIMUnreadBadge();
+      });
+      
+      imInitialized = true;
+    }
+  } catch (error) {
+    console.error('OpenIM init error:', error);
+  }
+}
+
+async function loadIMConversations() {
+  try {
+    imConversations = await FuelTrakIM.getConversations();
+    renderIMContactList();
+  } catch (error) {
+    console.error('Load conversations error:', error);
+  }
+}
+
+function renderIMContactList() {
+  const container = document.getElementById('imContactList');
+  
+  if (!imConversations.length) {
+    container.innerHTML = '<div class="p-3 text-center text-gray-400 text-sm">No conversations yet</div>';
+    return;
+  }
+  
+  container.innerHTML = imConversations.map(conv => `
+    <div onclick="openIMConversation('${conv.conversationID}', '${conv.showName || 'User'}')" 
+         class="flex items-center p-3 hover:bg-gray-50 cursor-pointer border-b">
+      <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+        <i class="fas fa-user text-blue-600"></i>
+      </div>
+      <div class="flex-1 min-w-0">
+        <p class="text-sm font-semibold truncate">${conv.showName || 'User'}</p>
+        <p class="text-xs text-gray-400 truncate">${conv.latestMsg || 'No messages'}</p>
+      </div>
+      ${conv.unreadCount > 0 ? `<span class="bg-red-500 text-white text-xs rounded-full px-2 py-0.5">${conv.unreadCount}</span>` : ''}
+    </div>
+  `).join('');
+}
+
+async function openIMConversation(conversationId, userName) {
+  imCurrentConv = conversationId;
+  imCurrentUser = userName;
+  
+  document.getElementById('imChatTitle').textContent = userName;
+  document.getElementById('imContactList').classList.add('hidden');
+  document.getElementById('imChatBody').classList.remove('hidden');
+  document.getElementById('imChatInput').classList.remove('hidden');
+  
+  await loadIMMessages(userName);
+}
+
+async function loadIMMessages(userName) {
+  if (!imCurrentConv) return;
+  
+  try {
+    const messages = await FuelTrakIM.getMessages(imCurrentConv);
+    
+    const container = document.getElementById('imChatBody');
+    container.innerHTML = messages.messageList?.length 
+      ? messages.messageList.reverse().map(msg => {
+          const isMe = msg.sendID === (window.user?.id?.toString() || '');
+          return `<div class="${isMe ? 'text-right' : 'text-left'} mb-2">
+            <div class="inline-block ${isMe ? 'bg-blue-100' : 'bg-white'} rounded-lg px-3 py-2 text-sm max-w-[80%] shadow-sm">
+              <p class="text-[10px] text-gray-500">${isMe ? 'You' : (userName || 'User')}</p>
+              <p>${msg.text || msg.content || ''}</p>
+              <p class="text-[9px] text-gray-400 text-right">${new Date(msg.sendTime).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</p>
+            </div>
+          </div>`;
+        }).join('')
+      : '<p class="text-center text-gray-400 text-sm pt-10">Start the conversation!</p>';
+    
+    container.scrollTop = container.scrollHeight;
+  } catch (error) {
+    console.error('Load messages error:', error);
+  }
+}
+
+async function IMSendMessage() {
+  const input = document.getElementById('imMessageInput');
+  const text = input.value.trim();
+  
+  if (!text || !imCurrentConv) return;
+  
+  input.value = '';
+  
+  const result = await FuelTrakIM.sendMessage(imCurrentConv, text);
+  
+  if (result.success) {
+    await loadIMMessages(imCurrentUser);
+  }
+}
+
+function showIMContactList() {
+  document.getElementById('imContactList').classList.remove('hidden');
+  document.getElementById('imChatBody').classList.add('hidden');
+  document.getElementById('imChatInput').classList.add('hidden');
+  imCurrentConv = null;
+  imCurrentUser = null;
+}
+
+function IMToggleView(view) {
+  if (view === 'contacts') {
+    showIMContactList();
+  }
+}
+
+function closeOpenIMChat() {
+  document.getElementById('openimChatWidget').classList.add('hidden');
+  document.getElementById('imChatButton').classList.remove('hidden');
+}
+
+function updateIMUnreadBadge() {
+  const total = imConversations.reduce((sum, c) => sum + (c.unreadCount || 0), 0);
+  const badge = document.getElementById('imUnreadBadge');
+  if (total > 0) {
+    badge.textContent = total > 99 ? '99+' : total;
+    badge.classList.remove('hidden');
+  } else {
+    badge.classList.add('hidden');
+  }
 }
 
 // ============ CHAT ============

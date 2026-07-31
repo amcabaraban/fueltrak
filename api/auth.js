@@ -211,6 +211,40 @@ const WAF_PATTERNS = { sqli: /(\bUNION\s+SELECT\b|\bSELECT\s+.*\s+FROM\b.*--|\bI
 function detectWAF(req) { const url=req.originalUrl||req.url||'',ua=req.headers['user-agent']||''; for(const [t,p] of Object.entries(WAF_PATTERNS)){ if(p.test(url)||p.test(ua)) return {blocked:true,type:t}; } return {blocked:false}; }
 app.use((req,res,next)=>{const r=detectWAF(req); if(r.blocked){logger.warn('WAF blocked',{ip:req.ip,type:r.type,path:req.path});return res.status(403).json({error:'Request blocked by WAF'});} next();});
 
+// ============ OPENIM INTEGRATION ============
+app.get('/api/chat/openim-token', authenticate, async (req, res) => {
+  try {
+    // Generate or fetch OpenIM token for this user
+    const [users] = await pool.execute('SELECT id, email, openim_token FROM users WHERE id = ?', [req.user.id]);
+    
+    if (!users.length) return res.status(404).json({ error: 'User not found' });
+    
+    let openimToken = users[0].openim_token;
+    
+    // If no token exists, generate one
+    if (!openimToken) {
+      openimToken = jwt.sign(
+        { id: req.user.id, email: req.user.email, platform: 'openim' },
+        process.env.JWT_SECRET,
+        { expiresIn: '30d' }
+      );
+      await pool.execute('UPDATE users SET openim_token = ? WHERE id = ?', [openimToken, req.user.id]);
+    }
+    
+    res.json({
+      status: 'success',
+      data: {
+        userId: req.user.id.toString(),
+        token: openimToken,
+        apiUrl: process.env.OPENIM_API_URL || 'https://your-openim-server.com/api',
+        wsUrl: process.env.OPENIM_WS_URL || 'wss://your-openim-server.com/ws'
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // ============================================================
 // AUTH ROUTES
 // ============================================================
