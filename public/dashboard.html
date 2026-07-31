@@ -12,6 +12,8 @@
         .stat-card:hover { transform: translateY(-3px); box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
         .progress-bar { transition: width 0.5s ease; }
         #sidebar{transition:transform 0.3s}
+        @keyframes badgePulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.3)} }
+        #unreadBadge:not(.hidden){animation:badgePulse 0.5s ease-out}
         @media(max-width:767px){#sidebar{display:none!important}#sidebarOverlay{display:none!important}body{padding-left:0!important;padding-bottom:70px}.mobile-bottom-nav{display:flex!important}}
         @media(min-width:768px){body{padding-left:176px}.mobile-bottom-nav{display:none!important}}
         .mobile-bottom-nav{display:flex;position:fixed;bottom:0;left:0;right:0;background:#1e3a5f;color:white;z-index:50;justify-content:space-around;padding:6px 0;box-shadow:0 -2px 10px rgba(0,0,0,0.3)}
@@ -37,12 +39,8 @@
     <!-- Desktop Sidebar -->
     <div class="fixed left-0 top-0 h-full w-14 md:w-48 bg-blue-900 text-white z-40 pt-16 overflow-y-auto no-print" id="sidebar" style="box-shadow:inset -2px 0 5px rgba(0,0,0,0.3),2px 0 10px rgba(0,0,0,0.2)">
         <a href="/dashboard" class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap shadow-[inset_0_2px_4px_rgba(255,255,255,0.1),inset_0_-2px_4px_rgba(0,0,0,0.2)]"><i class="fas fa-tachometer-alt w-6 text-center"></i><span class="hidden md:inline ml-2">Dashboard</span></a>
-        <a href="/adminclient" class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap shadow-[inset_0_2px_4px_rgba(255,255,255,0.1),inset_0_-2px_4px_rgba(0,0,0,0.2)]" title="Clients">
-            <i class="fas fa-users w-6 text-center"></i><span class="hidden md:inline ml-2">Clients</span>
-        </a>
-        <a href="/sales-orders" class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap shadow-[inset_0_2px_4px_rgba(255,255,255,0.1),inset_0_-2px_4px_rgba(0,0,0,0.2)]">
-            <i class="fas fa-file-invoice w-6 text-center"></i><span class="hidden md:inline ml-2">Sales Orders</span>
-        </a>
+        <a href="/adminclient" class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap shadow-[inset_0_2px_4px_rgba(255,255,255,0.1),inset_0_-2px_4px_rgba(0,0,0,0.2)]" title="Clients"><i class="fas fa-users w-6 text-center"></i><span class="hidden md:inline ml-2">Clients</span></a>
+        <a href="/sales-orders" class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap shadow-[inset_0_2px_4px_rgba(255,255,255,0.1),inset_0_-2px_4px_rgba(0,0,0,0.2)]"><i class="fas fa-file-invoice w-6 text-center"></i><span class="hidden md:inline ml-2">Sales Orders</span></a>
         <a href="/reports" class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap shadow-[inset_0_2px_4px_rgba(255,255,255,0.1),inset_0_-2px_4px_rgba(0,0,0,0.2)]"><i class="fas fa-chart-bar w-6 text-center"></i><span class="hidden md:inline ml-2">Reports</span></a>
         <a href="/trucks" class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap shadow-[inset_0_2px_4px_rgba(255,255,255,0.1),inset_0_-2px_4px_rgba(0,0,0,0.2)]"><i class="fas fa-truck w-6 text-center"></i><span class="hidden md:inline ml-2">Truck Masterlist</span></a>
         <a href="/docs-report" class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap shadow-[inset_0_2px_4px_rgba(255,255,255,0.1),inset_0_-2px_4px_rgba(0,0,0,0.2)]"><i class="fas fa-file-alt w-6 text-center"></i><span class="hidden md:inline ml-2">Doc Report</span></a>
@@ -66,7 +64,6 @@
     </div>
 
     <div id="sidebarOverlay" class="hidden fixed inset-0 bg-black bg-opacity-50 z-30" onclick="toggleSidebar()"></div>
-    
 
     <div class="max-w-7xl mx-auto px-4 py-8 w-full">
         <div id="dashboardView">
@@ -80,92 +77,73 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-6" id="docStats"></div>
             <h2 class="text-lg font-bold text-gray-800 mb-4">Quick Actions</h2>
             <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <button onclick="openTab('verify')" class="stat-card bg-gradient-to-br shadow-[0_6px_15px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.2)] hover:shadow-[0_8px_20px_rgba(0,0,0,0.4)] hover:translate-y-[-2px] shadow-[0_4px_15px_rgba(0,0,0,0.2)] from-yellow-400 to-yellow-500 text-white rounded-xl shadow-lg p-4 text-left w-full relative">
-                    <i class="fas fa-clipboard-check text-2xl mb-2"></i><h3 class="font-bold text-sm">Verify ATL</h3>
-                    <span id="pendingBadge" class="absolute top-2 right-2 bg-red-500 text-white text-xs w-6 h-6 rounded-full flex items-center justify-center font-bold hidden">0</span>
-                </button>
-                <button onclick="openTab('loading')" class="stat-card bg-gradient-to-br shadow-[0_6px_15px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.2)] hover:shadow-[0_8px_20px_rgba(0,0,0,0.4)] hover:translate-y-[-2px] shadow-[0_4px_15px_rgba(0,0,0,0.2)] from-blue-400 to-blue-500 text-white rounded-xl shadow-lg p-4 text-left w-full">
-                    <i class="fas fa-truck-loading text-2xl mb-2"></i><h3 class="font-bold text-sm">Loading</h3>
-                </button>
-                <a href="/trucks" class="stat-card bg-gradient-to-br shadow-[0_6px_15px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.2)] hover:shadow-[0_8px_20px_rgba(0,0,0,0.4)] hover:translate-y-[-2px] shadow-[0_4px_15px_rgba(0,0,0,0.2)] from-green-400 to-green-500 text-white rounded-xl shadow-lg p-4 block">
-                    <i class="fas fa-truck text-2xl mb-2"></i><h3 class="font-bold text-sm">Truck Masterlist</h3>
-                </a>
-                <button onclick="openTab('clients')" class="stat-card bg-gradient-to-br shadow-[0_6px_15px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.2)] hover:shadow-[0_8px_20px_rgba(0,0,0,0.4)] hover:translate-y-[-2px] shadow-[0_4px_15px_rgba(0,0,0,0.2)] from-purple-400 to-purple-500 text-white rounded-xl shadow-lg p-4 text-left w-full">
-                    <i class="fas fa-users text-2xl mb-2"></i><h3 class="font-bold text-sm">Clients</h3>
-                </button>
-                <a href="/ttsd-checklist" class="stat-card bg-gradient-to-br shadow-[0_6px_15px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.2)] hover:shadow-[0_8px_20px_rgba(0,0,0,0.4)] hover:translate-y-[-2px] shadow-[0_4px_15px_rgba(0,0,0,0.2)] from-cyan-400 to-cyan-500 text-white rounded-xl shadow-lg p-4 block">
-                    <i class="fas fa-clipboard-check text-2xl mb-2"></i><h3 class="font-bold text-sm">TTSD Checklist</h3>
-                </a>
-                <a href="/reports" class="stat-card bg-gradient-to-br shadow-[0_6px_15px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.2)] hover:shadow-[0_8px_20px_rgba(0,0,0,0.4)] hover:translate-y-[-2px] shadow-[0_4px_15px_rgba(0,0,0,0.2)] from-teal-400 to-teal-500 text-white rounded-xl shadow-lg p-4 block">
-                    <i class="fas fa-chart-bar text-2xl mb-2"></i><h3 class="font-bold text-sm">Reports</h3>
-                </a>
-                <a href="/docs-report" class="stat-card bg-gradient-to-br shadow-[0_6px_15px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.2)] hover:shadow-[0_8px_20px_rgba(0,0,0,0.4)] hover:translate-y-[-2px] shadow-[0_4px_15px_rgba(0,0,0,0.2)] from-orange-400 to-orange-500 text-white rounded-xl shadow-lg p-4 block">
-                    <i class="fas fa-file-alt text-2xl mb-2"></i><h3 class="font-bold text-sm">Doc Report</h3>
-                </a>
-                <a href="/audit-logs" class="stat-card bg-gradient-to-br shadow-[0_6px_15px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.2)] hover:shadow-[0_8px_20px_rgba(0,0,0,0.4)] hover:translate-y-[-2px] shadow-[0_4px_15px_rgba(0,0,0,0.2)] from-gray-600 to-gray-700 text-white rounded-xl shadow-lg p-4 block">
-                    <i class="fas fa-history text-2xl mb-2"></i><h3 class="font-bold text-sm">Audit Logs</h3>
-                </a>
+                <button onclick="openTab('verify')" class="stat-card bg-gradient-to-br shadow-[0_6px_15px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.2)] hover:shadow-[0_8px_20px_rgba(0,0,0,0.4)] hover:translate-y-[-2px] shadow-[0_4px_15px_rgba(0,0,0,0.2)] from-yellow-400 to-yellow-500 text-white rounded-xl shadow-lg p-4 text-left w-full relative"><i class="fas fa-clipboard-check text-2xl mb-2"></i><h3 class="font-bold text-sm">Verify ATL</h3><span id="pendingBadge" class="absolute top-2 right-2 bg-red-500 text-white text-xs w-6 h-6 rounded-full flex items-center justify-center font-bold hidden">0</span></button>
+                <button onclick="openTab('loading')" class="stat-card bg-gradient-to-br shadow-[0_6px_15px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.2)] hover:shadow-[0_8px_20px_rgba(0,0,0,0.4)] hover:translate-y-[-2px] shadow-[0_4px_15px_rgba(0,0,0,0.2)] from-blue-400 to-blue-500 text-white rounded-xl shadow-lg p-4 text-left w-full"><i class="fas fa-truck-loading text-2xl mb-2"></i><h3 class="font-bold text-sm">Loading</h3></button>
+                <a href="/trucks" class="stat-card bg-gradient-to-br shadow-[0_6px_15px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.2)] hover:shadow-[0_8px_20px_rgba(0,0,0,0.4)] hover:translate-y-[-2px] shadow-[0_4px_15px_rgba(0,0,0,0.2)] from-green-400 to-green-500 text-white rounded-xl shadow-lg p-4 block"><i class="fas fa-truck text-2xl mb-2"></i><h3 class="font-bold text-sm">Truck Masterlist</h3></a>
+                <button onclick="openTab('clients')" class="stat-card bg-gradient-to-br shadow-[0_6px_15px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.2)] hover:shadow-[0_8px_20px_rgba(0,0,0,0.4)] hover:translate-y-[-2px] shadow-[0_4px_15px_rgba(0,0,0,0.2)] from-purple-400 to-purple-500 text-white rounded-xl shadow-lg p-4 text-left w-full"><i class="fas fa-users text-2xl mb-2"></i><h3 class="font-bold text-sm">Clients</h3></button>
+                <a href="/ttsd-checklist" class="stat-card bg-gradient-to-br shadow-[0_6px_15px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.2)] hover:shadow-[0_8px_20px_rgba(0,0,0,0.4)] hover:translate-y-[-2px] shadow-[0_4px_15px_rgba(0,0,0,0.2)] from-cyan-400 to-cyan-500 text-white rounded-xl shadow-lg p-4 block"><i class="fas fa-clipboard-check text-2xl mb-2"></i><h3 class="font-bold text-sm">TTSD Checklist</h3></a>
+                <a href="/reports" class="stat-card bg-gradient-to-br shadow-[0_6px_15px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.2)] hover:shadow-[0_8px_20px_rgba(0,0,0,0.4)] hover:translate-y-[-2px] shadow-[0_4px_15px_rgba(0,0,0,0.2)] from-teal-400 to-teal-500 text-white rounded-xl shadow-lg p-4 block"><i class="fas fa-chart-bar text-2xl mb-2"></i><h3 class="font-bold text-sm">Reports</h3></a>
+                <a href="/docs-report" class="stat-card bg-gradient-to-br shadow-[0_6px_15px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.2)] hover:shadow-[0_8px_20px_rgba(0,0,0,0.4)] hover:translate-y-[-2px] shadow-[0_4px_15px_rgba(0,0,0,0.2)] from-orange-400 to-orange-500 text-white rounded-xl shadow-lg p-4 block"><i class="fas fa-file-alt text-2xl mb-2"></i><h3 class="font-bold text-sm">Doc Report</h3></a>
+                <a href="/audit-logs" class="stat-card bg-gradient-to-br shadow-[0_6px_15px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.2)] hover:shadow-[0_8px_20px_rgba(0,0,0,0.4)] hover:translate-y-[-2px] shadow-[0_4px_15px_rgba(0,0,0,0.2)] from-gray-600 to-gray-700 text-white rounded-xl shadow-lg p-4 block"><i class="fas fa-history text-2xl mb-2"></i><h3 class="font-bold text-sm">Audit Logs</h3></a>
             </div>
         </div>
 
-        <div id="tabVerify" class="hidden">
-            <div class="flex items-center mb-4"><button onclick="showDashboard()" class="text-gray-500 hover:text-gray-700 mr-3"><i class="fas fa-arrow-left text-xl"></i></button><h2 class="text-xl font-bold">Pending ATL Verifications</h2></div>
-            <div class="bg-white rounded-lg shadow-[0_4px_10px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.5)] p-3 mb-4">
-                <input type="text" id="pendingSearch" placeholder="Search plate, company..." class="w-full px-3 py-2 border rounded shadow-[inset_0_2px_4px_rgba(0,0,0,0.1)] text-sm" oninput="filterPending()">
-            </div>
-            <div id="pendingATLs" class="space-y-3"></div>
-        </div>
-
-        <div id="tabLoading" class="hidden">
-            <div class="flex items-center mb-4"><button onclick="showDashboard()" class="text-gray-500 hover:text-gray-700 mr-3"><i class="fas fa-arrow-left text-xl"></i></button><h2 class="text-xl font-bold">Loading Management</h2></div>
-            <div class="mb-8"><h3 class="text-lg font-semibold text-orange-700 mb-3">Ongoing Loading</h3><div id="ongoingLoading" class="space-y-3"></div></div>
-            <div><h3 class="text-lg font-semibold text-blue-700 mb-3">Approved - Waiting</h3><div id="approvedForLoading" class="space-y-3"></div></div>
-        </div>
-
-        <div id="tabTrucks" class="hidden">
-            <div class="flex items-center justify-between mb-4"><div class="flex items-center"><button onclick="showDashboard()" class="text-gray-500 hover:text-gray-700 mr-3"><i class="fas fa-arrow-left text-xl"></i></button><h2 class="text-xl font-bold">Truck Management</h2></div></div>
-            <div id="truckList"></div>
-        </div>
-
-        <div id="tabClients" class="hidden">
-            <div class="flex items-center justify-between mb-4"><div class="flex items-center"><button onclick="showDashboard()" class="text-gray-500 hover:text-gray-700 mr-3"><i class="fas fa-arrow-left text-xl"></i></button><h2 class="text-xl font-bold">Client Management</h2></div><button onclick="showAddClient()" class="bg-green-600 text-white px-4 py-2 rounded text-sm">+ Add Client</button></div>
-            <div id="clientList"></div>
-        </div>
+        <div id="tabVerify" class="hidden"><div class="flex items-center mb-4"><button onclick="showDashboard()" class="text-gray-500 hover:text-gray-700 mr-3"><i class="fas fa-arrow-left text-xl"></i></button><h2 class="text-xl font-bold">Pending ATL Verifications</h2></div><div class="bg-white rounded-lg shadow-[0_4px_10px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.5)] p-3 mb-4"><input type="text" id="pendingSearch" placeholder="Search plate, company..." class="w-full px-3 py-2 border rounded shadow-[inset_0_2px_4px_rgba(0,0,0,0.1)] text-sm" oninput="filterPending()"></div><div id="pendingATLs" class="space-y-3"></div></div>
+        <div id="tabLoading" class="hidden"><div class="flex items-center mb-4"><button onclick="showDashboard()" class="text-gray-500 hover:text-gray-700 mr-3"><i class="fas fa-arrow-left text-xl"></i></button><h2 class="text-xl font-bold">Loading Management</h2></div><div class="mb-8"><h3 class="text-lg font-semibold text-orange-700 mb-3">Ongoing Loading</h3><div id="ongoingLoading" class="space-y-3"></div></div><div><h3 class="text-lg font-semibold text-blue-700 mb-3">Approved - Waiting</h3><div id="approvedForLoading" class="space-y-3"></div></div></div>
+        <div id="tabTrucks" class="hidden"><div class="flex items-center justify-between mb-4"><div class="flex items-center"><button onclick="showDashboard()" class="text-gray-500 hover:text-gray-700 mr-3"><i class="fas fa-arrow-left text-xl"></i></button><h2 class="text-xl font-bold">Truck Management</h2></div></div><div id="truckList"></div></div>
+        <div id="tabClients" class="hidden"><div class="flex items-center justify-between mb-4"><div class="flex items-center"><button onclick="showDashboard()" class="text-gray-500 hover:text-gray-700 mr-3"><i class="fas fa-arrow-left text-xl"></i></button><h2 class="text-xl font-bold">Client Management</h2></div><button onclick="showAddClient()" class="bg-green-600 text-white px-4 py-2 rounded text-sm">+ Add Client</button></div><div id="clientList"></div></div>
     </div>
 </div>
 
+<!-- Chat Widget -->
 <div id="chatWidget" class="hidden fixed bottom-4 right-4 z-50 w-80 bg-white rounded-xl shadow-2xl border">
-    <div class="bg-blue-900 text-white p-3 rounded-t-xl flex justify-between items-center">
-        <span><i class="fas fa-comments mr-2"></i><span id="chatTitle">Chat</span></span>
-        <div>
-            <button onclick="showContactList()" class="text-white mr-2 text-sm"><i class="fas fa-users"></i></button>
-            <button onclick="closeChat()" class="text-white">&times;</button>
-        </div>
-    </div>
+    <div class="bg-blue-900 text-white p-3 rounded-t-xl flex justify-between items-center"><span><i class="fas fa-comments mr-2"></i><span id="chatTitle">Chat</span></span><div><button onclick="showContactList()" class="text-white mr-2 text-sm"><i class="fas fa-users"></i></button><button onclick="closeChat()" class="text-white">&times;</button></div></div>
     <div id="contactList" class="h-64 overflow-y-auto"><div class="p-3 text-center text-gray-400 text-sm">Loading contacts...</div></div>
     <div id="chatBody" class="hidden h-64 overflow-y-auto p-3 space-y-2"></div>
-    <div id="chatInputArea" class="hidden p-2 border-t flex gap-2">
-        <input type="text" id="chatInput" placeholder="Type message..." class="flex-1 px-2 py-1 border rounded text-sm" onkeypress="if(event.key==='Enter')sendChat()">
-        <button onclick="sendChat()" class="bg-blue-900 text-white px-3 py-1 rounded text-sm"><i class="fas fa-paper-plane"></i></button>
-    </div>
+    <div id="chatInputArea" class="hidden p-2 border-t flex gap-2"><input type="text" id="chatInput" placeholder="Type message..." class="flex-1 px-2 py-1 border rounded text-sm" onkeypress="if(event.key==='Enter')sendChat()"><button onclick="sendChat()" class="bg-blue-900 text-white px-3 py-1 rounded text-sm"><i class="fas fa-paper-plane"></i></button></div>
 </div>
 <button onclick="openChat()" class="fixed bottom-4 right-4 z-50 bg-blue-900 text-white p-3 rounded-full shadow-lg hover:bg-blue-800" id="chatButton">
     <i class="fas fa-comments"></i>
     <span id="unreadBadge" class="hidden absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">0</span>
 </button>
 
+<!-- Floating Calculator -->
+<div id="calcWidget" class="hidden fixed bottom-20 right-4 z-50 w-72 bg-white rounded-xl shadow-2xl border">
+    <div class="bg-blue-900 text-white p-3 rounded-t-xl flex justify-between items-center cursor-pointer" onclick="toggleCalc()"><span><i class="fas fa-calculator mr-2"></i>Calculator</span><button onclick="event.stopPropagation();closeCalc()" class="text-white">&times;</button></div>
+    <div class="p-3"><input type="text" id="calcDisplay" class="w-full px-3 py-2 border rounded text-right text-xl font-mono mb-2" readonly value="0"><div class="grid grid-cols-4 gap-1"><button onclick="calcInput('7')" class="bg-gray-100 hover:bg-gray-200 py-2 rounded font-semibold">7</button><button onclick="calcInput('8')" class="bg-gray-100 hover:bg-gray-200 py-2 rounded font-semibold">8</button><button onclick="calcInput('9')" class="bg-gray-100 hover:bg-gray-200 py-2 rounded font-semibold">9</button><button onclick="calcInput('/')" class="bg-orange-100 hover:bg-orange-200 py-2 rounded font-semibold text-orange-700">/</button><button onclick="calcInput('4')" class="bg-gray-100 hover:bg-gray-200 py-2 rounded font-semibold">4</button><button onclick="calcInput('5')" class="bg-gray-100 hover:bg-gray-200 py-2 rounded font-semibold">5</button><button onclick="calcInput('6')" class="bg-gray-100 hover:bg-gray-200 py-2 rounded font-semibold">6</button><button onclick="calcInput('*')" class="bg-orange-100 hover:bg-orange-200 py-2 rounded font-semibold text-orange-700">*</button><button onclick="calcInput('1')" class="bg-gray-100 hover:bg-gray-200 py-2 rounded font-semibold">1</button><button onclick="calcInput('2')" class="bg-gray-100 hover:bg-gray-200 py-2 rounded font-semibold">2</button><button onclick="calcInput('3')" class="bg-gray-100 hover:bg-gray-200 py-2 rounded font-semibold">3</button><button onclick="calcInput('-')" class="bg-orange-100 hover:bg-orange-200 py-2 rounded font-semibold text-orange-700">-</button><button onclick="calcInput('0')" class="bg-gray-100 hover:bg-gray-200 py-2 rounded font-semibold">0</button><button onclick="calcInput('.')" class="bg-gray-100 hover:bg-gray-200 py-2 rounded font-semibold">.</button><button onclick="calcResult()" class="bg-blue-900 text-white hover:bg-blue-800 py-2 rounded font-semibold">=</button><button onclick="calcInput('+')" class="bg-orange-100 hover:bg-orange-200 py-2 rounded font-semibold text-orange-700">+</button></div><button onclick="calcClear()" class="w-full mt-1 bg-red-100 hover:bg-red-200 py-1 rounded text-red-700 text-sm">Clear</button></div>
+</div>
+<button onclick="openCalc()" class="fixed bottom-20 right-4 z-50 bg-green-600 text-white p-3 rounded-full shadow-lg hover:bg-green-700" id="calcButton"><i class="fas fa-calculator"></i></button>
+
+<!-- Document Report Modal -->
+<div id="docReportModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-5xl max-h-[85vh] flex flex-col">
+        <div class="flex items-center justify-between p-4 border-b"><h3 class="text-lg font-bold text-gray-800" id="docReportTitle"><i class="fas fa-file-alt mr-2 text-blue-600"></i>Document Report</h3><button onclick="closeDocReport()" class="text-gray-400 hover:text-gray-600 text-xl transition"><i class="fas fa-times"></i></button></div>
+        <div class="p-3 bg-gray-50 border-b space-y-2">
+            <div class="flex items-center gap-2"><div class="relative flex-1"><i class="fas fa-search absolute left-3 top-2.5 text-gray-400 text-sm"></i><input type="text" id="docSearchInput" class="w-full pl-9 pr-10 py-2 border border-gray-300 rounded-lg text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition" placeholder="Search by plate number, driver name, or hauler..." oninput="applyDocSearch()" autocomplete="off"><button id="docSearchClear" class="hidden absolute right-2 top-2 text-gray-400 hover:text-gray-600" onclick="clearDocSearch()"><i class="fas fa-times-circle"></i></button></div><span class="text-xs text-gray-400 whitespace-nowrap" id="docReportCount">0 trucks</span></div>
+            <div class="flex flex-wrap gap-2 items-center"><span class="text-xs text-gray-500">Status:</span><button onclick="filterDocReport('all')" class="doc-filter-btn px-3 py-1 rounded-full text-xs bg-blue-100 text-blue-700 hover:bg-blue-200 transition font-semibold" id="docFilterAll">All</button><button onclick="filterDocReport('valid')" class="doc-filter-btn px-3 py-1 rounded-full text-xs bg-gray-100 text-gray-600 hover:bg-green-100 hover:text-green-700 transition" id="docFilterValid">Valid</button><button onclick="filterDocReport('expired')" class="doc-filter-btn px-3 py-1 rounded-full text-xs bg-gray-100 text-gray-600 hover:bg-red-100 hover:text-red-700 transition" id="docFilterExpired">Expired</button><button onclick="filterDocReport('missing')" class="doc-filter-btn px-3 py-1 rounded-full text-xs bg-gray-100 text-gray-600 hover:bg-yellow-100 hover:text-yellow-700 transition" id="docFilterMissing">Missing</button></div>
+        </div>
+        <div class="overflow-auto flex-1 p-4"><table class="w-full text-sm border rounded-lg"><thead class="bg-gray-100 sticky top-0"><tr><th class="py-2 px-3 text-left">Plate No</th><th class="py-2 px-3 text-left">Driver</th><th class="py-2 px-3 text-left">Hauler</th><th class="py-2 px-3 text-center">LTO Registration</th><th class="py-2 px-3 text-center">Fire Permit</th><th class="py-2 px-3 text-center">DOST Calibration</th><th class="py-2 px-3 text-center">Make</th></tr></thead><tbody id="docReportBody"><tr><td colspan="7" class="text-center py-12 text-gray-400"><i class="fas fa-spinner fa-spin text-2xl mb-2 block"></i>Loading document data...</td></tr></tbody></table><div id="docNoResults" class="hidden text-center py-12 text-gray-400"><i class="fas fa-search text-3xl mb-2 block"></i><p>No trucks match your search</p><p class="text-xs mt-1">Try a different plate number, driver, or hauler</p></div></div>
+        <div class="p-3 border-t bg-gray-50 flex justify-between items-center"><span class="text-xs text-gray-400">Click outside or press ESC to close</span><button onclick="closeDocReport()" class="bg-blue-900 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-800 transition"><i class="fas fa-check mr-1"></i>Close</button></div>
+    </div>
+</div>
+
 <script>
-const API='/api';const token=localStorage.getItem('fueltrak_token');const user=JSON.parse(localStorage.getItem('fueltrak_user')||'{}');
+// ============ INITIALIZATION ============
+const API='/api';
+const token=localStorage.getItem('fueltrak_token');
+const user=JSON.parse(localStorage.getItem('fueltrak_user')||'{}');
 if(!token||!['dispatcher','management'].includes(user.role))window.location.replace('/');
 document.getElementById('userInfo').textContent=(user.email||'').split('@')[0].substring(0,3)+'***@'+(user.email||'').split('@')[1];
 document.getElementById('welcomeDate').textContent=new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
 
+// ============ API HELPER ============
 async function api(url,method,body){method=method||'GET';var o={method,headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'}};if(body)o.body=JSON.stringify(body);var r=await fetch(API+url,o);return await r.json()}
 
+// ============ NAVIGATION ============
 function showDashboard(){['tabVerify','tabLoading','tabTrucks','tabClients'].forEach(t=>document.getElementById(t).classList.add('hidden'));document.getElementById('dashboardView').classList.remove('hidden');loadDashboard()}
-
 function openTab(tab){document.getElementById('dashboardView').classList.add('hidden');['tabVerify','tabLoading','tabTrucks','tabClients'].forEach(t=>document.getElementById(t).classList.add('hidden'));var el=document.getElementById('tab'+tab.charAt(0).toUpperCase()+tab.slice(1));if(el)el.classList.remove('hidden');try{if(tab==='verify')loadPending();if(tab==='loading')loadApproved();if(tab==='trucks')loadTrucks();if(tab==='clients')loadClients()}catch(e){}}
 
+// ============ DASHBOARD ============
 async function loadDashboard(){
     var a=await api('/dispatch/enhanced-stats'),t=await api('/dispatch/truck-stats');
     if(a.status==='success'){var s=a.data;
@@ -175,468 +153,84 @@ async function loadDashboard(){
             {label:'Loading',value:s.loading,gradient:'from-orange-400 to-orange-500'},
             {label:'Completed',value:s.completed,gradient:'from-green-400 to-green-500'},
             {label:'Today',value:s.loadedToday,gradient:'from-indigo-400 to-indigo-500'},
-            {label:'Today Vol',value:Math.round((s.todayVolume||0)/1000).toLocaleString()+'kL',gradient:'from-purple-400 to-purple-500' }
+            {label:'Today Vol',value:Math.round((s.todayVolume||0)/1000).toLocaleString()+'kL',gradient:'from-purple-400 to-purple-500'}
         ].map(c=>`<div class="stat-card bg-gradient-to-br shadow-[0_6px_15px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.2)] hover:shadow-[0_8px_20px_rgba(0,0,0,0.4)] hover:translate-y-[-2px] shadow-[0_4px_15px_rgba(0,0,0,0.2)] ${c.gradient} rounded-xl shadow-lg p-3 text-white"><p class="text-xs opacity-90">${c.label}</p><p class="text-2xl font-bold mt-1">${c.value}</p></div>`).join('');
         var pb=document.getElementById('pendingBadge');if(s.pending>0){pb.textContent=s.pending>99?'99+':s.pending;pb.classList.remove('hidden')}else pb.classList.add('hidden');
     }
-    // Replace the fleetStats rendering in loadDashboard()
     if(t.status==='success'){var d=t.data;
-        var fleetHTML = [
+        var fleetHTML=[
             {label:'Total Trucks',value:d.total,sub:(d.active||0)+' active',border:'border-blue-500',filter:'all',icon:'fa-truck'},
             {label:'Valid Docs',value:d.withValidDocs,border:'border-green-500',filter:'valid',icon:'fa-check-circle'},
             {label:'Expired Docs',value:d.withExpiredDocs,border:'border-red-500',filter:'expired',icon:'fa-exclamation-triangle'},
             {label:'Missing Docs',value:Math.max(0,(d.total||0)-(d.withValidDocs||0)-(d.withExpiredDocs||0)),border:'border-yellow-500',filter:'missing',icon:'fa-question-circle'}
-        ].map(function(c){
-            return '<div class="stat-card bg-white rounded-xl shadow-[0_4px_15px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.5)] p-3 border-l-4 '+c.border+' cursor-pointer hover:shadow-lg hover:translate-y-[-2px] transition-all" onclick="showDocReport(\''+c.filter+'\',\''+c.label+'\')" title="Click to view '+c.label.toLowerCase()+' report">'+
-                '<div class="flex items-center justify-between">'+
-                '<p class="text-xs text-gray-500">'+c.label+'</p>'+
-                '<i class="fas '+c.icon+' text-gray-300 text-sm"></i>'+
-                '</div>'+
-                '<p class="text-xl font-bold">'+c.value+'</p>'+
-                (c.sub?'<p class="text-xs text-gray-400 mt-1">'+c.sub+'</p>':'')+
-                '<p class="text-xs text-blue-500 mt-1 opacity-0 hover:opacity-100 transition">Click to view →</p>'+
-                '</div>';
-        }).join('');
-        
-        fleetHTML+='<div class="stat-card bg-white rounded-xl shadow-[0_4px_15px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.5)] p-3 border-l-4 border-purple-500">'+
-                '<div class="flex items-center justify-between">'+
-                '<p class="text-xs text-gray-500">Total Capacity</p>'+
-                '<i class="fas fa-gas-pump text-gray-300 text-sm"></i>'+
-                '</div>'+
-                '<p class="text-xl font-bold">'+((d.totalCapacity||0)/1000).toFixed(1)+'kL</p>'+
-                '</div>';
-        
-        document.getElementById('fleetStats').innerHTML=fleetHTML;
-        window._truckStats=d;
+        ].map(function(c){return '<div class="stat-card bg-white rounded-xl shadow-[0_4px_15px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.5)] p-3 border-l-4 '+c.border+' cursor-pointer hover:shadow-lg hover:translate-y-[-2px] transition-all" onclick="showDocReport(\''+c.filter+'\',\''+c.label+'\')" title="Click to view '+c.label.toLowerCase()+' report"><div class="flex items-center justify-between"><p class="text-xs text-gray-500">'+c.label+'</p><i class="fas '+c.icon+' text-gray-300 text-sm"></i></div><p class="text-xl font-bold">'+c.value+'</p>'+(c.sub?'<p class="text-xs text-gray-400 mt-1">'+c.sub+'</p>':'')+'<p class="text-xs text-blue-500 mt-1 opacity-0 hover:opacity-100 transition">Click to view →</p></div>';}).join('');
+        fleetHTML+='<div class="stat-card bg-white rounded-xl shadow-[0_4px_15px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.5)] p-3 border-l-4 border-purple-500"><div class="flex items-center justify-between"><p class="text-xs text-gray-500">Total Capacity</p><i class="fas fa-gas-pump text-gray-300 text-sm"></i></div><p class="text-xl font-bold">'+((d.totalCapacity||0)/1000).toFixed(1)+'kL</p></div>';
+        document.getElementById('fleetStats').innerHTML=fleetHTML;window._truckStats=d;
     }
 }
 
-var _allDocRecords = [];
-var _currentDocFilter = 'all';
-var _currentSearchTerm = '';
+// ============ DOCUMENT REPORT ============
+var _allDocRecords=[],_currentDocFilter='all',_currentSearchTerm='';
+async function showDocReport(filter,title){document.getElementById('docReportModal').classList.remove('hidden');document.getElementById('docReportTitle').innerHTML='<i class="fas fa-file-alt mr-2 text-blue-600"></i>'+title+' - Document Report';document.getElementById('docReportBody').innerHTML='<tr><td colspan="7" class="text-center py-12 text-gray-400"><i class="fas fa-spinner fa-spin text-2xl mb-2 block"></i>Loading document data...</td></tr>';document.getElementById('docNoResults').classList.add('hidden');document.body.style.overflow='hidden';document.getElementById('docSearchInput').value='';document.getElementById('docSearchClear').classList.add('hidden');_currentSearchTerm='';_currentDocFilter=filter;updateDocFilterButtons(filter);try{var r=await fetch(API+'/docs-report/summary',{headers:{'Authorization':'Bearer '+token}});var d=await r.json();if(d.status==='success'){_allDocRecords=d.data.records;applyDocFilters()}else{document.getElementById('docReportBody').innerHTML='<tr><td colspan="7" class="text-center py-12 text-red-400">Error loading data</td></tr>';document.getElementById('docReportCount').textContent='0 trucks'}}catch(e){document.getElementById('docReportBody').innerHTML='<tr><td colspan="7" class="text-center py-12 text-red-400">Error: '+e.message+'</td></tr>';document.getElementById('docReportCount').textContent='Error'}}
+function filterDocReport(filter){_currentDocFilter=filter;updateDocFilterButtons(filter);applyDocFilters()}
+function updateDocFilterButtons(filter){document.querySelectorAll('.doc-filter-btn').forEach(function(btn){btn.classList.remove('bg-blue-100','text-blue-700','font-semibold');btn.classList.add('bg-gray-100','text-gray-600')});var activeBtn=document.getElementById('docFilter'+filter.charAt(0).toUpperCase()+filter.slice(1));if(activeBtn){activeBtn.classList.remove('bg-gray-100','text-gray-600');activeBtn.classList.add('bg-blue-100','text-blue-700','font-semibold')}}
+function applyDocSearch(){var searchInput=document.getElementById('docSearchInput'),clearBtn=document.getElementById('docSearchClear');_currentSearchTerm=searchInput.value.toLowerCase().trim();if(_currentSearchTerm.length>0)clearBtn.classList.remove('hidden');else clearBtn.classList.add('hidden');applyDocFilters()}
+function clearDocSearch(){document.getElementById('docSearchInput').value='';document.getElementById('docSearchClear').classList.add('hidden');_currentSearchTerm='';applyDocFilters();document.getElementById('docSearchInput').focus()}
+function applyDocFilters(){var filtered=[],searchTerm=_currentSearchTerm;_allDocRecords.forEach(function(rec){var vl=rec.lto_expiry&&new Date(rec.lto_expiry)>=new Date(),vf=rec.fire_expiry&&new Date(rec.fire_expiry)>=new Date(),vd=rec.dost_expiry&&new Date(rec.dost_expiry)>=new Date(),el=rec.lto_expiry&&new Date(rec.lto_expiry)<new Date(),ef=rec.fire_expiry&&new Date(rec.fire_expiry)<new Date(),ed=rec.dost_expiry&&new Date(rec.dost_expiry)<new Date(),av=vl&&vf&&vd,ae=el||ef||ed,am=!rec.lto_expiry||!rec.fire_expiry||!rec.dost_expiry;var passesFilter=_currentDocFilter==='all'||(_currentDocFilter==='valid'&&av)||(_currentDocFilter==='expired'&&ae)||(_currentDocFilter==='missing'&&am);if(!passesFilter)return;if(searchTerm){var plateMatch=(rec.plate_no||'').toLowerCase().includes(searchTerm),driverMatch=(rec.driver_name||'').toLowerCase().includes(searchTerm),haulerMatch=(rec.hauler_name||'').toLowerCase().includes(searchTerm),makeMatch=(rec.make||'').toLowerCase().includes(searchTerm);if(!plateMatch&&!driverMatch&&!haulerMatch&&!makeMatch)return;rec._highlight={plate:plateMatch,driver:driverMatch,hauler:haulerMatch,make:makeMatch}}else rec._highlight=null;filtered.push(rec)});document.getElementById('docReportCount').textContent=filtered.length+' truck'+(filtered.length!==1?'s':'');var tableBody=document.getElementById('docReportBody'),noResults=document.getElementById('docNoResults');if(!filtered.length){tableBody.innerHTML='';noResults.classList.remove('hidden');if(searchTerm)noResults.querySelector('p').textContent='No trucks match "'+searchTerm+'"';else noResults.querySelector('p').textContent='No trucks match the selected filter'}else{noResults.classList.add('hidden');var h='';filtered.forEach(function(rec){var plateDisplay=highlightText(rec.plate_no||'N/A',rec._highlight&&rec._highlight.plate,searchTerm),driverDisplay=highlightText(rec.driver_name||'-',rec._highlight&&rec._highlight.driver,searchTerm),haulerDisplay=highlightText(rec.hauler_name||'-',rec._highlight&&rec._highlight.hauler,searchTerm),makeDisplay=highlightText(rec.make||'-',rec._highlight&&rec._highlight.make,searchTerm);h+='<tr class="border-b hover:bg-gray-50 transition"><td class="py-2 px-3 font-semibold">'+plateDisplay+'</td><td class="py-2 px-3">'+driverDisplay+'</td><td class="py-2 px-3">'+haulerDisplay+'</td><td class="py-2 px-3 text-center">'+getDocStatus(rec.lto_expiry)+'</td><td class="py-2 px-3 text-center">'+getDocStatus(rec.fire_expiry)+'</td><td class="py-2 px-3 text-center">'+getDocStatus(rec.dost_expiry)+'</td><td class="py-2 px-3 text-center text-xs">'+makeDisplay+'</td></tr>'});tableBody.innerHTML=h}}
+function highlightText(text,isMatch,searchTerm){if(!isMatch||!searchTerm||!text)return escapeHtml(text);var escaped=escapeHtml(text),searchEscaped=escapeHtml(searchTerm),regex=new RegExp('('+searchEscaped.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi');return escaped.replace(regex,'<mark class="bg-yellow-200 rounded px-0.5">$1</mark>')}
+function escapeHtml(text){var map={'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'};return String(text).replace(/[&<>"']/g,function(m){return map[m]})}
+function getDocStatus(exp){if(!exp)return'<span class="bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded text-xs font-semibold">Missing</span>';var d=Math.ceil((new Date(exp)-new Date())/86400000);if(d<0)return'<span class="bg-red-100 text-red-800 px-2 py-0.5 rounded text-xs font-semibold">Expired</span>';if(d<=30)return'<span class="bg-orange-100 text-orange-800 px-2 py-0.5 rounded text-xs font-semibold">'+d+' days</span>';return'<span class="bg-green-100 text-green-800 px-2 py-0.5 rounded text-xs font-semibold">Valid ('+d+'d)</span>'}
+function closeDocReport(){document.getElementById('docReportModal').classList.add('hidden');document.body.style.overflow='';document.getElementById('docSearchInput').value='';document.getElementById('docSearchClear').classList.add('hidden');_currentSearchTerm=''}
+document.addEventListener('DOMContentLoaded',function(){var docModal=document.getElementById('docReportModal');if(docModal)docModal.addEventListener('click',function(e){if(e.target===docModal)closeDocReport()})});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'){var docModal=document.getElementById('docReportModal');if(docModal&&!docModal.classList.contains('hidden'))closeDocReport()}});
 
-async function showDocReport(filter, title) {
-    document.getElementById('docReportModal').classList.remove('hidden');
-    document.getElementById('docReportTitle').innerHTML = '<i class="fas fa-file-alt mr-2 text-blue-600"></i>' + title + ' - Document Report';
-    document.getElementById('docReportBody').innerHTML = '<tr><td colspan="7" class="text-center py-12 text-gray-400"><i class="fas fa-spinner fa-spin text-2xl mb-2 block"></i>Loading document data...</td></tr>';
-    document.getElementById('docNoResults').classList.add('hidden');
-    document.body.style.overflow = 'hidden';
-    
-    // Clear search
-    document.getElementById('docSearchInput').value = '';
-    document.getElementById('docSearchClear').classList.add('hidden');
-    _currentSearchTerm = '';
-    
-    _currentDocFilter = filter;
-    
-    // Highlight active filter button
-    updateDocFilterButtons(filter);
-    
-    try {
-        var r = await fetch(API + '/docs-report/summary', {
-            headers: {'Authorization': 'Bearer ' + token}
-        });
-        var d = await r.json();
-        if (d.status === 'success') {
-            _allDocRecords = d.data.records;
-            applyDocFilters();
-        } else {
-            document.getElementById('docReportBody').innerHTML = '<tr><td colspan="7" class="text-center py-12 text-red-400">Error loading data</td></tr>';
-            document.getElementById('docReportCount').textContent = '0 trucks';
-        }
-    } catch(e) {
-        document.getElementById('docReportBody').innerHTML = '<tr><td colspan="7" class="text-center py-12 text-red-400">Error: ' + e.message + '</td></tr>';
-        document.getElementById('docReportCount').textContent = 'Error';
-    }
-}
-
-function filterDocReport(filter) {
-    _currentDocFilter = filter;
-    updateDocFilterButtons(filter);
-    applyDocFilters();
-}
-
-function updateDocFilterButtons(filter) {
-    document.querySelectorAll('.doc-filter-btn').forEach(function(btn) {
-        btn.classList.remove('bg-blue-100', 'text-blue-700', 'font-semibold');
-        btn.classList.add('bg-gray-100', 'text-gray-600');
-    });
-    var activeBtn = document.getElementById('docFilter' + filter.charAt(0).toUpperCase() + filter.slice(1));
-    if (activeBtn) {
-        activeBtn.classList.remove('bg-gray-100', 'text-gray-600');
-        activeBtn.classList.add('bg-blue-100', 'text-blue-700', 'font-semibold');
-    }
-}
-
-function applyDocSearch() {
-    var searchInput = document.getElementById('docSearchInput');
-    var clearBtn = document.getElementById('docSearchClear');
-    
-    _currentSearchTerm = searchInput.value.toLowerCase().trim();
-    
-    // Show/hide clear button
-    if (_currentSearchTerm.length > 0) {
-        clearBtn.classList.remove('hidden');
-    } else {
-        clearBtn.classList.add('hidden');
-    }
-    
-    // Apply filters with debounce-like behavior (already handled by oninput)
-    applyDocFilters();
-}
-
-function clearDocSearch() {
-    document.getElementById('docSearchInput').value = '';
-    document.getElementById('docSearchClear').classList.add('hidden');
-    _currentSearchTerm = '';
-    applyDocFilters();
-    // Focus back on search input
-    document.getElementById('docSearchInput').focus();
-}
-
-function applyDocFilters() {
-    var filtered = [];
-    var searchTerm = _currentSearchTerm;
-    
-    _allDocRecords.forEach(function(rec) {
-        // Apply status filter
-        var vl = rec.lto_expiry && new Date(rec.lto_expiry) >= new Date();
-        var vf = rec.fire_expiry && new Date(rec.fire_expiry) >= new Date();
-        var vd = rec.dost_expiry && new Date(rec.dost_expiry) >= new Date();
-        var el = rec.lto_expiry && new Date(rec.lto_expiry) < new Date();
-        var ef = rec.fire_expiry && new Date(rec.fire_expiry) < new Date();
-        var ed = rec.dost_expiry && new Date(rec.dost_expiry) < new Date();
-        var av = vl && vf && vd;
-        var ae = el || ef || ed;
-        var am = !rec.lto_expiry || !rec.fire_expiry || !rec.dost_expiry;
-        
-        var passesFilter = _currentDocFilter === 'all' || 
-                          (_currentDocFilter === 'valid' && av) || 
-                          (_currentDocFilter === 'expired' && ae) || 
-                          (_currentDocFilter === 'missing' && am);
-        
-        if (!passesFilter) return;
-        
-        // Apply search filter (incremental search)
-        if (searchTerm) {
-            var plateMatch = (rec.plate_no || '').toLowerCase().includes(searchTerm);
-            var driverMatch = (rec.driver_name || '').toLowerCase().includes(searchTerm);
-            var haulerMatch = (rec.hauler_name || '').toLowerCase().includes(searchTerm);
-            var makeMatch = (rec.make || '').toLowerCase().includes(searchTerm);
-            
-            if (!plateMatch && !driverMatch && !haulerMatch && !makeMatch) return;
-            
-            // Highlight matching text
-            rec._highlight = {
-                plate: plateMatch,
-                driver: driverMatch,
-                hauler: haulerMatch,
-                make: makeMatch
-            };
-        } else {
-            rec._highlight = null;
-        }
-        
-        filtered.push(rec);
-    });
-    
-    document.getElementById('docReportCount').textContent = filtered.length + ' truck' + (filtered.length !== 1 ? 's' : '');
-    
-    // Show/hide no results message and table
-    var tableBody = document.getElementById('docReportBody');
-    var noResults = document.getElementById('docNoResults');
-    
-    if (!filtered.length) {
-        tableBody.innerHTML = '';
-        noResults.classList.remove('hidden');
-        if (searchTerm) {
-            noResults.querySelector('p').textContent = 'No trucks match "' + searchTerm + '"';
-        } else {
-            noResults.querySelector('p').textContent = 'No trucks match the selected filter';
-        }
-    } else {
-        noResults.classList.add('hidden');
-        var h = '';
-        filtered.forEach(function(rec) {
-            var plateDisplay = highlightText(rec.plate_no || 'N/A', rec._highlight && rec._highlight.plate, searchTerm);
-            var driverDisplay = highlightText(rec.driver_name || '-', rec._highlight && rec._highlight.driver, searchTerm);
-            var haulerDisplay = highlightText(rec.hauler_name || '-', rec._highlight && rec._highlight.hauler, searchTerm);
-            var makeDisplay = highlightText(rec.make || '-', rec._highlight && rec._highlight.make, searchTerm);
-            
-            h += '<tr class="border-b hover:bg-gray-50 transition">' +
-                 '<td class="py-2 px-3 font-semibold">' + plateDisplay + '</td>' +
-                 '<td class="py-2 px-3">' + driverDisplay + '</td>' +
-                 '<td class="py-2 px-3">' + haulerDisplay + '</td>' +
-                 '<td class="py-2 px-3 text-center">' + getDocStatus(rec.lto_expiry) + '</td>' +
-                 '<td class="py-2 px-3 text-center">' + getDocStatus(rec.fire_expiry) + '</td>' +
-                 '<td class="py-2 px-3 text-center">' + getDocStatus(rec.dost_expiry) + '</td>' +
-                 '<td class="py-2 px-3 text-center text-xs">' + makeDisplay + '</td>' +
-                 '</tr>';
-        });
-        tableBody.innerHTML = h;
-    }
-}
-
-function highlightText(text, isMatch, searchTerm) {
-    if (!isMatch || !searchTerm || !text) return escapeHtml(text);
-    
-    var escaped = escapeHtml(text);
-    var searchEscaped = escapeHtml(searchTerm);
-    var regex = new RegExp('(' + searchEscaped.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
-    return escaped.replace(regex, '<mark class="bg-yellow-200 rounded px-0.5">$1</mark>');
-}
-
-function escapeHtml(text) {
-    var map = {
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#039;'
-    };
-    return String(text).replace(/[&<>"']/g, function(m) { return map[m]; });
-}
-
-function getDocStatus(exp) {
-    if (!exp) return '<span class="bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded text-xs font-semibold">Missing</span>';
-    var d = Math.ceil((new Date(exp) - new Date()) / 86400000);
-    if (d < 0) return '<span class="bg-red-100 text-red-800 px-2 py-0.5 rounded text-xs font-semibold">Expired</span>';
-    if (d <= 30) return '<span class="bg-orange-100 text-orange-800 px-2 py-0.5 rounded text-xs font-semibold">' + d + ' days</span>';
-    return '<span class="bg-green-100 text-green-800 px-2 py-0.5 rounded text-xs font-semibold">Valid (' + d + 'd)</span>';
-}
-
-function closeDocReport() {
-    document.getElementById('docReportModal').classList.add('hidden');
-    document.body.style.overflow = '';
-    // Clear search when closing
-    document.getElementById('docSearchInput').value = '';
-    document.getElementById('docSearchClear').classList.add('hidden');
-    _currentSearchTerm = '';
-}
-
-// Add click-outside-to-close and ESC key functionality
-document.addEventListener('DOMContentLoaded', function() {
-    var docModal = document.getElementById('docReportModal');
-    if (docModal) {
-        docModal.addEventListener('click', function(e) {
-            if (e.target === docModal) closeDocReport();
-        });
-    }
-});
-
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-        var docModal = document.getElementById('docReportModal');
-        if (docModal && !docModal.classList.contains('hidden')) {
-            closeDocReport();
-        }
-    }
-});
-
+// ============ PENDING ATLs ============
 var allPendingATLs=[];
 async function loadPending(){var d=await api('/dispatch/pending');if(d.status==='success'){allPendingATLs=d.data;filterPending()}}
-function filterPending(){var s=(document.getElementById('pendingSearch')?.value||'').toLowerCase();var f=allPendingATLs.filter(a=>!s||(a.plate_no||'').toLowerCase().includes(s)||(a.company||'').toLowerCase().includes(s)||(a.atl_code||'').toLowerCase().includes(s));document.getElementById('pendingATLs').innerHTML=f.map(a=>`<div class="bg-white rounded-lg shadow-[0_4px_10px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.5)] p-3 flex justify-between"><div><p class="font-bold text-sm">${a.atl_code||'N/A'} - ${a.plate_no}</p><p class="text-xs">${a.company||''} | SO: ${a.so_number||'N/A'} | Date: ${a.scheduled_date?new Date(a.scheduled_date).toLocaleDateString():'N/A'} | Vol: ${a.volume||'N/A'}L | ${a.driver_name}${a.special_instructions ? '<div class="text-xs text-orange-600 mt-1"><i class="fas fa-info-circle"></i> ' + a.special_instructions + '</div>' : ''}</p></div><div class="flex space-x-2"><button onclick="verifyATL(${a.id},'approve')" class="bg-green-500 text-white px-2 py-1 rounded text-xs">Approve</button><button onclick="verifyATL(${a.id},'reject')" class="bg-red-500 text-white px-2 py-1 rounded text-xs">Reject</button></div></div>`).join('')||'<p class="text-gray-500 text-center py-8">No pending ATLs</p>'}
+function filterPending(){var s=(document.getElementById('pendingSearch')?.value||'').toLowerCase();var f=allPendingATLs.filter(a=>!s||(a.plate_no||'').toLowerCase().includes(s)||(a.company||'').toLowerCase().includes(s)||(a.atl_code||'').toLowerCase().includes(s));document.getElementById('pendingATLs').innerHTML=f.map(a=>`<div class="bg-white rounded-lg shadow-[0_4px_10px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.5)] p-3 flex justify-between"><div><p class="font-bold text-sm">${a.atl_code||'N/A'} - ${a.plate_no}</p><p class="text-xs">${a.company||''} | SO: ${a.so_number||'N/A'} | Date: ${a.scheduled_date?new Date(a.scheduled_date).toLocaleDateString():'N/A'} | Vol: ${a.volume||'N/A'}L | ${a.driver_name}${a.special_instructions?'<div class="text-xs text-orange-600 mt-1"><i class="fas fa-info-circle"></i> '+a.special_instructions+'</div>':''}</p></div><div class="flex space-x-2"><button onclick="verifyATL(${a.id},'approve')" class="bg-green-500 text-white px-2 py-1 rounded text-xs">Approve</button><button onclick="verifyATL(${a.id},'reject')" class="bg-red-500 text-white px-2 py-1 rounded text-xs">Reject</button></div></div>`).join('')||'<p class="text-gray-500 text-center py-8">No pending ATLs</p>'}
 async function verifyATL(id,action){if(!confirm(action==='approve'?'Approve?':'Reject?'))return;await api('/dispatch/verify/'+id,'POST',{action,remarks:prompt('Remarks:')||''});loadPending();loadDashboard()}
 
-async function loadApproved(){
-    var o=await api('/dispatch/ongoing-loading');
-    document.getElementById('ongoingLoading').innerHTML=o.status==='success'?o.data.map(a=>`<div class="bg-orange-50 border-l-4 border-orange-500 rounded-lg shadow p-3 flex justify-between"><div><p class="font-bold text-sm">${a.atl_code} - ${a.plate_no} - ${a.driver_name}</p><p class="text-xs">${a.company} | SO: ${a.so_number||'N/A'} | ${a.driver_name}</p><p class="text-xs">Date: ${a.dispatch_date?new Date(a.dispatch_date).toLocaleDateString():'N/A'} | Vol: ${a.volume?Number(a.volume).toLocaleString()+'L':'N/A'}</p></div><div class="flex space-x-1"><button onclick="completeLoading(${a.id})" class="bg-green-500 text-white px-2 py-1 rounded text-xs">Done</button></div></div>`).join('')||'<p class="text-gray-500 text-center py-4">No ongoing loading</p>':'';
-    var w=await api('/dispatch/approved-for-loading');
-    document.getElementById('approvedForLoading').innerHTML=w.status==='success'?w.data.map(a=>`<div class="bg-white rounded-lg shadow-[0_4px_10px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.5)] p-3 flex justify-between"><div><p class="font-bold text-sm">${a.atl_code} - ${a.plate_no} - ${a.driver_name}</p><p class="text-xs">${a.company||''} | SO: ${a.so_number||'N/A'} | Date: ${a.scheduled_date?new Date(a.scheduled_date).toLocaleDateString():'N/A'} | Vol: ${a.volume?Number(a.volume).toLocaleString()+'L':'N/A'}</p></div><button onclick="startLoading(${a.id})" class="bg-orange-500 text-white px-3 py-1 rounded text-xs">Start</button></div>`).join('')||'<p class="text-gray-500 text-center py-4">None waiting</p>':'';
-}
-
+// ============ LOADING MANAGEMENT ============
+async function loadApproved(){var o=await api('/dispatch/ongoing-loading');document.getElementById('ongoingLoading').innerHTML=o.status==='success'?o.data.map(a=>`<div class="bg-orange-50 border-l-4 border-orange-500 rounded-lg shadow p-3 flex justify-between"><div><p class="font-bold text-sm">${a.atl_code} - ${a.plate_no} - ${a.driver_name}</p><p class="text-xs">${a.company} | SO: ${a.so_number||'N/A'} | ${a.driver_name}</p><p class="text-xs">Date: ${a.dispatch_date?new Date(a.dispatch_date).toLocaleDateString():'N/A'} | Vol: ${a.volume?Number(a.volume).toLocaleString()+'L':'N/A'}</p></div><div class="flex space-x-1"><button onclick="completeLoading(${a.id})" class="bg-green-500 text-white px-2 py-1 rounded text-xs">Done</button></div></div>`).join('')||'<p class="text-gray-500 text-center py-4">No ongoing loading</p>':'';var w=await api('/dispatch/approved-for-loading');document.getElementById('approvedForLoading').innerHTML=w.status==='success'?w.data.map(a=>`<div class="bg-white rounded-lg shadow-[0_4px_10px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.5)] p-3 flex justify-between"><div><p class="font-bold text-sm">${a.atl_code} - ${a.plate_no} - ${a.driver_name}</p><p class="text-xs">${a.company||''} | SO: ${a.so_number||'N/A'} | Date: ${a.scheduled_date?new Date(a.scheduled_date).toLocaleDateString():'N/A'} | Vol: ${a.volume?Number(a.volume).toLocaleString()+'L':'N/A'}</p></div><button onclick="startLoading(${a.id})" class="bg-orange-500 text-white px-3 py-1 rounded text-xs">Start</button></div>`).join('')||'<p class="text-gray-500 text-center py-4">None waiting</p>':''}
 async function startLoading(id){if(!confirm('Start loading?'))return;await api('/dispatch/start-loading/'+id,'POST');loadApproved();loadDashboard()}
 async function completeLoading(id){var v=prompt('Actual volume (L):');if(!v)return;await api('/dispatch/complete-loading/'+id,'POST',{actual_volume:v});loadApproved();loadDashboard()}
 
+// ============ TRUCKS & CLIENTS ============
 async function loadTrucks(){var d=await api('/truck-masterlist-all');if(d.status==='success'){document.getElementById('truckList').innerHTML='<div class="table-wrap"><table class="w-full text-sm bg-white rounded-lg shadow-[0_4px_10px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.5)]"><thead class="bg-gray-50"><tr><th class="py-2 px-3">Plate</th><th class="py-2 px-3">Driver</th><th class="py-2 px-3">Hauler</th></tr></thead><tbody>'+d.data.slice(0,50).map(t=>`<tr class="border-b"><td class="py-2 px-3 font-semibold">${t.plate_no}</td><td class="py-2 px-3">${(t.driver_name||'').replace(/"/g,'')}</td><td class="py-2 px-3">${t.hauler_name||''}</td></tr>`).join('')+'</tbody></table></div>'}}
-
 async function loadClients(){var d=await api('/clients');if(d.status==='success'){document.getElementById('clientList').innerHTML='<div class="table-wrap"><table class="w-full text-sm bg-white rounded-lg shadow-[0_4px_10px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.5)]"><thead class="bg-gray-50"><tr><th class="py-2 px-3">Company</th><th class="py-2 px-3">Email</th><th class="py-2 px-3">Mobile</th><th class="py-2 px-3">ATLs</th><th class="py-2 px-3">Actions</th></tr></thead><tbody>'+d.data.map(c=>'<tr class="border-b"><td class="py-2 px-3 font-semibold">'+(c.company_name||'-')+'</td><td class="py-2 px-3">'+c.email+'</td><td class="py-2 px-3">'+c.mobile+'</td><td class="py-2 px-3 text-center">'+c.total_atls+'</td><td class="py-2 px-3"><div class="flex space-x-2 justify-center"><button onclick="editClient('+c.id+')" class="text-blue-600"><i class="fas fa-edit"></i></button>'+(c.is_active?'<button onclick="toggleClient('+c.id+')" class="text-orange-600"><i class="fas fa-ban"></i></button>':'<button onclick="toggleClient('+c.id+')" class="text-green-600"><i class="fas fa-check"></i></button>')+'<button onclick="deleteClient('+c.id+',\''+c.email+'\')" class="text-red-600"><i class="fas fa-trash"></i></button></div></td></tr>').join('')+'</tbody></table></div>'}}
+function showAddClient(){document.getElementById('editClientId').value='';document.getElementById('clientModalTitle').textContent='Add Client';['clientEmail','clientMobile','clientCompany','clientPassword'].forEach(id=>document.getElementById(id).value='');document.getElementById('clientModal').classList.remove('hidden')}
+function closeClientModal(){document.getElementById('clientModal').classList.add('hidden')}
+async function editClient(id){var d=await api('/clients/'+id);if(d.status==='success'){var c=d.data;document.getElementById('editClientId').value=c.id;document.getElementById('clientModalTitle').textContent='Edit Client';document.getElementById('clientEmail').value=c.email;document.getElementById('clientMobile').value=c.mobile;document.getElementById('clientCompany').value=c.company_name||'';document.getElementById('clientPassword').value='';document.getElementById('clientModal').classList.remove('hidden')}}
+async function saveClient(e){e.preventDefault();var id=document.getElementById('editClientId').value;var body={email:document.getElementById('clientEmail').value,mobile:document.getElementById('clientMobile').value,company_name:document.getElementById('clientCompany').value};var pw=document.getElementById('clientPassword').value;if(pw)body.password=pw;var url=id?'/clients/'+id:'/clients';var method=id?'PUT':'POST';var d=await api(url,method,body);if(d.status==='success'){closeClientModal();loadClients()}else alert(d.error||'Error')}
+async function toggleClient(id){await api('/clients/'+id+'/toggle-status','PATCH');loadClients()}
+async function deleteClient(id,email){if(!confirm('Delete '+email+'?'))return;await api('/clients/'+id,'DELETE');loadClients()}
 
-function showAddClient(){document.getElementById('editClientId').value='';document.getElementById('clientModalTitle').textContent='Add Client';['clientEmail','clientMobile','clientCompany','clientPassword'].forEach(id=>document.getElementById(id).value='');document.getElementById('clientModal').classList.remove('hidden');}
-function closeClientModal(){document.getElementById('clientModal').classList.add('hidden');}
-async function editClient(id){var d=await api('/clients/'+id);if(d.status==='success'){var c=d.data;document.getElementById('editClientId').value=c.id;document.getElementById('clientModalTitle').textContent='Edit Client';document.getElementById('clientEmail').value=c.email;document.getElementById('clientMobile').value=c.mobile;document.getElementById('clientCompany').value=c.company_name||'';document.getElementById('clientPassword').value='';document.getElementById('clientModal').classList.remove('hidden');}}
-async function saveClient(e){e.preventDefault();var id=document.getElementById('editClientId').value;var body={email:document.getElementById('clientEmail').value,mobile:document.getElementById('clientMobile').value,company_name:document.getElementById('clientCompany').value};var pw=document.getElementById('clientPassword').value;if(pw)body.password=pw;var url=id?'/clients/'+id:'/clients';var method=id?'PUT':'POST';var d=await api(url,method,body);if(d.status==='success'){closeClientModal();loadClients();}else alert(d.error||'Error');}
-async function toggleClient(id){await api('/clients/'+id+'/toggle-status','PATCH');loadClients();}
-async function deleteClient(id,email){if(!confirm('Delete '+email+'?'))return;await api('/clients/'+id,'DELETE');loadClients();}
+// ============ CHAT WITH NOTIFICATIONS ============
+var currentChatUser=null,currentChatName='',chatInterval=null,contactList=[],lastMessageId=0;
+if('Notification' in window&&Notification.permission==='default'){Notification.requestPermission()}
+function showChatNotification(title,body,icon){if('Notification' in window&&Notification.permission==='granted'){var chatWidget=document.getElementById('chatWidget');if(chatWidget&&!chatWidget.classList.contains('hidden')&&document.hasFocus())return;var notification=new Notification(title,{body:body,icon:icon||'/favicon.svg',badge:'/favicon.svg',tag:'fueltrak-chat',requireInteraction:false,silent:false});notification.onclick=function(){window.focus();openChat();notification.close()};setTimeout(function(){notification.close()},5000)}}
+async function openChat(){document.getElementById('chatWidget').classList.remove('hidden');document.getElementById('chatButton').classList.add('hidden');document.getElementById('unreadBadge').classList.add('hidden');loadContactList()}
+function showContactList(){document.getElementById('contactList').classList.remove('hidden');document.getElementById('chatBody').classList.add('hidden');document.getElementById('chatInputArea').classList.add('hidden');document.getElementById('chatTitle').textContent='Chat';currentChatUser=null;loadContactList()}
+async function loadContactList(){var r=await fetch('/api/chat-list',{headers:{'Authorization':'Bearer '+token}});var d=await r.json();if(d.status==='success'){contactList=d.data;var h='';contactList.forEach(function(c){h+='<div onclick="startChat('+c.id+',\''+(c.email||c.company_name)+'\')" class="flex items-center p-3 hover:bg-gray-50 cursor-pointer border-b"><div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3"><i class="fas fa-user text-blue-600 text-sm"></i></div><div class="flex-1"><p class="text-sm font-semibold">'+(c.company_name||c.email)+'</p><p class="text-xs text-gray-400">'+(c.email||'')+'</p></div><div class="w-2 h-2 bg-green-400 rounded-full" title="Online"></div></div>'});document.getElementById('contactList').innerHTML=h||'<p class="p-3 text-center text-gray-400 text-sm">No contacts</p>'}}
+function startChat(id,name){currentChatUser=id;currentChatName=name;document.getElementById('chatTitle').textContent=name;document.getElementById('contactList').classList.add('hidden');document.getElementById('chatBody').classList.remove('hidden');document.getElementById('chatInputArea').classList.remove('hidden');loadChatMessages();if(chatInterval)clearInterval(chatInterval);chatInterval=setInterval(loadChatMessages,5000)}
+async function loadChatMessages(){if(!currentChatUser)return;var r=await fetch('/api/chat/'+currentChatUser,{headers:{'Authorization':'Bearer '+token}});var d=await r.json();if(d.status==='success'){var h='',newMessages=0;d.data.forEach(function(m){var isMe=m.sender_id==user.id;if(!isMe){newMessages++;if(m.id>lastMessageId)lastMessageId=m.id}h+='<div class="'+(isMe?'text-right':'text-left')+' mb-2"><div class="inline-block '+(isMe?'bg-blue-100':'bg-gray-100')+' rounded-lg px-3 py-1.5 text-sm max-w-[80%]"><p class="text-[10px] text-gray-500">'+(isMe?'You':currentChatName)+'</p><p>'+m.message+'</p><p class="text-[9px] text-gray-400 text-right">'+new Date(m.created_at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})+'</p></div></div>'});document.getElementById('chatBody').innerHTML=h||'<p class="text-center text-gray-400 text-sm pt-10">Start the conversation!</p>';document.getElementById('chatBody').scrollTop=document.getElementById('chatBody').scrollHeight;if(newMessages>0&&document.getElementById('chatWidget').classList.contains('hidden')){showChatNotification('New message from '+currentChatName,'You have '+newMessages+' new message'+(newMessages>1?'s':''),'/favicon.svg');var badge=document.getElementById('unreadBadge');badge.textContent=newMessages;badge.classList.remove('hidden')}}}
+async function sendChat(){var i=document.getElementById('chatInput');var m=i.value.trim();if(!m||!currentChatUser)return;i.value='';await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({receiver_id:currentChatUser,message:m})});loadChatMessages()}
+function closeChat(){document.getElementById('chatWidget').classList.add('hidden');document.getElementById('chatButton').classList.remove('hidden');if(chatInterval)clearInterval(chatInterval)}
+setInterval(async function(){if(document.getElementById('chatWidget').classList.contains('hidden')){try{var r=await fetch('/api/chat/unread',{headers:{'Authorization':'Bearer '+token}});var d=await r.json();if(d.status==='success'&&d.unread>0){var badge=document.getElementById('unreadBadge');badge.textContent=d.unread>9?'9+':d.unread;badge.classList.remove('hidden')}}catch(e){}}},15000);
 
-var currentChatUser=null,currentChatName='',chatInterval=null,contactList=[];
-async function openChat(){
-    document.getElementById('chatWidget').classList.remove('hidden');
-    document.getElementById('chatButton').classList.add('hidden');
-    document.getElementById('unreadBadge').classList.add('hidden');
-    loadContactList();
-}
-function showContactList(){document.getElementById('contactList').classList.remove('hidden');document.getElementById('chatBody').classList.add('hidden');document.getElementById('chatInputArea').classList.add('hidden');document.getElementById('chatTitle').textContent='Chat';currentChatUser=null;loadContactList();}
-async function loadContactList(){var r=await fetch('/api/chat-list',{headers:{'Authorization':'Bearer '+token}});var d=await r.json();if(d.status==='success'){contactList=d.data;var h='';contactList.forEach(function(c){h+='<div onclick="startChat('+c.id+',\''+(c.email||c.company_name)+'\')" class="flex items-center p-3 hover:bg-gray-50 cursor-pointer border-b"><div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3"><i class="fas fa-user text-blue-600 text-sm"></i></div><div class="flex-1"><p class="text-sm font-semibold">'+(c.company_name||c.email)+'</p><p class="text-xs text-gray-400">'+(c.email||'')+'</p></div><div class="w-2 h-2 bg-green-400 rounded-full" title="Online"></div></div>'});document.getElementById('contactList').innerHTML=h||'<p class="p-3 text-center text-gray-400 text-sm">No contacts</p>';}}
-function startChat(id,name){currentChatUser=id;currentChatName=name;document.getElementById('chatTitle').textContent=name;document.getElementById('contactList').classList.add('hidden');document.getElementById('chatBody').classList.remove('hidden');document.getElementById('chatInputArea').classList.remove('hidden');loadChatMessages();if(chatInterval)clearInterval(chatInterval);chatInterval=setInterval(loadChatMessages,10000);}
-async function loadChatMessages(){
-    if(!currentChatUser)return;
-    var r=await fetch('/api/chat/'+currentChatUser,{headers:{'Authorization':'Bearer '+token}});
-    var d=await r.json();
-    if(d.status==='success'){
-        var h='';
-        var newMessages=0;
-        var lastSender='';
-        d.data.forEach(function(m){
-            var isMe=m.sender_id==user.id;
-            if(!isMe) { newMessages++; lastSender=m.sender_email||'Client'; }
-            h+='<div class="'+(isMe?'text-right':'text-left')+' mb-2"><div class="inline-block '+(isMe?'bg-blue-100':'bg-gray-100')+' rounded-lg px-3 py-1.5 text-sm max-w-[80%]"><p class="text-[10px] text-gray-500">'+(isMe?'You':currentChatName)+'</p><p>'+m.message+'</p><p class="text-[9px] text-gray-400 text-right">'+new Date(m.created_at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})+'</p></div></div>';
-        });
-        document.getElementById('chatBody').innerHTML=h||'<p class="text-center text-gray-400 text-sm pt-10">Start the conversation!</p>';
-        document.getElementById('chatBody').scrollTop=document.getElementById('chatBody').scrollHeight;
-        
-        // Update notification badge if chat is closed
-        if(newMessages>0 && document.getElementById('chatWidget').classList.contains('hidden')){
-            var badge=document.getElementById('unreadBadge');
-            badge.textContent=newMessages;
-            badge.classList.remove('hidden');
-            badge.title='New messages from '+lastSender;
-        }
-    }
-}
-async function sendChat(){var i=document.getElementById('chatInput');var m=i.value.trim();if(!m||!currentChatUser)return;i.value='';await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({receiver_id:currentChatUser,message:m})});loadChatMessages();}
-function closeChat(){document.getElementById('chatWidget').classList.add('hidden');document.getElementById('chatButton').classList.remove('hidden');}
-
-// Check unread messages every 15 seconds from ANY client
-setInterval(async function(){
-    if(document.getElementById('chatWidget').classList.contains('hidden')){
-        try {
-            var r = await fetch('/api/chat/unread', {
-                headers: {'Authorization': 'Bearer ' + token}
-            });
-            var d = await r.json();
-            if(d.status === 'success' && d.unread > 0){
-                var badge = document.getElementById('unreadBadge');
-                badge.textContent = d.unread > 9 ? '9+' : d.unread;
-                badge.classList.remove('hidden');
-            }
-        } catch(e) {}
-    }
-}, 15000);
-
+// ============ CALCULATOR ============
 function toggleSidebar(){var s=document.getElementById("sidebar");s.classList.toggle("open");document.getElementById("sidebarOverlay").classList.toggle("hidden")}
-function openCalc(){document.getElementById('calcWidget').classList.remove('hidden');document.getElementById('calcButton').classList.add('hidden');}
-function closeCalc(){document.getElementById('calcWidget').classList.add('hidden');document.getElementById('calcButton').classList.remove('hidden');}
+function openCalc(){document.getElementById('calcWidget').classList.remove('hidden');document.getElementById('calcButton').classList.add('hidden')}
+function closeCalc(){document.getElementById('calcWidget').classList.add('hidden');document.getElementById('calcButton').classList.remove('hidden')}
 function toggleCalc(){}
 var calcExpr='';
-function calcInput(v){calcExpr+=v;document.getElementById('calcDisplay').value=calcExpr;}
-function calcClear(){calcExpr='';document.getElementById('calcDisplay').value='0';}
-function calcResult(){try{var r=eval(calcExpr.replace(/×/g,'*').replace(/÷/g,'/').replace(/-/g,'-'));document.getElementById('calcDisplay').value=Number(r.toFixed(4));calcExpr=String(r);}catch(e){document.getElementById('calcDisplay').value='Error';calcExpr='';}}
+function calcInput(v){calcExpr+=v;document.getElementById('calcDisplay').value=calcExpr}
+function calcClear(){calcExpr='';document.getElementById('calcDisplay').value='0'}
+function calcResult(){try{var r=eval(calcExpr.replace(/×/g,'*').replace(/÷/g,'/').replace(/-/g,'-'));document.getElementById('calcDisplay').value=Number(r.toFixed(4));calcExpr=String(r)}catch(e){document.getElementById('calcDisplay').value='Error';calcExpr=''}}
 async function logout(){try{await fetch('/api/auth/logout',{method:'POST',headers:{'Authorization':'Bearer '+localStorage.getItem('fueltrak_token')}})}catch(e){}localStorage.clear();window.location.href='/'}
 loadDashboard();
-var urlParams=new URLSearchParams(window.location.search);var tab=urlParams.get('tab');if(tab==='clients'){openTab('clients');}
-document.addEventListener('keydown',function(e){if(document.getElementById('calcWidget').classList.contains('hidden'))return;var k=e.key;if(k>='0'&&k<='9')calcInput(k);else if(k==='.')calcInput('.');else if(k==='+')calcInput('+');else if(k==='-')calcInput('-');else if(k==='*')calcInput('*');else if(k==='/'){e.preventDefault();calcInput('/');}else if(k==='Enter')calcResult();else if(k==='Escape')closeCalc();else if(k==='Backspace'){calcExpr=calcExpr.slice(0,-1);document.getElementById('calcDisplay').value=calcExpr||'0';}});
+var urlParams=new URLSearchParams(window.location.search);var tab=urlParams.get('tab');if(tab==='clients'){openTab('clients')}
+document.addEventListener('keydown',function(e){if(document.getElementById('calcWidget').classList.contains('hidden'))return;var k=e.key;if(k>='0'&&k<='9')calcInput(k);else if(k==='.')calcInput('.');else if(k==='+')calcInput('+');else if(k==='-')calcInput('-');else if(k==='*')calcInput('*');else if(k==='/'){e.preventDefault();calcInput('/')}else if(k==='Enter')calcResult();else if(k==='Escape')closeCalc();else if(k==='Backspace'){calcExpr=calcExpr.slice(0,-1);document.getElementById('calcDisplay').value=calcExpr||'0'}});
 </script>
-<!-- Floating Calculator -->
-<div id="calcWidget" class="hidden fixed bottom-20 right-4 z-50 w-72 bg-white rounded-xl shadow-2xl border">
-    <div class="bg-blue-900 text-white p-3 rounded-t-xl flex justify-between items-center cursor-pointer" onclick="toggleCalc()">
-        <span><i class="fas fa-calculator mr-2"></i>Calculator</span>
-        <button onclick="event.stopPropagation();closeCalc()" class="text-white">&times;</button>
-    </div>
-    <div class="p-3">
-        <input type="text" id="calcDisplay" class="w-full px-3 py-2 border rounded text-right text-xl font-mono mb-2" readonly value="0">
-        <div class="grid grid-cols-4 gap-1">
-            <button onclick="calcInput('7')" class="bg-gray-100 hover:bg-gray-200 py-2 rounded font-semibold">7</button>
-            <button onclick="calcInput('8')" class="bg-gray-100 hover:bg-gray-200 py-2 rounded font-semibold">8</button>
-            <button onclick="calcInput('9')" class="bg-gray-100 hover:bg-gray-200 py-2 rounded font-semibold">9</button>
-            <button onclick="calcInput('/')" class="bg-orange-100 hover:bg-orange-200 py-2 rounded font-semibold text-orange-700">/</button>
-            <button onclick="calcInput('4')" class="bg-gray-100 hover:bg-gray-200 py-2 rounded font-semibold">4</button>
-            <button onclick="calcInput('5')" class="bg-gray-100 hover:bg-gray-200 py-2 rounded font-semibold">5</button>
-            <button onclick="calcInput('6')" class="bg-gray-100 hover:bg-gray-200 py-2 rounded font-semibold">6</button>
-            <button onclick="calcInput('*')" class="bg-orange-100 hover:bg-orange-200 py-2 rounded font-semibold text-orange-700">*</button>
-            <button onclick="calcInput('1')" class="bg-gray-100 hover:bg-gray-200 py-2 rounded font-semibold">1</button>
-            <button onclick="calcInput('2')" class="bg-gray-100 hover:bg-gray-200 py-2 rounded font-semibold">2</button>
-            <button onclick="calcInput('3')" class="bg-gray-100 hover:bg-gray-200 py-2 rounded font-semibold">3</button>
-            <button onclick="calcInput('-')" class="bg-orange-100 hover:bg-orange-200 py-2 rounded font-semibold text-orange-700">-</button>
-            <button onclick="calcInput('0')" class="bg-gray-100 hover:bg-gray-200 py-2 rounded font-semibold">0</button>
-            <button onclick="calcInput('.')" class="bg-gray-100 hover:bg-gray-200 py-2 rounded font-semibold">.</button>
-            <button onclick="calcResult()" class="bg-blue-900 text-white hover:bg-blue-800 py-2 rounded font-semibold">=</button>
-            <button onclick="calcInput('+')" class="bg-orange-100 hover:bg-orange-200 py-2 rounded font-semibold text-orange-700">+</button>
-        </div>
-        <button onclick="calcClear()" class="w-full mt-1 bg-red-100 hover:bg-red-200 py-1 rounded text-red-700 text-sm">Clear</button>
-    </div>
-</div>
-<button onclick="openCalc()" class="fixed bottom-20 right-4 z-50 bg-green-600 text-white p-3 rounded-full shadow-lg hover:bg-green-700" id="calcButton">
-    <i class="fas fa-calculator"></i>
-</button>
-
-<!-- Document Report Modal -->
-<div id="docReportModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-xl shadow-2xl w-full max-w-5xl max-h-[85vh] flex flex-col">
-        <div class="flex items-center justify-between p-4 border-b">
-            <h3 class="text-lg font-bold text-gray-800" id="docReportTitle">
-                <i class="fas fa-file-alt mr-2 text-blue-600"></i>Document Report
-            </h3>
-            <button onclick="closeDocReport()" class="text-gray-400 hover:text-gray-600 text-xl transition">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-        
-        <!-- Enhanced Filter Bar with Search -->
-        <div class="p-3 bg-gray-50 border-b space-y-2">
-            <!-- Search Row -->
-            <div class="flex items-center gap-2">
-                <div class="relative flex-1">
-                    <i class="fas fa-search absolute left-3 top-2.5 text-gray-400 text-sm"></i>
-                    <input type="text" id="docSearchInput" 
-                           class="w-full pl-9 pr-10 py-2 border border-gray-300 rounded-lg text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition"
-                           placeholder="Search by plate number, driver name, or hauler..."
-                           oninput="applyDocSearch()"
-                           autocomplete="off">
-                    <button id="docSearchClear" 
-                            class="hidden absolute right-2 top-2 text-gray-400 hover:text-gray-600"
-                            onclick="clearDocSearch()">
-                        <i class="fas fa-times-circle"></i>
-                    </button>
-                </div>
-                <span class="text-xs text-gray-400 whitespace-nowrap" id="docReportCount">0 trucks</span>
-            </div>
-            
-            <!-- Filter Buttons Row -->
-            <div class="flex flex-wrap gap-2 items-center">
-                <span class="text-xs text-gray-500">Status:</span>
-                <button onclick="filterDocReport('all')" class="doc-filter-btn px-3 py-1 rounded-full text-xs bg-blue-100 text-blue-700 hover:bg-blue-200 transition font-semibold" id="docFilterAll">All</button>
-                <button onclick="filterDocReport('valid')" class="doc-filter-btn px-3 py-1 rounded-full text-xs bg-gray-100 text-gray-600 hover:bg-green-100 hover:text-green-700 transition" id="docFilterValid">Valid</button>
-                <button onclick="filterDocReport('expired')" class="doc-filter-btn px-3 py-1 rounded-full text-xs bg-gray-100 text-gray-600 hover:bg-red-100 hover:text-red-700 transition" id="docFilterExpired">Expired</button>
-                <button onclick="filterDocReport('missing')" class="doc-filter-btn px-3 py-1 rounded-full text-xs bg-gray-100 text-gray-600 hover:bg-yellow-100 hover:text-yellow-700 transition" id="docFilterMissing">Missing</button>
-            </div>
-        </div>
-        
-        <div class="overflow-auto flex-1 p-4">
-            <table class="w-full text-sm border rounded-lg">
-                <thead class="bg-gray-100 sticky top-0">
-                    <tr>
-                        <th class="py-2 px-3 text-left">Plate No</th>
-                        <th class="py-2 px-3 text-left">Driver</th>
-                        <th class="py-2 px-3 text-left">Hauler</th>
-                        <th class="py-2 px-3 text-center">LTO Registration</th>
-                        <th class="py-2 px-3 text-center">Fire Permit</th>
-                        <th class="py-2 px-3 text-center">DOST Calibration</th>
-                        <th class="py-2 px-3 text-center">Make</th>
-                    </tr>
-                </thead>
-                <tbody id="docReportBody">
-                    <tr><td colspan="7" class="text-center py-12 text-gray-400">
-                        <i class="fas fa-spinner fa-spin text-2xl mb-2 block"></i>Loading document data...
-                    </td></tr>
-                </tbody>
-            </table>
-            <!-- No Results Message -->
-            <div id="docNoResults" class="hidden text-center py-12 text-gray-400">
-                <i class="fas fa-search text-3xl mb-2 block"></i>
-                <p>No trucks match your search</p>
-                <p class="text-xs mt-1">Try a different plate number, driver, or hauler</p>
-            </div>
-        </div>
-        
-        <div class="p-3 border-t bg-gray-50 flex justify-between items-center">
-            <span class="text-xs text-gray-400">Click outside or press ESC to close</span>
-            <button onclick="closeDocReport()" class="bg-blue-900 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-800 transition">
-                <i class="fas fa-check mr-1"></i>Close
-            </button>
-        </div>
-    </div>
-</div>
-
 </body>
 </html>
