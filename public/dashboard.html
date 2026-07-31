@@ -211,7 +211,48 @@ if('Notification' in window&&Notification.permission==='default'){Notification.r
 function showChatNotification(title,body,icon){if('Notification' in window&&Notification.permission==='granted'){var chatWidget=document.getElementById('chatWidget');if(chatWidget&&!chatWidget.classList.contains('hidden')&&document.hasFocus())return;var notification=new Notification(title,{body:body,icon:icon||'/favicon.svg',badge:'/favicon.svg',tag:'fueltrak-chat',requireInteraction:false,silent:false});notification.onclick=function(){window.focus();openChat();notification.close()};setTimeout(function(){notification.close()},5000)}}
 async function openChat(){document.getElementById('chatWidget').classList.remove('hidden');document.getElementById('chatButton').classList.add('hidden');document.getElementById('unreadBadge').classList.add('hidden');loadContactList()}
 function showContactList(){document.getElementById('contactList').classList.remove('hidden');document.getElementById('chatBody').classList.add('hidden');document.getElementById('chatInputArea').classList.add('hidden');document.getElementById('chatTitle').textContent='Chat';currentChatUser=null;loadContactList()}
-async function loadContactList(){var r=await fetch('/api/chat-list',{headers:{'Authorization':'Bearer '+token}});var d=await r.json();if(d.status==='success'){contactList=d.data;var h='';contactList.forEach(function(c){h+='<div onclick="startChat('+c.id+',\''+(c.email||c.company_name)+'\')" class="flex items-center p-3 hover:bg-gray-50 cursor-pointer border-b"><div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3"><i class="fas fa-user text-blue-600 text-sm"></i></div><div class="flex-1"><p class="text-sm font-semibold">'+(c.company_name||c.email)+'</p><p class="text-xs text-gray-400">'+(c.email||'')+'</p></div><div class="w-2 h-2 bg-green-400 rounded-full" title="Online"></div></div>'});document.getElementById('contactList').innerHTML=h||'<p class="p-3 text-center text-gray-400 text-sm">No contacts</p>'}}
+async function loadContactList() {
+    try {
+        var r = await fetch('/api/chat-list', {
+            headers: {
+                'Authorization': 'Bearer ' + token
+            }
+        });
+        var d = await r.json();
+        
+        if (d.status === 'success') {
+            contactList = d.data;
+            var h = '';
+            
+            contactList.forEach(function(c) {
+                var name = c.company_name || c.email;
+                var unreadCount = c.unread_count || 0;
+                
+                // Show badge only if unread_count > 0
+                var badgeHtml = unreadCount > 0 
+                    ? '<span class="ml-2 px-2 py-0.5 text-xs font-bold text-white bg-red-500 rounded-full">' + (unreadCount > 99 ? '99+' : unreadCount) + '</span>'
+                    : '';
+
+                h += '<div onclick="startChat(' + c.id + ',\'' + (c.email || c.company_name) + '\')" class="flex items-center p-3 hover:bg-gray-50 cursor-pointer border-b relative">' +
+                        '<div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">' +
+                            '<i class="fas fa-user text-blue-600 text-sm"></i>' +
+                        '</div>' +
+                        '<div class="flex-1 min-w-0">' +
+                            '<div class="flex items-center justify-between">' +
+                                '<p class="text-sm font-semibold truncate">' + name + '</p>' +
+                                badgeHtml +
+                            '</div>' +
+                            '<p class="text-xs text-gray-400 truncate">' + (c.email || '') + '</p>' +
+                        '</div>' +
+                     '</div>';
+            });
+            
+            document.getElementById('contactList').innerHTML = h || '<p class="p-3 text-center text-gray-400 text-sm">No contacts</p>';
+        }
+    } catch (err) {
+        console.error('Failed to load contact list:', err);
+    }
+}
 function startChat(id,name){currentChatUser=id;currentChatName=name;document.getElementById('chatTitle').textContent=name;document.getElementById('contactList').classList.add('hidden');document.getElementById('chatBody').classList.remove('hidden');document.getElementById('chatInputArea').classList.remove('hidden');loadChatMessages();if(chatInterval)clearInterval(chatInterval);chatInterval=setInterval(loadChatMessages,5000)}
 async function loadChatMessages(){if(!currentChatUser)return;var r=await fetch('/api/chat/'+currentChatUser,{headers:{'Authorization':'Bearer '+token}});var d=await r.json();if(d.status==='success'){var h='',newMessages=0;d.data.forEach(function(m){var isMe=m.sender_id==user.id;if(!isMe){newMessages++;if(m.id>lastMessageId)lastMessageId=m.id}h+='<div class="'+(isMe?'text-right':'text-left')+' mb-2"><div class="inline-block '+(isMe?'bg-blue-100':'bg-gray-100')+' rounded-lg px-3 py-1.5 text-sm max-w-[80%]"><p class="text-[10px] text-gray-500">'+(isMe?'You':currentChatName)+'</p><p>'+m.message+'</p><p class="text-[9px] text-gray-400 text-right">'+new Date(m.created_at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})+'</p></div></div>'});document.getElementById('chatBody').innerHTML=h||'<p class="text-center text-gray-400 text-sm pt-10">Start the conversation!</p>';document.getElementById('chatBody').scrollTop=document.getElementById('chatBody').scrollHeight;if(newMessages>0&&document.getElementById('chatWidget').classList.contains('hidden')){showChatNotification('New message from '+currentChatName,'You have '+newMessages+' new message'+(newMessages>1?'s':''),'/favicon.svg');var badge=document.getElementById('unreadBadge');badge.textContent=newMessages;badge.classList.remove('hidden')}}}
 async function sendChat(){var i=document.getElementById('chatInput');var m=i.value.trim();if(!m||!currentChatUser)return;i.value='';await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({receiver_id:currentChatUser,message:m})});loadChatMessages()}
