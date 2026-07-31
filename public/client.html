@@ -1623,57 +1623,7 @@
         if (chatInterval) clearInterval(chatInterval);
         chatInterval = setInterval(loadChatMessages, 5000);
       }
-      async function loadChatMessages() {
-        if (!currentChatUser) return;
-        var r = await fetch("/api/chat/" + currentChatUser, {
-          headers: { Authorization: "Bearer " + token },
-        });
-        var d = await r.json();
-        if (d.status === "success") {
-          var h = "",
-            nm = 0;
-          d.data.forEach(function (m) {
-            var im = m.sender_id == user.id;
-            if (!im) {
-              nm++;
-              if (m.id > lastMessageId) lastMessageId = m.id;
-            }
-            h +=
-              '<div class="' +
-              (im ? "text-right" : "text-left") +
-              ' mb-2"><div class="inline-block ' +
-              (im ? "bg-blue-100" : "bg-gray-100") +
-              ' rounded-lg px-3 py-1.5 text-sm max-w-[80%]"><p class="text-[10px] text-gray-500">' +
-              (im ? "You" : currentChatName) +
-              "</p><p>" +
-              m.message +
-              '</p><p class="text-[9px] text-gray-400 text-right">' +
-              new Date(m.created_at).toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit",
-              }) +
-              "</p></div></div>";
-          });
-          document.getElementById("chatBody").innerHTML =
-            h ||
-            '<p class="text-center text-gray-400 text-sm pt-10">Start the conversation!</p>';
-          document.getElementById("chatBody").scrollTop =
-            document.getElementById("chatBody").scrollHeight;
-          if (
-            nm > 0 &&
-            document.getElementById("chatWidget").classList.contains("hidden")
-          ) {
-            showChatNotification(
-              "New message from " + currentChatName,
-              "You have " + nm + " new message" + (nm > 1 ? "s" : ""),
-              "/favicon.svg",
-            );
-            var badge = document.getElementById("unreadBadge");
-            badge.textContent = nm;
-            badge.classList.remove("hidden");
-          }
-        }
-      }
+      async function loadChatMessages(){if(!currentChatUser)return;var r=await fetch('/api/chat/'+currentChatUser,{headers:{'Authorization':'Bearer '+token}});var d=await r.json();if(d.status==='success'){var h='',newMessages=0;d.data.forEach(function(m){var isMe=m.sender_id==user.id;if(!isMe){newMessages++;if(m.id>lastMessageId)lastMessageId=m.id}h+='<div class="'+(isMe?'text-right':'text-left')+' mb-2"><div class="inline-block '+(isMe?'bg-blue-100':'bg-gray-100')+' rounded-lg px-3 py-1.5 text-sm max-w-[80%]"><p class="text-[10px] text-gray-500">'+(isMe?'You':currentChatName)+'</p><p>'+m.message+'</p><p class="text-[9px] text-gray-400 text-right">'+new Date(m.created_at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})+'</p></div></div>'});document.getElementById('chatBody').innerHTML=h||'<p class="text-center text-gray-400 text-sm pt-10">Start the conversation!</p>';document.getElementById('chatBody').scrollTop=document.getElementById('chatBody').scrollHeight;if(newMessages>0&&document.getElementById('chatWidget').classList.contains('hidden')){showChatNotification('New message from '+currentChatName,'You have '+newMessages+' new message'+(newMessages>1?'s':''),'/favicon.svg')}}}
       async function sendChat() {
         var i = document.getElementById("chatInput");
         var m = i.value.trim();
