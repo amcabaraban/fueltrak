@@ -360,26 +360,54 @@ app.delete('/api/sales-orders/:id', authenticate, authorize('dispatcher','manage
 // Chat
 app.get('/api/chat-list', authenticate, async (req, res) => {
   try {
-    let query;
+    const currentUserId = req.user.id;
+    let users = [];
+
     if (req.user.role === 'client') {
-      query = `
-        SELECT u.id, u.email, 
-               (SELECT COUNT(*) FROM chat_messages WHERE sender_id = u.id AND receiver_id = ? AND is_read = 0) as unread_count
+      // 1. Client fetching dispatchers/management
+      const sql = `
+        SELECT 
+          u.id, 
+          u.email, 
+          (SELECT COUNT(*) FROM chat_messages WHERE sender_id = u.id AND receiver_id = ? AND is_read = 0) AS unread_count
         FROM users u 
-        WHERE u.role IN ('dispatcher','management') 
+        WHERE u.role IN ('dispatcher', 'management') 
         LIMIT 5`;
+      
+      [users] = await pool.execute(sql, [currentUserId]);
+
     } else {
-      query = `
-        SELECT u.id, u.email, 
-               (SELECT COUNT(*) FROM chat_messages WHERE sender_id = u.id AND receiver_id = ? AND is_read = 0) as unread_count
+      // 2. Staff fetching clients (ordered by company_name)
+      const sqlWithCompany = `
+        SELECT 
+          u.id, 
+          u.email, 
+          (SELECT COUNT(*) FROM chat_messages WHERE sender_id = u.id AND receiver_id = ? AND is_read = 0) AS unread_count
         FROM users u 
         WHERE u.role = 'client' 
-        ORDER BY u.company_name LIMIT 50`;
+        ORDER BY u.company_name ASC 
+        LIMIT 50`;
+
+      [users] = await pool.execute(sqlWithCompany, [currentUserId]);
+
+      // Fallback if no clients found with company_name sorting
+      if (!users.length) {
+        const sqlFallback = `
+          SELECT 
+            u.id, 
+            u.email, 
+            (SELECT COUNT(*) FROM chat_messages WHERE sender_id = u.id AND receiver_id = ? AND is_read = 0) AS unread_count
+          FROM users u 
+          WHERE u.role = 'client' 
+          LIMIT 50`;
+
+        [users] = await pool.execute(sqlFallback, [currentUserId]);
+      }
     }
 
-    const [u] = await pool.execute(query, [req.user.id]);
-    res.json({ status: 'success', data: u });
+    res.json({ status: 'success', data: users });
   } catch (e) {
+    console.error('Chat List Error:', e); // Check your server console for details
     res.status(500).json({ error: e.message });
   }
 });
