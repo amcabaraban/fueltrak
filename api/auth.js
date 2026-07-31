@@ -363,18 +363,14 @@ app.get('/api/chat/:clientId', authenticate, async (req, res) => { try { const [
 app.post('/api/chat', authenticate, async (req, res) => { try { await pool.execute('INSERT INTO chat_messages (sender_id,receiver_id,message) VALUES (?,?,?)',[req.user.id,req.body.receiver_id,req.body.message]); res.json({status:'success',message:'Sent'}); } catch(e) { res.status(400).json({error:e.message}); } });
 app.get('/api/chat/unread', authenticate, async (req, res) => {
   try {
-    // Simple count - all messages sent to this user that are newer than 30 seconds
-    // This avoids dependency on chat_reads table
     const [result] = await pool.execute(
       `SELECT COUNT(*) as unread FROM chat_messages 
-       WHERE receiver_id = ? 
-       AND sender_id != ?
+       WHERE receiver_id = ? AND sender_id != ?
        AND created_at > DATE_SUB(NOW(), INTERVAL 24 HOUR)`,
       [req.user.id, req.user.id]
     );
     res.json({ status: 'success', unread: result[0].unread || 0 });
   } catch (error) {
-    // Fallback if query fails
     res.json({ status: 'success', unread: 0 });
   }
 });
