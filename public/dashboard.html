@@ -110,9 +110,9 @@
     <div id="chatBody" class="hidden h-64 overflow-y-auto p-3 space-y-2"></div>
     <div id="chatInputArea" class="hidden p-2 border-t flex gap-2"><input type="text" id="chatInput" placeholder="Type message..." class="flex-1 px-2 py-1 border rounded text-sm" onkeypress="if(event.key==='Enter')sendChat()"><button onclick="sendChat()" class="bg-blue-900 text-white px-3 py-1 rounded text-sm"><i class="fas fa-paper-plane"></i></button></div>
 </div>
-<button onclick="openChat()" class="fixed bottom-20 right-16 z-50 bg-blue-900 text-white p-3 rounded-full shadow-lg hover:bg-blue-800 relative" id="chatButton">
+<button onclick="openChat()" class="fixed bottom-20 right-16 z-50 bg-blue-900 text-white p-3 rounded-full shadow-lg hover:bg-blue-800" id="chatButton" style="position:relative">
     <i class="fas fa-comments"></i>
-    <span id="unreadBadge" class="hidden absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold" style="min-width:20px;height:20px;z-index:51">0</span>
+    <span id="unreadBadge" class="hidden" style="position:absolute;top:-4px;right:-4px;background:#ef4444;color:white;font-size:11px;min-width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;z-index:51;box-shadow:0 2px 4px rgba(0,0,0,0.3)">0</span>
 </button>
 
 <!-- Floating Calculator -->
