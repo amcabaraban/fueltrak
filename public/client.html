@@ -1,797 +1,1730 @@
-﻿<!DOCTYPE html>
+﻿<!doctype html>
 <html lang="en">
-<head>
- <meta charset="UTF-8">
- <meta name="viewport" content="width=device-width, initial-scale=1.0">
- <title>FuelTrak - Client Portal</title>
- <script src="https://cdn.tailwindcss.com"></script>
- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
- <style>
-  .stat-card { transition: all 0.3s ease; }
-  .stat-card:hover { transform: translateY(-3px); box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
-  .progress-bar { transition: width 0.5s ease; }
-  .plate-suggestion-item { transition: background-color 0.15s ease; }
-  .plate-suggestion-item:hover { background-color: #eff6ff; }
-  .plate-suggestion-item mark { background-color: #fef08a; padding: 0 2px; border-radius: 2px; }
-  #plateSuggestions { animation: fadeIn 0.15s ease-out; }
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
-  @media print {
-   body { background: white !important; }
-   nav, .no-print { display: none !important; }
-   #printArea { display: block !important; padding: 20px; }
-   #printArea table { inline-size: 100%; border-collapse: collapse; font-size: 11px; }
-   #printArea th, #printArea td { border: 1px solid #ddd; padding: 6px 8px; text-align: start; }
-   #printArea th { background: #f0f0f0 !important; }
-   @page { margin: 1cm; }
-  }
-  .print-only { display: none; }
-  @media print { .print-only { display: block; } }
- </style>
-</head>
-<body class="bg-gray-50 min-h-screen">
-<div class="main-content">
- <!-- Navigation -->
- <nav class="bg-gradient-to-r from-blue-900 to-blue-800 text-white shadow-[0_4px_6px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.1)] sticky top-0 z-50 no-print">
-  <div class="hidden md:flex max-w-7xl mx-auto px-4 py-3 justify-between items-center">
-   <div class="flex items-center space-x-3">
-    <div class="bg-white/20 p-2 rounded-lg"><i class="fas fa-gas-pump text-2xl text-yellow-400"></i></div>
-    <div><span class="font-bold text-xl">FuelTrak</span><p class="text-xs text-blue-300">Client Portal</p></div>
-   </div>
-   <div class="flex items-center space-x-3">
-    <span id="userInfo" class="text-sm bg-white/10 px-3 py-1 rounded-full"></span>
-    <button onclick="showView('dashboard')" class="bg-white/20 px-3 py-1 rounded text-sm hover:bg-white/30"><i class="fas fa-chart-pie mr-1"></i>Dashboard</button>
-    <button onclick="showView('submit')" class="bg-white/20 px-3 py-1 rounded text-sm hover:bg-white/30"><i class="fas fa-plus-circle mr-1"></i>New ATL</button>
-    <button onclick="showView('history')" class="bg-white/20 px-3 py-1 rounded text-sm hover:bg-white/30"><i class="fas fa-list mr-1"></i>My ATLs</button>
-    <button onclick="showView('reports')" class="bg-white/20 px-3 py-1 rounded text-sm hover:bg-white/30"><i class="fas fa-chart-bar mr-1"></i>Reports</button>
-    <button onclick="logout()" class="bg-red-500/80 hover:bg-red-500 px-4 py-2 rounded text-sm"><i class="fas fa-sign-out-alt mr-1"></i>Logout</button>
-   </div>
-  </div>
-  <div class="flex md:hidden px-2 py-2 items-center space-x-1">
-   <div class="flex items-center space-x-1">
-    <div class="bg-white/20 p-1 rounded"><i class="fas fa-gas-pump text-sm text-yellow-400"></i></div>
-    <span class="font-bold text-xs whitespace-nowrap">FuelTrak</span>
-   </div>
-   <div class="flex-1 overflow-x-auto flex items-center space-x-1" style="scrollbar-width:none">
-    <span id="userInfoMob" class="text-[9px] bg-white/10 px-1.5 py-0.5 rounded-full max-w-[80px] truncate"></span>
-    <button onclick="showView('dashboard')" class="bg-white/20 px-2 py-1 rounded text-xs hover:bg-white/30"><i class="fas fa-chart-pie mr-1"></i>Dashboard</button>
-    <button onclick="showView('submit')" class="bg-white/20 px-2 py-1 rounded text-xs hover:bg-white/30"><i class="fas fa-plus-circle mr-1"></i>New ATL</button>
-    <button onclick="showView('history')" class="bg-white/20 px-2 py-1 rounded text-xs hover:bg-white/30"><i class="fas fa-list mr-1"></i>My ATLs</button>
-    <button onclick="showView('reports')" class="bg-white/20 px-2 py-1 rounded text-xs hover:bg-white/30"><i class="fas fa-chart-bar mr-1"></i>Reports</button>
-    <button onclick="logout()" class="bg-red-500/80 hover:bg-red-500 px-2 py-1 rounded text-xs"><i class="fas fa-sign-out-alt mr-1"></i>Logout</button>
-   </div>
-  </div>
- </nav>
-
- <div class="max-w-7xl mx-auto px-4 py-8 w-full">
-
-  <!-- ============ DASHBOARD VIEW ============ -->
-  <div id="dashboardView">
-   <div class="bg-gradient-to-r from-blue-900 via-blue-700 to-blue-500 rounded-2xl shadow-2xl p-8 mb-8 text-white">
-    <p class="text-blue-200 text-sm" id="welcomeDate"></p>
-    <h1 class="text-3xl font-bold mt-1">My Dashboard</h1>
-    <p class="text-blue-100 mt-2">ATL summary and statistics</p>
-   </div>
-   <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8" id="atlStats"></div>
-   <div id="recentATLCodes" class="mb-8"></div>
-   
-   <!-- Client Sales Orders Table -->
-   <div id="clientSalesOrders" class="mb-8">
-    <div class="bg-white rounded-xl shadow-lg p-6">
-     <div class="flex justify-between items-center mb-4">
-      <h3 class="font-bold text-lg text-gray-800">
-       <i class="fas fa-file-invoice mr-2 text-blue-600"></i>My Sales Orders
-      </h3>
-      <span class="text-xs text-gray-400" id="soLastUpdated"></span>
-     </div>
-     <div class="overflow-x-auto">
-      <table class="w-full text-sm" style="min-width:600px">
-       <thead class="bg-gray-50 border-b">
-        <tr>
-         <th class="py-3 px-3 text-left text-xs font-semibold text-gray-600">Date</th>
-         <th class="py-3 px-3 text-left text-xs font-semibold text-gray-600">SO #</th>
-         <th class="py-3 px-3 text-right text-xs font-semibold text-gray-600">Total Volume (L)</th>
-         <th class="py-3 px-3 text-right text-xs font-semibold text-gray-600">Withdrawn (L)</th>
-         <th class="py-3 px-3 text-right text-xs font-semibold text-gray-600">Balance (L)</th>
-         <th class="py-3 px-3 text-center text-xs font-semibold text-gray-600">Status</th>
-        </tr>
-       </thead>
-       <tbody id="clientSOTableBody">
-        <tr><td colspan="6" class="text-center py-8 text-gray-400"><i class="fas fa-spinner fa-spin mr-2"></i>Loading sales orders...</td></tr>
-       </tbody>
-      </table>
-     </div>
-    </div>
-   </div>
-  </div>
-
-  <!-- ============ SUBMIT ATL VIEW ============ -->
-  <div id="submitView" class="hidden">
-   <div class="bg-white rounded-2xl shadow-[0_4px_15px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.5)] p-4 sm:p-6 md:p-8 max-w-2xl mx-auto">
-    <h2 class="text-xl sm:text-2xl font-bold mb-6"><i class="fas fa-plus-circle text-blue-600 mr-2"></i>Submit New ATL</h2>
-    <form onsubmit="submitATL(event)" class="space-y-5">
-     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      <div><label class="block text-xs font-semibold text-gray-700 mb-1.5">Company <span class="text-red-500">*</span></label><input type="text" id="company" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm" required></div>
-      <div><label class="block text-xs font-semibold text-gray-700 mb-1.5">SO Number <span class="text-red-500">*</span></label><input type="text" id="soNumber" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm" required></div>
-     </div>
-     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      <div><label class="block text-xs font-semibold text-gray-700 mb-1.5">Scheduled Date <span class="text-red-500">*</span></label><input type="date" id="scheduledDate" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm" required></div>
-      <div><label class="block text-xs font-semibold text-gray-700 mb-1.5">Volume (Liters) <span class="text-red-500">*</span></label><input type="number" id="volume" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm" required min="1"><p class="text-xs text-gray-400 mt-1" id="capacityHint"></p></div>
-     </div>
-     <div><label class="block text-xs font-semibold text-gray-700 mb-2">Sales Invoice</label><div class="flex items-center space-x-6"><label class="flex items-center cursor-pointer space-x-2"><input type="radio" name="siOption" value="yes" class="w-4 h-4 text-blue-600"><span class="text-sm text-gray-700">With SI</span></label><label class="flex items-center cursor-pointer space-x-2"><input type="radio" name="siOption" value="no" checked class="w-4 h-4 text-blue-600"><span class="text-sm text-gray-700">No SI</span></label></div></div>
-     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      <div><label class="block text-xs font-semibold text-gray-700 mb-1.5">Hauler <span class="text-red-500">*</span></label><input type="text" id="hauler" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm" required></div>
-      <div class="relative">
-       <label class="block text-xs font-semibold text-gray-700 mb-1.5">Plate Number <span class="text-red-500">*</span></label>
-       <input type="text" id="plateNo" 
-       class="w-full px-3 py-2.5 border border-gray-300 rounded-lg uppercase focus:ring-2 focus:ring-blue-500 text-sm" 
-       required 
-       oninput="debouncedVerifyTruck()" 
-       onfocus="showPlateSuggestions()"
-       onblur="hidePlateSuggestions()"
-       onkeydown="handlePlateKeydown(event)"
-       autocomplete="off">
-       <div id="truckStatus" class="mt-1 text-xs hidden"></div>
-       <div id="plateSuggestions" class="hidden absolute z-10 bg-white border border-gray-300 rounded-lg shadow-lg max-h-48 overflow-y-auto w-full mt-1"></div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FuelTrak - Client Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    />
+    <style>
+      .stat-card {
+        transition: all 0.3s ease;
+      }
+      .stat-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+      }
+      .progress-bar {
+        transition: width 0.5s ease;
+      }
+      .plate-suggestion-item {
+        transition: background-color 0.15s ease;
+      }
+      .plate-suggestion-item:hover {
+        background-color: #eff6ff;
+      }
+      .plate-suggestion-item mark {
+        background-color: #fef08a;
+        padding: 0 2px;
+        border-radius: 2px;
+      }
+      #plateSuggestions {
+        animation: fadeIn 0.15s ease-out;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(-5px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      @keyframes badgePulse {
+        0%,
+        100% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.3);
+        }
+      }
+      #unreadBadge:not(.hidden) {
+        animation: badgePulse 0.5s ease-out;
+      }
+      @media print {
+        body {
+          background: white !important;
+        }
+        nav,
+        .no-print {
+          display: none !important;
+        }
+        #printArea {
+          display: block !important;
+          padding: 20px;
+        }
+        #printArea table {
+          inline-size: 100%;
+          border-collapse: collapse;
+          font-size: 11px;
+        }
+        #printArea th,
+        #printArea td {
+          border: 1px solid #ddd;
+          padding: 6px 8px;
+          text-align: start;
+        }
+        #printArea th {
+          background: #f0f0f0 !important;
+        }
+        @page {
+          margin: 1cm;
+        }
+      }
+      .print-only {
+        display: none;
+      }
+      @media print {
+        .print-only {
+          display: block;
+        }
+      }
+    </style>
+  </head>
+  <body class="bg-gray-50 min-h-screen">
+    <div class="main-content">
+      <nav
+        class="bg-gradient-to-r from-blue-900 to-blue-800 text-white shadow-[0_4px_6px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.1)] sticky top-0 z-50 no-print"
+      >
+        <div
+          class="hidden md:flex max-w-7xl mx-auto px-4 py-3 justify-between items-center"
+        >
+          <div class="flex items-center space-x-3">
+            <div class="bg-white/20 p-2 rounded-lg">
+              <i class="fas fa-gas-pump text-2xl text-yellow-400"></i>
+            </div>
+            <div>
+              <span class="font-bold text-xl">FuelTrak</span>
+              <p class="text-xs text-blue-300">Client Portal</p>
+            </div>
+          </div>
+          <div class="flex items-center space-x-3">
+            <span
+              id="userInfo"
+              class="text-sm bg-white/10 px-3 py-1 rounded-full"
+            ></span
+            ><button
+              onclick="showView('dashboard')"
+              class="bg-white/20 px-3 py-1 rounded text-sm hover:bg-white/30"
+            >
+              <i class="fas fa-chart-pie mr-1"></i>Dashboard</button
+            ><button
+              onclick="showView('submit')"
+              class="bg-white/20 px-3 py-1 rounded text-sm hover:bg-white/30"
+            >
+              <i class="fas fa-plus-circle mr-1"></i>New ATL</button
+            ><button
+              onclick="showView('history')"
+              class="bg-white/20 px-3 py-1 rounded text-sm hover:bg-white/30"
+            >
+              <i class="fas fa-list mr-1"></i>My ATLs</button
+            ><button
+              onclick="showView('reports')"
+              class="bg-white/20 px-3 py-1 rounded text-sm hover:bg-white/30"
+            >
+              <i class="fas fa-chart-bar mr-1"></i>Reports</button
+            ><button
+              onclick="logout()"
+              class="bg-red-500/80 hover:bg-red-500 px-4 py-2 rounded text-sm"
+            >
+              <i class="fas fa-sign-out-alt mr-1"></i>Logout
+            </button>
+          </div>
+        </div>
+        <div class="flex md:hidden px-2 py-2 items-center space-x-1">
+          <div class="flex items-center space-x-1">
+            <div class="bg-white/20 p-1 rounded">
+              <i class="fas fa-gas-pump text-sm text-yellow-400"></i>
+            </div>
+            <span class="font-bold text-xs whitespace-nowrap">FuelTrak</span>
+          </div>
+          <div
+            class="flex-1 overflow-x-auto flex items-center space-x-1"
+            style="scrollbar-width: none"
+          >
+            <span
+              id="userInfoMob"
+              class="text-[9px] bg-white/10 px-1.5 py-0.5 rounded-full max-w-[80px] truncate"
+            ></span
+            ><button
+              onclick="showView('dashboard')"
+              class="bg-white/20 px-2 py-1 rounded text-xs hover:bg-white/30"
+            >
+              <i class="fas fa-chart-pie mr-1"></i>Dashboard</button
+            ><button
+              onclick="showView('submit')"
+              class="bg-white/20 px-2 py-1 rounded text-xs hover:bg-white/30"
+            >
+              <i class="fas fa-plus-circle mr-1"></i>New ATL</button
+            ><button
+              onclick="showView('history')"
+              class="bg-white/20 px-2 py-1 rounded text-xs hover:bg-white/30"
+            >
+              <i class="fas fa-list mr-1"></i>My ATLs</button
+            ><button
+              onclick="showView('reports')"
+              class="bg-white/20 px-2 py-1 rounded text-xs hover:bg-white/30"
+            >
+              <i class="fas fa-chart-bar mr-1"></i>Reports</button
+            ><button
+              onclick="logout()"
+              class="bg-red-500/80 hover:bg-red-500 px-2 py-1 rounded text-xs"
+            >
+              <i class="fas fa-sign-out-alt mr-1"></i>Logout
+            </button>
+          </div>
+        </div>
+      </nav>
+      <div class="max-w-7xl mx-auto px-4 py-8 w-full">
+        <div id="dashboardView">
+          <div
+            class="bg-gradient-to-r from-blue-900 via-blue-700 to-blue-500 rounded-2xl shadow-2xl p-8 mb-8 text-white"
+          >
+            <p class="text-blue-200 text-sm" id="welcomeDate"></p>
+            <h1 class="text-3xl font-bold mt-1">My Dashboard</h1>
+            <p class="text-blue-100 mt-2">ATL summary and statistics</p>
+          </div>
+          <div
+            class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8"
+            id="atlStats"
+          ></div>
+          <div id="recentATLCodes" class="mb-8"></div>
+          <div id="clientSalesOrders" class="mb-8">
+            <div class="bg-white rounded-xl shadow-lg p-6">
+              <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold text-lg text-gray-800">
+                  <i class="fas fa-file-invoice mr-2 text-blue-600"></i>My Sales
+                  Orders
+                </h3>
+                <span class="text-xs text-gray-400" id="soLastUpdated"></span>
+              </div>
+              <div class="overflow-x-auto">
+                <table class="w-full text-sm" style="min-width: 600px">
+                  <thead class="bg-gray-50 border-b">
+                    <tr>
+                      <th
+                        class="py-3 px-3 text-left text-xs font-semibold text-gray-600"
+                      >
+                        Date
+                      </th>
+                      <th
+                        class="py-3 px-3 text-left text-xs font-semibold text-gray-600"
+                      >
+                        SO #
+                      </th>
+                      <th
+                        class="py-3 px-3 text-right text-xs font-semibold text-gray-600"
+                      >
+                        Total Volume (L)
+                      </th>
+                      <th
+                        class="py-3 px-3 text-right text-xs font-semibold text-gray-600"
+                      >
+                        Withdrawn (L)
+                      </th>
+                      <th
+                        class="py-3 px-3 text-right text-xs font-semibold text-gray-600"
+                      >
+                        Balance (L)
+                      </th>
+                      <th
+                        class="py-3 px-3 text-center text-xs font-semibold text-gray-600"
+                      >
+                        Status
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody id="clientSOTableBody">
+                    <tr>
+                      <td colspan="6" class="text-center py-8 text-gray-400">
+                        <i class="fas fa-spinner fa-spin mr-2"></i>Loading sales
+                        orders...
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id="submitView" class="hidden">
+          <div
+            class="bg-white rounded-2xl shadow-[0_4px_15px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.5)] p-4 sm:p-6 md:p-8 max-w-2xl mx-auto"
+          >
+            <h2 class="text-xl sm:text-2xl font-bold mb-6">
+              <i class="fas fa-plus-circle text-blue-600 mr-2"></i>Submit New
+              ATL
+            </h2>
+            <form onsubmit="submitATL(event)" class="space-y-5">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label
+                    class="block text-xs font-semibold text-gray-700 mb-1.5"
+                    >Company <span class="text-red-500">*</span></label
+                  ><input
+                    type="text"
+                    id="company"
+                    class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+                    required
+                  />
+                </div>
+                <div>
+                  <label
+                    class="block text-xs font-semibold text-gray-700 mb-1.5"
+                    >SO Number <span class="text-red-500">*</span></label
+                  ><input
+                    type="text"
+                    id="soNumber"
+                    class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+                    required
+                  />
+                </div>
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label
+                    class="block text-xs font-semibold text-gray-700 mb-1.5"
+                    >Scheduled Date <span class="text-red-500">*</span></label
+                  ><input
+                    type="date"
+                    id="scheduledDate"
+                    class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+                    required
+                  />
+                </div>
+                <div>
+                  <label
+                    class="block text-xs font-semibold text-gray-700 mb-1.5"
+                    >Volume (Liters) <span class="text-red-500">*</span></label
+                  ><input
+                    type="number"
+                    id="volume"
+                    class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+                    required
+                    min="1"
+                  />
+                  <p class="text-xs text-gray-400 mt-1" id="capacityHint"></p>
+                </div>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-gray-700 mb-2"
+                  >Sales Invoice</label
+                >
+                <div class="flex items-center space-x-6">
+                  <label class="flex items-center cursor-pointer space-x-2"
+                    ><input
+                      type="radio"
+                      name="siOption"
+                      value="yes"
+                      class="w-4 h-4 text-blue-600"
+                    /><span class="text-sm text-gray-700">With SI</span></label
+                  ><label class="flex items-center cursor-pointer space-x-2"
+                    ><input
+                      type="radio"
+                      name="siOption"
+                      value="no"
+                      checked
+                      class="w-4 h-4 text-blue-600"
+                    /><span class="text-sm text-gray-700">No SI</span></label
+                  >
+                </div>
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label
+                    class="block text-xs font-semibold text-gray-700 mb-1.5"
+                    >Hauler <span class="text-red-500">*</span></label
+                  ><input
+                    type="text"
+                    id="hauler"
+                    class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+                    required
+                  />
+                </div>
+                <div class="relative">
+                  <label
+                    class="block text-xs font-semibold text-gray-700 mb-1.5"
+                    >Plate Number <span class="text-red-500">*</span></label
+                  ><input
+                    type="text"
+                    id="plateNo"
+                    class="w-full px-3 py-2.5 border border-gray-300 rounded-lg uppercase focus:ring-2 focus:ring-blue-500 text-sm"
+                    required
+                    oninput="debouncedVerifyTruck()"
+                    onfocus="showPlateSuggestions()"
+                    onblur="hidePlateSuggestions()"
+                    onkeydown="handlePlateKeydown(event)"
+                    autocomplete="off"
+                  />
+                  <div id="truckStatus" class="mt-1 text-xs hidden"></div>
+                  <div
+                    id="plateSuggestions"
+                    class="hidden absolute z-10 bg-white border border-gray-300 rounded-lg shadow-lg max-h-48 overflow-y-auto w-full mt-1"
+                  ></div>
+                </div>
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label
+                    class="block text-xs font-semibold text-gray-700 mb-1.5"
+                    >Driver's Name <span class="text-red-500">*</span></label
+                  ><input
+                    type="text"
+                    id="driverName"
+                    class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+                    required
+                  />
+                </div>
+                <div>
+                  <label
+                    class="block text-xs font-semibold text-gray-700 mb-1.5"
+                    >Contact Number <span class="text-red-500">*</span></label
+                  ><input
+                    type="text"
+                    id="contactNumber"
+                    class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+                    required
+                  />
+                </div>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-gray-700 mb-1.5"
+                  >Special Instructions</label
+                ><textarea
+                  id="specialInstructions"
+                  class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+                  rows="2"
+                  placeholder="Any special instructions for this ATL..."
+                ></textarea>
+              </div>
+              <button
+                type="submit"
+                id="submitBtn"
+                class="w-full bg-blue-900 text-white py-3 rounded-lg font-semibold hover:bg-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition text-sm"
+              >
+                <i class="fas fa-paper-plane mr-2"></i>Submit ATL
+              </button>
+            </form>
+            <div id="atlMessage" class="mt-4 text-sm text-center hidden"></div>
+          </div>
+        </div>
+        <div id="historyView" class="hidden">
+          <h2 class="text-2xl font-bold mb-6">
+            <i class="fas fa-history mr-2"></i>My ATL Records
+          </h2>
+          <div class="bg-white rounded-lg shadow p-3 mb-4 no-print">
+            <div class="flex flex-wrap gap-2">
+              <input
+                type="text"
+                id="atlSearch"
+                placeholder="Search plate, ATL code, driver..."
+                class="flex-1 px-3 py-2 border rounded text-sm"
+                oninput="filterMyATLs()"
+              /><select
+                id="atlStatusFilter"
+                class="px-3 py-2 border rounded text-sm"
+                onchange="filterMyATLs()"
+              >
+                <option value="all">All Status</option>
+                <option value="pending">Pending</option>
+                <option value="approved">Approved</option>
+                <option value="dispatched">Ongoing</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </div>
+          </div>
+          <div id="atlHistory" class="space-y-3"></div>
+        </div>
+        <div id="reportsView" class="hidden">
+          <h2 class="text-2xl font-bold mb-6">
+            <i class="fas fa-chart-bar mr-2"></i>My Reports
+          </h2>
+          <div class="bg-white rounded-xl shadow p-6 mb-6 no-print">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div>
+                <label class="text-xs font-semibold">Start Date</label
+                ><input
+                  type="date"
+                  id="startDate"
+                  class="w-full px-3 py-2 border rounded"
+                  onchange="loadClientReports()"
+                />
+              </div>
+              <div>
+                <label class="text-xs font-semibold">End Date</label
+                ><input
+                  type="date"
+                  id="endDate"
+                  class="w-full px-3 py-2 border rounded"
+                  onchange="loadClientReports()"
+                />
+              </div>
+              <div>
+                <label class="text-xs font-semibold">Status</label
+                ><select
+                  id="statusFilter"
+                  class="w-full px-3 py-2 border rounded"
+                  onchange="loadClientReports()"
+                >
+                  <option value="">All</option>
+                  <option value="completed">Completed</option>
+                  <option value="cancelled">Cancelled</option>
+                  <option value="dispatched">Ongoing</option>
+                  <option value="pending">Pending</option>
+                  <option value="approved">Approved</option>
+                </select>
+              </div>
+              <div class="flex items-end space-x-2">
+                <button
+                  onclick="clearClientFilters()"
+                  class="text-blue-600 text-sm"
+                >
+                  Clear</button
+                ><button
+                  onclick="printClientReport()"
+                  class="bg-blue-600 text-white px-4 py-2 rounded text-sm"
+                >
+                  <i class="fas fa-print mr-1"></i>Print</button
+                ><button
+                  onclick="exportClientCSV()"
+                  class="bg-green-600 text-white px-4 py-2 rounded text-sm"
+                >
+                  <i class="fas fa-download mr-1"></i>Export
+                </button>
+              </div>
+            </div>
+          </div>
+          <div
+            class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6"
+            id="reportSummaryCards"
+          ></div>
+          <div class="bg-white rounded-xl shadow overflow-hidden">
+            <div class="overflow-x-auto w-full">
+              <table class="w-full text-sm" style="min-width: 800px">
+                <thead class="bg-gray-50 border-b">
+                  <tr>
+                    <th class="py-3 px-3 text-left">ATL Code</th>
+                    <th class="py-3 px-3 text-left">SO #</th>
+                    <th class="py-3 px-3 text-left">Company</th>
+                    <th class="py-3 px-3 text-left">Plate</th>
+                    <th class="py-3 px-3 text-left">Driver</th>
+                    <th class="py-3 px-3 text-right">Volume</th>
+                    <th class="py-3 px-3 text-center">SI</th>
+                    <th class="py-3 px-3 text-center">Status</th>
+                    <th class="py-3 px-3 text-left">Date</th>
+                    <th class="py-3 px-3 text-center">WC</th>
+                  </tr>
+                </thead>
+                <tbody id="reportTableBody">
+                  <tr>
+                    <td colspan="10" class="text-center py-8 text-gray-500">
+                      Loading...
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div id="printArea" class="print-only">
+          <div style="text-align: center; margin-bottom: 20px">
+            <h1 style="font-size: 20px; font-weight: bold">
+              FuelTrak Logistics
+            </h1>
+            <h2>Client ATL Report</h2>
+            <p id="printDate" style="font-size: 12px"></p>
+          </div>
+          <div id="printSummary" style="margin-bottom: 20px"></div>
+          <table class="w-full">
+            <thead>
+              <tr>
+                <th>ATL Code</th>
+                <th>SO #</th>
+                <th>Plate</th>
+                <th>Driver</th>
+                <th>Volume</th>
+                <th>SI</th>
+                <th>Status</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody id="printTableBody"></tbody>
+          </table>
+        </div>
+        <div
+          id="atlModal"
+          class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+        >
+          <div
+            class="bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[80vh] overflow-y-auto p-6"
+          >
+            <div class="flex justify-between mb-4">
+              <h3 class="text-lg font-bold">ATL Details</h3>
+              <button
+                onclick="
+                  document.getElementById('atlModal').classList.add('hidden')
+                "
+                class="text-2xl"
+              >
+                &times;
+              </button>
+            </div>
+            <div id="atlDetail"></div>
+          </div>
+        </div>
       </div>
-     </div>
-     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      <div><label class="block text-xs font-semibold text-gray-700 mb-1.5">Driver's Name <span class="text-red-500">*</span></label><input type="text" id="driverName" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm" required></div>
-      <div><label class="block text-xs font-semibold text-gray-700 mb-1.5">Contact Number <span class="text-red-500">*</span></label><input type="text" id="contactNumber" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm" required></div>
-     </div>
-     <div><label class="block text-xs font-semibold text-gray-700 mb-1.5">Special Instructions</label><textarea id="specialInstructions" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm" rows="2" placeholder="Any special instructions for this ATL..."></textarea></div>
-     <button type="submit" id="submitBtn" class="w-full bg-blue-900 text-white py-3 rounded-lg font-semibold hover:bg-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition text-sm"><i class="fas fa-paper-plane mr-2"></i>Submit ATL</button>
-    </form>
-    <div id="atlMessage" class="mt-4 text-sm text-center hidden"></div>
-   </div>
-  </div>
-
-  <!-- ============ HISTORY VIEW ============ -->
-  <div id="historyView" class="hidden">
-   <h2 class="text-2xl font-bold mb-6"><i class="fas fa-history mr-2"></i>My ATL Records</h2>
-   <div class="bg-white rounded-lg shadow p-3 mb-4 no-print">
-    <div class="flex flex-wrap gap-2">
-     <input type="text" id="atlSearch" placeholder="Search plate, ATL code, driver..." class="flex-1 px-3 py-2 border rounded text-sm" oninput="filterMyATLs()">
-     <select id="atlStatusFilter" class="px-3 py-2 border rounded text-sm" onchange="filterMyATLs()">
-      <option value="all">All Status</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="dispatched">Ongoing</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option>
-     </select>
+      <div
+        id="chatWidget"
+        class="hidden fixed bottom-4 right-4 z-50 w-80 bg-white rounded-xl shadow-2xl border"
+      >
+        <div
+          class="bg-blue-900 text-white p-3 rounded-t-xl flex justify-between items-center"
+        >
+          <span
+            ><i class="fas fa-comments mr-2"></i
+            ><span id="chatTitle">Chat</span></span
+          >
+          <div>
+            <button onclick="showContactList()" class="text-white mr-2 text-sm">
+              <i class="fas fa-users"></i></button
+            ><button onclick="closeChat()" class="text-white">&times;</button>
+          </div>
+        </div>
+        <div id="contactList" class="h-64 overflow-y-auto">
+          <div class="p-3 text-center text-gray-400 text-sm">
+            Loading contacts...
+          </div>
+        </div>
+        <div
+          id="chatBody"
+          class="hidden h-64 overflow-y-auto p-3 space-y-2"
+        ></div>
+        <div id="chatInputArea" class="hidden p-2 border-t flex gap-2">
+          <input
+            type="text"
+            id="chatInput"
+            placeholder="Type message..."
+            class="flex-1 px-2 py-1 border rounded text-sm"
+            onkeypress="if (event.key === 'Enter') sendChat();"
+          /><button
+            onclick="sendChat()"
+            class="bg-blue-900 text-white px-3 py-1 rounded text-sm"
+          >
+            <i class="fas fa-paper-plane"></i>
+          </button>
+        </div>
+      </div>
+      <button
+        onclick="openChat()"
+        class="fixed bottom-4 right-4 z-50 bg-blue-900 text-white p-3 rounded-full shadow-lg hover:bg-blue-800"
+        id="chatButton"
+      >
+        <i class="fas fa-comments"></i
+        ><span
+          id="unreadBadge"
+          class="hidden absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center"
+          >0</span
+        >
+      </button>
     </div>
-   </div>
-   <div id="atlHistory" class="space-y-3"></div>
-  </div>
 
-  <!-- ============ REPORTS VIEW ============ -->
-  <div id="reportsView" class="hidden">
-   <h2 class="text-2xl font-bold mb-6"><i class="fas fa-chart-bar mr-2"></i>My Reports</h2>
-   <div class="bg-white rounded-xl shadow p-6 mb-6 no-print">
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-     <div><label class="text-xs font-semibold">Start Date</label><input type="date" id="startDate" class="w-full px-3 py-2 border rounded" onchange="loadClientReports()"></div>
-     <div><label class="text-xs font-semibold">End Date</label><input type="date" id="endDate" class="w-full px-3 py-2 border rounded" onchange="loadClientReports()"></div>
-     <div><label class="text-xs font-semibold">Status</label><select id="statusFilter" class="w-full px-3 py-2 border rounded" onchange="loadClientReports()"><option value="">All</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option><option value="dispatched">Ongoing</option><option value="pending">Pending</option><option value="approved">Approved</option></select></div>
-     <div class="flex items-end space-x-2"><button onclick="clearClientFilters()" class="text-blue-600 text-sm">Clear</button><button onclick="printClientReport()" class="bg-blue-600 text-white px-4 py-2 rounded text-sm"><i class="fas fa-print mr-1"></i>Print</button><button onclick="exportClientCSV()" class="bg-green-600 text-white px-4 py-2 rounded text-sm"><i class="fas fa-download mr-1"></i>Export</button></div>
-    </div>
-   </div>
-   <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6" id="reportSummaryCards"></div>
-   <div class="bg-white rounded-xl shadow overflow-hidden">
-    <div class="overflow-x-auto w-full">
-     <table class="w-full text-sm" style="min-width:800px">
-      <thead class="bg-gray-50 border-b"><tr><th class="py-3 px-3 text-left">ATL Code</th><th class="py-3 px-3 text-left">SO #</th><th class="py-3 px-3 text-left">Company</th><th class="py-3 px-3 text-left">Plate</th><th class="py-3 px-3 text-left">Driver</th><th class="py-3 px-3 text-right">Volume</th><th class="py-3 px-3 text-center">SI</th><th class="py-3 px-3 text-center">Status</th><th class="py-3 px-3 text-left">Date</th><th class="py-3 px-3 text-center">WC</th></tr></thead>
-      <tbody id="reportTableBody"><tr><td colspan="10" class="text-center py-8 text-gray-500">Loading...</td></tr></tbody>
-     </table>
-    </div>
-   </div>
-  </div>
-
-  <!-- Print Area -->
-  <div id="printArea" class="print-only">
-   <div style="text-align:center;margin-bottom:20px;"><h1 style="font-size:20px;font-weight:bold;">FuelTrak Logistics</h1><h2>Client ATL Report</h2><p id="printDate" style="font-size:12px;"></p></div>
-   <div id="printSummary" style="margin-bottom:20px;"></div>
-   <table class="w-full"><thead><tr><th>ATL Code</th><th>SO #</th><th>Plate</th><th>Driver</th><th>Volume</th><th>SI</th><th>Status</th><th>Date</th></tr></thead><tbody id="printTableBody"></tbody></table>
-  </div>
-
-  <!-- ATL Detail Modal -->
-  <div id="atlModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-   <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[80vh] overflow-y-auto p-6">
-    <div class="flex justify-between mb-4"><h3 class="text-lg font-bold">ATL Details</h3><button onclick="document.getElementById('atlModal').classList.add('hidden')" class="text-2xl">&times;</button></div>
-    <div id="atlDetail"></div>
-   </div>
-  </div>
- </div>
-
- <!-- Chat Widget -->
- <div id="chatWidget" class="hidden fixed bottom-4 right-4 z-50 w-80 bg-white rounded-xl shadow-2xl border">
-  <div class="bg-blue-900 text-white p-3 rounded-t-xl flex justify-between items-center">
-   <span><i class="fas fa-comments mr-2"></i><span id="chatTitle">Chat</span></span>
-   <div><button onclick="showContactList()" class="text-white mr-2 text-sm"><i class="fas fa-users"></i></button><button onclick="closeChat()" class="text-white">&times;</button></div>
-  </div>
-  <div id="contactList" class="h-64 overflow-y-auto"><div class="p-3 text-center text-gray-400 text-sm">Loading contacts...</div></div>
-  <div id="chatBody" class="hidden h-64 overflow-y-auto p-3 space-y-2"></div>
-  <div id="chatInputArea" class="hidden p-2 border-t flex gap-2">
-   <input type="text" id="chatInput" placeholder="Type message..." class="flex-1 px-2 py-1 border rounded text-sm" onkeypress="if(event.key==='Enter')sendChat()">
-   <button onclick="sendChat()" class="bg-blue-900 text-white px-3 py-1 rounded text-sm"><i class="fas fa-paper-plane"></i></button>
-  </div>
- </div>
- <button onclick="openChat()" class="fixed bottom-4 right-4 z-50 bg-blue-900 text-white p-3 rounded-full shadow-lg hover:bg-blue-800" id="chatButton">
-  <i class="fas fa-comments"></i>
-  <span id="unreadBadge" class="hidden absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">0</span>
- </button>
-
-<script>
-const API = '/api';
-const token = localStorage.getItem('fueltrak_token');
-const user = JSON.parse(localStorage.getItem('fueltrak_user') || '{}');
-if (!token || user.role !== 'client') { window.location.replace('/'); }
-
-let truckVerified = false, currentTruckId = null, allClientATLs = [];
-let verifyTimeout = null, allPlateNumbers = [], selectedSuggestionIndex = -1;
-let allMyATLs = [];
-let currentChatUser = null, currentChatName = '', chatInterval = null, contactList = [];
-
-document.getElementById('userInfo').textContent = user.email || '';
-document.getElementById('welcomeDate').textContent = new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
-document.getElementById('scheduledDate').value = new Date().toISOString().split('T')[0];
-
-async function api(url, method, body) {
- method = method || 'GET';
- var opts = { method: method, headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' } };
- if (body) opts.body = JSON.stringify(body);
- var response = await fetch(API + url, opts);
- return await response.json();
-}
-
-function showView(view) {
- ['dashboardView','submitView','historyView','reportsView'].forEach(function(v) { document.getElementById(v).classList.add('hidden'); });
- document.getElementById(view + 'View').classList.remove('hidden');
- if (view === 'dashboard') loadDashboard();
- if (view === 'history') loadHistory();
- if (view === 'reports') loadClientReports();
-}
-
-// ============ DASHBOARD ============
-//async function loadDashboard() {
-// var data = await api('/client/dashboard');
-// if (data.status === 'success') {
-//  var atls = data.data.recent || [];
-//  var stats = {
-//   total: atls.length,
-//   dispatched: atls.filter(function(a) { return a.status === 'dispatched'; }).length,
-//   completed: atls.filter(function(a) { return a.status === 'completed'; }).length,
-//   pending: atls.filter(function(a) { return a.status === 'pending'; }).length,
-//   approved: atls.filter(function(a) { return a.status === 'approved'; }).length,
-//   cancelled: atls.filter(function(a) { return a.status === 'cancelled' || a.status === 'rejected'; }).length
-//  };
-  
-//  document.getElementById('atlStats').innerHTML = [
-//   { label: 'Total', value: stats.total, gradient: 'from-blue-400 to-blue-500' },
-//   { label: 'Dispatched', value: stats.dispatched, gradient: 'from-green-400 to-green-500' },
-//   { label: 'Pending', value: stats.pending, gradient: 'from-yellow-400 to-yellow-500' },
-//   { label: 'Approved', value: stats.approved, gradient: 'from-indigo-400 to-indigo-500' },
-//   { label: 'Cancelled', value: stats.cancelled, gradient: 'from-red-400 to-red-500' }
-//  ].map(function(c) {
-//   return '<div class="stat-card bg-gradient-to-br ' + c.gradient + ' text-white rounded-xl shadow-lg p-5 text-center"><p class="text-sm opacity-90">' + c.label + '</p><p class="text-3xl font-bold">' + c.value + '</p></div>';
-//  }).join('');
-  
-//  var codes = atls.slice(0, 5);
-//  if (codes.length > 0) {
-//   document.getElementById('recentATLCodes').innerHTML = '<div class="bg-white rounded-xl shadow p-6"><h3 class="font-semibold mb-3">Recent ATL Codes</h3><div class="space-y-2">' + codes.map(function(a) {
-//    var sc = a.status==='completed'?'bg-green-100 text-green-800':a.status==='dispatched'?'bg-orange-100 text-orange-800':'bg-gray-100';
-//    return '<div class="flex justify-between items-center text-sm"><span class="font-mono font-bold text-blue-900">' + (a.atl_code||'N/A') + '</span><span class="text-xs px-2 py-1 rounded ' + sc + '">' + a.status + '</span></div>';
-//   }).join('') + '</div></div>';
-//  }
-// }
-// loadClientSalesOrders();
-//}
-
-// ============ OPTIMIZED PAGE LOAD ============
-function initPage() {
-  document.getElementById('welcomeDate').textContent = new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
-  document.getElementById('scheduledDate').value = new Date().toISOString().split('T')[0];
-  
-  // Show skeleton immediately
-  showDashboardSkeleton();
-  
-  // Load data
-  loadDashboardOptimized();
-}
-
-function showDashboardSkeleton() {
-  document.getElementById('atlStats').innerHTML = Array(5).fill(0).map(function() {
-    return '<div class="bg-gray-200 animate-pulse rounded-xl shadow p-5 text-center"><div class="h-4 bg-gray-300 rounded w-16 mx-auto mb-2"></div><div class="h-8 bg-gray-300 rounded w-12 mx-auto"></div></div>';
-  }).join('');
-  
-  document.getElementById('recentATLCodes').innerHTML = '<div class="bg-white rounded-xl shadow p-6"><div class="h-5 bg-gray-200 rounded w-32 mb-3 animate-pulse"></div>' + Array(3).fill(0).map(function() { return '<div class="flex justify-between items-center mb-2"><div class="h-4 bg-gray-200 rounded w-40 animate-pulse"></div><div class="h-5 bg-gray-200 rounded w-16 animate-pulse"></div></div>'; }).join('') + '</div>';
-  
-  document.getElementById('clientSOTableBody').innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-400"><i class="fas fa-spinner fa-spin mr-2"></i>Loading...</td></tr>';
-}
-
-var loadDashboard = async function() {
-  await loadDashboardOptimized();
-  loadClientSalesOrders();
-};
-
-async function loadDashboardOptimized() {
-  try {
-    var controller = new AbortController();
-    var timeoutId = setTimeout(function() { controller.abort(); }, 10000);
-    
-    var response = await fetch(API + '/client/dashboard', {
-      headers: { 'Authorization': 'Bearer ' + token },
-      signal: controller.signal
-    });
-    clearTimeout(timeoutId);
-    
-    var data = await response.json();
-    if (data.status === 'success') renderDashboard(data);
-  } catch(e) {
-    if (e.name === 'AbortError') {
-      document.getElementById('atlStats').innerHTML = '<div class="col-span-full text-center py-4 text-red-500"><i class="fas fa-exclamation-circle"></i> Request timed out. <button onclick="loadDashboard()" class="text-blue-600 underline">Retry</button></div>';
-    }
-  }
-}
-
-// ============ CLIENT SALES ORDERS ============
-async function loadClientSalesOrders() {
- var tbody = document.getElementById('clientSOTableBody');
- if (!tbody) return;
- try {
-  var res = await fetch(API + '/client/sales-orders', { headers: { 'Authorization': 'Bearer ' + token } });
-  var data = await res.json();
-  if (data.status === 'success' && data.data && data.data.length > 0) {
-   var html = '';
-   data.data.forEach(function(so) {
-    var totalVol = parseFloat(so.total_volume) || 0;
-    var usedVol = parseFloat(so.used_volume) || 0;
-    var balance = totalVol - usedVol;
-    var usagePercent = totalVol > 0 ? Math.round((usedVol / totalVol) * 100) : 0;
-    var statusColor = so.status === 'active' ? 'bg-green-100 text-green-800' : so.status === 'completed' ? 'bg-blue-100 text-blue-800' : 'bg-red-100 text-red-800';
-    var balanceColor = balance <= 0 ? 'text-red-600 font-bold' : usagePercent > 80 ? 'text-orange-600 font-bold' : 'text-green-600';
-    var dateStr = so.createdAt ? new Date(so.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '-';
-    html += '<tr class="border-b hover:bg-gray-50 transition">' +
-     '<td class="py-2.5 px-3 text-xs">' + dateStr + '</td>' +
-     '<td class="py-2.5 px-3 font-mono font-bold text-blue-900 text-xs">' + (so.so_number || 'N/A') + '</td>' +
-     '<td class="py-2.5 px-3 text-right text-xs">' + totalVol.toLocaleString() + '</td>' +
-     '<td class="py-2.5 px-3 text-right text-xs">' + usedVol.toLocaleString() + '<div class="w-full bg-gray-200 rounded-full h-1.5 mt-1"><div class="h-1.5 rounded-full ' + (usagePercent > 80 ? 'bg-red-500' : usagePercent > 50 ? 'bg-yellow-500' : 'bg-green-500') + '" style="width:' + usagePercent + '%"></div></div></td>' +
-     '<td class="py-2.5 px-3 text-right text-xs font-semibold ' + balanceColor + '">' + balance.toLocaleString() + '</td>' +
-     '<td class="py-2.5 px-3 text-center"><span class="px-2 py-0.5 rounded text-xs font-semibold ' + statusColor + '">' + so.status + '</span></td></tr>';
-   });
-   tbody.innerHTML = html;
-   document.getElementById('soLastUpdated').textContent = 'Updated: ' + new Date().toLocaleTimeString();
-  } else {
-   tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-400"><i class="fas fa-inbox text-2xl mb-2 block"></i><p>No sales orders assigned yet</p><p class="text-xs mt-1">Contact your administrator</p></td></tr>';
-  }
- } catch(e) { tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-red-400">Error loading sales orders</td></tr>'; }
-}
-
-// ============ PLATE NUMBER INCREMENTAL SEARCH ============
-function debouncedVerifyTruck() {
-    if (verifyTimeout) clearTimeout(verifyTimeout);
-    
-    // Get the value and clean it (trim only, keep internal spaces)
-    var plateEl = document.getElementById('plateNo');
-    var plate = plateEl.value.toUpperCase().trim();
-    
-    // Update the input with trimmed value
-    plateEl.value = plate;
-    
-    // If empty or less than 2 characters (ignoring spaces), hide status
-    var plateNoSpaces = plate.replace(/\s+/g, '');
-    if (!plateNoSpaces || plateNoSpaces.length < 2) {
-        document.getElementById('truckStatus').classList.add('hidden');
-        document.getElementById('plateSuggestions').classList.add('hidden');
-        document.getElementById('submitBtn').disabled = true;
-        currentTruckId = null;
-        truckVerified = false;
-        return;
-    }
-    
-    // Show loading indicator
-    var statusDiv = document.getElementById('truckStatus');
-    statusDiv.innerHTML = '<span class="text-blue-600"><i class="fas fa-spinner fa-spin mr-1"></i>Searching...</span>';
-    statusDiv.classList.remove('hidden');
-    
-    // Debounce: wait 300ms after user stops typing
-    verifyTimeout = setTimeout(function() {
-        verifyTruck();
-        filterPlateSuggestions(plate);
-    }, 300);
-}
-
-// Update verifyTruck to also trim
-async function verifyTruck() {
-    var plateInput = document.getElementById('plateNo');
-    // Trim only leading/trailing spaces, keep internal spaces (e.g., "ABC 123")
-    var plate = plateInput.value.trim().toUpperCase();
-    
-    // Update the input with cleaned value
-    plateInput.value = plate;
-    
-    var statusDiv = document.getElementById('truckStatus');
-    var submitBtn = document.getElementById('submitBtn');
-    var capacityHint = document.getElementById('capacityHint');
-    var volumeInput = document.getElementById('volume');
-    
-    // Hide suggestions when verifying
-    document.getElementById('plateSuggestions').classList.add('hidden');
-    
-    // Check if plate has any characters (ignoring spaces)
-    var plateNoSpaces = plate.replace(/\s+/g, '');
-    if (!plateNoSpaces || plateNoSpaces.length < 2) { 
-        statusDiv.classList.add('hidden'); 
-        submitBtn.disabled = true;
-        currentTruckId = null;
-        truckVerified = false;
-        return; 
-    }
-    
-    statusDiv.innerHTML = '<span class="text-blue-600"><i class="fas fa-spinner fa-spin mr-1"></i>Verifying...</span>';
-    statusDiv.classList.remove('hidden');
-    
-    try {
-        // Encode the plate properly - spaces become %20 which is fine
-        var encodedPlate = encodeURIComponent(plate);
-        console.log('Verifying plate:', plate, 'Encoded:', encodedPlate);
-        
-        const data = await api('/client/verify-truck/' + encodedPlate);
-        
-        if (data.status === 'success' && data.data) {
-            var truck = data.data.truck;
-            var canProceed = data.data.can_proceed;
-            var documents = data.data.documents || {};
-            
-            if (!truck.id) {
-                truckVerified = false;
-                currentTruckId = null;
-                submitBtn.disabled = true;
-                statusDiv.innerHTML = '<span class="text-red-600">❌ Truck not found in system</span>';
-                statusDiv.classList.remove('hidden');
-                return;
+    <script>
+      const API = "/api";
+      const token = localStorage.getItem("fueltrak_token");
+      const user = JSON.parse(localStorage.getItem("fueltrak_user") || "{}");
+      if (!token || user.role !== "client") window.location.replace("/");
+      let truckVerified = false,
+        currentTruckId = null,
+        allClientATLs = [],
+        verifyTimeout = null,
+        allPlateNumbers = [],
+        selectedSuggestionIndex = -1,
+        allMyATLs = [],
+        currentChatUser = null,
+        currentChatName = "",
+        chatInterval = null,
+        contactList = [],
+        lastMessageId = 0;
+      document.getElementById("userInfo").textContent = user.email || "";
+      document.getElementById("welcomeDate").textContent =
+        new Date().toLocaleDateString("en-US", {
+          weekday: "long",
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        });
+      document.getElementById("scheduledDate").value = new Date()
+        .toISOString()
+        .split("T")[0];
+      if ("Notification" in window && Notification.permission === "default") {
+        Notification.requestPermission();
+      }
+      function showChatNotification(title, body, icon) {
+        if ("Notification" in window && Notification.permission === "granted") {
+          var cw = document.getElementById("chatWidget");
+          if (cw && !cw.classList.contains("hidden") && document.hasFocus())
+            return;
+          var n = new Notification(title, {
+            body: body,
+            icon: icon || "/favicon.svg",
+            badge: "/favicon.svg",
+            tag: "fueltrak-chat",
+            requireInteraction: false,
+            silent: false,
+          });
+          n.onclick = function () {
+            window.focus();
+            openChat();
+            n.close();
+          };
+          setTimeout(function () {
+            n.close();
+          }, 5000);
+        }
+      }
+      async function api(url, method, body) {
+        method = method || "GET";
+        var o = {
+          method,
+          headers: {
+            Authorization: "Bearer " + token,
+            "Content-Type": "application/json",
+          },
+        };
+        if (body) o.body = JSON.stringify(body);
+        var r = await fetch(API + url, o);
+        return await r.json();
+      }
+      function showView(view) {
+        ["dashboardView", "submitView", "historyView", "reportsView"].forEach(
+          function (v) {
+            document.getElementById(v).classList.add("hidden");
+          },
+        );
+        document.getElementById(view + "View").classList.remove("hidden");
+        if (view === "dashboard") loadDashboard();
+        if (view === "history") loadHistory();
+        if (view === "reports") loadClientReports();
+      }
+      function initPage() {
+        document.getElementById("welcomeDate").textContent =
+          new Date().toLocaleDateString("en-US", {
+            weekday: "long",
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          });
+        document.getElementById("scheduledDate").value = new Date()
+          .toISOString()
+          .split("T")[0];
+        showDashboardSkeleton();
+        loadDashboardOptimized();
+      }
+      function showDashboardSkeleton() {
+        document.getElementById("atlStats").innerHTML = Array(5)
+          .fill(0)
+          .map(function () {
+            return '<div class="bg-gray-200 animate-pulse rounded-xl shadow p-5 text-center"><div class="h-4 bg-gray-300 rounded w-16 mx-auto mb-2"></div><div class="h-8 bg-gray-300 rounded w-12 mx-auto"></div></div>';
+          })
+          .join("");
+        document.getElementById("recentATLCodes").innerHTML =
+          '<div class="bg-white rounded-xl shadow p-6"><div class="h-5 bg-gray-200 rounded w-32 mb-3 animate-pulse"></div>' +
+          Array(3)
+            .fill(0)
+            .map(function () {
+              return '<div class="flex justify-between items-center mb-2"><div class="h-4 bg-gray-200 rounded w-40 animate-pulse"></div><div class="h-5 bg-gray-200 rounded w-16 animate-pulse"></div></div>';
+            })
+            .join("") +
+          "</div>";
+        document.getElementById("clientSOTableBody").innerHTML =
+          '<tr><td colspan="6" class="text-center py-8 text-gray-400"><i class="fas fa-spinner fa-spin mr-2"></i>Loading...</td></tr>';
+      }
+      var loadDashboard = async function () {
+        await loadDashboardOptimized();
+        loadClientSalesOrders();
+      };
+      async function loadDashboardOptimized() {
+        try {
+          var c = new AbortController();
+          var t = setTimeout(function () {
+            c.abort();
+          }, 10000);
+          var r = await fetch(API + "/client/dashboard", {
+            headers: { Authorization: "Bearer " + token },
+            signal: c.signal,
+          });
+          clearTimeout(t);
+          var d = await r.json();
+          if (d.status === "success") renderDashboard(d);
+        } catch (e) {
+          if (e.name === "AbortError")
+            document.getElementById("atlStats").innerHTML =
+              '<div class="col-span-full text-center py-4 text-red-500"><i class="fas fa-exclamation-circle"></i> Request timed out. <button onclick="loadDashboard()" class="text-blue-600 underline">Retry</button></div>';
+        }
+      }
+      function renderDashboard(data) {
+        var atls = data.data.recent || [];
+        var stats = {
+          total: atls.length,
+          dispatched: atls.filter(function (a) {
+            return a.status === "dispatched";
+          }).length,
+          completed: atls.filter(function (a) {
+            return a.status === "completed";
+          }).length,
+          pending: atls.filter(function (a) {
+            return a.status === "pending";
+          }).length,
+          approved: atls.filter(function (a) {
+            return a.status === "approved";
+          }).length,
+          cancelled: atls.filter(function (a) {
+            return a.status === "cancelled" || a.status === "rejected";
+          }).length,
+        };
+        document.getElementById("atlStats").innerHTML = [
+          {
+            label: "Total",
+            value: stats.total,
+            gradient: "from-blue-400 to-blue-500",
+          },
+          {
+            label: "Dispatched",
+            value: stats.dispatched,
+            gradient: "from-green-400 to-green-500",
+          },
+          {
+            label: "Pending",
+            value: stats.pending,
+            gradient: "from-yellow-400 to-yellow-500",
+          },
+          {
+            label: "Approved",
+            value: stats.approved,
+            gradient: "from-indigo-400 to-indigo-500",
+          },
+          {
+            label: "Cancelled",
+            value: stats.cancelled,
+            gradient: "from-red-400 to-red-500",
+          },
+        ]
+          .map(function (c) {
+            return (
+              '<div class="stat-card bg-gradient-to-br ' +
+              c.gradient +
+              ' text-white rounded-xl shadow-lg p-5 text-center"><p class="text-sm opacity-90">' +
+              c.label +
+              '</p><p class="text-3xl font-bold">' +
+              c.value +
+              "</p></div>"
+            );
+          })
+          .join("");
+        var codes = atls.slice(0, 5);
+        if (codes.length > 0) {
+          document.getElementById("recentATLCodes").innerHTML =
+            '<div class="bg-white rounded-xl shadow p-6"><h3 class="font-semibold mb-3">Recent ATL Codes</h3><div class="space-y-2">' +
+            codes
+              .map(function (a) {
+                var sc =
+                  a.status === "completed"
+                    ? "bg-green-100 text-green-800"
+                    : a.status === "dispatched"
+                      ? "bg-orange-100 text-orange-800"
+                      : "bg-gray-100";
+                return (
+                  '<div class="flex justify-between items-center text-sm"><span class="font-mono font-bold text-blue-900">' +
+                  (a.atl_code || "N/A") +
+                  '</span><span class="text-xs px-2 py-1 rounded ' +
+                  sc +
+                  '">' +
+                  a.status +
+                  "</span></div>"
+                );
+              })
+              .join("") +
+            "</div></div>";
+        }
+      }
+      async function loadClientSalesOrders() {
+        var tb = document.getElementById("clientSOTableBody");
+        if (!tb) return;
+        try {
+          var r = await fetch(API + "/client/sales-orders", {
+            headers: { Authorization: "Bearer " + token },
+          });
+          var d = await r.json();
+          if (d.status === "success" && d.data && d.data.length > 0) {
+            var h = "";
+            d.data.forEach(function (so) {
+              var tv = parseFloat(so.total_volume) || 0,
+                uv = parseFloat(so.used_volume) || 0,
+                bal = tv - uv,
+                up = tv > 0 ? Math.round((uv / tv) * 100) : 0,
+                sc =
+                  so.status === "active"
+                    ? "bg-green-100 text-green-800"
+                    : so.status === "completed"
+                      ? "bg-blue-100 text-blue-800"
+                      : "bg-red-100 text-red-800",
+                bc =
+                  bal <= 0
+                    ? "text-red-600 font-bold"
+                    : up > 80
+                      ? "text-orange-600 font-bold"
+                      : "text-green-600",
+                ds = so.createdAt
+                  ? new Date(so.createdAt).toLocaleDateString("en-US", {
+                      year: "numeric",
+                      month: "short",
+                      day: "numeric",
+                    })
+                  : "-";
+              h +=
+                '<tr class="border-b hover:bg-gray-50 transition"><td class="py-2.5 px-3 text-xs">' +
+                ds +
+                '</td><td class="py-2.5 px-3 font-mono font-bold text-blue-900 text-xs">' +
+                (so.so_number || "N/A") +
+                '</td><td class="py-2.5 px-3 text-right text-xs">' +
+                tv.toLocaleString() +
+                '</td><td class="py-2.5 px-3 text-right text-xs">' +
+                uv.toLocaleString() +
+                '<div class="w-full bg-gray-200 rounded-full h-1.5 mt-1"><div class="h-1.5 rounded-full ' +
+                (up > 80
+                  ? "bg-red-500"
+                  : up > 50
+                    ? "bg-yellow-500"
+                    : "bg-green-500") +
+                '" style="width:' +
+                up +
+                '%"></div></div></td><td class="py-2.5 px-3 text-right text-xs font-semibold ' +
+                bc +
+                '">' +
+                bal.toLocaleString() +
+                '</td><td class="py-2.5 px-3 text-center"><span class="px-2 py-0.5 rounded text-xs font-semibold ' +
+                sc +
+                '">' +
+                so.status +
+                "</span></td></tr>";
+            });
+            tb.innerHTML = h;
+            document.getElementById("soLastUpdated").textContent =
+              "Updated: " + new Date().toLocaleTimeString();
+          } else {
+            tb.innerHTML =
+              '<tr><td colspan="6" class="text-center py-8 text-gray-400"><i class="fas fa-inbox text-2xl mb-2 block"></i><p>No sales orders assigned yet</p><p class="text-xs mt-1">Contact your administrator</p></td></tr>';
+          }
+        } catch (e) {
+          tb.innerHTML =
+            '<tr><td colspan="6" class="text-center py-8 text-red-400">Error loading sales orders</td></tr>';
+        }
+      }
+      function debouncedVerifyTruck() {
+        if (verifyTimeout) clearTimeout(verifyTimeout);
+        var pe = document.getElementById("plateNo");
+        var p = pe.value.toUpperCase().trim();
+        pe.value = p;
+        var pns = p.replace(/\s+/g, "");
+        if (!pns || pns.length < 2) {
+          document.getElementById("truckStatus").classList.add("hidden");
+          document.getElementById("plateSuggestions").classList.add("hidden");
+          document.getElementById("submitBtn").disabled = true;
+          currentTruckId = null;
+          truckVerified = false;
+          return;
+        }
+        var sd = document.getElementById("truckStatus");
+        sd.innerHTML =
+          '<span class="text-blue-600"><i class="fas fa-spinner fa-spin mr-1"></i>Searching...</span>';
+        sd.classList.remove("hidden");
+        verifyTimeout = setTimeout(function () {
+          verifyTruck();
+          filterPlateSuggestions(p);
+        }, 300);
+      }
+      async function verifyTruck() {
+        var pi = document.getElementById("plateNo");
+        var p = pi.value.trim().toUpperCase();
+        pi.value = p;
+        var sd = document.getElementById("truckStatus"),
+          sb = document.getElementById("submitBtn"),
+          ch = document.getElementById("capacityHint"),
+          vi = document.getElementById("volume");
+        document.getElementById("plateSuggestions").classList.add("hidden");
+        var pns = p.replace(/\s+/g, "");
+        if (!pns || pns.length < 2) {
+          sd.classList.add("hidden");
+          sb.disabled = true;
+          currentTruckId = null;
+          truckVerified = false;
+          return;
+        }
+        sd.innerHTML =
+          '<span class="text-blue-600"><i class="fas fa-spinner fa-spin mr-1"></i>Verifying...</span>';
+        sd.classList.remove("hidden");
+        try {
+          var ep = encodeURIComponent(p);
+          var data = await api("/client/verify-truck/" + ep);
+          if (data.status === "success" && data.data) {
+            var t = data.data.truck,
+              cp = data.data.can_proceed,
+              dc = data.data.documents || {};
+            if (!t.id) {
+              truckVerified = false;
+              currentTruckId = null;
+              sb.disabled = true;
+              sd.innerHTML =
+                '<span class="text-red-600">❌ Truck not found</span>';
+              return;
             }
-            
-            // Check for expired documents
-            var expiredDocs = [];
-            var expiringDocs = [];
-            if (documents.lto_registration) {
-                if (documents.lto_registration.status === 'expired') expiredDocs.push('LTO Registration');
-                else if (documents.lto_registration.status === 'expiring_soon') expiringDocs.push('LTO Registration (' + documents.lto_registration.days_remaining + ' days)');
+            var ed = [],
+              xd = [];
+            if (dc.lto_registration) {
+              if (dc.lto_registration.status === "expired") ed.push("LTO");
+              else if (dc.lto_registration.status === "expiring_soon")
+                xd.push("LTO (" + dc.lto_registration.days_remaining + "d)");
             }
-            if (documents.fire_permit) {
-                if (documents.fire_permit.status === 'expired') expiredDocs.push('Fire Permit');
-                else if (documents.fire_permit.status === 'expiring_soon') expiringDocs.push('Fire Permit (' + documents.fire_permit.days_remaining + ' days)');
+            if (dc.fire_permit) {
+              if (dc.fire_permit.status === "expired") ed.push("Fire");
+              else if (dc.fire_permit.status === "expiring_soon")
+                xd.push("Fire (" + dc.fire_permit.days_remaining + "d)");
             }
-            if (documents.dost_calibration) {
-                if (documents.dost_calibration.status === 'expired') expiredDocs.push('DOST Calibration');
-                else if (documents.dost_calibration.status === 'expiring_soon') expiringDocs.push('DOST Calibration (' + documents.dost_calibration.days_remaining + ' days)');
+            if (dc.dost_calibration) {
+              if (dc.dost_calibration.status === "expired") ed.push("DOST");
+              else if (dc.dost_calibration.status === "expiring_soon")
+                xd.push("DOST (" + dc.dost_calibration.days_remaining + "d)");
             }
-            
-            var statusHTML = '';
-            if (expiredDocs.length > 0) {
-                statusHTML = '<span class="text-red-600">⚠️ Expired: ' + expiredDocs.join(', ') + '</span>';
-            } else if (expiringDocs.length > 0) {
-                statusHTML = '<span class="text-orange-600">⚠️ Expiring soon: ' + expiringDocs.join(', ') + '</span>';
-            } else {
-                statusHTML = '<span class="text-green-600">✅ Truck verified | Capacity: ' + (truck.total_capacity ? Math.round(truck.total_capacity * 1000).toLocaleString() + ' L' : 'N/A') + '</span>';
+            var sh = "";
+            if (ed.length > 0)
+              sh =
+                '<span class="text-red-600">⚠️ Expired: ' +
+                ed.join(", ") +
+                "</span>";
+            else if (xd.length > 0)
+              sh =
+                '<span class="text-orange-600">⚠️ Soon: ' +
+                xd.join(", ") +
+                "</span>";
+            else
+              sh =
+                '<span class="text-green-600">✅ Verified | ' +
+                Math.round(t.total_capacity * 1000).toLocaleString() +
+                " L</span>";
+            truckVerified = cp !== false;
+            currentTruckId = t.id;
+            sb.disabled = !truckVerified;
+            sd.innerHTML = sh;
+            sd.classList.remove("hidden");
+            if (t.driver_name && !document.getElementById("driverName").value)
+              document.getElementById("driverName").value = t.driver_name;
+            if (t.hauler_name && !document.getElementById("hauler").value)
+              document.getElementById("hauler").value = t.hauler_name || "";
+            if (t.total_capacity) {
+              var cl = (parseFloat(t.total_capacity) || 0) * 1000;
+              ch.textContent = "Max: " + Math.round(cl).toLocaleString() + " L";
+              vi.max = cl;
             }
-            
-            truckVerified = canProceed !== false;
-            currentTruckId = truck.id;
-            submitBtn.disabled = !truckVerified;
-            
-            statusDiv.innerHTML = statusHTML;
-            statusDiv.classList.remove('hidden');
-            
-            // Auto-fill driver and hauler from truck data
-            if (truck.driver_name && !document.getElementById('driverName').value) {
-                document.getElementById('driverName').value = truck.driver_name;
-            }
-            if (truck.hauler_name && !document.getElementById('hauler').value) {
-                document.getElementById('hauler').value = truck.hauler_name || '';
-            }
-            if (truck.total_capacity) {
-                var capLiters = (parseFloat(truck.total_capacity) || 0) * 1000;
-                capacityHint.textContent = 'Max capacity: ' + Math.round(capLiters).toLocaleString() + ' L';
-                volumeInput.max = capLiters;
-            }
-        } else {
+          } else {
             truckVerified = false;
             currentTruckId = null;
-            submitBtn.disabled = true;
-            statusDiv.innerHTML = '<span class="text-red-600">❌ Truck not found in system</span>';
-            statusDiv.classList.remove('hidden');
+            sb.disabled = true;
+            sd.innerHTML = '<span class="text-red-600">❌ Not found</span>';
+          }
+        } catch (e) {
+          truckVerified = false;
+          currentTruckId = null;
+          sb.disabled = true;
+          sd.innerHTML = '<span class="text-red-600">❌ Error</span>';
         }
-    } catch (e) {
-        console.error('Verify truck error:', e);
-        truckVerified = false;
-        currentTruckId = null;
-        submitBtn.disabled = true;
-        statusDiv.innerHTML = '<span class="text-red-600">❌ Connection error</span>';
-        statusDiv.classList.remove('hidden');
-    }
-}
-
-function showPlateSuggestions() { var plate = document.getElementById('plateNo').value.toUpperCase(); if (plate && plate.length >= 1) filterPlateSuggestions(plate); }
-function hidePlateSuggestions() { setTimeout(function() { document.getElementById('plateSuggestions').classList.add('hidden'); }, 200); }
-
-function handlePlateKeydown(event) {
- var suggestions = document.getElementById('plateSuggestions').querySelectorAll('.plate-suggestion-item');
- if (!suggestions.length) return;
- if (event.key === 'ArrowDown') { event.preventDefault(); selectedSuggestionIndex = Math.min(selectedSuggestionIndex + 1, suggestions.length - 1); highlightSuggestion(suggestions); }
- else if (event.key === 'ArrowUp') { event.preventDefault(); selectedSuggestionIndex = Math.max(selectedSuggestionIndex - 1, 0); highlightSuggestion(suggestions); }
- else if (event.key === 'Enter') { if (selectedSuggestionIndex >= 0 && selectedSuggestionIndex < suggestions.length) { event.preventDefault(); suggestions[selectedSuggestionIndex].click(); } }
- else if (event.key === 'Escape') { document.getElementById('plateSuggestions').classList.add('hidden'); selectedSuggestionIndex = -1; }
-}
-
-function highlightSuggestion(suggestions) {
- suggestions.forEach(function(item, index) {
-  if (index === selectedSuggestionIndex) { item.classList.add('bg-blue-100'); item.scrollIntoView({ block: 'nearest' }); }
-  else { item.classList.remove('bg-blue-100'); }
- });
-}
-
-function selectPlateSuggestion(plate, driver, hauler) {
- document.getElementById('plateNo').value = plate;
- document.getElementById('plateSuggestions').classList.add('hidden');
- selectedSuggestionIndex = -1;
- if (driver) document.getElementById('driverName').value = driver;
- if (hauler) document.getElementById('hauler').value = hauler;
- verifyTruck();
-}
-
-async function filterPlateSuggestions(searchTerm) {
- if (!searchTerm || searchTerm.length < 1) { document.getElementById('plateSuggestions').classList.add('hidden'); return; }
- if (allPlateNumbers.length === 0) {
-  try {
-   var res = await fetch(API + '/truck-masterlist', { headers: { 'Authorization': 'Bearer ' + token } });
-   var data = await res.json();
-   if (data.status === 'success') allPlateNumbers = data.data.map(function(i) { return i.plate_no || ''; }).filter(function(p) { return p.length > 0; });
-  } catch(e) { return; }
- }
- var search = searchTerm.toUpperCase();
- var matches = allPlateNumbers.filter(function(p) { return p.includes(search); }).slice(0, 10);
- var div = document.getElementById('plateSuggestions');
- if (!matches.length) { div.classList.add('hidden'); return; }
- div.innerHTML = matches.map(function(plate, i) {
-  var hl = plate.replace(new RegExp('(' + search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi'), '<mark class="bg-yellow-200 rounded px-0.5">$1</mark>');
-  return '<div class="plate-suggestion-item px-3 py-2 cursor-pointer hover:bg-blue-50 border-b last:border-b-0 flex items-center justify-between" onmousedown="selectPlateSuggestion(\'' + plate + '\',\'\',\'\')"><span class="font-semibold text-sm">' + hl + '</span><i class="fas fa-truck text-gray-400 text-xs"></i></div>';
- }).join('');
- div.classList.remove('hidden');
- selectedSuggestionIndex = -1;
-}
-
-// ============ SUBMIT ATL ============
-async function submitATL(e) {
- e.preventDefault();
- var msg = document.getElementById('atlMessage');
- var volume = parseFloat(document.getElementById('volume').value);
- 
- if (!truckVerified) { 
-  msg.textContent = 'Verify truck first'; 
-  msg.className = 'mt-3 text-sm text-red-600'; 
-  msg.classList.remove('hidden'); 
-  return; 
- }
- if (!volume || volume <= 0) { 
-  msg.textContent = 'Enter valid volume'; 
-  msg.className = 'mt-3 text-sm text-red-600'; 
-  msg.classList.remove('hidden'); 
-  return; 
- }
- 
- var hasSI = document.querySelector('input[name="siOption"]:checked')?.value === 'yes';
- var company = document.getElementById('company').value;
- var plate = document.getElementById('plateNo').value.toUpperCase();
- var driver = document.getElementById('driverName').value;
- var date = document.getElementById('scheduledDate').value;
- var soNumber = document.getElementById('soNumber').value;
- var hauler = document.getElementById('hauler').value;
- var contact = document.getElementById('contactNumber').value;
- var specialInstructions = document.getElementById('specialInstructions') ? document.getElementById('specialInstructions').value : '';
-
- // ============ VALIDATE SALES ORDER ============
- if (soNumber && soNumber.trim() !== '') {
-  msg.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Validating Sales Order...';
-  msg.className = 'mt-3 text-sm text-blue-600';
-  msg.classList.remove('hidden');
-  
-  try {
-   var soValidation = await api('/sales-orders/validate?so_number=' + encodeURIComponent(soNumber) + '&client_id=' + user.id);
-   
-   if (soValidation.status === 'error' || !soValidation.valid) {
-    msg.innerHTML = '<span class="text-red-600">❌ ' + (soValidation.message || 'Invalid Sales Order') + '</span>';
-    if (soValidation.so_owner) {
-     msg.innerHTML += '<br><span class="text-xs text-gray-500">This SO belongs to: <b>' + soValidation.so_owner + '</b></span>';
-    }
-    msg.className = 'mt-3 text-sm text-red-600 text-center';
-    msg.classList.remove('hidden');
-    setTimeout(function() { msg.classList.add('hidden'); }, 8000);
-    return;
-   }
-   
-   // SO is valid - check remaining volume
-   if (soValidation.data) {
-    var remaining = parseFloat(soValidation.data.remaining_volume) || 0;
-    if (volume > remaining) {
-     msg.innerHTML = '<span class="text-red-600">❌ Volume exceeds SO balance!</span><br><span class="text-xs">SO Total: ' + Number(soValidation.data.total_volume).toLocaleString() + ' L | Used: ' + Number(soValidation.data.used_volume).toLocaleString() + ' L | Remaining: ' + Number(remaining).toLocaleString() + ' L</span>';
-     msg.className = 'mt-3 text-sm text-red-600 text-center';
-     msg.classList.remove('hidden');
-     setTimeout(function() { msg.classList.add('hidden'); }, 8000);
-     return;
-    }
-   }
-  } catch(e) {
-   msg.textContent = '⚠️ Could not validate SO. Please check and try again.';
-   msg.className = 'mt-3 text-sm text-orange-600';
-   msg.classList.remove('hidden');
-   setTimeout(function() { msg.classList.add('hidden'); }, 5000);
-   return;
-  }
-  
-  msg.classList.add('hidden');
- }
- // ============ END SO VALIDATION ============
-
- // Confirmation prompt
- var summary = 'Please verify all details:\n\n' +
-  'Company: ' + company + '\n' +
-  'SO Number: ' + (soNumber || 'N/A') + '\n' +
-  'Plate: ' + plate + '\n' +
-  'Volume: ' + Number(volume).toLocaleString() + ' L\n' +
-  'Driver: ' + driver + '\n' +
-  'Hauler: ' + hauler + '\n' +
-  'Contact: ' + contact + '\n' +
-  'Date: ' + date + '\n' +
-  'SI: ' + (hasSI ? 'With SI' : 'No SI') + '\n' +
-  'Special Instructions: ' + (specialInstructions || 'None');
-
- if (!confirm(summary + '\n\nSubmit this ATL?')) return;
- 
- try {
-  var res = await api('/client/submit-atl', 'POST', {
-   truck_id: currentTruckId,
-   plate_no: plate,
-   hauler_name: hauler,
-   driver_name: driver,
-   volume: volume,
-   remarks: hasSI ? 'With SI' : 'No SI',
-   company: company,
-   so_number: soNumber,
-   scheduled_date: date,
-   contact_number: contact,
-   has_si: hasSI,
-   special_instructions: specialInstructions
-  });
-  
-  if (res.status === 'success') {
-   msg.innerHTML = '✅ Submitted!<br><span class="font-bold text-blue-900">Code: ' + (res.data ? res.data.atl_code : res.atl_code) + '</span>';
-   msg.className = 'mt-3 text-sm text-green-600 text-center';
-   ['company','soNumber','volume','hauler','plateNo','driverName','contactNumber'].forEach(function(id) {
-    document.getElementById(id).value = '';
-   });
-   if (document.getElementById('specialInstructions')) document.getElementById('specialInstructions').value = '';
-   document.querySelector('input[name="siOption"][value="no"]').checked = true;
-   document.getElementById('submitBtn').disabled = true;
-   document.getElementById('capacityHint').textContent = '';
-   document.getElementById('truckStatus').classList.add('hidden');
-   truckVerified = false;
-   currentTruckId = null;
-   // Refresh dashboard data
-   setTimeout(function() { loadDashboard(); }, 1000);
-  } else { 
-   msg.textContent = res.error || 'Error submitting ATL'; 
-   msg.className = 'mt-3 text-sm text-red-600'; 
-  }
-  msg.classList.remove('hidden');
-  setTimeout(function() { msg.classList.add('hidden'); }, 5000);
- } catch(e) { 
-  msg.textContent = 'Connection error. Please try again.'; 
-  msg.className = 'mt-3 text-sm text-red-600'; 
-  msg.classList.remove('hidden'); 
- }
-}
-
-// ============ HISTORY ============
-async function loadHistory() {
- var data = await api('/atl/summary');
- if (data.status === 'success') { allMyATLs = data.data.recent || []; filterMyATLs(); }
-}
-
-function filterMyATLs() {
- var search = (document.getElementById('atlSearch')?.value || '').toLowerCase();
- var status = document.getElementById('atlStatusFilter')?.value || 'all';
- var filtered = allMyATLs;
- if (search) filtered = filtered.filter(function(a) { return (a.plate_no||'').toLowerCase().includes(search) || (a.atl_code||'').toLowerCase().includes(search) || (a.driver_name||'').toLowerCase().includes(search); });
- if (status !== 'all') filtered = filtered.filter(function(a) { return a.status === status; });
- document.getElementById('atlHistory').innerHTML = filtered.map(function(a) {
-  var sc = a.status==='completed'?'bg-green-100 text-green-800':a.status==='dispatched'?'bg-orange-100 text-orange-800':a.status==='cancelled'?'bg-gray-200 text-gray-700':a.status==='approved'?'bg-blue-100 text-blue-800':'bg-yellow-100 text-yellow-800';
-  return '<div class="bg-white rounded-lg shadow p-4"><div class="flex justify-between"><div><span class="font-mono font-bold text-blue-900 bg-blue-50 px-2 py-1 rounded text-xs">' + (a.atl_code||'N/A') + '</span><p class="font-bold text-lg mt-1">' + a.plate_no + '</p><p class="text-sm">' + (a.company||'') + ' | Vol: ' + (a.volume?Number(a.volume).toLocaleString()+'L':'N/A') + ' | ' + a.driver_name + '</p></div><div class="text-right"><span class="px-3 py-1 rounded-full text-xs font-semibold ' + sc + '">' + a.status.toUpperCase() + '</span><div class="mt-2"><button onclick="viewATL(' + a.id + ')" class="text-blue-600 text-xs">View</button>' + ((a.status==='pending'||a.status==='approved')?' <button onclick="cancelATL(' + a.id + ')" class="text-red-600 text-xs">Cancel</button>':'') + '</div></div></div></div>';
- }).join('') || '<p class="text-center py-8 text-gray-500">No ATL records found</p>';
-}
-
-async function viewATL(id) {
- var data = await api('/client/atl/' + id);
- if (data.status === 'success') {
-  var a = data.data;
-  document.getElementById('atlDetail').innerHTML = '<div class="text-center mb-4"><p class="text-2xl font-mono font-bold text-blue-900">' + (a.atl_code||'N/A') + '</p></div><div class="grid grid-cols-2 gap-3 text-sm"><div><p class="text-xs text-gray-500">Company</p><p class="font-semibold">' + (a.company||'N/A') + '</p></div><div><p class="text-xs text-gray-500">SO Number</p><p>' + (a.so_number||'N/A') + '</p></div><div><p class="text-xs text-gray-500">Status</p><span class="px-2 py-1 rounded text-xs font-semibold">' + a.status + '</span></div><div><p class="text-xs text-gray-500">Volume</p><p>' + (a.volume?Number(a.volume).toLocaleString()+'L':'N/A') + '</p></div><div><p class="text-xs text-gray-500">Plate</p><p class="font-semibold">' + a.plate_no + '</p></div><div><p class="text-xs text-gray-500">Driver</p><p>' + (a.driver_name||'N/A') + '</p></div><div><p class="text-xs text-gray-500">Hauler</p><p>' + (a.hauler||'N/A') + '</p></div><div><p class="text-xs text-gray-500">Scheduled</p><p>' + a.scheduled_date + '</p></div><div><p class="text-xs text-gray-500">Remarks</p><p>' + (a.remarks||'None') + '</p></div></div>';
-  document.getElementById('atlModal').classList.remove('hidden');
- }
-}
-
-async function cancelATL(id) {
- if (!confirm('Cancel this ATL?')) return;
- var reason = prompt('Reason:');
- if (!reason) return;
- await api('/client/cancel-atl/' + id, 'POST', { reason: reason });
- loadHistory(); loadDashboard();
-}
-
-// ============ REPORTS ============
-async function loadClientReports() {
- var params = new URLSearchParams();
- var start = document.getElementById('startDate').value;
- var end = document.getElementById('endDate').value;
- var status = document.getElementById('statusFilter').value;
- if (start) params.append('startDate', start);
- if (end) params.append('endDate', end);
- if (status) params.append('status', status);
- var data = await api('/atl/summary?' + params.toString());
- if (data.status === 'success') {
-  var allATLs = data.data.recent || [];
-  var filtered = allATLs;
-  if (status) filtered = filtered.filter(function(a) { return a.status === status; });
-  if (start) filtered = filtered.filter(function(a) { return new Date(a.scheduled_date) >= new Date(start); });
-  if (end) filtered = filtered.filter(function(a) { return new Date(a.scheduled_date) <= new Date(end); });
-  var totalVol = filtered.reduce(function(s, a) { return s + (Number(a.volume) || 0); }, 0);
-  document.getElementById('reportSummaryCards').innerHTML = '<div class="bg-white rounded-xl shadow p-4 text-center"><p class="text-2xl font-bold">' + filtered.length + '</p><p class="text-xs">Records</p></div><div class="bg-green-50 rounded-xl shadow p-4 text-center"><p class="text-2xl font-bold text-green-700">' + filtered.filter(function(a){return a.status==='completed'||a.status==='dispatched';}).length + '</p><p class="text-xs">Dispatched</p></div><div class="bg-red-50 rounded-xl shadow p-4 text-center"><p class="text-2xl font-bold text-red-700">' + filtered.filter(function(a){return a.status==='cancelled'||a.status==='rejected';}).length + '</p><p class="text-xs">Rejected</p></div><div class="bg-yellow-50 rounded-xl shadow p-4 text-center"><p class="text-2xl font-bold text-yellow-700">' + filtered.filter(function(a){return a.status==='pending';}).length + '</p><p class="text-xs">Pending</p></div><div class="bg-blue-50 rounded-xl shadow p-4 text-center"><p class="text-2xl font-bold text-blue-700">' + totalVol.toLocaleString() + 'L</p><p class="text-xs">Total Vol</p></div>';
-  document.getElementById('reportTableBody').innerHTML = filtered.map(function(a) {
-   var sc = a.status==='completed'?'bg-green-100 text-green-800':a.status==='dispatched'?'bg-orange-100 text-orange-800':a.status==='cancelled'?'bg-red-100 text-red-800':'bg-yellow-100 text-yellow-800';
-   return '<tr class="border-b hover:bg-gray-50"><td class="py-2 px-3 font-mono text-xs font-bold text-blue-900">'+(a.atl_code||'-')+'</td><td class="py-2 px-3 text-xs">'+(a.so_number||'-')+'</td><td class="py-2 px-3">'+(a.company||'-')+'</td><td class="py-2 px-3">'+a.plate_no+'</td><td class="py-2 px-3">'+(a.driver_name||'-')+'</td><td class="py-2 px-3 text-right">'+(a.volume?Number(a.volume).toLocaleString():'-')+'</td><td class="py-2 px-3 text-center">'+(a.has_si==1?'With SI':'No SI')+'</td><td class="py-2 px-3 text-center"><span class="px-2 py-1 rounded text-xs '+sc+'">'+a.status+'</span></td><td class="py-2 px-3 text-xs">'+new Date(a.scheduled_date).toLocaleDateString()+'</td><td class="py-2 px-3 text-center font-mono text-xs">'+(a.printed_wc||'-')+'</td></tr>';
-  }).join('') || '<tr><td colspan="10" class="text-center py-8 text-gray-500">No records found</td></tr>';
- }
-}
-
-function clearClientFilters() { ['startDate','endDate','statusFilter'].forEach(function(id) { document.getElementById(id).value = ''; }); loadClientReports(); }
-function printClientReport() { document.getElementById('printDate').textContent = 'Period: ' + (document.getElementById('startDate').value||'All') + ' - ' + (document.getElementById('endDate').value||'Today'); document.getElementById('printTableBody').innerHTML = document.getElementById('reportTableBody').innerHTML; window.print(); }
-function exportClientCSV() {
- var csv = 'ATL Code,SO#,Plate,Driver,Volume,SI,Status,Date\n';
- document.querySelectorAll('#reportTableBody tr').forEach(function(row) { if(row.cells.length>1){ var c=row.cells; csv+='"'+c[0].textContent+'","'+c[1].textContent+'","'+c[3].textContent+'","'+c[4].textContent+'","'+c[5].textContent+'","'+c[6].textContent+'","'+c[7].textContent+'","'+c[8].textContent+'"\n'; }});
- var blob=new Blob([csv],{type:'text/csv'}); var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='client-report-'+new Date().toISOString().split('T')[0]+'.csv'; a.click();
-}
-
-// ============ CHAT ============
-async function openChat() { document.getElementById('chatWidget').classList.remove('hidden'); document.getElementById('chatButton').classList.add('hidden'); loadContactList(); }
-function showContactList() { document.getElementById('contactList').classList.remove('hidden'); document.getElementById('chatBody').classList.add('hidden'); document.getElementById('chatInputArea').classList.add('hidden'); document.getElementById('chatTitle').textContent='Chat'; currentChatUser=null; loadContactList(); }
-async function loadContactList() {
- var res = await fetch('/api/chat-list', { headers: { 'Authorization': 'Bearer ' + token } });
- var data = await res.json();
- if (data.status === 'success') {
-  contactList = data.data;
-  document.getElementById('contactList').innerHTML = contactList.map(function(c) { return '<div onclick="startChat('+c.id+',\''+(c.email||c.company_name)+'\')" class="flex items-center p-3 hover:bg-gray-50 cursor-pointer border-b"><div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3"><i class="fas fa-user text-blue-600 text-sm"></i></div><div class="flex-1"><p class="text-sm font-semibold">'+(c.company_name||c.email)+'</p><p class="text-xs text-gray-400">'+(c.email||'')+'</p></div><div class="w-2 h-2 bg-green-400 rounded-full"></div></div>'; }).join('') || '<p class="p-3 text-center text-gray-400 text-sm">No contacts</p>';
- }
-}
-function startChat(userId, userName) { currentChatUser=userId; currentChatName=userName; document.getElementById('chatTitle').textContent=userName; document.getElementById('contactList').classList.add('hidden'); document.getElementById('chatBody').classList.remove('hidden'); document.getElementById('chatInputArea').classList.remove('hidden'); loadChatMessages(); if(chatInterval)clearInterval(chatInterval); chatInterval=setInterval(loadChatMessages,10000); }
-async function loadChatMessages() {
- if(!currentChatUser)return;
- var res=await fetch('/api/chat/'+currentChatUser,{headers:{'Authorization':'Bearer '+token}});
- var data=await res.json();
- if(data.status==='success'){
-  document.getElementById('chatBody').innerHTML=data.data.map(function(m){var im=m.sender_id==user.id;return'<div class="'+(im?'text-right':'text-left')+' mb-2"><div class="inline-block '+(im?'bg-blue-100':'bg-gray-100')+' rounded-lg px-3 py-1.5 text-sm max-w-[80%]"><p class="text-[10px] text-gray-500">'+(im?'You':currentChatName)+'</p><p>'+m.message+'</p><p class="text-[9px] text-gray-400 text-right">'+new Date(m.created_at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})+'</p></div></div>';}).join('')||'<p class="text-center text-gray-400 text-sm pt-10">Start the conversation!</p>';
-  document.getElementById('chatBody').scrollTop=document.getElementById('chatBody').scrollHeight;
- }
-}
-async function sendChat(){var i=document.getElementById('chatInput');var m=i.value.trim();if(!m||!currentChatUser)return;i.value='';await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({receiver_id:currentChatUser,message:m})});loadChatMessages();}
-function closeChat(){document.getElementById('chatWidget').classList.add('hidden');document.getElementById('chatButton').classList.remove('hidden');if(chatInterval)clearInterval(chatInterval);}
-
-document.getElementById('volume').addEventListener('input', function() {
- var submitBtn = document.getElementById('submitBtn');
- var volume = parseFloat(this.value);
- var max = parseFloat(this.max);
- if (truckVerified && volume > 0 && volume <= max) submitBtn.disabled = false;
- else if (truckVerified && (volume <= 0 || volume > max)) submitBtn.disabled = true;
-});
-
-document.getElementById('userInfoMob').textContent = document.getElementById('userInfo').textContent;
-
-function logout() { localStorage.clear(); window.location.href = '/'; }
-loadDashboard();
-</script>
-</div>
-</body>
+      }
+      function showPlateSuggestions() {
+        var p = document.getElementById("plateNo").value.toUpperCase();
+        if (p && p.length >= 1) filterPlateSuggestions(p);
+      }
+      function hidePlateSuggestions() {
+        setTimeout(function () {
+          document.getElementById("plateSuggestions").classList.add("hidden");
+        }, 200);
+      }
+      function handlePlateKeydown(e) {
+        var s = document
+          .getElementById("plateSuggestions")
+          .querySelectorAll(".plate-suggestion-item");
+        if (!s.length) return;
+        if (e.key === "ArrowDown") {
+          e.preventDefault();
+          selectedSuggestionIndex = Math.min(
+            selectedSuggestionIndex + 1,
+            s.length - 1,
+          );
+          highlightSuggestion(s);
+        } else if (e.key === "ArrowUp") {
+          e.preventDefault();
+          selectedSuggestionIndex = Math.max(selectedSuggestionIndex - 1, 0);
+          highlightSuggestion(s);
+        } else if (e.key === "Enter") {
+          if (
+            selectedSuggestionIndex >= 0 &&
+            selectedSuggestionIndex < s.length
+          ) {
+            e.preventDefault();
+            s[selectedSuggestionIndex].click();
+          }
+        } else if (e.key === "Escape") {
+          document.getElementById("plateSuggestions").classList.add("hidden");
+          selectedSuggestionIndex = -1;
+        }
+      }
+      function highlightSuggestion(s) {
+        s.forEach(function (i, idx) {
+          if (idx === selectedSuggestionIndex) {
+            i.classList.add("bg-blue-100");
+            i.scrollIntoView({ block: "nearest" });
+          } else {
+            i.classList.remove("bg-blue-100");
+          }
+        });
+      }
+      function selectPlateSuggestion(p, d, h) {
+        document.getElementById("plateNo").value = p;
+        document.getElementById("plateSuggestions").classList.add("hidden");
+        selectedSuggestionIndex = -1;
+        if (d) document.getElementById("driverName").value = d;
+        if (h) document.getElementById("hauler").value = h;
+        verifyTruck();
+      }
+      async function filterPlateSuggestions(st) {
+        if (!st || st.length < 1) {
+          document.getElementById("plateSuggestions").classList.add("hidden");
+          return;
+        }
+        if (allPlateNumbers.length === 0) {
+          try {
+            var r = await fetch(API + "/truck-masterlist", {
+              headers: { Authorization: "Bearer " + token },
+            });
+            var d = await r.json();
+            if (d.status === "success")
+              allPlateNumbers = d.data
+                .map(function (i) {
+                  return i.plate_no || "";
+                })
+                .filter(function (p) {
+                  return p.length > 0;
+                });
+          } catch (e) {
+            return;
+          }
+        }
+        var s = st.toUpperCase();
+        var m = allPlateNumbers
+          .filter(function (p) {
+            return p.includes(s);
+          })
+          .slice(0, 10);
+        var dv = document.getElementById("plateSuggestions");
+        if (!m.length) {
+          dv.classList.add("hidden");
+          return;
+        }
+        dv.innerHTML = m
+          .map(function (p, i) {
+            var hl = p.replace(
+              new RegExp(
+                "(" + s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + ")",
+                "gi",
+              ),
+              '<mark class="bg-yellow-200 rounded px-0.5">$1</mark>',
+            );
+            return (
+              '<div class="plate-suggestion-item px-3 py-2 cursor-pointer hover:bg-blue-50 border-b last:border-b-0 flex items-center justify-between" onmousedown="selectPlateSuggestion(\'' +
+              p +
+              "','','')\"><span class=\"font-semibold text-sm\">" +
+              hl +
+              '</span><i class="fas fa-truck text-gray-400 text-xs"></i></div>'
+            );
+          })
+          .join("");
+        dv.classList.remove("hidden");
+        selectedSuggestionIndex = -1;
+      }
+      async function submitATL(e) {
+        e.preventDefault();
+        var msg = document.getElementById("atlMessage");
+        var vol = parseFloat(document.getElementById("volume").value);
+        if (!truckVerified) {
+          msg.textContent = "Verify truck first";
+          msg.className = "mt-3 text-sm text-red-600";
+          msg.classList.remove("hidden");
+          return;
+        }
+        if (!vol || vol <= 0) {
+          msg.textContent = "Enter valid volume";
+          msg.className = "mt-3 text-sm text-red-600";
+          msg.classList.remove("hidden");
+          return;
+        }
+        var hasSI =
+          document.querySelector('input[name="siOption"]:checked')?.value ===
+          "yes";
+        var company = document.getElementById("company").value,
+          plate = document.getElementById("plateNo").value.toUpperCase(),
+          driver = document.getElementById("driverName").value,
+          date = document.getElementById("scheduledDate").value,
+          soNumber = document.getElementById("soNumber").value,
+          hauler = document.getElementById("hauler").value,
+          contact = document.getElementById("contactNumber").value,
+          si = document.getElementById("specialInstructions")
+            ? document.getElementById("specialInstructions").value
+            : "";
+        if (soNumber && soNumber.trim() !== "") {
+          msg.innerHTML =
+            '<i class="fas fa-spinner fa-spin mr-1"></i>Validating SO...';
+          msg.className = "mt-3 text-sm text-blue-600";
+          msg.classList.remove("hidden");
+          try {
+            var sv = await api(
+              "/sales-orders/validate?so_number=" +
+                encodeURIComponent(soNumber) +
+                "&client_id=" +
+                user.id,
+            );
+            if (sv.status === "error" || !sv.valid) {
+              msg.innerHTML =
+                '<span class="text-red-600">❌ ' +
+                (sv.message || "Invalid SO") +
+                "</span>";
+              if (sv.so_owner)
+                msg.innerHTML +=
+                  '<br><span class="text-xs text-gray-500">Belongs to: <b>' +
+                  sv.so_owner +
+                  "</b></span>";
+              msg.className = "mt-3 text-sm text-red-600 text-center";
+              msg.classList.remove("hidden");
+              setTimeout(function () {
+                msg.classList.add("hidden");
+              }, 8000);
+              return;
+            }
+            if (sv.data) {
+              var rem = parseFloat(sv.data.remaining_volume) || 0;
+              if (vol > rem) {
+                msg.innerHTML =
+                  '<span class="text-red-600">❌ Exceeds balance!</span><br><span class="text-xs">Total: ' +
+                  Number(sv.data.total_volume).toLocaleString() +
+                  "L | Used: " +
+                  Number(sv.data.used_volume).toLocaleString() +
+                  "L | Rem: " +
+                  Number(rem).toLocaleString() +
+                  "L</span>";
+                msg.className = "mt-3 text-sm text-red-600 text-center";
+                msg.classList.remove("hidden");
+                setTimeout(function () {
+                  msg.classList.add("hidden");
+                }, 8000);
+                return;
+              }
+            }
+          } catch (ex) {
+            msg.textContent = "⚠️ Could not validate SO";
+            msg.className = "mt-3 text-sm text-orange-600";
+            msg.classList.remove("hidden");
+            setTimeout(function () {
+              msg.classList.add("hidden");
+            }, 5000);
+            return;
+          }
+          msg.classList.add("hidden");
+        }
+        var summary =
+          "Verify:\n\nCompany: " +
+          company +
+          "\nSO: " +
+          (soNumber || "N/A") +
+          "\nPlate: " +
+          plate +
+          "\nVolume: " +
+          Number(vol).toLocaleString() +
+          "L\nDriver: " +
+          driver +
+          "\nHauler: " +
+          hauler +
+          "\nContact: " +
+          contact +
+          "\nDate: " +
+          date +
+          "\nSI: " +
+          (hasSI ? "With SI" : "No SI") +
+          "\nInstructions: " +
+          (si || "None");
+        if (!confirm(summary + "\n\nSubmit?")) return;
+        try {
+          var res = await api("/client/submit-atl", "POST", {
+            truck_id: currentTruckId,
+            plate_no: plate,
+            hauler_name: hauler,
+            driver_name: driver,
+            volume: vol,
+            remarks: hasSI ? "With SI" : "No SI",
+            company: company,
+            so_number: soNumber,
+            scheduled_date: date,
+            contact_number: contact,
+            has_si: hasSI,
+            special_instructions: si,
+          });
+          if (res.status === "success") {
+            msg.innerHTML =
+              '✅ Submitted!<br><span class="font-bold text-blue-900">Code: ' +
+              (res.data ? res.data.atl_code : res.atl_code) +
+              "</span>";
+            msg.className = "mt-3 text-sm text-green-600 text-center";
+            [
+              "company",
+              "soNumber",
+              "volume",
+              "hauler",
+              "plateNo",
+              "driverName",
+              "contactNumber",
+            ].forEach(function (id) {
+              document.getElementById(id).value = "";
+            });
+            if (document.getElementById("specialInstructions"))
+              document.getElementById("specialInstructions").value = "";
+            document.querySelector(
+              'input[name="siOption"][value="no"]',
+            ).checked = true;
+            document.getElementById("submitBtn").disabled = true;
+            document.getElementById("capacityHint").textContent = "";
+            document.getElementById("truckStatus").classList.add("hidden");
+            truckVerified = false;
+            currentTruckId = null;
+            setTimeout(function () {
+              loadDashboard();
+            }, 1000);
+          } else {
+            msg.textContent = res.error || "Error";
+            msg.className = "mt-3 text-sm text-red-600";
+          }
+          msg.classList.remove("hidden");
+          setTimeout(function () {
+            msg.classList.add("hidden");
+          }, 5000);
+        } catch (ex) {
+          msg.textContent = "Connection error";
+          msg.className = "mt-3 text-sm text-red-600";
+          msg.classList.remove("hidden");
+        }
+      }
+      async function loadHistory() {
+        var d = await api("/atl/summary");
+        if (d.status === "success") {
+          allMyATLs = d.data.recent || [];
+          filterMyATLs();
+        }
+      }
+      function filterMyATLs() {
+        var s = (
+            document.getElementById("atlSearch")?.value || ""
+          ).toLowerCase(),
+          st = document.getElementById("atlStatusFilter")?.value || "all",
+          f = allMyATLs;
+        if (s)
+          f = f.filter(function (a) {
+            return (
+              (a.plate_no || "").toLowerCase().includes(s) ||
+              (a.atl_code || "").toLowerCase().includes(s) ||
+              (a.driver_name || "").toLowerCase().includes(s)
+            );
+          });
+        if (st !== "all")
+          f = f.filter(function (a) {
+            return a.status === st;
+          });
+        document.getElementById("atlHistory").innerHTML =
+          f
+            .map(function (a) {
+              var sc =
+                a.status === "completed"
+                  ? "bg-green-100 text-green-800"
+                  : a.status === "dispatched"
+                    ? "bg-orange-100 text-orange-800"
+                    : a.status === "cancelled"
+                      ? "bg-gray-200 text-gray-700"
+                      : a.status === "approved"
+                        ? "bg-blue-100 text-blue-800"
+                        : "bg-yellow-100 text-yellow-800";
+              return (
+                '<div class="bg-white rounded-lg shadow p-4"><div class="flex justify-between"><div><span class="font-mono font-bold text-blue-900 bg-blue-50 px-2 py-1 rounded text-xs">' +
+                (a.atl_code || "N/A") +
+                '</span><p class="font-bold text-lg mt-1">' +
+                a.plate_no +
+                '</p><p class="text-sm">' +
+                (a.company || "") +
+                " | Vol: " +
+                (a.volume ? Number(a.volume).toLocaleString() + "L" : "N/A") +
+                " | " +
+                a.driver_name +
+                '</p></div><div class="text-right"><span class="px-3 py-1 rounded-full text-xs font-semibold ' +
+                sc +
+                '">' +
+                a.status.toUpperCase() +
+                '</span><div class="mt-2"><button onclick="viewATL(' +
+                a.id +
+                ')" class="text-blue-600 text-xs">View</button>' +
+                (a.status === "pending" || a.status === "approved"
+                  ? ' <button onclick="cancelATL(' +
+                    a.id +
+                    ')" class="text-red-600 text-xs">Cancel</button>'
+                  : "") +
+                "</div></div></div></div>"
+              );
+            })
+            .join("") ||
+          '<p class="text-center py-8 text-gray-500">No records</p>';
+      }
+      async function viewATL(id) {
+        var d = await api("/client/atl/" + id);
+        if (d.status === "success") {
+          var a = d.data;
+          document.getElementById("atlDetail").innerHTML =
+            '<div class="text-center mb-4"><p class="text-2xl font-mono font-bold text-blue-900">' +
+            (a.atl_code || "N/A") +
+            '</p></div><div class="grid grid-cols-2 gap-3 text-sm"><div><p class="text-xs text-gray-500">Company</p><p class="font-semibold">' +
+            (a.company || "N/A") +
+            '</p></div><div><p class="text-xs text-gray-500">SO</p><p>' +
+            (a.so_number || "N/A") +
+            '</p></div><div><p class="text-xs text-gray-500">Status</p><span class="px-2 py-1 rounded text-xs font-semibold">' +
+            a.status +
+            '</span></div><div><p class="text-xs text-gray-500">Volume</p><p>' +
+            (a.volume ? Number(a.volume).toLocaleString() + "L" : "N/A") +
+            '</p></div><div><p class="text-xs text-gray-500">Plate</p><p class="font-semibold">' +
+            a.plate_no +
+            '</p></div><div><p class="text-xs text-gray-500">Driver</p><p>' +
+            (a.driver_name || "N/A") +
+            '</p></div><div><p class="text-xs text-gray-500">Hauler</p><p>' +
+            (a.hauler || "N/A") +
+            '</p></div><div><p class="text-xs text-gray-500">Date</p><p>' +
+            a.scheduled_date +
+            '</p></div><div><p class="text-xs text-gray-500">Remarks</p><p>' +
+            (a.remarks || "None") +
+            "</p></div></div>";
+          document.getElementById("atlModal").classList.remove("hidden");
+        }
+      }
+      async function cancelATL(id) {
+        if (!confirm("Cancel?")) return;
+        var r = prompt("Reason:");
+        if (!r) return;
+        await api("/client/cancel-atl/" + id, "POST", { reason: r });
+        loadHistory();
+        loadDashboard();
+      }
+      async function loadClientReports() {
+        var p = new URLSearchParams(),
+          s = document.getElementById("startDate").value,
+          e = document.getElementById("endDate").value,
+          st = document.getElementById("statusFilter").value;
+        if (s) p.append("startDate", s);
+        if (e) p.append("endDate", e);
+        if (st) p.append("status", st);
+        var d = await api("/atl/summary?" + p.toString());
+        if (d.status === "success") {
+          var a = d.data.recent || [],
+            f = a;
+          if (st)
+            f = f.filter(function (x) {
+              return x.status === st;
+            });
+          if (s)
+            f = f.filter(function (x) {
+              return new Date(x.scheduled_date) >= new Date(s);
+            });
+          if (e)
+            f = f.filter(function (x) {
+              return new Date(x.scheduled_date) <= new Date(e);
+            });
+          var tv = f.reduce(function (s, x) {
+            return s + (Number(x.volume) || 0);
+          }, 0);
+          document.getElementById("reportSummaryCards").innerHTML =
+            '<div class="bg-white rounded-xl shadow p-4 text-center"><p class="text-2xl font-bold">' +
+            f.length +
+            '</p><p class="text-xs">Records</p></div><div class="bg-green-50 rounded-xl shadow p-4 text-center"><p class="text-2xl font-bold text-green-700">' +
+            f.filter(function (x) {
+              return x.status === "completed" || x.status === "dispatched";
+            }).length +
+            '</p><p class="text-xs">Dispatched</p></div><div class="bg-red-50 rounded-xl shadow p-4 text-center"><p class="text-2xl font-bold text-red-700">' +
+            f.filter(function (x) {
+              return x.status === "cancelled" || x.status === "rejected";
+            }).length +
+            '</p><p class="text-xs">Rejected</p></div><div class="bg-yellow-50 rounded-xl shadow p-4 text-center"><p class="text-2xl font-bold text-yellow-700">' +
+            f.filter(function (x) {
+              return x.status === "pending";
+            }).length +
+            '</p><p class="text-xs">Pending</p></div><div class="bg-blue-50 rounded-xl shadow p-4 text-center"><p class="text-2xl font-bold text-blue-700">' +
+            tv.toLocaleString() +
+            'L</p><p class="text-xs">Total</p></div>';
+          document.getElementById("reportTableBody").innerHTML =
+            f
+              .map(function (x) {
+                var sc =
+                  x.status === "completed"
+                    ? "bg-green-100 text-green-800"
+                    : x.status === "dispatched"
+                      ? "bg-orange-100 text-orange-800"
+                      : x.status === "cancelled"
+                        ? "bg-red-100 text-red-800"
+                        : "bg-yellow-100 text-yellow-800";
+                return (
+                  '<tr class="border-b hover:bg-gray-50"><td class="py-2 px-3 font-mono text-xs font-bold text-blue-900">' +
+                  (x.atl_code || "-") +
+                  '</td><td class="py-2 px-3 text-xs">' +
+                  (x.so_number || "-") +
+                  '</td><td class="py-2 px-3">' +
+                  (x.company || "-") +
+                  '</td><td class="py-2 px-3">' +
+                  x.plate_no +
+                  '</td><td class="py-2 px-3">' +
+                  (x.driver_name || "-") +
+                  '</td><td class="py-2 px-3 text-right">' +
+                  (x.volume ? Number(x.volume).toLocaleString() : "-") +
+                  '</td><td class="py-2 px-3 text-center">' +
+                  (x.has_si == 1 ? "With SI" : "No SI") +
+                  '</td><td class="py-2 px-3 text-center"><span class="px-2 py-1 rounded text-xs ' +
+                  sc +
+                  '">' +
+                  x.status +
+                  '</span></td><td class="py-2 px-3 text-xs">' +
+                  new Date(x.scheduled_date).toLocaleDateString() +
+                  '</td><td class="py-2 px-3 text-center font-mono text-xs">' +
+                  (x.printed_wc || "-") +
+                  "</td></tr>"
+                );
+              })
+              .join("") ||
+            '<tr><td colspan="10" class="text-center py-8 text-gray-500">No records</td></tr>';
+        }
+      }
+      function clearClientFilters() {
+        ["startDate", "endDate", "statusFilter"].forEach(function (id) {
+          document.getElementById(id).value = "";
+        });
+        loadClientReports();
+      }
+      function printClientReport() {
+        document.getElementById("printDate").textContent =
+          "Period: " +
+          (document.getElementById("startDate").value || "All") +
+          " - " +
+          (document.getElementById("endDate").value || "Today");
+        document.getElementById("printTableBody").innerHTML =
+          document.getElementById("reportTableBody").innerHTML;
+        window.print();
+      }
+      function exportClientCSV() {
+        var csv = "ATL Code,SO#,Plate,Driver,Volume,SI,Status,Date\n";
+        document.querySelectorAll("#reportTableBody tr").forEach(function (r) {
+          if (r.cells.length > 1) {
+            var c = r.cells;
+            csv +=
+              '"' +
+              c[0].textContent +
+              '","' +
+              c[1].textContent +
+              '","' +
+              c[3].textContent +
+              '","' +
+              c[4].textContent +
+              '","' +
+              c[5].textContent +
+              '","' +
+              c[6].textContent +
+              '","' +
+              c[7].textContent +
+              '","' +
+              c[8].textContent +
+              '"\n';
+          }
+        });
+        var b = new Blob([csv], { type: "text/csv" });
+        var a = document.createElement("a");
+        a.href = URL.createObjectURL(b);
+        a.download =
+          "client-report-" + new Date().toISOString().split("T")[0] + ".csv";
+        a.click();
+      }
+      async function openChat() {
+        document.getElementById("chatWidget").classList.remove("hidden");
+        document.getElementById("chatButton").classList.add("hidden");
+        document.getElementById("unreadBadge").classList.add("hidden");
+        loadContactList();
+      }
+      function showContactList() {
+        document.getElementById("contactList").classList.remove("hidden");
+        document.getElementById("chatBody").classList.add("hidden");
+        document.getElementById("chatInputArea").classList.add("hidden");
+        document.getElementById("chatTitle").textContent = "Chat";
+        currentChatUser = null;
+        loadContactList();
+      }
+      async function loadContactList() {
+        var r = await fetch("/api/chat-list", {
+          headers: { Authorization: "Bearer " + token },
+        });
+        var d = await r.json();
+        if (d.status === "success") {
+          contactList = d.data;
+          document.getElementById("contactList").innerHTML =
+            contactList
+              .map(function (c) {
+                return (
+                  '<div onclick="startChat(' +
+                  c.id +
+                  ",'" +
+                  (c.email || c.company_name) +
+                  '\')" class="flex items-center p-3 hover:bg-gray-50 cursor-pointer border-b"><div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3"><i class="fas fa-user text-blue-600 text-sm"></i></div><div class="flex-1"><p class="text-sm font-semibold">' +
+                  (c.company_name || c.email) +
+                  '</p><p class="text-xs text-gray-400">' +
+                  (c.email || "") +
+                  '</p></div><div class="w-2 h-2 bg-green-400 rounded-full"></div></div>'
+                );
+              })
+              .join("") ||
+            '<p class="p-3 text-center text-gray-400 text-sm">No contacts</p>';
+        }
+      }
+      function startChat(id, name) {
+        currentChatUser = id;
+        currentChatName = name;
+        document.getElementById("chatTitle").textContent = name;
+        document.getElementById("contactList").classList.add("hidden");
+        document.getElementById("chatBody").classList.remove("hidden");
+        document.getElementById("chatInputArea").classList.remove("hidden");
+        loadChatMessages();
+        if (chatInterval) clearInterval(chatInterval);
+        chatInterval = setInterval(loadChatMessages, 5000);
+      }
+      async function loadChatMessages() {
+        if (!currentChatUser) return;
+        var r = await fetch("/api/chat/" + currentChatUser, {
+          headers: { Authorization: "Bearer " + token },
+        });
+        var d = await r.json();
+        if (d.status === "success") {
+          var h = "",
+            nm = 0;
+          d.data.forEach(function (m) {
+            var im = m.sender_id == user.id;
+            if (!im) {
+              nm++;
+              if (m.id > lastMessageId) lastMessageId = m.id;
+            }
+            h +=
+              '<div class="' +
+              (im ? "text-right" : "text-left") +
+              ' mb-2"><div class="inline-block ' +
+              (im ? "bg-blue-100" : "bg-gray-100") +
+              ' rounded-lg px-3 py-1.5 text-sm max-w-[80%]"><p class="text-[10px] text-gray-500">' +
+              (im ? "You" : currentChatName) +
+              "</p><p>" +
+              m.message +
+              '</p><p class="text-[9px] text-gray-400 text-right">' +
+              new Date(m.created_at).toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+              }) +
+              "</p></div></div>";
+          });
+          document.getElementById("chatBody").innerHTML =
+            h ||
+            '<p class="text-center text-gray-400 text-sm pt-10">Start the conversation!</p>';
+          document.getElementById("chatBody").scrollTop =
+            document.getElementById("chatBody").scrollHeight;
+          if (
+            nm > 0 &&
+            document.getElementById("chatWidget").classList.contains("hidden")
+          ) {
+            showChatNotification(
+              "New message from " + currentChatName,
+              "You have " + nm + " new message" + (nm > 1 ? "s" : ""),
+              "/favicon.svg",
+            );
+            var badge = document.getElementById("unreadBadge");
+            badge.textContent = nm;
+            badge.classList.remove("hidden");
+          }
+        }
+      }
+      async function sendChat() {
+        var i = document.getElementById("chatInput");
+        var m = i.value.trim();
+        if (!m || !currentChatUser) return;
+        i.value = "";
+        await fetch("/api/chat", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + token,
+          },
+          body: JSON.stringify({ receiver_id: currentChatUser, message: m }),
+        });
+        loadChatMessages();
+      }
+      function closeChat() {
+        document.getElementById("chatWidget").classList.add("hidden");
+        document.getElementById("chatButton").classList.remove("hidden");
+        if (chatInterval) clearInterval(chatInterval);
+      }
+      setInterval(async function () {
+        if (
+          document.getElementById("chatWidget").classList.contains("hidden")
+        ) {
+          try {
+            var r = await fetch("/api/chat/unread", {
+              headers: { Authorization: "Bearer " + token },
+            });
+            var d = await r.json();
+            if (d.status === "success" && d.unread > 0) {
+              var badge = document.getElementById("unreadBadge");
+              badge.textContent = d.unread > 9 ? "9+" : d.unread;
+              badge.classList.remove("hidden");
+            }
+          } catch (e) {}
+        }
+      }, 15000);
+      document.getElementById("volume").addEventListener("input", function () {
+        var sb = document.getElementById("submitBtn"),
+          v = parseFloat(this.value),
+          mx = parseFloat(this.max);
+        if (truckVerified && v > 0 && v <= mx) sb.disabled = false;
+        else if (truckVerified && (v <= 0 || v > mx)) sb.disabled = true;
+      });
+      document.getElementById("userInfoMob").textContent =
+        document.getElementById("userInfo").textContent;
+      function logout() {
+        localStorage.clear();
+        window.location.href = "/";
+      }
+      loadDashboard();
+    </script>
+  </body>
 </html>
