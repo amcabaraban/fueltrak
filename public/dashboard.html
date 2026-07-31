@@ -216,7 +216,30 @@ function startChat(id,name){currentChatUser=id;currentChatName=name;document.get
 async function loadChatMessages(){if(!currentChatUser)return;var r=await fetch('/api/chat/'+currentChatUser,{headers:{'Authorization':'Bearer '+token}});var d=await r.json();if(d.status==='success'){var h='',newMessages=0;d.data.forEach(function(m){var isMe=m.sender_id==user.id;if(!isMe){newMessages++;if(m.id>lastMessageId)lastMessageId=m.id}h+='<div class="'+(isMe?'text-right':'text-left')+' mb-2"><div class="inline-block '+(isMe?'bg-blue-100':'bg-gray-100')+' rounded-lg px-3 py-1.5 text-sm max-w-[80%]"><p class="text-[10px] text-gray-500">'+(isMe?'You':currentChatName)+'</p><p>'+m.message+'</p><p class="text-[9px] text-gray-400 text-right">'+new Date(m.created_at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})+'</p></div></div>'});document.getElementById('chatBody').innerHTML=h||'<p class="text-center text-gray-400 text-sm pt-10">Start the conversation!</p>';document.getElementById('chatBody').scrollTop=document.getElementById('chatBody').scrollHeight;if(newMessages>0&&document.getElementById('chatWidget').classList.contains('hidden')){showChatNotification('New message from '+currentChatName,'You have '+newMessages+' new message'+(newMessages>1?'s':''),'/favicon.svg');var badge=document.getElementById('unreadBadge');badge.textContent=newMessages;badge.classList.remove('hidden')}}}
 async function sendChat(){var i=document.getElementById('chatInput');var m=i.value.trim();if(!m||!currentChatUser)return;i.value='';await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({receiver_id:currentChatUser,message:m})});loadChatMessages()}
 function closeChat(){document.getElementById('chatWidget').classList.add('hidden');document.getElementById('chatButton').classList.remove('hidden');if(chatInterval)clearInterval(chatInterval)}
-setInterval(async function(){if(document.getElementById('chatWidget').classList.contains('hidden')){try{var r=await fetch('/api/chat/unread',{headers:{'Authorization':'Bearer '+token}});var d=await r.json();if(d.status==='success'&&d.unread>0){var badge=document.getElementById('unreadBadge');badge.textContent=d.unread>9?'9+':d.unread;badge.classList.remove('hidden')}}catch(e){}}},15000);
+// Background polling for unread messages - show badge and notification
+setInterval(async function(){
+    if(document.getElementById('chatWidget').classList.contains('hidden')){
+        try {
+            var r = await fetch('/api/chat/unread', {
+                headers: {'Authorization': 'Bearer ' + token}
+            });
+            var d = await r.json();
+            var badge = document.getElementById('unreadBadge');
+            if(d.status === 'success' && d.unread > 0){
+                badge.textContent = d.unread > 9 ? '9+' : d.unread;
+                badge.classList.remove('hidden');
+                // Show notification for background unread messages
+                showChatNotification(
+                    'FuelTrak - New Messages',
+                    'You have ' + d.unread + ' unread message' + (d.unread > 1 ? 's' : ''),
+                    '/favicon.svg'
+                );
+            } else {
+                badge.classList.add('hidden');
+            }
+        } catch(e) {}
+    }
+}, 15000);
 
 // ============ CALCULATOR ============
 function toggleSidebar(){var s=document.getElementById("sidebar");s.classList.toggle("open");document.getElementById("sidebarOverlay").classList.toggle("hidden")}
