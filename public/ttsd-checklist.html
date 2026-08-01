@@ -185,7 +185,7 @@
 </div>
 
 <script>
-document.querySelector('#sidebar a[href="/audit-logs"]').style.background = '#1e40af';    
+document.querySelector('#sidebar a[href="/ttsd-checklist"]').style.background = '#1e40af';    
 const token=localStorage.getItem('fueltrak_token');if(!token)window.location.href='/';
 const user=JSON.parse(localStorage.getItem('fueltrak_user')||'{}');
 document.getElementById('userInfo').textContent=user.email?user.email.split('@')[0].substring(0,3)+'***@'+user.email.split('@')[1]+' ('+user.role+')':'';
