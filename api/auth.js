@@ -409,11 +409,389 @@ app.post('/api/migrate', authenticate, authorize('dispatcher','management'), asy
 app.post('/api/sync-truck-capacities', authenticate, authorize('dispatcher','management'), async (req, res) => { try { const {batch=0}=req.body; const [t]=await pool.execute('SELECT id,plate_no FROM trucks WHERE total_capacity=0 OR total_capacity IS NULL ORDER BY id LIMIT 50 OFFSET ?',[String(batch*50)]); if(!t.length) return res.json({status:'success',message:'Done!',done:true}); let c=0; for(const x of t){const [m]=await pool.execute('SELECT * FROM truck_masterlist WHERE plate_no=?',[x.plate_no]); if(m.length){const cap=[m[0].cot1,m[0].cot2,m[0].cot3,m[0].cot4,m[0].cot5,m[0].cot6,m[0].cot7,m[0].cot8,m[0].cot9,m[0].cot10].reduce((s,v)=>s+parseFloat(v||0),0);if(cap>0){await pool.execute('UPDATE trucks SET total_capacity=? WHERE id=?',[cap,x.id]);c++;}}} res.json({status:'success',message:`Batch ${batch+1}: ${c} updated`,count:c,done:false,nextBatch:batch+1}); } catch(e) { res.status(400).json({error:e.message}); } });
 
 // ============================================================
+// RECYCLE BIN & BACKUP SYSTEM
+// ============================================================
+
+const RECYCLE_BIN_DAYS = 30; // Items stay in recycle bin for 30 days
+
+// ============ SOFT DELETE HELPER ============
+async function softDelete(tableName, recordId, deletedBy, deletedByEmail, daysToKeep = RECYCLE_BIN_DAYS) {
+  try {
+    // Get the record data before deleting
+    const [records] = await pool.execute(`SELECT * FROM ${tableName} WHERE id = ?`, [recordId]);
+    
+    if (!records.length) return false;
+    
+    const recordData = records[0];
+    // Remove sensitive fields
+    delete recordData.password;
+    delete recordData.current_token;
+    delete recordData.openim_token;
+    
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + daysToKeep);
+    
+    // Store in recycle bin
+    await pool.execute(
+      'INSERT INTO recycle_bin (table_name, record_id, record_data, deleted_by, deleted_by_email, expires_at) VALUES (?, ?, ?, ?, ?, ?)',
+      [tableName, recordId, JSON.stringify(recordData), deletedBy, deletedByEmail, expiresAt]
+    );
+    
+    return true;
+  } catch (error) {
+    logger.error('Soft delete failed', { error: error.message, table: tableName, id: recordId });
+    return false;
+  }
+}
+
+// ============ RESTORE FROM RECYCLE BIN ============
+async function restoreFromBin(binId, restoredBy) {
+  try {
+    const [bins] = await pool.execute('SELECT * FROM recycle_bin WHERE id = ? AND restored = 0', [binId]);
+    
+    if (!bins.length) return { success: false, error: 'Record not found or already restored' };
+    
+    const bin = bins[0];
+    const recordData = JSON.parse(bin.record_data);
+    
+    // Remove auto-generated fields
+    delete recordData.id;
+    
+    // Build INSERT statement
+    const columns = Object.keys(recordData).join(', ');
+    const placeholders = Object.keys(recordData).map(() => '?').join(', ');
+    const values = Object.values(recordData);
+    
+    const [result] = await pool.execute(
+      `INSERT INTO ${bin.table_name} (${columns}) VALUES (${placeholders})`,
+      values
+    );
+    
+    // Mark as restored
+    await pool.execute(
+      'UPDATE recycle_bin SET restored = 1, restored_at = NOW(), restored_by = ? WHERE id = ?',
+      [restoredBy, binId]
+    );
+    
+    await logAudit(restoredBy, 'RESTORE', bin.table_name, result.insertId, { restored_from_bin: binId });
+    
+    return { success: true, newId: result.insertId };
+  } catch (error) {
+    logger.error('Restore failed', { error: error.message, binId });
+    return { success: false, error: error.message };
+  }
+}
+
+// ============ AUTO-CLEANUP EXPIRED RECYCLE BIN ITEMS ============
+async function cleanupRecycleBin() {
+  try {
+    const [result] = await pool.execute(
+      'DELETE FROM recycle_bin WHERE expires_at < NOW() AND restored = 0'
+    );
+    if (result.affectedRows > 0) {
+      logger.info('Recycle bin cleaned', { deleted: result.affectedRows });
+    }
+  } catch (error) {
+    logger.error('Recycle bin cleanup failed', { error: error.message });
+  }
+}
+
+// Run cleanup every hour
+setInterval(cleanupRecycleBin, 60 * 60 * 1000);
+
+// ============ RECYCLE BIN API ============
+
+// Get all items in recycle bin
+app.get('/api/admin/recycle-bin', authenticate, authorize('dispatcher', 'management'), async (req, res) => {
+  try {
+    const { table, search } = req.query;
+    let query = 'SELECT * FROM recycle_bin WHERE restored = 0';
+    const params = [];
+    
+    if (table) { query += ' AND table_name = ?'; params.push(table); }
+    if (search) { query += ' AND (record_data LIKE ? OR deleted_by_email LIKE ?)'; params.push('%'+search+'%', '%'+search+'%'); }
+    
+    query += ' ORDER BY deleted_at DESC LIMIT 200';
+    
+    const [items] = await pool.execute(query, params);
+    
+    // Parse JSON data for display
+    const result = items.map(item => ({
+      ...item,
+      record_data: JSON.parse(item.record_data || '{}'),
+      days_remaining: Math.max(0, Math.ceil((new Date(item.expires_at) - new Date()) / 86400000))
+    }));
+    
+    res.json({ status: 'success', data: result, total: result.length });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Restore item from recycle bin
+app.post('/api/admin/recycle-bin/:id/restore', authenticate, authorize('dispatcher', 'management'), async (req, res) => {
+  try {
+    const result = await restoreFromBin(req.params.id, req.user.id);
+    
+    if (result.success) {
+      res.json({ status: 'success', message: 'Record restored successfully', newId: result.newId });
+    } else {
+      res.status(400).json({ error: result.error });
+    }
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Permanently delete from recycle bin
+app.delete('/api/admin/recycle-bin/:id', authenticate, authorize('dispatcher', 'management'), async (req, res) => {
+  try {
+    await pool.execute('DELETE FROM recycle_bin WHERE id = ?', [req.params.id]);
+    res.json({ status: 'success', message: 'Permanently deleted' });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Empty entire recycle bin
+app.post('/api/admin/recycle-bin/empty', authenticate, authorize('dispatcher', 'management'), async (req, res) => {
+  try {
+    const [result] = await pool.execute('DELETE FROM recycle_bin WHERE restored = 0');
+    res.json({ status: 'success', message: `Emptied ${result.affectedRows} items from recycle bin` });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Get recycle bin stats
+app.get('/api/admin/recycle-bin/stats', authenticate, authorize('dispatcher', 'management'), async (req, res) => {
+  try {
+    const [stats] = await pool.execute(`
+      SELECT 
+        COUNT(*) as total_items,
+        SUM(CASE WHEN restored = 0 THEN 1 ELSE 0 END) as active_items,
+        SUM(CASE WHEN restored = 1 THEN 1 ELSE 0 END) as restored_items,
+        SUM(CASE WHEN expires_at < NOW() AND restored = 0 THEN 1 ELSE 0 END) as expired_items,
+        COUNT(DISTINCT table_name) as unique_tables
+      FROM recycle_bin
+    `);
+    
+    const [byTable] = await pool.execute(`
+      SELECT table_name, COUNT(*) as count 
+      FROM recycle_bin WHERE restored = 0 
+      GROUP BY table_name ORDER BY count DESC
+    `);
+    
+    res.json({ 
+      status: 'success', 
+      data: { 
+        ...stats[0],
+        by_table: byTable,
+        retention_days: RECYCLE_BIN_DAYS
+      } 
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ============ BACKUP API ============
+
+// Create manual backup
+app.post('/api/admin/backup', authenticate, authorize('dispatcher', 'management'), async (req, res) => {
+  try {
+    const tables = [
+      'authority_to_load', 'audit_logs', 'backup_logs', 'chat_messages',
+      'recycle_bin', 'sales_order_clients', 'sales_orders', 'truck_documents',
+      'truck_masterlist', 'trucks', 'users'
+    ];
+    
+    let backup = {};
+    let totalRecords = 0;
+    
+    for (const table of tables) {
+      try {
+        const [rows] = await pool.execute(`SELECT * FROM ${table}`);
+        backup[table] = rows;
+        totalRecords += rows.length;
+      } catch (e) {
+        // Table might not exist yet
+        backup[table] = [];
+      }
+    }
+    
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const filename = `fueltrak_backup_${timestamp}.json`;
+    const backupJSON = JSON.stringify(backup);
+    const fileSize = Buffer.byteLength(backupJSON, 'utf8');
+    
+    // Log the backup
+    await pool.execute(
+      'INSERT INTO backup_logs (backup_type, filename, file_size, tables_backed_up, records_count, status, created_by) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      ['manual', filename, fileSize, tables.join(', '), totalRecords, 'success', req.user.id]
+    );
+    
+    // Set response headers for download
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(backupJSON);
+    
+    logger.info('Backup created', { filename, records: totalRecords, size: fileSize });
+  } catch (error) {
+    // Log failed backup
+    await pool.execute(
+      'INSERT INTO backup_logs (backup_type, filename, status, error_message, created_by) VALUES (?, ?, ?, ?, ?)',
+      ['manual', 'failed_backup.json', 'failed', error.message, req.user.id]
+    );
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get backup history
+app.get('/api/admin/backup-logs', authenticate, authorize('dispatcher', 'management'), async (req, res) => {
+  try {
+    const [logs] = await pool.execute(
+      'SELECT bl.*, u.email as created_by_email FROM backup_logs bl LEFT JOIN users u ON bl.created_by = u.id ORDER BY bl.created_at DESC LIMIT 50'
+    );
+    res.json({ status: 'success', data: logs });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Restore from backup (upload JSON file)
+app.post('/api/admin/restore', authenticate, authorize('dispatcher', 'management'), async (req, res) => {
+  try {
+    const { backup, mode = 'merge' } = req.body; // mode: 'merge' or 'replace'
+    
+    if (!backup || typeof backup !== 'object') {
+      return res.status(400).json({ error: 'Invalid backup data' });
+    }
+    
+    let restored = 0;
+    let errors = [];
+    
+    for (const [table, records] of Object.entries(backup)) {
+      if (!Array.isArray(records) || records.length === 0) continue;
+      
+      try {
+        if (mode === 'replace') {
+          // Delete existing records
+          await pool.execute(`DELETE FROM ${table}`);
+        }
+        
+        for (const record of records) {
+          try {
+            const columns = Object.keys(record).join(', ');
+            const placeholders = Object.keys(record).map(() => '?').join(', ');
+            const values = Object.values(record);
+            
+            await pool.execute(
+              `INSERT IGNORE INTO ${table} (${columns}) VALUES (${placeholders})`,
+              values
+            );
+            restored++;
+          } catch (e) {
+            errors.push(`${table}: ${e.message}`);
+          }
+        }
+      } catch (e) {
+        errors.push(`Table ${table}: ${e.message}`);
+      }
+    }
+    
+    await logAudit(req.user.id, 'RESTORE_BACKUP', 'system', 0, { restored, errors: errors.length });
+    
+    res.json({ 
+      status: 'success', 
+      message: `Restored ${restored} records`,
+      errors: errors.slice(0, 10),
+      mode
+    });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Update existing delete endpoints to use soft delete
+// Wrap the original delete handlers for clients and users
+
+// Override client delete to use soft delete
+const originalDeleteClient = app.delete;
+app.delete('/api/clients/:id', authenticate, authorize('dispatcher', 'management'), async (req, res) => {
+  try {
+    // Get client info before deleting
+    const [clients] = await pool.execute("SELECT * FROM users WHERE id = ? AND role = 'client'", [req.params.id]);
+    if (!clients.length) return res.status(404).json({ error: 'Client not found' });
+    
+    const client = clients[0];
+    
+    // Soft delete - move to recycle bin
+    const deleted = await softDelete('users', req.params.id, req.user.id, req.user.email);
+    
+    if (deleted) {
+      // Now hard delete from users table
+      await pool.execute("DELETE FROM users WHERE id = ? AND role = 'client'", [req.params.id]);
+      await logAudit(req.user.id, 'DELETE_CLIENT', 'users', req.params.id, { email: client.email, soft_delete: true });
+    }
+    
+    res.json({ status: 'success', message: 'Client deleted (moved to recycle bin)' });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Override user delete to use soft delete
+app.delete('/api/users/:id', authenticate, authorize('dispatcher', 'management'), async (req, res) => {
+  try {
+    const [users] = await pool.execute('SELECT * FROM users WHERE id = ?', [req.params.id]);
+    if (!users.length) return res.status(404).json({ error: 'User not found' });
+    
+    const user = users[0];
+    
+    // Soft delete
+    const deleted = await softDelete('users', req.params.id, req.user.id, req.user.email);
+    
+    if (deleted) {
+      await pool.execute('DELETE FROM users WHERE id = ?', [req.params.id]);
+      await logAudit(req.user.id, 'DELETE_USER', 'users', req.params.id, { email: user.email, soft_delete: true });
+    }
+    
+    res.json({ status: 'success', message: 'User deleted (moved to recycle bin)' });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Override truck delete to use soft delete
+app.delete('/api/trucks/delete/:id', authenticate, authorize('dispatcher', 'management'), async (req, res) => {
+  try {
+    const [truck] = await pool.execute('SELECT * FROM trucks WHERE id = ?', [req.params.id]);
+    if (!truck.length) return res.status(404).json({ error: 'Truck not found' });
+    
+    // Soft delete
+    await softDelete('trucks', req.params.id, req.user.id, req.user.email);
+    
+    // Hard delete
+    await pool.execute('DELETE FROM truck_documents WHERE truck_id = ?', [req.params.id]);
+    await pool.execute('DELETE FROM trucks WHERE id = ?', [req.params.id]);
+    await pool.execute('DELETE FROM truck_masterlist WHERE plate_no = ?', [truck[0].plate_no]);
+    
+    res.json({ status: 'success', message: 'Truck deleted (moved to recycle bin)' });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// ============ RECYCLE BIN PAGE ROUTE ============
+app.get('/recycle-bin', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'recycle-bin.html')));
+
+// ============================================================
 // STATIC FILES & PAGE ROUTES
 // ============================================================
 app.use('/public', express.static(path.join(__dirname, '..', 'public'), { maxAge: '1h', setHeaders: (res, fp) => res.setHeader('Cache-Control', fp.endsWith('.html') ? 'public, max-age=0, must-revalidate' : 'public, max-age=3600') }));
 
-const pageRoutes = { '/': 'index.html', '/privacy': 'privacy.html', '/dashboard': 'dashboard.html', '/dashboard.html': 'dashboard.html', '/client': 'client.html', '/client.html': 'client.html', '/sales-orders': 'sales-orders.html', '/docs-report': 'docs-report.html', '/reports': 'reports.html', '/reports.html': 'reports.html', '/atl.html': 'atl.html', '/trucks': 'trucks.html', '/ttsd-checklist': 'ttsd-checklist.html', '/tutorial': 'tutorial.html', '/users': 'users.html', '/adminclient': 'adminclient.html', '/audit-logs': 'audit-logs.html', '/first-login': 'first-login.html', '/terms': 'terms.html' };
+const pageRoutes = { '/': 'index.html', '/privacy': 'privacy.html', '/dashboard': 'dashboard.html', '/dashboard.html': 'dashboard.html', '/client': 'client.html', '/client.html': 'client.html', '/sales-orders': 'sales-orders.html', '/docs-report': 'docs-report.html', '/reports': 'reports.html', '/reports.html': 'reports.html', '/atl.html': 'atl.html', '/trucks': 'trucks.html', '/ttsd-checklist': 'ttsd-checklist.html', '/tutorial': 'tutorial.html', '/users': 'users.html', '/adminclient': 'adminclient.html', '/audit-logs': 'audit-logs.html', '/first-login': 'first-login.html', '/terms': 'terms.html', '/recycle-bin': 'recycle-bin.html', '/backup': 'backup.html' };
 Object.entries(pageRoutes).forEach(([route, file]) => { app.get(route, (req, res) => res.sendFile(path.join(__dirname, '..', 'public', file))); });
 
 // ============================================================
