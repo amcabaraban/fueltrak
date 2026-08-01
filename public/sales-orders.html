@@ -221,6 +221,23 @@
             <div id="soViewContent"></div>
         </div>
     </div>
+    <!-- Chat Widget -->
+    <div id="chatWidget" class="hidden fixed bottom-4 right-4 z-50 w-80 bg-white rounded-xl shadow-2xl border">
+        <div class="bg-blue-900 text-white p-3 rounded-t-xl flex justify-between items-center"><span><i class="fas fa-comments mr-2"></i><span id="chatTitle">Chat</span></span><div><button onclick="showContactList()" class="text-white mr-2 text-sm"><i class="fas fa-users"></i></button><button onclick="closeChat()" class="text-white">&times;</button></div></div>
+        <div id="contactList" class="h-64 overflow-y-auto"><div class="p-3 text-center text-gray-400 text-sm">Loading contacts...</div></div>
+        <div id="chatBody" class="hidden h-64 overflow-y-auto p-3 space-y-2"></div>
+        <div id="chatInputArea" class="hidden p-2 border-t flex gap-2"><input type="text" id="chatInput" placeholder="Type message..." class="flex-1 px-2 py-1 border rounded text-sm" onkeypress="if(event.key==='Enter')sendChat()"><button onclick="sendChat()" class="bg-blue-900 text-white px-3 py-1 rounded text-sm"><i class="fas fa-paper-plane"></i></button></div>
+    </div>
+    <button onclick="openChat()" class="fixed bottom-20 right-16 z-50 bg-blue-900 text-white p-3 rounded-full shadow-lg hover:bg-blue-800" id="chatButton">
+        <i class="fas fa-comments"></i>
+        <span id="unreadBadge" class="hidden" style="position:absolute;top:-4px;right:-4px;background:#ef4444;color:white;font-size:11px;min-width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;z-index:51;box-shadow:0 2px 4px rgba(0,0,0,0.3)">0</span>
+    </button>
+    <!-- Floating Calculator -->
+    <div id="calcWidget" class="hidden fixed bottom-20 right-4 z-50 w-72 bg-white rounded-xl shadow-2xl border">
+        <div class="bg-blue-900 text-white p-3 rounded-t-xl flex justify-between items-center cursor-pointer" onclick="toggleCalc()"><span><i class="fas fa-calculator mr-2"></i>Calculator</span><button onclick="event.stopPropagation();closeCalc()" class="text-white">&times;</button></div>
+        <div class="p-3"><input type="text" id="calcDisplay" class="w-full px-3 py-2 border rounded text-right text-xl font-mono mb-2" readonly value="0"><div class="grid grid-cols-4 gap-1"><button onclick="calcInput('7')" class="bg-gray-100 hover:bg-gray-200 py-2 rounded font-semibold">7</button><button onclick="calcInput('8')" class="bg-gray-100 hover:bg-gray-200 py-2 rounded font-semibold">8</button><button onclick="calcInput('9')" class="bg-gray-100 hover:bg-gray-200 py-2 rounded font-semibold">9</button><button onclick="calcInput('/')" class="bg-orange-100 hover:bg-orange-200 py-2 rounded font-semibold text-orange-700">/</button><button onclick="calcInput('4')" class="bg-gray-100 hover:bg-gray-200 py-2 rounded font-semibold">4</button><button onclick="calcInput('5')" class="bg-gray-100 hover:bg-gray-200 py-2 rounded font-semibold">5</button><button onclick="calcInput('6')" class="bg-gray-100 hover:bg-gray-200 py-2 rounded font-semibold">6</button><button onclick="calcInput('*')" class="bg-orange-100 hover:bg-orange-200 py-2 rounded font-semibold text-orange-700">*</button><button onclick="calcInput('1')" class="bg-gray-100 hover:bg-gray-200 py-2 rounded font-semibold">1</button><button onclick="calcInput('2')" class="bg-gray-100 hover:bg-gray-200 py-2 rounded font-semibold">2</button><button onclick="calcInput('3')" class="bg-gray-100 hover:bg-gray-200 py-2 rounded font-semibold">3</button><button onclick="calcInput('-')" class="bg-orange-100 hover:bg-orange-200 py-2 rounded font-semibold text-orange-700">-</button><button onclick="calcInput('0')" class="bg-gray-100 hover:bg-gray-200 py-2 rounded font-semibold">0</button><button onclick="calcInput('.')" class="bg-gray-100 hover:bg-gray-200 py-2 rounded font-semibold">.</button><button onclick="calcResult()" class="bg-blue-900 text-white hover:bg-blue-800 py-2 rounded font-semibold">=</button><button onclick="calcInput('+')" class="bg-orange-100 hover:bg-orange-200 py-2 rounded font-semibold text-orange-700">+</button></div><button onclick="calcClear()" class="w-full mt-1 bg-red-100 hover:bg-red-200 py-1 rounded text-red-700 text-sm">Clear</button></div>
+    </div>
+    <button onclick="openCalc()" class="fixed bottom-20 right-4 z-50 bg-green-600 text-white p-3 rounded-full shadow-lg hover:bg-green-700" id="calcButton"><i class="fas fa-calculator"></i></button>
 
     <script>
         document.querySelector('#sidebar a[href="/sales-orders"]').style.background = '#1e40af';
