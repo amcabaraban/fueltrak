@@ -20,11 +20,82 @@
                 <div><span class="font-bold text-lg">FuelTrak</span><p class="text-xs text-blue-300">Sales Orders</p></div>
             </div>
             <div class="flex items-center space-x-3">
-                <a href="/dashboard" class="bg-white/20 px-3 py-1 rounded text-sm hover:bg-white/30"><i class="fas fa-tachometer-alt mr-1"></i>Dashboard</a>
                 <button onclick="logout()" class="bg-red-500/80 px-3 py-1 rounded text-sm"><i class="fas fa-sign-out-alt mr-1"></i>Logout</button>
             </div>
         </div>
     </nav>
+
+        <!-- Desktop Sidebar -->
+    <div class="fixed left-0 top-0 h-full w-14 md:w-48 bg-blue-900 text-white z-40 pt-16 overflow-y-auto no-print" id="sidebar" style="box-shadow:inset -2px 0 5px rgba(0,0,0,0.3),2px 0 10px rgba(0,0,0,0.2)">
+        
+        <!-- Dashboard -->
+        <a href="/dashboard" class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap shadow-[inset_0_2px_4px_rgba(255,255,255,0.1),inset_0_-2px_4px_rgba(0,0,0,0.2)]">
+            <i class="fas fa-tachometer-alt w-6 text-center"></i>
+            <span class="hidden md:inline ml-2">Dashboard</span>
+        </a>
+        
+        <!-- Clients -->
+        <a href="/adminclient" class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap shadow-[inset_0_2px_4px_rgba(255,255,255,0.1),inset_0_-2px_4px_rgba(0,0,0,0.2)]" title="Clients">
+            <i class="fas fa-users w-6 text-center"></i>
+            <span class="hidden md:inline ml-2">Clients</span>
+        </a>
+        
+        <!-- Sales Orders -->
+        <a href="/sales-orders" class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap shadow-[inset_0_2px_4px_rgba(255,255,255,0.1),inset_0_-2px_4px_rgba(0,0,0,0.2)]">
+            <i class="fas fa-file-invoice w-6 text-center"></i>
+            <span class="hidden md:inline ml-2">Sales Orders</span>
+        </a>
+        
+        <!-- Reports -->
+        <a href="/reports" class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap shadow-[inset_0_2px_4px_rgba(255,255,255,0.1),inset_0_-2px_4px_rgba(0,0,0,0.2)]">
+            <i class="fas fa-chart-bar w-6 text-center"></i>
+            <span class="hidden md:inline ml-2">Reports</span>
+        </a>
+        
+        <!-- Truck Masterlist -->
+        <a href="/trucks" class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap shadow-[inset_0_2px_4px_rgba(255,255,255,0.1),inset_0_-2px_4px_rgba(0,0,0,0.2)]">
+            <i class="fas fa-truck w-6 text-center"></i>
+            <span class="hidden md:inline ml-2">Truck Masterlist</span>
+        </a>
+        
+        <!-- Document Report -->
+        <a href="/docs-report" class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap shadow-[inset_0_2px_4px_rgba(255,255,255,0.1),inset_0_-2px_4px_rgba(0,0,0,0.2)]">
+            <i class="fas fa-file-alt w-6 text-center"></i>
+            <span class="hidden md:inline ml-2">Doc Report</span>
+        </a>
+        
+        <!-- TTSD Checklist -->
+        <a href="/ttsd-checklist" class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap shadow-[inset_0_2px_4px_rgba(255,255,255,0.1),inset_0_-2px_4px_rgba(0,0,0,0.2)]">
+            <i class="fas fa-clipboard-check w-6 text-center"></i>
+            <span class="hidden md:inline ml-2">TTSD Checklist</span>
+        </a>
+        
+        <!-- Users -->
+        <a href="/users" class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap shadow-[inset_0_2px_4px_rgba(255,255,255,0.1),inset_0_-2px_4px_rgba(0,0,0,0.2)]">
+            <i class="fas fa-users-cog w-6 text-center"></i>
+            <span class="hidden md:inline ml-2">Users</span>
+        </a>
+        
+        <!-- Audit Logs -->
+        <a href="/audit-logs" class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap shadow-[inset_0_2px_4px_rgba(255,255,255,0.1),inset_0_-2px_4px_rgba(0,0,0,0.2)]">
+            <i class="fas fa-history w-6 text-center"></i>
+            <span class="hidden md:inline ml-2">Audit Logs</span>
+        </a>
+        
+        <!-- Recycle Bin -->
+        <a href="/recycle-bin" class="flex items-center px-2 md:px-4 py-5 hover:bg-blue-800 text-xs md:text-sm whitespace-nowrap shadow-[inset_0_2px_4px_rgba(255,255,255,0.1),inset_0_-2px_4px_rgba(0,0,0,0.2)]">
+            <i class="fas fa-trash-restore w-6 text-center"></i>
+            <span class="hidden md:inline ml-2">Recycle Bin</span>
+        </a>
+        
+        <!-- Divider -->
+        <div class="border-t border-blue-700 p-2 mt-2">
+            <button onclick="logout()" class="flex items-center px-2 py-3 hover:bg-red-700 text-xs md:text-sm w-full text-left whitespace-nowrap">
+                <i class="fas fa-sign-out-alt w-6 text-center"></i>
+                <span class="hidden md:inline ml-2">Logout</span>
+            </button>
+        </div>
+    </div>
 
     <div class="max-w-7xl mx-auto px-4 py-6">
         <!-- Header -->
@@ -152,6 +223,7 @@
     </div>
 
     <script>
+        document.querySelector('#sidebar a[href="/audit-logs"]').style.background = '#1e40af';
         const API = '/api';
         const token = localStorage.getItem('fueltrak_token');
         const user = JSON.parse(localStorage.getItem('fueltrak_user') || '{}');
