@@ -148,7 +148,10 @@
         const d=await r.json();
         if(d.status==='success'){allLogs=d.data;logPage=1;renderLogPage();}
     }
-    document.querySelector('#sidebar a[href="/audit-logs"]').style.background = '#1e40af';
+    document.querySelectorAll('#sidebar a').forEach(function(link) {
+        link.style.background = '';
+    });
+
     function renderLogPage(){
         var tp=Math.ceil(allLogs.length/logsPerPage);
         var s=(logPage-1)*logsPerPage;
@@ -169,14 +172,14 @@
     function closeChat(){document.getElementById('chatWidget').classList.add('hidden');document.getElementById('chatButton').classList.remove('hidden');}
 
     function openCalc(){document.getElementById('calcWidget').classList.remove('hidden');document.getElementById('calcButton').classList.add('hidden');}
-function closeCalc(){document.getElementById('calcWidget').classList.add('hidden');document.getElementById('calcButton').classList.remove('hidden');}
-function toggleCalc(){}
-var calcExpr='';
-function calcInput(v){calcExpr+=v;document.getElementById('calcDisplay').value=calcExpr;}
-function calcClear(){calcExpr='';document.getElementById('calcDisplay').value='0';}
-function calcResult(){try{var r=eval(calcExpr.replace(/×/g,'*').replace(/÷/g,'/').replace(/-/g,'-'));document.getElementById('calcDisplay').value=Number(r.toFixed(4));calcExpr=String(r);}catch(e){document.getElementById('calcDisplay').value='Error';calcExpr='';}}
-document.addEventListener('keydown',function(e){if(document.getElementById('calcWidget').classList.contains('hidden'))return;var k=e.key;if(k>='0'&&k<='9')calcInput(k);else if(k==='.')calcInput('.');else if(k==='+')calcInput('+');else if(k==='-')calcInput('-');else if(k==='*')calcInput('*');else if(k==='/'){e.preventDefault();calcInput('/');}else if(k==='Enter')calcResult();else if(k==='Escape')closeCalc();else if(k==='Backspace'){calcExpr=calcExpr.slice(0,-1);document.getElementById('calcDisplay').value=calcExpr||'0';}});
-async function logout(){try{await fetch('/api/auth/logout',{method:'POST',headers:{'Authorization':'Bearer '+localStorage.getItem('fueltrak_token')}})}catch(e){}localStorage.clear();window.location.href='/'}
+    function closeCalc(){document.getElementById('calcWidget').classList.add('hidden');document.getElementById('calcButton').classList.remove('hidden');}
+    function toggleCalc(){}
+    var calcExpr='';
+    function calcInput(v){calcExpr+=v;document.getElementById('calcDisplay').value=calcExpr;}
+    function calcClear(){calcExpr='';document.getElementById('calcDisplay').value='0';}
+    function calcResult(){try{var r=eval(calcExpr.replace(/×/g,'*').replace(/÷/g,'/').replace(/-/g,'-'));document.getElementById('calcDisplay').value=Number(r.toFixed(4));calcExpr=String(r);}catch(e){document.getElementById('calcDisplay').value='Error';calcExpr='';}}
+    document.addEventListener('keydown',function(e){if(document.getElementById('calcWidget').classList.contains('hidden'))return;var k=e.key;if(k>='0'&&k<='9')calcInput(k);else if(k==='.')calcInput('.');else if(k==='+')calcInput('+');else if(k==='-')calcInput('-');else if(k==='*')calcInput('*');else if(k==='/'){e.preventDefault();calcInput('/');}else if(k==='Enter')calcResult();else if(k==='Escape')closeCalc();else if(k==='Backspace'){calcExpr=calcExpr.slice(0,-1);document.getElementById('calcDisplay').value=calcExpr||'0';}});
+    async function logout(){try{await fetch('/api/auth/logout',{method:'POST',headers:{'Authorization':'Bearer '+localStorage.getItem('fueltrak_token')}})}catch(e){}localStorage.clear();window.location.href='/'}
     loadLogs();
 </script>
 
