@@ -520,6 +520,14 @@ function showSuccess(msg) {
     document.getElementById('successModal').classList.remove('hidden');
 }
 
+function openCalc(){document.getElementById('calcWidget').classList.remove('hidden');document.getElementById('calcButton').classList.add('hidden');}
+function closeCalc(){document.getElementById('calcWidget').classList.add('hidden');document.getElementById('calcButton').classList.remove('hidden');}
+function toggleCalc(){}
+var calcExpr='';
+function calcInput(v){calcExpr+=v;document.getElementById('calcDisplay').value=calcExpr;}
+function calcClear(){calcExpr='';document.getElementById('calcDisplay').value='0';}
+function calcResult(){try{var r=eval(calcExpr.replace(/�/g,'*').replace(/�/g,'/').replace(/-/g,'-'));document.getElementById('calcDisplay').value=Number(r.toFixed(4));calcExpr=String(r);}catch(e){document.getElementById('calcDisplay').value='Error';calcExpr='';}}
+
 function logout() { localStorage.clear(); window.location.href = '/'; }
 
 // Initialize
