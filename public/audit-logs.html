@@ -148,10 +148,7 @@
         const d=await r.json();
         if(d.status==='success'){allLogs=d.data;logPage=1;renderLogPage();}
     }
-    document.querySelectorAll('#sidebar a').forEach(function(link) {
-        link.style.background = '';
-    });
-
+    
     function renderLogPage(){
         var tp=Math.ceil(allLogs.length/logsPerPage);
         var s=(logPage-1)*logsPerPage;
