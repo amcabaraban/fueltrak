@@ -154,6 +154,12 @@ app.use('/api/auth/resend-otp', otpLimiter);
 app.use('/api/auth/verify-otp', otpLimiter);
 app.use('/api/auth/reset-password', strictLimiter);
 
+// Add with other static file middleware
+app.use('/css', express.static(path.join(__dirname, '..', 'public', 'css'), {
+    maxAge: '1h',
+    setHeaders: (res) => res.setHeader('Cache-Control', 'public, max-age=3600')
+}));
+
 // ============ ANTI-SCRAPING & BOT PROTECTION ============
 const BOT_PATTERNS = ['bot','crawler','spider','scraper','curl','wget','python','java/','node-fetch','axios','go-http','ruby','perl','scrapy','phpcrawl','httpclient','aiohttp','request','mechanize','selenium','headless','puppeteer','playwright','bytespider','petalbot','gptbot','chatgpt','openai','claude','anthropic','bard','gemini','copilot','ccbot','commoncrawl','semrush','ahrefs','mj12bot','dotbot','rogerbot','exabot','yandexbot','baiduspider','facebookexternalhit','twitterbot','slackbot','discordbot','googlebot','bingbot','duckduckbot','yahoobot'];
 function isBotUA(ua) { return !ua || BOT_PATTERNS.some(p => (ua||'').toLowerCase().includes(p)); }
@@ -793,6 +799,11 @@ app.use('/public', express.static(path.join(__dirname, '..', 'public'), { maxAge
 
 const pageRoutes = { '/': 'index.html', '/privacy': 'privacy.html', '/dashboard': 'dashboard.html', '/dashboard.html': 'dashboard.html', '/client': 'client.html', '/client.html': 'client.html', '/sales-orders': 'sales-orders.html', '/docs-report': 'docs-report.html', '/reports': 'reports.html', '/reports.html': 'reports.html', '/atl.html': 'atl.html', '/trucks': 'trucks.html', '/ttsd-checklist': 'ttsd-checklist.html', '/tutorial': 'tutorial.html', '/users': 'users.html', '/adminclient': 'adminclient.html', '/audit-logs': 'audit-logs.html', '/first-login': 'first-login.html', '/terms': 'terms.html', '/recycle-bin': 'recycle-bin.html', '/backup': 'backup.html' };
 Object.entries(pageRoutes).forEach(([route, file]) => { app.get(route, (req, res) => res.sendFile(path.join(__dirname, '..', 'public', file))); });
+
+app.use('/js', express.static(path.join(__dirname, '..', 'public', 'js'), {
+    maxAge: '1h',
+    setHeaders: (res) => res.setHeader('Cache-Control', 'public, max-age=3600')
+}));
 
 // ============================================================
 // EXPORT
