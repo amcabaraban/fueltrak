@@ -204,6 +204,93 @@
 </div>
 
 <script>
+// ============ ERROR HANDLER (INLINE) ============
+var ErrorHandler = {
+    toastContainer: null,
+    init: function() {
+        if (!this.toastContainer) {
+            this.toastContainer = document.createElement('div');
+            this.toastContainer.id = 'errorToastContainer';
+            this.toastContainer.className = 'fixed top-4 right-4 z-[9999] space-y-2 max-w-sm';
+            document.body.appendChild(this.toastContainer);
+        }
+    },
+    toast: function(message, type, duration) {
+        type = type || 'error';
+        duration = duration || 5000;
+        this.init();
+        var colors = { error: 'bg-red-500', warning: 'bg-orange-500', success: 'bg-green-500', info: 'bg-blue-500' };
+        var icons = { error: 'fa-exclamation-circle', warning: 'fa-exclamation-triangle', success: 'fa-check-circle', info: 'fa-info-circle' };
+        var toast = document.createElement('div');
+        toast.className = (colors[type] || colors.error) + ' text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-3 animate-slide-down';
+        toast.innerHTML = '<i class="fas ' + (icons[type] || icons.error) + ' text-lg"></i><span class="text-sm flex-1">' + message + '</span><button onclick="this.parentElement.remove()" class="text-white/80 hover:text-white"><i class="fas fa-times"></i></button>';
+        this.toastContainer.appendChild(toast);
+        setTimeout(function() { toast.remove(); }, duration);
+    },
+    handleAPIError: function(error, customMessage) {
+        console.error('API Error:', error);
+        if (error.name === 'AbortError') { this.toast('Request timed out. Please try again.', 'warning'); return; }
+        if (error.message && error.message.includes('Failed to fetch')) { this.toast('Connection lost. Please check your internet.', 'error'); return; }
+        this.toast(customMessage || 'An unexpected error occurred.', 'error');
+    },
+    showError: function(containerId, message, retryFn) {
+        var container = document.getElementById(containerId);
+        if (!container) return;
+        container.innerHTML = '<div class="text-center py-8 text-red-400"><i class="fas fa-exclamation-circle text-3xl mb-2 block"></i><p>' + message + '</p>' + (retryFn ? '<button onclick="(' + retryFn.toString() + ')()" class="mt-2 text-blue-600 hover:underline text-sm">Retry</button>' : '') + '</div>';
+    },
+    showSkeleton: function(containerId, count) {
+        var container = document.getElementById(containerId);
+        if (!container) return;
+        count = count || 3;
+        container.innerHTML = Array(count).fill(0).map(function() {
+            return '<div class="bg-gray-200 animate-pulse rounded-xl p-4"><div class="h-4 bg-gray-300 rounded w-3/4 mb-3"></div><div class="h-6 bg-gray-300 rounded w-1/2"></div></div>';
+        }).join('');
+    }
+};
+
+// ============ API HELPER (INLINE) ============
+var APIHelper = {
+    token: localStorage.getItem('fueltrak_token'),
+    user: JSON.parse(localStorage.getItem('fueltrak_user') || '{}'),
+    getHeaders: function() {
+        return { 'Authorization': 'Bearer ' + this.token, 'Content-Type': 'application/json' };
+    },
+    get: async function(url, options) {
+        options = options || {};
+        try {
+            var controller = new AbortController();
+            var timeoutId = setTimeout(function() { controller.abort(); }, options.timeout || 15000);
+            var response = await fetch('/api' + url, { headers: this.getHeaders(), signal: controller.signal });
+            clearTimeout(timeoutId);
+            if (response.status === 401) { ErrorHandler.toast('Session expired. Redirecting...', 'warning'); localStorage.clear(); setTimeout(function() { window.location.href = '/'; }, 1500); return { _error: true, error: 'Unauthorized' }; }
+            if (response.status === 429) { ErrorHandler.toast('Too many requests. Please wait.', 'warning'); return { _error: true, error: 'Rate limited' }; }
+            if (response.status >= 500) { ErrorHandler.toast('Server error. Please try again.', 'error'); return { _error: true, error: 'Server error' }; }
+            var data = await response.json();
+            if (data.error) { if (!options.silent) ErrorHandler.toast(data.error, 'error'); return { _error: true, error: data.error }; }
+            return data;
+        } catch (error) {
+            if (!options.silent) ErrorHandler.handleAPIError(error);
+            return { _error: true, error: error.message };
+        }
+    },
+    post: async function(url, body, options) {
+        options = options || {};
+        try {
+            var controller = new AbortController();
+            var timeoutId = setTimeout(function() { controller.abort(); }, options.timeout || 15000);
+            var response = await fetch('/api' + url, { method: 'POST', headers: this.getHeaders(), body: JSON.stringify(body), signal: controller.signal });
+            clearTimeout(timeoutId);
+            if (response.status === 401) { ErrorHandler.toast('Session expired.', 'warning'); localStorage.clear(); setTimeout(function() { window.location.href = '/'; }, 1500); return { _error: true }; }
+            var data = await response.json();
+            if (data.error) { if (!options.silent) ErrorHandler.toast(data.error, 'error'); return { _error: true, error: data.error }; }
+            return data;
+        } catch (error) {
+            if (!options.silent) ErrorHandler.handleAPIError(error);
+            return { _error: true, error: error.message };
+        }
+    }
+};
+
 // ============ INITIALIZATION ============
 const API='/api';
 const token=localStorage.getItem('fueltrak_token');
@@ -221,9 +308,18 @@ async function api(url,method,body){method=method||'GET';var o={method,headers:{
 function showDashboard(){['tabVerify','tabLoading','tabTrucks','tabClients'].forEach(t=>document.getElementById(t).classList.add('hidden'));document.getElementById('dashboardView').classList.remove('hidden');loadDashboard()}
 function openTab(tab){document.getElementById('dashboardView').classList.add('hidden');['tabVerify','tabLoading','tabTrucks','tabClients'].forEach(t=>document.getElementById(t).classList.add('hidden'));var el=document.getElementById('tab'+tab.charAt(0).toUpperCase()+tab.slice(1));if(el)el.classList.remove('hidden');try{if(tab==='verify')loadPending();if(tab==='loading')loadApproved();if(tab==='trucks')loadTrucks();if(tab==='clients')loadClients()}catch(e){}}
 
+// Replace the old api function
 async function api(url, method, body) {
-    if (!APIHelper.token) APIHelper.init();
-    return await APIHelper.call(url, method, body);
+    if (method === 'GET' || !method) {
+        return await APIHelper.get(url);
+    } else if (method === 'POST') {
+        return await APIHelper.post(url, body);
+    }
+    // Fallback for other methods
+    var opts = { method: method, headers: APIHelper.getHeaders() };
+    if (body) opts.body = JSON.stringify(body);
+    var r = await fetch('/api' + url, opts);
+    return await r.json();
 }
 
 // ============ DASHBOARD ============
