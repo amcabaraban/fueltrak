@@ -561,7 +561,7 @@ function showSuccess(msg) {
     document.getElementById('successMessage').textContent = msg;
     document.getElementById('successModal').classList.remove('hidden');
 }
-
+function toggleSidebar(){var s=document.getElementById("sidebar");s.classList.toggle("open");document.getElementById("sidebarOverlay").classList.toggle("hidden")}
 function openCalc(){document.getElementById('calcWidget').classList.remove('hidden');document.getElementById('calcButton').classList.add('hidden');}
 function closeCalc(){document.getElementById('calcWidget').classList.add('hidden');document.getElementById('calcButton').classList.remove('hidden');}
 function toggleCalc(){}
