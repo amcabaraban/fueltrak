@@ -131,12 +131,18 @@
 
     <div id="clientModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"><div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6"><div class="flex justify-between mb-4"><h3 class="text-lg font-bold" id="clientModalTitle">Add Client</h3><button onclick="closeClientModal()" class="text-2xl">&times;</button></div><form onsubmit="saveClient(event)"><input type="hidden" id="editClientId"><input type="email" id="clientEmail" placeholder="Email *" class="w-full px-3 py-2 border rounded shadow-[inset_0_2px_4px_rgba(0,0,0,0.1)] mb-3" required><input type="text" id="clientMobile" placeholder="Mobile *" class="w-full px-3 py-2 border rounded shadow-[inset_0_2px_4px_rgba(0,0,0,0.1)] mb-3" required><input type="text" id="clientCompany" placeholder="Company" class="w-full px-3 py-2 border rounded shadow-[inset_0_2px_4px_rgba(0,0,0,0.1)] mb-3"><input type="password" id="clientPassword" placeholder="Password (min 8 chars)" class="w-full px-3 py-2 border rounded shadow-[inset_0_2px_4px_rgba(0,0,0,0.1)] mb-3" minlength="8"><button type="submit" class="w-full bg-blue-900 text-white py-2 rounded font-semibold shadow-[0_4px_6px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.1)] hover:shadow-[0_6px_8px_rgba(0,0,0,0.3)]">Save Client</button></form></div></div>
 
-    <!-- Mobile Bottom Navigation -->
-    <div class="mobile-bottom-nav">
-        <a href="/dashboard" class="active"><i class="fas fa-tachometer-alt"></i><span>Home</span></a>
+    <!-- Mobile Bottom Navigation - Scrollable -->
+    <div class="mobile-bottom-nav" style="overflow-x:auto;white-space:nowrap;gap:2px">
+        <a href="/dashboard"><i class="fas fa-tachometer-alt"></i><span>Home</span></a>
+        <a href="/adminclient"><i class="fas fa-users"></i><span>Clients</span></a>
+        <a href="/sales-orders"><i class="fas fa-file-invoice"></i><span>SO</span></a>
         <a href="/reports"><i class="fas fa-chart-bar"></i><span>Reports</span></a>
         <a href="/trucks"><i class="fas fa-truck"></i><span>Trucks</span></a>
         <a href="/docs-report"><i class="fas fa-file-alt"></i><span>Docs</span></a>
+        <a href="/ttsd-checklist"><i class="fas fa-clipboard-check"></i><span>TTSD</span></a>
+        <a href="/users"><i class="fas fa-users-cog"></i><span>Users</span></a>
+        <a href="/audit-logs"><i class="fas fa-history"></i><span>Audit</span></a>
+        <a href="/recycle-bin"><i class="fas fa-trash-restore"></i><span>Bin</span></a>
         <button onclick="logout()"><i class="fas fa-sign-out-alt"></i><span>Logout</span></button>
     </div>
 
