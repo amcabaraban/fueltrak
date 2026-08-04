@@ -115,6 +115,11 @@
             to { opacity: 1; transform: translateY(0); }
         }
         .animate-slide-down { animation: slideDown 0.3s ease-out; }
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-slide-down { animation: slideDown 0.3s ease-out; }
     </style>
   </head>
   <body class="bg-gray-50 min-h-screen">
@@ -658,7 +663,59 @@
     </div>
 
     <script>
-      
+      // ============ ERROR HANDLER (INLINE) ============
+      var ErrorHandler = {
+          toastContainer: null,
+          init: function() {
+              if (!this.toastContainer) {
+                  this.toastContainer = document.createElement('div');
+                  this.toastContainer.id = 'errorToastContainer';
+                  this.toastContainer.className = 'fixed top-4 right-4 z-[9999] space-y-2 max-w-sm';
+                  document.body.appendChild(this.toastContainer);
+              }
+          },
+          toast: function(message, type, duration) {
+              type = type || 'error'; duration = duration || 5000; this.init();
+              var colors = { error: 'bg-red-500', warning: 'bg-orange-500', success: 'bg-green-500', info: 'bg-blue-500' };
+              var icons = { error: 'fa-exclamation-circle', warning: 'fa-exclamation-triangle', success: 'fa-check-circle', info: 'fa-info-circle' };
+              var toast = document.createElement('div');
+              toast.className = (colors[type] || colors.error) + ' text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-3 animate-slide-down';
+              toast.innerHTML = '<i class="fas ' + (icons[type] || icons.error) + ' text-lg"></i><span class="text-sm flex-1">' + message + '</span><button onclick="this.parentElement.remove()" class="text-white/80 hover:text-white"><i class="fas fa-times"></i></button>';
+              this.toastContainer.appendChild(toast);
+              setTimeout(function() { toast.remove(); }, duration);
+          }
+      };
+
+      // ============ API HELPER (INLINE) ============
+      var APIHelper = {
+          token: localStorage.getItem('fueltrak_token'),
+          user: JSON.parse(localStorage.getItem('fueltrak_user') || '{}'),
+          getHeaders: function() { return { 'Authorization': 'Bearer ' + this.token, 'Content-Type': 'application/json' }; },
+          call: async function(url, method, body, options) {
+              options = options || {};
+              try {
+                  var controller = new AbortController();
+                  var timeoutId = setTimeout(function() { controller.abort(); }, options.timeout || 15000);
+                  var fetchOptions = { method: method || 'GET', headers: this.getHeaders(), signal: controller.signal };
+                  if (body) fetchOptions.body = JSON.stringify(body);
+                  var response = await fetch('/api' + url, fetchOptions);
+                  clearTimeout(timeoutId);
+                  if (response.status === 401) { ErrorHandler.toast('Session expired. Redirecting...', 'warning'); localStorage.clear(); setTimeout(function() { window.location.href = '/'; }, 1500); return { _error: true, error: 'Unauthorized' }; }
+                  if (response.status === 429) { ErrorHandler.toast('Too many requests. Please wait.', 'warning'); return { _error: true, error: 'Rate limited' }; }
+                  if (response.status >= 500) { ErrorHandler.toast('Server error. Please try again.', 'error'); return { _error: true, error: 'Server error' }; }
+                  var data = await response.json();
+                  if (data.error) { if (!options.silent) ErrorHandler.toast(data.error, 'error'); return { _error: true, error: data.error }; }
+                  return data;
+              } catch (error) {
+                  if (!options.silent) ErrorHandler.toast('Connection error. Please try again.', 'error');
+                  return { _error: true, error: error.message };
+              }
+          },
+          get: function(url, options) { return this.call(url, 'GET', null, options); },
+          post: function(url, body, options) { return this.call(url, 'POST', body, options); },
+          put: function(url, body, options) { return this.call(url, 'PUT', body, options); },
+          delete: function(url, options) { return this.call(url, 'DELETE', null, options); }
+      };
       const API = "/api";
       const token = localStorage.getItem("fueltrak_token");
       const user = JSON.parse(localStorage.getItem("fueltrak_user") || "{}");
@@ -714,9 +771,8 @@
       }
 
       async function api(url, method, body) {
-          if (!APIHelper.token) APIHelper.init();
           return await APIHelper.call(url, method, body);
-      }   
+      } 
 
       function showView(view) {
         ["dashboardView", "submitView", "historyView", "reportsView"].forEach(
