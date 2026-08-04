@@ -41,9 +41,26 @@
             to { opacity: 1; transform: translateY(0); }
         }
         .animate-slide-down { animation: slideDown 0.3s ease-out; }
+        body::after {
+            content: '';
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 500px;
+            height: 350px;
+            background-image: url('/images/oil-tanker-truck.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            opacity: 0.10;
+            z-index: 0;
+            pointer-events: none;
+        }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
+    <img src="/images/oil-tanker-truck.png" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:400px;opacity:0.08;z-index:0;pointer-events:none;" alt="">
 <div class="main-content">
     <nav class="bg-gradient-to-r from-blue-900 to-blue-800 text-white shadow-[0_4px_6px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.1)] sticky top-0 z-20">
         <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
