@@ -467,6 +467,7 @@
 }
 .mobile-bottom-nav a i,.mobile-bottom-nav button i{font-size:16px;margin-bottom:2px}
 .mobile-bottom-nav a.active,.mobile-bottom-nav button.active{color:#fbbf24}
+
 /* ============================================================
    Background Image - Oil Tanker Truck
    ============================================================ */
@@ -489,7 +490,13 @@ body::after {
     background-size: contain;
     background-repeat: no-repeat;
     background-position: center;
-    opacity: 0.06;
-    z-index: -1;
+    opacity: 0.10;
+    z-index: 0;
     pointer-events: none;
+}
+
+/* Ensure main content stays above the watermark */
+.main-content, .slide-container, #root, #app {
+    position: relative;
+    z-index: 1;
 }
