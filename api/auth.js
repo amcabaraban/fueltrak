@@ -463,6 +463,7 @@ app.post('/api/admin/restore', authenticate, authorize('dispatcher','management'
 // STATIC FILES & PAGE ROUTES
 // ============================================================
 
+app.use('/images', express.static(path.join(__dirname, '..', 'public', 'images'), { maxAge: '24h', setHeaders: (res) => res.setHeader('Cache-Control', 'public, max-age=86400') })); // ADD THIS LINE
 app.use('/public', express.static(path.join(__dirname, '..', 'public'), { maxAge: '1h', setHeaders: (res, fp) => res.setHeader('Cache-Control', fp.endsWith('.html') ? 'public, max-age=0, must-revalidate' : 'public, max-age=3600') }));
 
 const pageRoutes = { '/': 'index.html', '/privacy': 'privacy.html', '/dashboard': 'dashboard.html', '/dashboard.html': 'dashboard.html', '/client': 'client.html', '/client.html': 'client.html', '/sales-orders': 'sales-orders.html', '/docs-report': 'docs-report.html', '/reports': 'reports.html', '/reports.html': 'reports.html', '/atl.html': 'atl.html', '/trucks': 'trucks.html', '/ttsd-checklist': 'ttsd-checklist.html', '/tutorial': 'tutorial.html', '/users': 'users.html', '/adminclient': 'adminclient.html', '/audit-logs': 'audit-logs.html', '/first-login': 'first-login.html', '/terms': 'terms.html', '/recycle-bin': 'recycle-bin.html' };
