@@ -471,32 +471,3 @@
 /* ============================================================
    Background Image - Oil Tanker Truck
    ============================================================ */
-
-body {
-    position: relative;
-    background-color: #f9fafb;
-}
-
-/* Watermark background image */
-body::after {
-    content: '';
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 500px;
-    height: 350px;
-    background-image: url('/images/oil-tanker-truck.png');
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: center;
-    opacity: 0.10;
-    z-index: 0;
-    pointer-events: none;
-}
-
-/* Ensure main content stays above the watermark */
-.main-content, .slide-container, #root, #app {
-    position: relative;
-    z-index: 1;
-}
