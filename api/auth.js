@@ -70,7 +70,21 @@ const logger = {
 const transporter = nodemailer.createTransport({ host: process.env.SMTP_HOST || 'smtp.gmail.com', port: parseInt(process.env.SMTP_PORT) || 587, secure: false, auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS } });
 
 // ============ DATABASE CONNECTION ============
-const pool = mysql.createPool({ host: process.env.DB_HOST, port: process.env.DB_PORT || 16287, user: process.env.DB_USER, password: process.env.DB_PASSWORD, database: process.env.DB_NAME, ssl: { rejectUnauthorized: false }, waitForConnections: true, connectionLimit: 50, queueLimit: 100, enableKeepAlive: true, keepAliveInitialDelay: 5000, connectTimeout: 10000, acquireTimeout: 10000, timeout: 30000, charset: 'utf8mb4' });
+const pool = mysql.createPool({ 
+  host: process.env.DB_HOST, 
+  port: process.env.DB_PORT || 16287, 
+  user: process.env.DB_USER, 
+  password: process.env.DB_PASSWORD, 
+  database: process.env.DB_NAME, 
+  ssl: { rejectUnauthorized: false }, 
+  waitForConnections: true, 
+  connectionLimit: 50, 
+  queueLimit: 100, 
+  enableKeepAlive: true, 
+  keepAliveInitialDelay: 5000,
+  connectTimeout: 10000,
+  charset: 'utf8mb4' 
+});
 pool.on('error', (err) => logger.error('Database pool error', { error: err.message }));
 
 // ============ MIDDLEWARE ============
@@ -88,17 +102,51 @@ app.use((req, res, next) => {
   next();
 });
 
-// Helmet - ALL security headers consolidated here
+// ============ STRONGER CSP & SECURITY HEADERS ============
+
+// Generate nonce for CSP (if needed later)
+app.use((req, res, next) => {
+  res.locals.nonce = require('crypto').randomBytes(16).toString('base64');
+  next();
+});
+
+// Helmet - Hardened CSP (unsafe-inline removed from scripts)
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://cdn.tailwindcss.com", "https://cdnjs.cloudflare.com"],
-      scriptSrcAttr: ["'self'", "'unsafe-inline'", "'unsafe-hashes'"],
-      styleSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com"],
-      styleSrcAttr: ["'self'", "'unsafe-inline'"],
+      
+      // SCRIPTS: Removed unsafe-inline and unsafe-eval
+      scriptSrc: [
+        "'self'",
+        "https://cdn.tailwindcss.com",
+        "https://cdnjs.cloudflare.com",
+        // Add back "'unsafe-inline'" only if your inline scripts break
+      ],
+      scriptSrcAttr: [
+        "'self'",
+        // Removed unsafe-inline from attributes too
+      ],
+      
+      // STYLES: Kept unsafe-inline (Tailwind requires it)
+      styleSrc: [
+        "'self'",
+        "'unsafe-inline'",
+        "https://cdnjs.cloudflare.com",
+      ],
+      styleSrcAttr: [
+        "'self'",
+        "'unsafe-inline'",
+      ],
+      
       imgSrc: ["'self'", "data:", "https:"],
-      connectSrc: ["'self'", "https://fueltraksystem.vercel.app", "https://fueltrak-seven.vercel.app"],
+      
+      connectSrc: [
+        "'self'",
+        "https://fueltraksystem.vercel.app",
+        "https://fueltrak-seven.vercel.app"
+      ],
+      
       fontSrc: ["'self'", "https://cdnjs.cloudflare.com"],
       objectSrc: ["'none'"],
       frameAncestors: ["'none'"],
@@ -107,14 +155,120 @@ app.use(helmet({
       upgradeInsecureRequests: [],
     }
   },
-  hsts: { maxAge: 31536000, includeSubDomains: true, preload: true },
+  
+  // Enhanced HSTS
+  hsts: {
+    maxAge: 31536000,
+    includeSubDomains: true,
+    preload: true
+  },
+  
+  // Strict framing protection
   frameguard: { action: 'deny' },
+  
+  // Hide tech stack
   hidePoweredBy: true,
+  
+  // Prevent MIME type sniffing
   noSniff: true,
+  
+  // Enable XSS filter in older browsers
   xssFilter: true,
+  
+  // Control referrer information
   referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+  
+  // Prevent cross-domain policy files
   permittedCrossDomainPolicies: { permittedPolicies: 'none' },
-  dnsPrefetchControl: { allow: false }
+  
+  // Disable DNS prefetch
+  dnsPrefetchControl: { allow: false },
+  
+  // ADDED: Cross-Origin isolation policies
+  crossOriginEmbedderPolicy: { policy: 'credentialless' },
+  crossOriginOpenerPolicy: { policy: 'same-origin' },
+  crossOriginResourcePolicy: { policy: 'same-origin' },
+}));
+
+// Additional strict security headers
+app.use((req, res, next) => {
+  // Remove any remaining powered-by headers
+  res.removeHeader('X-Powered-By');
+  
+  // Strict permissions policy - deny everything by default
+  res.setHeader(
+    'Permissions-Policy',
+    'camera=(), ' +
+    'microphone=(), ' +
+    'geolocation=(), ' +
+    'interest-cohort=(), ' +
+    'payment=(), ' +
+    'usb=(), ' +
+    'accelerometer=(), ' +
+    'autoplay=(), ' +
+    'clipboard-read=(), ' +
+    'clipboard-write=(self), ' +
+    'display-capture=(), ' +
+    'fullscreen=(self), ' +
+    'gyroscope=(), ' +
+    'magnetometer=(), ' +
+    'midi=(), ' +
+    'picture-in-picture=(), ' +
+    'sync-xhr=()'
+  );
+  
+  // Additional browser security headers
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-DNS-Prefetch-Control', 'off');
+  res.setHeader('X-Download-Options', 'noopen');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-Permitted-Cross-Domain-Policies', 'none');
+  res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+  res.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
+  
+  // Cache control for API responses
+  if (req.path.startsWith('/api/')) {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+  }
+  
+  next();
+});
+
+// Enhanced CORS with proper validation
+app.use(cors({
+  origin: (origin, callback) => {
+    const allowedOrigins = [
+      'https://fueltraksystem.vercel.app',
+      'https://fueltrak-seven.vercel.app',
+      'http://localhost:3000',
+      'http://localhost:8080'
+    ];
+    
+    // Allow requests with no origin (mobile apps, Postman, etc.)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.warn(`CORS blocked origin: ${origin}`);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: [
+    'Content-Type',
+    'Authorization',
+    'X-Requested-With',
+    'Accept',
+    'Origin'
+  ],
+  exposedHeaders: [
+    'Content-Length',
+    'X-RateLimit-Limit',
+    'X-RateLimit-Remaining'
+  ],
+  maxAge: 86400 // 24 hours cache for preflight
 }));
 
 // Additional headers not covered by helmet
@@ -127,28 +281,60 @@ app.use((req, res, next) => {
 
 app.use(compression());
 
-// CORS
-app.use(cors({
-  origin: (origin, cb) => { const allowed = ['https://fueltraksystem.vercel.app', 'https://fueltrak-seven.vercel.app', 'http://localhost:3000']; cb(null, !origin || allowed.includes(origin)); },
-  credentials: true, methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'], allowedHeaders: ['Content-Type', 'Authorization'], maxAge: 86400
-}));
+// ============ RATE LIMITERS ============
 
-// Rate Limiters - Per-IP for production scale
-const generalLimiter = rateLimit({ windowMs: 60 * 1000, max: 60, keyGenerator: (req) => req.ip, message: { error: 'Too many requests' }, standardHeaders: true, legacyHeaders: false });
-const strictLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 5, message: { error: 'Too many attempts. Try later.' }, standardHeaders: true, legacyHeaders: false });
-const otpLimiter = rateLimit({ windowMs: 60 * 60 * 1000, max: 3, message: { error: 'Too many OTP requests.' }, standardHeaders: true, legacyHeaders: false });
-const fingerprintLimiter = rateLimit({ windowMs: 60 * 1000, max: 30, message: { error: 'Rate limit exceeded' }, keyGenerator: (req) => req.ip + '|' + (req.headers['user-agent'] || '').substring(0, 50), standardHeaders: true, legacyHeaders: false });
+// General API limiter - 60 requests per minute
+const generalLimiter = rateLimit({ 
+  windowMs: 60 * 1000, 
+  max: 60, 
+  message: { error: 'Too many requests' }, 
+  standardHeaders: true, 
+  legacyHeaders: false 
+});
 
-// Rate limit skips MUST come BEFORE the general limiter
+// Strict limiter for auth endpoints
+const strictLimiter = rateLimit({ 
+  windowMs: 15 * 60 * 1000, 
+  max: 5, 
+  message: { error: 'Too many attempts. Try later.' }, 
+  standardHeaders: true, 
+  legacyHeaders: false 
+});
+
+// OTP limiter - 3 per hour
+const otpLimiter = rateLimit({ 
+  windowMs: 60 * 60 * 1000, 
+  max: 3, 
+  message: { error: 'Too many OTP requests.' }, 
+  standardHeaders: true, 
+  legacyHeaders: false 
+});
+
+// Fingerprint limiter - uses headers instead of IP (IPv6 safe)
+const fingerprintLimiter = rateLimit({ 
+  windowMs: 60 * 1000, 
+  max: 30, 
+  message: { error: 'Rate limit exceeded' }, 
+  standardHeaders: true, 
+  legacyHeaders: false,
+  keyGenerator: (req) => {
+    // Use request headers as fingerprint (no IP manipulation)
+    const ua = (req.headers['user-agent'] || '').substring(0, 100);
+    const lang = (req.headers['accept-language'] || '').substring(0, 50);
+    return (ua + lang) || 'unknown';
+  }
+});
+
+// Rate limit skips for chat endpoints
 app.use('/api/chat', (req, res, next) => next());
 app.use('/api/chat-list', (req, res, next) => next());
 app.use('/api/chat/unread', (req, res, next) => next());
 
-// THEN apply general limiters
+// Apply rate limiters
 app.use('/api/', generalLimiter);
 app.use('/api/', fingerprintLimiter);
 
-// THEN specific auth limiters
+// Auth-specific rate limits
 app.use('/api/auth/login', strictLimiter);
 app.use('/api/auth/register', strictLimiter);
 app.use('/api/auth/forgot-password', strictLimiter);
