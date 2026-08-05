@@ -116,19 +116,20 @@ app.use(helmet({
     directives: {
       defaultSrc: ["'self'"],
       
-      // SCRIPTS: Removed unsafe-inline and unsafe-eval
+      // SCRIPTS
       scriptSrc: [
         "'self'",
-        "'unsafe-inline'",  // Required for inline scripts in your HTML
+        "'unsafe-inline'",
         "https://cdn.tailwindcss.com",
         "https://cdnjs.cloudflare.com",
       ],
       scriptSrcAttr: [
         "'self'",
-        // Removed unsafe-inline from attributes too
+        "'unsafe-inline'",
+        "'unsafe-hashes'",
       ],
       
-      // STYLES: Kept unsafe-inline (Tailwind requires it)
+      // STYLES
       styleSrc: [
         "'self'",
         "'unsafe-inline'",
