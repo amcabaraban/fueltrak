@@ -271,14 +271,6 @@ app.use(cors({
   maxAge: 86400 // 24 hours cache for preflight
 }));
 
-// Additional headers not covered by helmet
-app.use((req, res, next) => {
-  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
-  res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
-  res.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
-  next();
-});
-
 app.use(compression());
 
 // ============ RATE LIMITERS ============
