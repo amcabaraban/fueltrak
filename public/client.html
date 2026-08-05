@@ -664,27 +664,62 @@
 
     <script>
       // ============ ERROR HANDLER (INLINE) ============
-      var ErrorHandler = {
-          toastContainer: null,
-          init: function() {
-              if (!this.toastContainer) {
-                  this.toastContainer = document.createElement('div');
-                  this.toastContainer.id = 'errorToastContainer';
-                  this.toastContainer.className = 'fixed top-4 right-4 z-[9999] space-y-2 max-w-sm';
-                  document.body.appendChild(this.toastContainer);
-              }
-          },
-          toast: function(message, type, duration) {
-              type = type || 'error'; duration = duration || 5000; this.init();
-              var colors = { error: 'bg-red-500', warning: 'bg-orange-500', success: 'bg-green-500', info: 'bg-blue-500' };
-              var icons = { error: 'fa-exclamation-circle', warning: 'fa-exclamation-triangle', success: 'fa-check-circle', info: 'fa-info-circle' };
-              var toast = document.createElement('div');
-              toast.className = (colors[type] || colors.error) + ' text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-3 animate-slide-down';
-              toast.innerHTML = '<i class="fas ' + (icons[type] || icons.error) + ' text-lg"></i><span class="text-sm flex-1">' + message + '</span><button onclick="this.parentElement.remove()" class="text-white/80 hover:text-white"><i class="fas fa-times"></i></button>';
-              this.toastContainer.appendChild(toast);
-              setTimeout(function() { toast.remove(); }, duration);
-          }
-      };
+    var ErrorHandler = {
+        toastContainer: null,
+        init: function() {
+            if (!this.toastContainer) {
+                this.toastContainer = document.createElement('div');
+                this.toastContainer.id = 'errorToastContainer';
+                this.toastContainer.className = 'fixed top-4 right-4 z-[9999] space-y-2 max-w-sm';
+                document.body.appendChild(this.toastContainer);
+            }
+        },
+        toast: function(message, type, duration) {
+            type = type || 'error'; duration = duration || 5000; this.init();
+            var colors = { error: 'bg-red-500', warning: 'bg-orange-500', success: 'bg-green-500', info: 'bg-blue-500' };
+            var icons = { error: 'fa-exclamation-circle', warning: 'fa-exclamation-triangle', success: 'fa-check-circle', info: 'fa-info-circle' };
+            var toast = document.createElement('div');
+            toast.className = (colors[type] || colors.error) + ' text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-3 animate-slide-down';
+            toast.innerHTML = '<i class="fas ' + (icons[type] || icons.error) + ' text-lg"></i><span class="text-sm flex-1">' + message + '</span><button onclick="this.parentElement.remove()" class="text-white/80 hover:text-white"><i class="fas fa-times"></i></button>';
+            this.toastContainer.appendChild(toast);
+            setTimeout(function() { toast.remove(); }, duration);
+        },
+        // ADD THESE METHODS:
+        showLoading: function(buttonId, text) {
+            var btn = document.getElementById(buttonId);
+            if (!btn) return;
+            btn.disabled = true;
+            btn.dataset.originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>' + (text || 'Processing...');
+        },
+        hideLoading: function(buttonId) {
+            var btn = document.getElementById(buttonId);
+            if (!btn || !btn.dataset.originalText) return;
+            btn.disabled = false;
+            btn.innerHTML = btn.dataset.originalText;
+            delete btn.dataset.originalText;
+        },
+        clearFieldErrors: function(formElement) {
+            if (!formElement) return;
+            var fields = formElement.querySelectorAll('.border-red-500');
+            fields.forEach(function(f) { f.classList.remove('border-red-500', 'bg-red-50'); });
+            var errors = formElement.querySelectorAll('.field-error');
+            errors.forEach(function(e) { e.remove(); });
+        },
+        showFieldError: function(fieldId, message) {
+            var field = document.getElementById(fieldId);
+            if (!field) return;
+            field.classList.add('border-red-500', 'bg-red-50');
+            var existing = field.parentElement.querySelector('.field-error');
+            if (existing) existing.remove();
+            if (message) {
+                var span = document.createElement('span');
+                span.className = 'field-error text-red-500 text-xs mt-1 block';
+                span.textContent = message;
+                field.parentElement.appendChild(span);
+            }
+        }
+    };
 
       // ============ API HELPER (INLINE) ============
       var APIHelper = {
