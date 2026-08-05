@@ -119,14 +119,11 @@ app.use(helmet({
       // SCRIPTS
       scriptSrc: [
         "'self'",
-        "'unsafe-inline'",
         "https://cdn.tailwindcss.com",
         "https://cdnjs.cloudflare.com",
       ],
       scriptSrcAttr: [
         "'self'",
-        "'unsafe-inline'",
-        "'unsafe-hashes'",
       ],
       
       // STYLES
