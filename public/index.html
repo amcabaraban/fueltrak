@@ -369,36 +369,6 @@
             }
         }
 
-        var demoEmails = {};
-
-        async function loadDemoCredentials() {
-            try {
-                var res = await fetch('/api/demo-credentials');
-                var data = await res.json();
-                if (data.status === 'success') {
-                    demoEmails = data.data;
-                }
-            } catch(e) {
-                // Fallback if API unavailable
-                console.log('Demo credentials not loaded');
-            }
-        }
-
-        function quickLogin(role) {
-            var email = demoEmails[role] || '';
-            document.getElementById('email').value = email;
-            document.getElementById('password').value = 'Admin123!';
-            
-            if (role === 'client') {
-                switchRole('client');
-            } else {
-                switchRole('admin');
-            }
-        }
-
-        // Call on page load
-        loadDemoCredentials();
-
     </script>
 </body>
 </html>

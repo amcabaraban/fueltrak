@@ -208,6 +208,15 @@ function validateATLInput(req, res, next) { const {volume,plate_no,company}=req.
 async function sendOTPEmail(email, mobile, otp, type) { if(mobile&&mobile.length>5) sendFreeSMS(mobile,otp).catch(()=>{}); if(!process.env.SMTP_USER){logger.info('Dev OTP',{email:maskEmail(email)});return;} try{await transporter.sendMail({from:`"FuelTrak" <${process.env.SMTP_USER}>`,to:email,subject:type==='reset'?'FuelTrak - Password Reset OTP':'FuelTrak - Verify Your Email',html:`<div style="font-family:Arial;max-width:500px;margin:auto;padding:20px;border:1px solid #ddd;border-radius:10px"><h2 style="color:#1e3a5f">FuelTrak Logistics</h2><p>Your OTP code is:</p><h1 style="color:#1e3a5f;font-size:36px;letter-spacing:5px;text-align:center">${otp}</h1><p>This code expires in 10 minutes.</p></div>`});logger.info('OTP emailed',{email:maskEmail(email)});}catch(e){logger.error('Email failed',{error:e.message});}}
 async function sendFreeSMS(mobile, otp) { if(!process.env.SMTP_USER) return false; for(const gw of [mobile.replace('+63','0')+'@txt.globe.com.ph',mobile.replace('+63','0')+'@isms.smart.com.ph']){try{await transporter.sendMail({from:process.env.SMTP_USER,to:gw,subject:'',text:`FuelTrak OTP: ${otp}. Expires in 10 mins.`});logger.info('SMS sent',{mobile:mobile.replace(/(\d{3})\d{4}(\d{3})/,'$1****$2')});return true;}catch(e){}} return false; }
 
+app.get('/api/demo-credentials', async (req, res) => {
+  try {
+    const [users] = await pool.execute("SELECT email, role FROM users WHERE email IN (?, ?, ?)", ['admin@fueltrak.com', 'dispatcher@fueltrak.com', 'client1@hauler.com']);
+    const credentials = {};
+    users.forEach(u => { if (u.role === 'management') credentials.admin = u.email; if (u.role === 'dispatcher') credentials.dispatcher = u.email; if (u.role === 'client') credentials.client = u.email; });
+    res.json({ status: 'success', data: credentials });
+  } catch (error) { res.status(500).json({ error: error.message }); }
+});
+
 // ============ AUTH MIDDLEWARE ============
 const authenticate = async (req, res, next) => { try { const t = req.header('Authorization')?.replace('Bearer ',''); if(!t) return res.status(401).json({error:'Please authenticate'}); if(tokenBlacklist.has(t)) return res.status(401).json({error:'Token revoked'}); const d = jwt.verify(t, process.env.JWT_SECRET); if(d.type==='refresh') return res.status(401).json({error:'Use access token'}); const [u] = await pool.execute('SELECT id,email,role,mobile,company_name,is_active FROM users WHERE id=?',[d.id]); if(!u.length||!u[0].is_active) return res.status(401).json({error:'Invalid token'}); req.user=u[0]; next(); } catch(e) { res.status(401).json({error:'Invalid token'}); } };
 const authorize = (...roles) => (req,res,next) => { if(!roles.includes(req.user.role)) return res.status(403).json({error:'Access denied'}); next(); };
