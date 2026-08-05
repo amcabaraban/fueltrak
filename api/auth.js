@@ -119,9 +119,9 @@ app.use(helmet({
       // SCRIPTS: Removed unsafe-inline and unsafe-eval
       scriptSrc: [
         "'self'",
+        "'unsafe-inline'",  // Required for inline scripts in your HTML
         "https://cdn.tailwindcss.com",
         "https://cdnjs.cloudflare.com",
-        // Add back "'unsafe-inline'" only if your inline scripts break
       ],
       scriptSrcAttr: [
         "'self'",
