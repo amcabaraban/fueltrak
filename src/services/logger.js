@@ -1,5 +1,3 @@
-const { logAudit } = require('./auditService');
-
 if (process.env.NODE_ENV === 'production') {
     const origConsole = { log: console.log, warn: console.warn, error: console.error, info: console.info, debug: console.debug };
     console.log = () => {};
@@ -23,7 +21,11 @@ const logger = {
     },
     info: (message, meta = {}) => { if (process.env.NODE_ENV !== 'production') console.log('[' + new Date().toISOString() + '] INFO:', message, meta); },
     warn: (message, meta = {}) => { if (process.env.NODE_ENV !== 'production') console.warn('[' + new Date().toISOString() + '] WARN:', message, meta); },
-    audit: (action, userId, details = {}) => { const s = { ...details }; delete s.password; delete s.token; logAudit(userId, action, 'system', 0, s).catch(() => {}); }
+    audit: (action, userId, details = {}) => { 
+        const s = { ...details }; delete s.password; delete s.token; 
+        const { logAudit } = require('./auditService');
+        logAudit(userId, action, 'system', 0, s).catch(() => {}); 
+    }
 };
 
 module.exports = logger;
