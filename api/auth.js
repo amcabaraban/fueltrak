@@ -110,77 +110,86 @@ app.use((req, res, next) => {
   next();
 });
 
-// Helmet - keep hardening headers but handle CSP separately via middleware so we can inject per-response nonces
+// Helmet - Hardened CSP (unsafe-inline removed from scripts)
 app.use(helmet({
+contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      
+      // SCRIPTS
+      scriptSrc: [
+        "'self'",
+        "'unsafe-inline'",
+        "https://cdn.tailwindcss.com",
+        "https://cdnjs.cloudflare.com",
+      ],
+      scriptSrcAttr: [
+        "'self'",
+        "'unsafe-inline'",
+        "'unsafe-hashes'",
+      ],
+      
+      // STYLES
+      styleSrc: [
+        "'self'",
+        "'unsafe-inline'",
+        "https://cdnjs.cloudflare.com",
+      ],
+      styleSrcAttr: [
+        "'self'",
+        "'unsafe-inline'",
+      ],
+      
+      imgSrc: ["'self'", "data:", "https:"],
+      
+      connectSrc: [
+        "'self'",
+        "https://fueltraksystem.vercel.app",
+        "https://fueltrak-seven.vercel.app"
+      ],
+      
+      fontSrc: ["'self'", "https://cdnjs.cloudflare.com"],
+      objectSrc: ["'none'"],
+      frameAncestors: ["'none'"],
+      formAction: ["'self'"],
+      baseUri: ["'self'"],
+      upgradeInsecureRequests: [],
+    }
+  },
+  
   // Enhanced HSTS
   hsts: {
     maxAge: 31536000,
     includeSubDomains: true,
     preload: true
   },
-
+  
   // Strict framing protection
   frameguard: { action: 'deny' },
-
+  
   // Hide tech stack
   hidePoweredBy: true,
-
+  
   // Prevent MIME type sniffing
   noSniff: true,
-
+  
   // Enable XSS filter in older browsers
   xssFilter: true,
-
+  
   // Control referrer information
   referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
-
+  
   // Prevent cross-domain policy files
   permittedCrossDomainPolicies: { permittedPolicies: 'none' },
-
+  
   // Disable DNS prefetch
   dnsPrefetchControl: { allow: false },
-
+  
   // ADDED: Cross-Origin isolation policies
   crossOriginEmbedderPolicy: { policy: 'credentialless' },
   crossOriginOpenerPolicy: { policy: 'same-origin' },
   crossOriginResourcePolicy: { policy: 'same-origin' },
 }));
-
-// CSP middleware: use per-response nonce and avoid 'unsafe-inline'
-app.use((req, res, next) => {
-  const nonce = res.locals.nonce || require('crypto').randomBytes(16).toString('base64');
-
-  const scriptSrc = [
-    "'self'",
-    `'nonce-${nonce}'`,
-    'https://cdn.tailwindcss.com',
-    'https://cdnjs.cloudflare.com'
-  ].join(' ');
-
-  const styleSrc = [
-    "'self'",
-    `'nonce-${nonce}'`,
-    'https://cdnjs.cloudflare.com'
-  ].join(' ');
-
-  const csp = [
-    "default-src 'self'",
-    `script-src ${scriptSrc}`,
-    `style-src ${styleSrc}`,
-    "img-src 'self' data: https:",
-    "connect-src 'self' https://fueltraksystem.vercel.app https://fueltrak-seven.vercel.app",
-    "font-src 'self' https://cdnjs.cloudflare.com",
-    "object-src 'none'",
-    "frame-ancestors 'none'",
-    "form-action 'self'",
-    "base-uri 'self'"
-  ].join('; ');
-
-  res.setHeader('Content-Security-Policy', csp);
-  // expose nonce to downstream templates
-  res.locals.cspNonce = nonce;
-  next();
-});
 
 // Additional strict security headers
 app.use((req, res, next) => {
