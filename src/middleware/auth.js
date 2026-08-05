@@ -1,25 +1,25 @@
-const jwt = require('jsonwebtoken'); 
-const { User } = require('../models'); 
- 
-const authenticate = async (req, res, next) => { 
-  try { 
-    const token = req.header('Authorization')?.replace('Bearer ', ''); 
-    if (!token) throw new Error(); 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret'); 
-    const user = await User.findByPk(decoded.id); 
-    if (!user || !user.is_active) throw new Error(); 
-    req.user = user; 
-    next(); 
-  } catch (error) { 
-    res.status(401).json({ status: 'error', message: 'Please authenticate' }); 
-  } 
-}; 
- 
-const authorize = (...roles) => { 
-  return (req, res, next) => { 
-    if (!roles.includes(req.user.role)) return res.status(403).json({ status: 'error', message: 'Access denied' }); 
-    next(); 
-  }; 
-}; 
+const jwt = require('jsonwebtoken');
+const pool = require('../config/database');
 
-module.exports = { authenticate, authorize }; 
+const tokenBlacklist = new Set();
+setInterval(() => { tokenBlacklist.forEach(t => { try { jwt.verify(t, process.env.JWT_SECRET); } catch(e) { tokenBlacklist.delete(t); } }); }, 3600000);
+
+const authenticate = async (req, res, next) => {
+    try {
+        const t = req.header('Authorization')?.replace('Bearer ', '');
+        if (!t) return res.status(401).json({ error: 'Please authenticate' });
+        if (tokenBlacklist.has(t)) return res.status(401).json({ error: 'Token revoked' });
+        const d = jwt.verify(t, process.env.JWT_SECRET);
+        if (d.type === 'refresh') return res.status(401).json({ error: 'Use access token' });
+        const [u] = await pool.execute('SELECT id,email,role,mobile,company_name,is_active FROM users WHERE id=?', [d.id]);
+        if (!u.length || !u[0].is_active) return res.status(401).json({ error: 'Invalid token' });
+        req.user = u[0]; next();
+    } catch(e) { res.status(401).json({ error: 'Invalid token' }); }
+};
+
+const authorize = (...roles) => (req, res, next) => {
+    if (!roles.includes(req.user.role)) return res.status(403).json({ error: 'Access denied' });
+    next();
+};
+
+module.exports = { authenticate, authorize, tokenBlacklist };
