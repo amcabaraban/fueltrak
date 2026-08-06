@@ -26,20 +26,52 @@ function setupSecurity(app) {
     
     // 2. Configure Helmet to dynamically read and pass this nonce to the browser
     app.use(helmet({
-        // 📍 Temp Test: Turn off CSP to see if your layout immediately comes back
-        contentSecurityPolicy: false, 
+        // 📍 FIX: Re-enables the global CSP header to pass security scanning audits
+        contentSecurityPolicy: {
+            directives: {
+                defaultSrc: ["'self'"],
+                scriptSrc: [
+                    "'self'", 
+                    "https://tailwindcss.com", 
+                    "https://cloudflare.com",
+                    // Allows your native index, client, and dashboard internal scripts to execute
+                    "'unsafe-inline'" 
+                ],
+                scriptSrcAttr: ["'self'", "'unsafe-inline'"], 
+                styleSrc: [
+                    "'self'", 
+                    "https://cloudflare.com",
+                    // Crucial: Allows Tailwind CDN engine to generate utility CSS classes dynamically
+                    "'unsafe-inline'"
+                ],
+                styleSrcAttr: ["'self'", "'unsafe-inline'"],
+                imgSrc: ["'self'", "data:", "https:"],
+                connectSrc: ["'self'", "https://vercel.app", "https://vercel.app"],
+                fontSrc: [
+                    "'self'", 
+                    "https://cloudflare.com" // Allows Font Awesome web fonts to resolve cleanly
+                ],
+                objectSrc: ["'none'"],
+                // 🔒 Protects against Clickjacking/Crossjacking by stopping foreign iframes from hijacking your pages
+                frameAncestors: ["'none'"], 
+                formAction: ["'self'"],
+                baseUri: ["'self'"],
+                upgradeInsecureRequests: [],
+            }
+        },
         hsts: { maxAge: 31536000, includeSubDomains: true, preload: true },
-        frameguard: { action: 'deny' },
+        // 🔒 Explicit clickjacking defense layer
+        frameguard: { action: 'deny' }, 
         hidePoweredBy: true,
         noSniff: true,
         xssFilter: true,
         referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
         permittedCrossDomainPolicies: { permittedPolicies: 'none' },
         dnsPrefetchControl: { allow: false },
-        // 📍 Critical: Disable strict resource isolation which breaks Tailwind CDN
+        // 📍 Set to false to prevent cross-origin media isolation from breaking Tailwind CDN asset channels
         crossOriginEmbedderPolicy: false, 
-        crossOriginOpenerPolicy: false,
-        crossOriginResourcePolicy: false,
+        crossOriginOpenerPolicy: { policy: 'same-origin' },
+        crossOriginResourcePolicy: { policy: 'same-origin' },
     }));
     
     app.use((req, res, next) => {
