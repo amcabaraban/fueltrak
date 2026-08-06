@@ -27,10 +27,22 @@ function setupSecurity(app) {
         contentSecurityPolicy: {
             directives: {
                 defaultSrc: ["'self'"],
-                scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.tailwindcss.com", "https://cdnjs.cloudflare.com"],
-                scriptSrcAttr: ["'self'", "'unsafe-inline'", "'unsafe-hashes'"],
-                styleSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com"],
-                styleSrcAttr: ["'self'", "'unsafe-inline'"],
+                // Removed 'unsafe-inline' and added dynamic nonce support
+                scriptSrc: [
+                    "'self'", 
+                    (req, res) => `'nonce-${res.locals.nonce}'`, 
+                    "https://cdn.tailwindcss.com", 
+                    "https://cdnjs.cloudflare.com"
+                ],
+                // Removed 'unsafe-inline' to protect event handlers
+                scriptSrcAttr: ["'self'"], 
+                // Using the nonce for inline <style> tags too
+                styleSrc: [
+                    "'self'", 
+                    (req, res) => `'nonce-${res.locals.nonce}'`, 
+                    "https://cdnjs.cloudflare.com"
+                ],
+                styleSrcAttr: ["'self'"],
                 imgSrc: ["'self'", "data:", "https:"],
                 connectSrc: ["'self'", "https://fueltraksystem.vercel.app", "https://fueltrak-seven.vercel.app"],
                 fontSrc: ["'self'", "https://cdnjs.cloudflare.com"],
