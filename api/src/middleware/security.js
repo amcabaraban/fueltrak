@@ -30,24 +30,24 @@ function setupSecurity(app) {
                 scriptSrc: [
                     "'self'", 
                     "https://cdn.tailwindcss.com", 
-                    "https://cloudflare.com",
-                    // This securely validates your main inline script block without needing attributes
-                    "'sha256-spdIyr2fBBgUpCBeUhE+W74ONuyZiuK0T8YWBNj+/nk='"
+                    "https://cdnjs.cloudflare.com", // 📍 Fixed from cloudflare.com
+                    // 1. Your Login Page Inline Script Hash
+                    "'sha256-spdIyr2fBBgUpCBeUhE+W74ONuyZiuK0T8YWBNj+/nk='",
+                    // 2. Your Client Page Inline Script Hash (Added from your latest log!)
+                    "'sha256-3uxURQM01xYoTRE/dqrF2aL+yvZPmiMKXEmyCFMXJHY='"
                 ],
-                // Keeps HTML attributes like onsubmit="login(event)" operational
                 scriptSrcAttr: ["'self'", "'unsafe-inline'"], 
                 styleSrc: [
                     "'self'", 
-                    "https://cloudflare.com",
-                    // 📍 Crucial: This grants Tailwind CDN permission to inject dynamic styles into the DOM
-                    "'unsafe-inline'"
+                    "https://cdnjs.cloudflare.com", // 📍 Fixed from cloudflare.com
+                    "'unsafe-inline'" // Allows Tailwind CDN to render your GUI safely
                 ],
                 styleSrcAttr: ["'self'", "'unsafe-inline'"],
                 imgSrc: ["'self'", "data:", "https:"],
                 connectSrc: ["'self'", "https://vercel.app", "https://vercel.app"],
                 fontSrc: [
                     "'self'", 
-                    "https://cloudflare.com" // Allows Font Awesome icons to render
+                    "https://cdnjs.cloudflare.com" // Allows Font Awesome icons to display globally
                 ],
                 objectSrc: ["'none'"],
                 frameAncestors: ["'none'"],
