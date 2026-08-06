@@ -13,47 +13,40 @@ function setupSecurity(app) {
     app.use((req, res, next) => {
         if (req.path === '/' || req.path === '/index.html' || req.path === '/client') {
             res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
-            res.setHeader('Pragma', 'no-cache'); res.setHeader('Expires', '0');
+            res.setHeader('Pragma', 'no-cache'); 
+            res.setHeader('Expires', '0');
         }
         next();
     });
     
-    // 1. Create a dynamic nonce for every single HTTP request
-    app.use((req, res, next) => {
-        res.locals.nonce = crypto.randomBytes(16).toString('base64');
-        next();
-    });
-    
-    // 2. Configure Helmet to dynamically read and pass this nonce to the browser
+    // 1. Core Helmet configuration with the correct, explicit subdomains
     app.use(helmet({
-        // 🔒 ACTIVE: Passes all automated web scanning compliance tests
         contentSecurityPolicy: {
             directives: {
                 defaultSrc: ["'self'"],
                 scriptSrc: [
                     "'self'", 
-                    "https://tailwindcss.com", 
-                    "https://cloudflare.com",
+                    "https://cdn.tailwindcss.com",       // 📍 Explicitly allowed
+                    "https://cdnjs.cloudflare.com",      // 📍 Explicitly allowed
                     "'unsafe-inline'" 
                 ],
                 scriptSrcAttr: ["'self'", "'unsafe-inline'"], 
                 styleSrc: [
                     "'self'", 
-                    "https://cloudflare.com",
-                    "'unsafe-inline'" // Allows Tailwind CDN script to dynamically draw the interface
+                    "https://cdnjs.cloudflare.com",     // 📍 Explicitly allowed
+                    "'unsafe-inline'"
                 ],
                 styleSrcAttr: ["'self'", "'unsafe-inline'"],
                 imgSrc: ["'self'", "data:", "https:"],
                 connectSrc: ["'self'", "https://vercel.app", "https://vercel.app"],
                 fontSrc: [
                     "'self'", 
-                    "https://cloudflare.com" // Allows Font Awesome icons to render globally
+                    "https://cdnjs.cloudflare.com"     // 📍 Explicitly allowed for icons
                 ],
                 objectSrc: ["'none'"],
-                frameAncestors: ["'none'"], // Prevents Clickjacking attacks
+                frameAncestors: ["'none'"], 
                 formAction: ["'self'"],
                 baseUri: ["'self'"],
-                // 📍 CRUCIAL FIX: Disable the default internal mixed-content upgrade block
                 upgradeInsecureRequests: null 
             }
         },
@@ -65,23 +58,17 @@ function setupSecurity(app) {
         referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
         permittedCrossDomainPolicies: { permittedPolicies: 'none' },
         dnsPrefetchControl: { allow: false },
-        
-        // Disable cross-origin strict multi-domain sandboxing to keep CDN pipelines fluid
         crossOriginEmbedderPolicy: false, 
         crossOriginOpenerPolicy: false,
         crossOriginResourcePolicy: false,
     }));
     
+    // 2. Modified Response Header Cleanup Middleware (Overwriting bug removed from here!)
     app.use((req, res, next) => {
         res.removeHeader('X-Powered-By');
         res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), interest-cohort=(), payment=(), usb=(), accelerometer=(), autoplay=(), clipboard-read=(), clipboard-write=(self), display-capture=(), fullscreen=(self), gyroscope=(), magnetometer=(), midi=(), picture-in-picture=(), sync-xhr=()');
-        res.setHeader('X-Content-Type-Options', 'nosniff');
-        res.setHeader('X-DNS-Prefetch-Control', 'off');
         res.setHeader('X-Download-Options', 'noopen');
-        res.setHeader('X-Frame-Options', 'DENY');
-        res.setHeader('X-Permitted-Cross-Domain-Policies', 'none');
-        res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
-        res.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
+        
         if (req.path.startsWith('/api/')) {
             res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
         }
@@ -90,24 +77,19 @@ function setupSecurity(app) {
     
     app.use(compression());
     
+    // 3. CORS Configuration
     app.use(cors({
         origin: (origin, callback) => {
-            // 1. Instantly pass requests with no origin structure (direct form actions / mobile requests)
             if (!origin || origin === 'null' || origin === 'undefined' || origin === '') {
                 return callback(null, true);
             }
-
-            // 2. Clean the incoming origin string by stripping any trailing slashes or subpaths
             const cleanOrigin = origin.replace(/\/$/, '');
-
             const allowedOrigins = [
-                'https://fueltraksystem.vercel.app',
-                'https://fueltrak-seven.vercel.app',
+                'https://vercel.app',
+                'https://vercel.app',
                 'http://localhost:3000',
                 'http://localhost:8080'
             ];
-
-            // 3. Match against your exact allowed network origins or self-references
             if (allowedOrigins.includes(cleanOrigin) || cleanOrigin.includes('vercel.app')) {
                 callback(null, true);
             } else {
