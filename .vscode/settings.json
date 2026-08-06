@@ -1,5 +1,7 @@
 {
     "files.readonlyInclude": {
         "{**/.c4z/.extsrcs/*.PROTSYM.cbl,**/.c4z/.extsrcs/*.PROTSYM.listing}": true
-    }
+    },
+    "opilot.enableInlineCompletions": true,
+    "opilot.experimental.nativeThinkingPart": true
 }
