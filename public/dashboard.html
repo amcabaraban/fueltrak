@@ -50,6 +50,12 @@
             </div>
             <div class="flex items-center space-x-3">
                 <span id="userInfo" class="text-sm bg-white/10 px-3 py-1 rounded-full truncate max-w-[150px]"></span>
+                
+                <!-- Announcement Bell -->
+                <div id="announcementBell" style="position:relative;cursor:pointer;display:inline-flex;align-items:center;" onclick="window.location.href='/announcements'">
+                    <i class="fas fa-bell" style="font-size:18px;color:#fbbf24;"></i>
+                    <span id="announcementBadge" class="hidden" style="position:absolute;top:-6px;right:-8px;background:#ef4444;color:white;font-size:10px;min-width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;">0</span>
+                </div>
             </div>
         </div>
     </nav>
@@ -560,6 +566,30 @@ document.addEventListener('keydown', function(e) {
     }
     if (e.key === 'Escape') { var m = document.getElementById('docReportModal'); if (m && !m.classList.contains('hidden')) closeDocReport(); }
 });
+
+// Update announcement badge
+async function updateAnnouncementBadge() {
+    try {
+        var token = localStorage.getItem('fueltrak_token');
+        if (!token) return;
+        var r = await fetch('/api/announcements/unread', { headers: { 'Authorization': 'Bearer ' + token } });
+        var d = await r.json();
+        var badge = document.getElementById('announcementBadge');
+        if (badge) {
+            if (d.unread > 0) {
+                badge.textContent = d.unread > 99 ? '99+' : d.unread;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+    } catch(e) {}
+}
+
+// Call on page load
+updateAnnouncementBadge();
+// Refresh every 30 seconds
+setInterval(updateAnnouncementBadge, 30000);
 
 // ============ STARTUP ============
 loadDashboard();
