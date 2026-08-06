@@ -176,12 +176,10 @@
                   <i class="fas fa-chart-bar mr-1"></i>Reports
               </button>
               
-              <!-- Add this before the logout button in mobile nav -->
-              <div id="announcementBellMob" style="position:relative;cursor:pointer;display:inline-flex!important;align-items:center;flex-shrink:0;" onclick="window.location.href='/announcements'" title="Announcements">
-                  <i class="fas fa-bell" style="font-size:14px;color:#fbbf24;"></i>
-                  <span id="announcementBadgeMob" class="hidden" style="position:absolute;top:-5px;right:-6px;background:#ef4444;color:white;font-size:8px;min-width:14px;height:14px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;">0</span>
-              </div>
-              
+              <button onclick="showView('announcements')" class="bg-white/20 px-3 py-1 rounded text-sm hover:bg-white/30">
+                  <i class="fas fa-bullhorn mr-1"></i>Announcements
+              </button>
+                           
               <button onclick="logout()" class="bg-red-500/80 hover:bg-red-500 px-4 py-2 rounded text-sm">
                   <i class="fas fa-sign-out-alt mr-1"></i>Logout
               </button>
