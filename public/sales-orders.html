@@ -285,7 +285,7 @@
     </div>
     <button onclick="openCalc()" class="fixed bottom-20 right-4 z-50 bg-green-600 text-white p-3 rounded-full shadow-lg hover:bg-green-700" id="calcButton"><i class="fas fa-calculator"></i></button>
 
-    <script>
+    <script nonce="<%= nonce %>">
         document.querySelector('#sidebar a[href="/sales-orders"]').style.background = '#1e40af';
         const API = '/api';
         const token = localStorage.getItem('fueltrak_token');

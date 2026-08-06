@@ -18,39 +18,33 @@ function setupSecurity(app) {
         next();
     });
     
+    // 1. Create a dynamic nonce for every single HTTP request
     app.use((req, res, next) => {
         res.locals.nonce = crypto.randomBytes(16).toString('base64');
         next();
     });
     
+    // 2. Configure Helmet to dynamically read and pass this nonce to the browser
     app.use(helmet({
         contentSecurityPolicy: {
             directives: {
                 defaultSrc: ["'self'"],
                 scriptSrc: [
                     "'self'", 
-                    "https://cdn.tailwindcss.com", 
-                    "https://cdnjs.cloudflare.com",
-                    // 1. Your Login Page Inline Script Hash
-                    "'sha256-spdIyr2fBBgUpCBeUhE+W74ONuyZiuK0T8YWBNj+/nk='",
-                    // 2. Your Client Page Inline Script Hash
-                    "'sha256-3uxURQM01xYoTRE/dqrF2aL+yvZPmiMKXEmyCFMXJHY='",
-                    // 3. 📍 Added: Your Dashboard Page Inline Script Hash
-                    "'sha256-XJCVqS5gLbeAlNaYQ7In8rMiuS1QOPp8iMKOoWqrbys='"
+                    "https://tailwindcss.com", 
+                    "https://cloudflare.com",
+                    (req, res) => `'nonce-${res.locals.nonce}'` // 📍 Universal Fix: Allows ANY script with matching nonce
                 ],
                 scriptSrcAttr: ["'self'", "'unsafe-inline'"], 
                 styleSrc: [
                     "'self'", 
-                    "https://cdnjs.cloudflare.com", // 📍 Fixed from cloudflare.com
+                    "https://cloudflare.com", 
                     "'unsafe-inline'" // Allows Tailwind CDN to render your GUI safely
                 ],
                 styleSrcAttr: ["'self'", "'unsafe-inline'"],
                 imgSrc: ["'self'", "data:", "https:"],
                 connectSrc: ["'self'", "https://vercel.app", "https://vercel.app"],
-                fontSrc: [
-                    "'self'", 
-                    "https://cdnjs.cloudflare.com" // Allows Font Awesome icons to display globally
-                ],
+                fontSrc: ["'self'", "https://cloudflare.com"], // Fixed to ://cloudflare.com for FontAwesome
                 objectSrc: ["'none'"],
                 frameAncestors: ["'none'"],
                 formAction: ["'self'"],
@@ -91,7 +85,7 @@ function setupSecurity(app) {
     
     app.use(cors({
         origin: (origin, callback) => {
-            const allowedOrigins = ['https://fueltraksystem.vercel.app', 'https://fueltrak-seven.vercel.app', 'http://localhost:3000', 'http://localhost:8080'];
+            const allowedOrigins = ['https://vercel.app', 'https://vercel.app', 'http://localhost:3000', 'http://localhost:8080'];
             if (!origin) return callback(null, true);
             if (allowedOrigins.includes(origin)) { callback(null, true); }
             else { console.warn('CORS blocked origin: ' + origin); callback(new Error('Not allowed by CORS')); }
