@@ -581,7 +581,7 @@ function closeChat() {
 // Load contact list with unread badges per sender
 async function loadContactList() {
     try {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('fueltrak_token');
         
         // Check if token exists
         if (!token) {
@@ -645,7 +645,7 @@ async function loadMessages() {
     if (!currentChatUserId) return;
     
     try {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('fueltrak_token');
         const user = JSON.parse(localStorage.getItem('user') || '{}');
         const myId = user.id; // Get current user's ID
         
@@ -687,7 +687,7 @@ async function sendChat() {
     if (!message || !currentChatUserId) return;
     
     try {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('fueltrak_token');
         await fetch('/api/chat', {
             method: 'POST',
             headers: {
@@ -732,7 +732,7 @@ function stopChatPolling() {
 
 async function updateUnreadBadge() {
     try {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('fueltrak_token');
         if (!token) return;
         
         const response = await fetch('/api/chat/unread', {
