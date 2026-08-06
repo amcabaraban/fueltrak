@@ -26,39 +26,8 @@ function setupSecurity(app) {
     
     // 2. Configure Helmet to dynamically read and pass this nonce to the browser
     app.use(helmet({
-        contentSecurityPolicy: {
-            directives: {
-                defaultSrc: ["'self'"],
-                scriptSrc: [
-                    "'self'", 
-                    "https://tailwindcss.com", 
-                    "https://cloudflare.com",
-                    // 📍 Universal Fix: Allows your internal HTML scripts safely without requiring nonces or individual hashes
-                    "'unsafe-inline'" 
-                ],
-                // Keeps HTML attributes like onsubmit="login(event)" and onclick="..." running smoothly across all layout forms
-                scriptSrcAttr: ["'self'", "'unsafe-inline'"], 
-                styleSrc: [
-                    "'self'", 
-                    "https://cloudflare.com",
-                    // Allows Tailwind CDN to scan classes and draw the interface layout dynamically
-                    "'unsafe-inline'"
-                ],
-                styleSrcAttr: ["'self'", "'unsafe-inline'"],
-                imgSrc: ["'self'", "data:", "https:"],
-                // Locks down network connections strictly to your secure backend API routes
-                connectSrc: ["'self'", "https://vercel.app", "https://vercel.app"],
-                fontSrc: [
-                    "'self'", 
-                    "https://cloudflare.com" // Allows Font Awesome icons to render perfectly
-                ],
-                objectSrc: ["'none'"],
-                frameAncestors: ["'none'"],
-                formAction: ["'self'"],
-                baseUri: ["'self'"],
-                upgradeInsecureRequests: [],
-            }
-        },
+        // 📍 Temp Test: Turn off CSP to see if your layout immediately comes back
+        contentSecurityPolicy: false, 
         hsts: { maxAge: 31536000, includeSubDomains: true, preload: true },
         frameguard: { action: 'deny' },
         hidePoweredBy: true,
@@ -67,10 +36,12 @@ function setupSecurity(app) {
         referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
         permittedCrossDomainPolicies: { permittedPolicies: 'none' },
         dnsPrefetchControl: { allow: false },
-        crossOriginEmbedderPolicy: { policy: 'credentialless' },
-        crossOriginOpenerPolicy: { policy: 'same-origin' },
-        crossOriginResourcePolicy: { policy: 'same-origin' },
+        // 📍 Critical: Disable strict resource isolation which breaks Tailwind CDN
+        crossOriginEmbedderPolicy: false, 
+        crossOriginOpenerPolicy: false,
+        crossOriginResourcePolicy: false,
     }));
+
     
     app.use((req, res, next) => {
         res.removeHeader('X-Powered-By');
