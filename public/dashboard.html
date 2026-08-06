@@ -236,361 +236,15 @@
     </div>
 </div>
 <script>
-
 // ============ INITIALIZATION ============
-const API='/api';
-const token=localStorage.getItem('fueltrak_token');
-const user=JSON.parse(localStorage.getItem('fueltrak_user')||'{}');
-if(!token||!['dispatcher','management'].includes(user.role))window.location.replace('/');
-document.getElementById('userInfo').textContent=(user.email||'').split('@')[0].substring(0,3)+'***@'+(user.email||'').split('@')[1];
-document.getElementById('welcomeDate').textContent=new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
-
+const token = localStorage.getItem('fueltrak_token');
+const currentUser = JSON.parse(localStorage.getItem('fueltrak_user') || '{}');
+if (!token || !['dispatcher', 'management'].includes(currentUser.role)) window.location.replace('/');
+document.getElementById('userInfo').textContent = (currentUser.email || '').split('@')[0].substring(0, 3) + '***@' + (currentUser.email || '').split('@')[1];
+document.getElementById('welcomeDate').textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 document.querySelector('#sidebar a[href="/dashboard"]').style.background = '#1e40af';
 
-// ============ API HELPER ============
-async function api(url,method,body){method=method||'GET';var o={method,headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'}};if(body)o.body=JSON.stringify(body);var r=await fetch(API+url,o);return await r.json()}
-
-// ============ NAVIGATION ============
-function showDashboard(){['tabVerify','tabLoading','tabTrucks','tabClients'].forEach(t=>document.getElementById(t).classList.add('hidden'));document.getElementById('dashboardView').classList.remove('hidden');loadDashboard()}
-function openTab(tab){document.getElementById('dashboardView').classList.add('hidden');['tabVerify','tabLoading','tabTrucks','tabClients'].forEach(t=>document.getElementById(t).classList.add('hidden'));var el=document.getElementById('tab'+tab.charAt(0).toUpperCase()+tab.slice(1));if(el)el.classList.remove('hidden');try{if(tab==='verify')loadPending();if(tab==='loading')loadApproved();if(tab==='trucks')loadTrucks();if(tab==='clients')loadClients()}catch(e){}}
-
-// Replace the old api function
-async function api(url, method, body) {
-    if (method === 'GET' || !method) {
-        return await APIHelper.get(url);
-    } else if (method === 'POST') {
-        return await APIHelper.post(url, body);
-    }
-    // Fallback for other methods
-    var opts = { method: method, headers: APIHelper.getHeaders() };
-    if (body) opts.body = JSON.stringify(body);
-    var r = await fetch('/api' + url, opts);
-    return await r.json();
-}
-
-// ============ DASHBOARD ============
-async function loadDashboard() {
-    // Show skeleton loading states immediately
-    showDashboardSkeleton();
-    
-    try {
-        // Fetch both stats in parallel
-        var [a, t] = await Promise.all([
-            APIHelper.get('/dispatch/enhanced-stats'),
-            APIHelper.get('/dispatch/truck-stats')
-        ]);
-        
-        // ============ RENDER ATL STATS ============
-        if (a._error) {
-            ErrorHandler.showError('atlStats', 'Failed to load ATL statistics', loadDashboard);
-        } else if (a.status === 'success') {
-            var s = a.data;
-            document.getElementById('atlStats').innerHTML = [
-                { label: 'Pending', value: s.pending || 0, gradient: 'from-yellow-400 to-yellow-500' },
-                { label: 'Approved', value: s.approved || 0, gradient: 'from-blue-400 to-blue-500' },
-                { label: 'Loading', value: s.loading || 0, gradient: 'from-orange-400 to-orange-500' },
-                { label: 'Completed', value: s.completed || 0, gradient: 'from-green-400 to-green-500' },
-                { label: 'Today', value: s.loadedToday || 0, gradient: 'from-indigo-400 to-indigo-500' },
-                { label: 'Today Vol', value: Math.round((s.todayVolume || 0) / 1000).toLocaleString() + 'kL', gradient: 'from-purple-400 to-purple-500' }
-            ].map(function(c) {
-                return '<div class="stat-card bg-gradient-to-br shadow-[0_6px_15px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.2)] hover:shadow-[0_8px_20px_rgba(0,0,0,0.4)] hover:translate-y-[-2px] ' + c.gradient + ' rounded-xl shadow-lg p-3 text-white animate-fade-up">' +
-                       '<p class="text-xs opacity-90">' + c.label + '</p>' +
-                       '<p class="text-2xl font-bold mt-1">' + c.value + '</p></div>';
-            }).join('');
-            
-            // Update pending badge
-            var pb = document.getElementById('pendingBadge');
-            if (pb) {
-                if (s.pending > 0) {
-                    pb.textContent = s.pending > 99 ? '99+' : s.pending;
-                    pb.classList.remove('hidden');
-                } else {
-                    pb.classList.add('hidden');
-                }
-            }
-        } else {
-            ErrorHandler.showError('atlStats', 'Unable to load statistics', loadDashboard);
-        }
-        
-        // ============ RENDER FLEET STATS ============
-        if (t._error) {
-            ErrorHandler.showError('fleetStats', 'Failed to load fleet statistics', loadDashboard);
-        } else if (t.status === 'success') {
-            var d = t.data;
-            
-            // Calculate missing docs
-            var totalTrucks = d.total || 0;
-            var validDocs = d.withValidDocs || 0;
-            var expiredDocs = d.withExpiredDocs || 0;
-            var missingDocs = Math.max(0, totalTrucks - validDocs - expiredDocs);
-            var activeTrucks = d.active || 0;
-            var totalCapacity = (d.totalCapacity || 0) / 1000;
-            
-            var fleetCards = [
-                { 
-                    label: 'Total Trucks', 
-                    value: totalTrucks, 
-                    sub: activeTrucks + ' active', 
-                    border: 'border-blue-500', 
-                    filter: 'all', 
-                    icon: 'fa-truck' 
-                },
-                { 
-                    label: 'Valid Docs', 
-                    value: validDocs, 
-                    border: 'border-green-500', 
-                    filter: 'valid', 
-                    icon: 'fa-check-circle' 
-                },
-                { 
-                    label: 'Expired Docs', 
-                    value: expiredDocs, 
-                    border: 'border-red-500', 
-                    filter: 'expired', 
-                    icon: 'fa-exclamation-triangle' 
-                },
-                { 
-                    label: 'Missing Docs', 
-                    value: missingDocs, 
-                    border: 'border-yellow-500', 
-                    filter: 'missing', 
-                    icon: 'fa-question-circle' 
-                }
-            ];
-            
-            var fleetHTML = fleetCards.map(function(c) {
-                return '<div class="stat-card bg-white rounded-xl shadow-[0_4px_15px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.5)] p-3 border-l-4 ' + c.border + ' cursor-pointer hover:shadow-lg hover:translate-y-[-2px] transition-all animate-fade-up" ' +
-                       'onclick="showDocReport(\'' + c.filter + '\', \'' + c.label + '\')" ' +
-                       'title="Click to view ' + c.label.toLowerCase() + ' report">' +
-                       '<div class="flex items-center justify-between">' +
-                       '<p class="text-xs text-gray-500">' + c.label + '</p>' +
-                       '<i class="fas ' + c.icon + ' text-gray-300 text-sm"></i>' +
-                       '</div>' +
-                       '<p class="text-xl font-bold">' + c.value + '</p>' +
-                       (c.sub ? '<p class="text-xs text-gray-400 mt-1">' + c.sub + '</p>' : '') +
-                       '<p class="text-xs text-blue-500 mt-1 opacity-0 hover:opacity-100 transition">Click to view →</p>' +
-                       '</div>';
-            }).join('');
-            
-            // Add total capacity card
-            fleetHTML += '<div class="stat-card bg-white rounded-xl shadow-[0_4px_15px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.5)] p-3 border-l-4 border-purple-500 animate-fade-up">' +
-                         '<div class="flex items-center justify-between">' +
-                         '<p class="text-xs text-gray-500">Total Capacity</p>' +
-                         '<i class="fas fa-gas-pump text-gray-300 text-sm"></i>' +
-                         '</div>' +
-                         '<p class="text-xl font-bold">' + totalCapacity.toFixed(1) + 'kL</p>' +
-                         '</div>';
-            
-            document.getElementById('fleetStats').innerHTML = fleetHTML;
-            
-            // Store truck stats globally for document report
-            window._truckStats = d;
-            
-            // ============ RENDER DOC STATS ============
-            if (d.documentBreakdown) {
-                var docStatsHTML = '';
-                var docTypes = [
-                    { key: 'lto', label: 'LTO Registration', icon: 'fa-id-card' },
-                    { key: 'fire', label: 'Fire Permit', icon: 'fa-fire' },
-                    { key: 'dost', label: 'DOST Calibration', icon: 'fa-flask' }
-                ];
-                
-                docTypes.forEach(function(doc) {
-                    var breakdown = d.documentBreakdown[doc.key] || {};
-                    var valid = breakdown.valid || 0;
-                    var expired = breakdown.expired || 0;
-                    var missing = breakdown.missing || 0;
-                    
-                    docStatsHTML += '<div class="bg-white rounded-xl shadow p-4 animate-fade-up">' +
-                                    '<div class="flex items-center justify-between mb-3">' +
-                                    '<h4 class="text-sm font-semibold text-gray-700"><i class="fas ' + doc.icon + ' mr-2 text-blue-500"></i>' + doc.label + '</h4>' +
-                                    '</div>' +
-                                    '<div class="grid grid-cols-3 gap-2 text-center text-xs">' +
-                                    '<div><p class="text-lg font-bold text-green-600">' + valid + '</p><p class="text-gray-400">Valid</p></div>' +
-                                    '<div><p class="text-lg font-bold text-red-600">' + expired + '</p><p class="text-gray-400">Expired</p></div>' +
-                                    '<div><p class="text-lg font-bold text-yellow-600">' + missing + '</p><p class="text-gray-400">Missing</p></div>' +
-                                    '</div></div>';
-                });
-                
-                document.getElementById('docStats').innerHTML = docStatsHTML;
-            }
-            
-        } else {
-            ErrorHandler.showError('fleetStats', 'Unable to load fleet data', loadDashboard);
-        }
-        
-    } catch (error) {
-        // Handle unexpected errors
-        console.error('Dashboard load error:', error);
-        
-        if (error.name === 'AbortError') {
-            ErrorHandler.toast('Dashboard request timed out. Retrying...', 'warning');
-        } else if (error.message && error.message.includes('Failed to fetch')) {
-            ErrorHandler.toast('Connection lost. Please check your internet.', 'error');
-        } else {
-            ErrorHandler.toast('Failed to load dashboard. Please refresh the page.', 'error');
-        }
-        
-        // Show error states with retry buttons
-        ErrorHandler.showError('atlStats', 'Failed to load data', loadDashboard);
-        ErrorHandler.showError('fleetStats', 'Failed to load data', loadDashboard);
-    }
-}
-
-// ============ SKELETON LOADING ============
-function showDashboardSkeleton() {
-    // ATL Stats skeleton
-    document.getElementById('atlStats').innerHTML = Array(6).fill(0).map(function() {
-        return '<div class="bg-gray-200 animate-pulse rounded-xl shadow p-3">' +
-               '<div class="h-3 bg-gray-300 rounded w-16 mb-3"></div>' +
-               '<div class="h-8 bg-gray-300 rounded w-12"></div></div>';
-    }).join('');
-    
-    // Fleet Stats skeleton
-    document.getElementById('fleetStats').innerHTML = Array(5).fill(0).map(function() {
-        return '<div class="bg-white animate-pulse rounded-xl shadow p-3 border-l-4 border-gray-300">' +
-               '<div class="h-3 bg-gray-200 rounded w-20 mb-3"></div>' +
-               '<div class="h-8 bg-gray-200 rounded w-12"></div></div>';
-    }).join('');
-    
-    // Doc Stats skeleton
-    document.getElementById('docStats').innerHTML = Array(3).fill(0).map(function() {
-        return '<div class="bg-white animate-pulse rounded-xl shadow p-4">' +
-               '<div class="h-4 bg-gray-200 rounded w-32 mb-3"></div>' +
-               '<div class="grid grid-cols-3 gap-2">' +
-               '<div class="h-10 bg-gray-200 rounded"></div>' +
-               '<div class="h-10 bg-gray-200 rounded"></div>' +
-               '<div class="h-10 bg-gray-200 rounded"></div>' +
-               '</div></div>';
-    }).join('');
-}
-
-// ============ DOCUMENT REPORT ============
-var _allDocRecords=[],_currentDocFilter='all',_currentSearchTerm='';
-async function showDocReport(filter,title){document.getElementById('docReportModal').classList.remove('hidden');document.getElementById('docReportTitle').innerHTML='<i class="fas fa-file-alt mr-2 text-blue-600"></i>'+title+' - Document Report';document.getElementById('docReportBody').innerHTML='<tr><td colspan="7" class="text-center py-12 text-gray-400"><i class="fas fa-spinner fa-spin text-2xl mb-2 block"></i>Loading document data...</td></tr>';document.getElementById('docNoResults').classList.add('hidden');document.body.style.overflow='hidden';document.getElementById('docSearchInput').value='';document.getElementById('docSearchClear').classList.add('hidden');_currentSearchTerm='';_currentDocFilter=filter;updateDocFilterButtons(filter);try{var r=await fetch(API+'/docs-report/summary',{headers:{'Authorization':'Bearer '+token}});var d=await r.json();if(d.status==='success'){_allDocRecords=d.data.records;applyDocFilters()}else{document.getElementById('docReportBody').innerHTML='<tr><td colspan="7" class="text-center py-12 text-red-400">Error loading data</td></tr>';document.getElementById('docReportCount').textContent='0 trucks'}}catch(e){document.getElementById('docReportBody').innerHTML='<tr><td colspan="7" class="text-center py-12 text-red-400">Error: '+e.message+'</td></tr>';document.getElementById('docReportCount').textContent='Error'}}
-function filterDocReport(filter){_currentDocFilter=filter;updateDocFilterButtons(filter);applyDocFilters()}
-function updateDocFilterButtons(filter){document.querySelectorAll('.doc-filter-btn').forEach(function(btn){btn.classList.remove('bg-blue-100','text-blue-700','font-semibold');btn.classList.add('bg-gray-100','text-gray-600')});var activeBtn=document.getElementById('docFilter'+filter.charAt(0).toUpperCase()+filter.slice(1));if(activeBtn){activeBtn.classList.remove('bg-gray-100','text-gray-600');activeBtn.classList.add('bg-blue-100','text-blue-700','font-semibold')}}
-function applyDocSearch(){var searchInput=document.getElementById('docSearchInput'),clearBtn=document.getElementById('docSearchClear');_currentSearchTerm=searchInput.value.toLowerCase().trim();if(_currentSearchTerm.length>0)clearBtn.classList.remove('hidden');else clearBtn.classList.add('hidden');applyDocFilters()}
-function clearDocSearch(){document.getElementById('docSearchInput').value='';document.getElementById('docSearchClear').classList.add('hidden');_currentSearchTerm='';applyDocFilters();document.getElementById('docSearchInput').focus()}
-function applyDocFilters(){var filtered=[],searchTerm=_currentSearchTerm;_allDocRecords.forEach(function(rec){var vl=rec.lto_expiry&&new Date(rec.lto_expiry)>=new Date(),vf=rec.fire_expiry&&new Date(rec.fire_expiry)>=new Date(),vd=rec.dost_expiry&&new Date(rec.dost_expiry)>=new Date(),el=rec.lto_expiry&&new Date(rec.lto_expiry)<new Date(),ef=rec.fire_expiry&&new Date(rec.fire_expiry)<new Date(),ed=rec.dost_expiry&&new Date(rec.dost_expiry)<new Date(),av=vl&&vf&&vd,ae=el||ef||ed,am=!rec.lto_expiry||!rec.fire_expiry||!rec.dost_expiry;var passesFilter=_currentDocFilter==='all'||(_currentDocFilter==='valid'&&av)||(_currentDocFilter==='expired'&&ae)||(_currentDocFilter==='missing'&&am);if(!passesFilter)return;if(searchTerm){var plateMatch=(rec.plate_no||'').toLowerCase().includes(searchTerm),driverMatch=(rec.driver_name||'').toLowerCase().includes(searchTerm),haulerMatch=(rec.hauler_name||'').toLowerCase().includes(searchTerm),makeMatch=(rec.make||'').toLowerCase().includes(searchTerm);if(!plateMatch&&!driverMatch&&!haulerMatch&&!makeMatch)return;rec._highlight={plate:plateMatch,driver:driverMatch,hauler:haulerMatch,make:makeMatch}}else rec._highlight=null;filtered.push(rec)});document.getElementById('docReportCount').textContent=filtered.length+' truck'+(filtered.length!==1?'s':'');var tableBody=document.getElementById('docReportBody'),noResults=document.getElementById('docNoResults');if(!filtered.length){tableBody.innerHTML='';noResults.classList.remove('hidden');if(searchTerm)noResults.querySelector('p').textContent='No trucks match "'+searchTerm+'"';else noResults.querySelector('p').textContent='No trucks match the selected filter'}else{noResults.classList.add('hidden');var h='';filtered.forEach(function(rec){var plateDisplay=highlightText(rec.plate_no||'N/A',rec._highlight&&rec._highlight.plate,searchTerm),driverDisplay=highlightText(rec.driver_name||'-',rec._highlight&&rec._highlight.driver,searchTerm),haulerDisplay=highlightText(rec.hauler_name||'-',rec._highlight&&rec._highlight.hauler,searchTerm),makeDisplay=highlightText(rec.make||'-',rec._highlight&&rec._highlight.make,searchTerm);h+='<tr class="border-b hover:bg-gray-50 transition"><td class="py-2 px-3 font-semibold">'+plateDisplay+'</td><td class="py-2 px-3">'+driverDisplay+'</td><td class="py-2 px-3">'+haulerDisplay+'</td><td class="py-2 px-3 text-center">'+getDocStatus(rec.lto_expiry)+'</td><td class="py-2 px-3 text-center">'+getDocStatus(rec.fire_expiry)+'</td><td class="py-2 px-3 text-center">'+getDocStatus(rec.dost_expiry)+'</td><td class="py-2 px-3 text-center text-xs">'+makeDisplay+'</td></tr>'});tableBody.innerHTML=h}}
-function highlightText(text,isMatch,searchTerm){if(!isMatch||!searchTerm||!text)return escapeHtml(text);var escaped=escapeHtml(text),searchEscaped=escapeHtml(searchTerm),regex=new RegExp('('+searchEscaped.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi');return escaped.replace(regex,'<mark class="bg-yellow-200 rounded px-0.5">$1</mark>')}
-function escapeHtml(text){var map={'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'};return String(text).replace(/[&<>"']/g,function(m){return map[m]})}
-function getDocStatus(exp){if(!exp)return'<span class="bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded text-xs font-semibold">Missing</span>';var d=Math.ceil((new Date(exp)-new Date())/86400000);if(d<0)return'<span class="bg-red-100 text-red-800 px-2 py-0.5 rounded text-xs font-semibold">Expired</span>';if(d<=30)return'<span class="bg-orange-100 text-orange-800 px-2 py-0.5 rounded text-xs font-semibold">'+d+' days</span>';return'<span class="bg-green-100 text-green-800 px-2 py-0.5 rounded text-xs font-semibold">Valid ('+d+'d)</span>'}
-function closeDocReport(){document.getElementById('docReportModal').classList.add('hidden');document.body.style.overflow='';document.getElementById('docSearchInput').value='';document.getElementById('docSearchClear').classList.add('hidden');_currentSearchTerm=''}
-document.addEventListener('DOMContentLoaded',function(){var docModal=document.getElementById('docReportModal');if(docModal)docModal.addEventListener('click',function(e){if(e.target===docModal)closeDocReport()})});
-document.addEventListener('keydown',function(e){if(e.key==='Escape'){var docModal=document.getElementById('docReportModal');if(docModal&&!docModal.classList.contains('hidden'))closeDocReport()}});
-
-// ============ PENDING ATLs ============
-var allPendingATLs=[];
-async function loadPending(){var d=await api('/dispatch/pending');if(d.status==='success'){allPendingATLs=d.data;filterPending()}}
-function filterPending(){var s=(document.getElementById('pendingSearch')?.value||'').toLowerCase();var f=allPendingATLs.filter(a=>!s||(a.plate_no||'').toLowerCase().includes(s)||(a.company||'').toLowerCase().includes(s)||(a.atl_code||'').toLowerCase().includes(s));document.getElementById('pendingATLs').innerHTML=f.map(a=>`<div class="bg-white rounded-lg shadow-[0_4px_10px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.5)] p-3 flex justify-between"><div><p class="font-bold text-sm">${a.atl_code||'N/A'} - ${a.plate_no}</p><p class="text-xs">${a.company||''} | SO: ${a.so_number||'N/A'} | Date: ${a.scheduled_date?new Date(a.scheduled_date).toLocaleDateString():'N/A'} | Vol: ${a.volume||'N/A'}L | ${a.driver_name}${a.special_instructions?'<div class="text-xs text-orange-600 mt-1"><i class="fas fa-info-circle"></i> '+a.special_instructions+'</div>':''}</p></div><div class="flex space-x-2"><button onclick="verifyATL(${a.id},'approve')" class="bg-green-500 text-white px-2 py-1 rounded text-xs">Approve</button><button onclick="verifyATL(${a.id},'reject')" class="bg-red-500 text-white px-2 py-1 rounded text-xs">Reject</button></div></div>`).join('')||'<p class="text-gray-500 text-center py-8">No pending ATLs</p>'}
-async function verifyATL(id,action){if(!confirm(action==='approve'?'Approve?':'Reject?'))return;await api('/dispatch/verify/'+id,'POST',{action,remarks:prompt('Remarks:')||''});loadPending();loadDashboard()}
-
-// ============ LOADING MANAGEMENT ============
-async function loadApproved(){var o=await api('/dispatch/ongoing-loading');document.getElementById('ongoingLoading').innerHTML=o.status==='success'?o.data.map(a=>`<div class="bg-orange-50 border-l-4 border-orange-500 rounded-lg shadow p-3 flex justify-between"><div><p class="font-bold text-sm">${a.atl_code} - ${a.plate_no} - ${a.driver_name}</p><p class="text-xs">${a.company} | SO: ${a.so_number||'N/A'} | ${a.driver_name}</p><p class="text-xs">Date: ${a.dispatch_date?new Date(a.dispatch_date).toLocaleDateString():'N/A'} | Vol: ${a.volume?Number(a.volume).toLocaleString()+'L':'N/A'}</p></div><div class="flex space-x-1"><button onclick="completeLoading(${a.id})" class="bg-green-500 text-white px-2 py-1 rounded text-xs">Done</button></div></div>`).join('')||'<p class="text-gray-500 text-center py-4">No ongoing loading</p>':'';var w=await api('/dispatch/approved-for-loading');document.getElementById('approvedForLoading').innerHTML=w.status==='success'?w.data.map(a=>`<div class="bg-white rounded-lg shadow-[0_4px_10px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.5)] p-3 flex justify-between"><div><p class="font-bold text-sm">${a.atl_code} - ${a.plate_no} - ${a.driver_name}</p><p class="text-xs">${a.company||''} | SO: ${a.so_number||'N/A'} | Date: ${a.scheduled_date?new Date(a.scheduled_date).toLocaleDateString():'N/A'} | Vol: ${a.volume?Number(a.volume).toLocaleString()+'L':'N/A'}</p></div><button onclick="startLoading(${a.id})" class="bg-orange-500 text-white px-3 py-1 rounded text-xs">Start</button></div>`).join('')||'<p class="text-gray-500 text-center py-4">None waiting</p>':''}
-async function startLoading(id){if(!confirm('Start loading?'))return;await api('/dispatch/start-loading/'+id,'POST');loadApproved();loadDashboard()}
-async function completeLoading(id){var v=prompt('Actual volume (L):');if(!v)return;await api('/dispatch/complete-loading/'+id,'POST',{actual_volume:v});loadApproved();loadDashboard()}
-
-// ============ TRUCKS & CLIENTS ============
-async function loadTrucks(){var d=await api('/truck-masterlist-all');if(d.status==='success'){document.getElementById('truckList').innerHTML='<div class="table-wrap"><table class="w-full text-sm bg-white rounded-lg shadow-[0_4px_10px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.5)]"><thead class="bg-gray-50"><tr><th class="py-2 px-3">Plate</th><th class="py-2 px-3">Driver</th><th class="py-2 px-3">Hauler</th></tr></thead><tbody>'+d.data.slice(0,50).map(t=>`<tr class="border-b"><td class="py-2 px-3 font-semibold">${t.plate_no}</td><td class="py-2 px-3">${(t.driver_name||'').replace(/"/g,'')}</td><td class="py-2 px-3">${t.hauler_name||''}</td></tr>`).join('')+'</tbody></table></div>'}}
-async function loadClients(){var d=await api('/clients');if(d.status==='success'){document.getElementById('clientList').innerHTML='<div class="table-wrap"><table class="w-full text-sm bg-white rounded-lg shadow-[0_4px_10px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.5)]"><thead class="bg-gray-50"><tr><th class="py-2 px-3">Company</th><th class="py-2 px-3">Email</th><th class="py-2 px-3">Mobile</th><th class="py-2 px-3">ATLs</th><th class="py-2 px-3">Actions</th></tr></thead><tbody>'+d.data.map(c=>'<tr class="border-b"><td class="py-2 px-3 font-semibold">'+(c.company_name||'-')+'</td><td class="py-2 px-3">'+c.email+'</td><td class="py-2 px-3">'+c.mobile+'</td><td class="py-2 px-3 text-center">'+c.total_atls+'</td><td class="py-2 px-3"><div class="flex space-x-2 justify-center"><button onclick="editClient('+c.id+')" class="text-blue-600"><i class="fas fa-edit"></i></button>'+(c.is_active?'<button onclick="toggleClient('+c.id+')" class="text-orange-600"><i class="fas fa-ban"></i></button>':'<button onclick="toggleClient('+c.id+')" class="text-green-600"><i class="fas fa-check"></i></button>')+'<button onclick="deleteClient('+c.id+',\''+c.email+'\')" class="text-red-600"><i class="fas fa-trash"></i></button></div></td></tr>').join('')+'</tbody></table></div>'}}
-function showAddClient(){document.getElementById('editClientId').value='';document.getElementById('clientModalTitle').textContent='Add Client';['clientEmail','clientMobile','clientCompany','clientPassword'].forEach(id=>document.getElementById(id).value='');document.getElementById('clientModal').classList.remove('hidden')}
-function closeClientModal(){document.getElementById('clientModal').classList.add('hidden')}
-async function editClient(id){var d=await api('/clients/'+id);if(d.status==='success'){var c=d.data;document.getElementById('editClientId').value=c.id;document.getElementById('clientModalTitle').textContent='Edit Client';document.getElementById('clientEmail').value=c.email;document.getElementById('clientMobile').value=c.mobile;document.getElementById('clientCompany').value=c.company_name||'';document.getElementById('clientPassword').value='';document.getElementById('clientModal').classList.remove('hidden')}}
-async function saveClient(e){e.preventDefault();var id=document.getElementById('editClientId').value;var body={email:document.getElementById('clientEmail').value,mobile:document.getElementById('clientMobile').value,company_name:document.getElementById('clientCompany').value};var pw=document.getElementById('clientPassword').value;if(pw)body.password=pw;var url=id?'/clients/'+id:'/clients';var method=id?'PUT':'POST';var d=await api(url,method,body);if(d.status==='success'){closeClientModal();loadClients()}else alert(d.error||'Error')}
-async function toggleClient(id){await api('/clients/'+id+'/toggle-status','PATCH');loadClients()}
-async function deleteClient(id,email){if(!confirm('Delete '+email+'?'))return;await api('/clients/'+id,'DELETE');loadClients()}
-
-// ============ CALCULATOR ============
-function toggleSidebar(){var s=document.getElementById("sidebar");s.classList.toggle("open");document.getElementById("sidebarOverlay").classList.toggle("hidden")}
-function openCalc(){document.getElementById('calcWidget').classList.remove('hidden');document.getElementById('calcButton').classList.add('hidden')}
-function closeCalc(){document.getElementById('calcWidget').classList.add('hidden');document.getElementById('calcButton').classList.remove('hidden')}
-function toggleCalc(){}
-var calcExpr='';
-function calcInput(v){calcExpr+=v;document.getElementById('calcDisplay').value=calcExpr}
-function calcClear(){calcExpr='';document.getElementById('calcDisplay').value='0'}
-function calcResult(){try{var r=eval(calcExpr.replace(/×/g,'*').replace(/÷/g,'/').replace(/-/g,'-'));document.getElementById('calcDisplay').value=Number(r.toFixed(4));calcExpr=String(r)}catch(e){document.getElementById('calcDisplay').value='Error';calcExpr=''}}
-async function logout(){try{await fetch('/api/auth/logout',{method:'POST',headers:{'Authorization':'Bearer '+localStorage.getItem('fueltrak_token')}})}catch(e){}localStorage.clear();window.location.href='/'}
-loadDashboard();
-var urlParams=new URLSearchParams(window.location.search);var tab=urlParams.get('tab');if(tab==='clients'){openTab('clients')}
-document.addEventListener('keydown',function(e){if(document.getElementById('calcWidget').classList.contains('hidden'))return;var k=e.key;if(k>='0'&&k<='9')calcInput(k);else if(k==='.')calcInput('.');else if(k==='+')calcInput('+');else if(k==='-')calcInput('-');else if(k==='*')calcInput('*');else if(k==='/'){e.preventDefault();calcInput('/')}else if(k==='Enter')calcResult();else if(k==='Escape')closeCalc();else if(k==='Backspace'){calcExpr=calcExpr.slice(0,-1);document.getElementById('calcDisplay').value=calcExpr||'0'}});
-
-// Show announcement section for admins/dispatchers
-const currentUser = JSON.parse(localStorage.getItem('fueltrak_user') || '{}');
-if (user.role === 'dispatcher' || user.role === 'management') {
-    document.getElementById('announcementSection').style.display = 'block';
-    loadAdminAnnouncements();
-}
-
-async function createAnnouncement() {
-    const title = document.getElementById('announcementTitle').value.trim();
-    const message = document.getElementById('announcementMessage').value.trim();
-    const priority = document.getElementById('announcementPriority').value;
-    const expires_at = document.getElementById('announcementExpiry').value || null;
-    
-    if (!title || !message) return alert('Title and message required');
-    
-    const token = localStorage.getItem('fueltrak_token');
-    const response = await fetch('/api/announcements', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + token
-        },
-        body: JSON.stringify({ title, message, priority, expires_at })
-    });
-    
-    if (response.ok) {
-        document.getElementById('announcementTitle').value = '';
-        document.getElementById('announcementMessage').value = '';
-        alert('Announcement sent!');
-        loadAdminAnnouncements();
-    }
-}
-
-async function loadAdminAnnouncements() {
-    const token = localStorage.getItem('fueltrak_token');
-    const response = await fetch('/api/announcements/admin', {
-        headers: { 'Authorization': 'Bearer ' + token }
-    });
-    const data = await response.json();
-    
-    const list = document.getElementById('adminAnnouncementList');
-    list.innerHTML = data.data.map(ann => `
-        <div style="padding:12px;border-bottom:1px solid #f3f4f6;display:flex;justify-content:space-between;align-items:center;">
-            <div>
-                <strong>${ann.title}</strong>
-                <span style="background:${ann.priority==='urgent'?'#ef4444':ann.priority==='important'?'#f59e0b':'#3b82f6'};color:white;font-size:10px;padding:2px 8px;border-radius:10px;margin-left:8px;">${ann.priority}</span>
-                <p style="font-size:12px;color:#6b7280;margin:2px 0;">${ann.message.substring(0, 80)}...</p>
-            </div>
-            <div style="display:flex;gap:8px;">
-                <button onclick="toggleAnnouncement(${ann.id})" style="font-size:12px;padding:4px 8px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer;background:${ann.is_active?'#dcfce7':'#fee2e2'};">${ann.is_active?'Active':'Inactive'}</button>
-                <button onclick="deleteAnnouncement(${ann.id})" style="font-size:12px;padding:4px 8px;border:1px solid #ef4444;color:#ef4444;border-radius:4px;cursor:pointer;background:white;">Delete</button>
-            </div>
-        </div>
-    `).join('');
-}
-
-async function toggleAnnouncement(id) {
-    const token = localStorage.getItem('fueltrak_token');
-    await fetch('/api/announcements/' + id + '/toggle', {
-        method: 'PATCH',
-        headers: { 'Authorization': 'Bearer ' + token }
-    });
-    loadAdminAnnouncements();
-}
-
-async function deleteAnnouncement(id) {
-    if (!confirm('Delete this announcement?')) return;
-    const token = localStorage.getItem('fueltrak_token');
-    await fetch('/api/announcements/' + id, {
-        method: 'DELETE',
-        headers: { 'Authorization': 'Bearer ' + token }
-    });
-    loadAdminAnnouncements();
-}
-
-// ============ ERROR HANDLER (INLINE) ============
+// ============ ERROR HANDLER ============
 var ErrorHandler = {
     toastContainer: null,
     init: function() {
@@ -615,29 +269,19 @@ var ErrorHandler = {
     },
     handleAPIError: function(error, customMessage) {
         console.error('API Error:', error);
-        if (error.name === 'AbortError') { this.toast('Request timed out. Please try again.', 'warning'); return; }
-        if (error.message && error.message.includes('Failed to fetch')) { this.toast('Connection lost. Please check your internet.', 'error'); return; }
-        this.toast(customMessage || 'An unexpected error occurred.', 'error');
+        if (error.name === 'AbortError') { this.toast('Request timed out', 'warning'); return; }
+        this.toast(customMessage || 'An error occurred', 'error');
     },
     showError: function(containerId, message, retryFn) {
         var container = document.getElementById(containerId);
         if (!container) return;
-        container.innerHTML = '<div class="text-center py-8 text-red-400"><i class="fas fa-exclamation-circle text-3xl mb-2 block"></i><p>' + message + '</p>' + (retryFn ? '<button onclick="(' + retryFn.toString() + ')()" class="mt-2 text-blue-600 hover:underline text-sm">Retry</button>' : '') + '</div>';
-    },
-    showSkeleton: function(containerId, count) {
-        var container = document.getElementById(containerId);
-        if (!container) return;
-        count = count || 3;
-        container.innerHTML = Array(count).fill(0).map(function() {
-            return '<div class="bg-gray-200 animate-pulse rounded-xl p-4"><div class="h-4 bg-gray-300 rounded w-3/4 mb-3"></div><div class="h-6 bg-gray-300 rounded w-1/2"></div></div>';
-        }).join('');
+        container.innerHTML = '<div class="text-center py-8 text-red-400"><p>' + message + '</p>' + (retryFn ? '<button onclick="(' + retryFn.toString() + ')()" class="mt-2 text-blue-600 text-sm">Retry</button>' : '') + '</div>';
     }
 };
 
-// ============ API HELPER (INLINE) ============
+// ============ API HELPER ============
 var APIHelper = {
     token: localStorage.getItem('fueltrak_token'),
-    user: JSON.parse(localStorage.getItem('fueltrak_user') || '{}'),
     getHeaders: function() {
         return { 'Authorization': 'Bearer ' + this.token, 'Content-Type': 'application/json' };
     },
@@ -648,11 +292,8 @@ var APIHelper = {
             var timeoutId = setTimeout(function() { controller.abort(); }, options.timeout || 15000);
             var response = await fetch('/api' + url, { headers: this.getHeaders(), signal: controller.signal });
             clearTimeout(timeoutId);
-            if (response.status === 401) { ErrorHandler.toast('Session expired. Redirecting...', 'warning'); localStorage.clear(); setTimeout(function() { window.location.href = '/'; }, 1500); return { _error: true, error: 'Unauthorized' }; }
-            if (response.status === 429) { ErrorHandler.toast('Too many requests. Please wait.', 'warning'); return { _error: true, error: 'Rate limited' }; }
-            if (response.status >= 500) { ErrorHandler.toast('Server error. Please try again.', 'error'); return { _error: true, error: 'Server error' }; }
+            if (response.status === 401) { ErrorHandler.toast('Session expired', 'warning'); localStorage.clear(); setTimeout(function() { window.location.href = '/'; }, 1500); return { _error: true }; }
             var data = await response.json();
-            if (data.error) { if (!options.silent) ErrorHandler.toast(data.error, 'error'); return { _error: true, error: data.error }; }
             return data;
         } catch (error) {
             if (!options.silent) ErrorHandler.handleAPIError(error);
@@ -666,9 +307,8 @@ var APIHelper = {
             var timeoutId = setTimeout(function() { controller.abort(); }, options.timeout || 15000);
             var response = await fetch('/api' + url, { method: 'POST', headers: this.getHeaders(), body: JSON.stringify(body), signal: controller.signal });
             clearTimeout(timeoutId);
-            if (response.status === 401) { ErrorHandler.toast('Session expired.', 'warning'); localStorage.clear(); setTimeout(function() { window.location.href = '/'; }, 1500); return { _error: true }; }
+            if (response.status === 401) { ErrorHandler.toast('Session expired', 'warning'); localStorage.clear(); setTimeout(function() { window.location.href = '/'; }, 1500); return { _error: true }; }
             var data = await response.json();
-            if (data.error) { if (!options.silent) ErrorHandler.toast(data.error, 'error'); return { _error: true, error: data.error }; }
             return data;
         } catch (error) {
             if (!options.silent) ErrorHandler.handleAPIError(error);
@@ -677,6 +317,278 @@ var APIHelper = {
     }
 };
 
+// ============ NAVIGATION ============
+function showDashboard() { ['tabVerify', 'tabLoading', 'tabTrucks', 'tabClients'].forEach(function(t) { document.getElementById(t).classList.add('hidden'); }); document.getElementById('dashboardView').classList.remove('hidden'); loadDashboard(); }
+function openTab(tab) { document.getElementById('dashboardView').classList.add('hidden'); ['tabVerify', 'tabLoading', 'tabTrucks', 'tabClients'].forEach(function(t) { document.getElementById(t).classList.add('hidden'); }); var el = document.getElementById('tab' + tab.charAt(0).toUpperCase() + tab.slice(1)); if (el) el.classList.remove('hidden'); if (tab === 'verify') loadPending(); if (tab === 'loading') loadApproved(); if (tab === 'trucks') loadTrucks(); if (tab === 'clients') loadClients(); }
+
+// ============ DASHBOARD ============
+function showDashboardSkeleton() {
+    document.getElementById('atlStats').innerHTML = Array(6).fill('<div class="bg-gray-200 animate-pulse rounded-xl p-3"><div class="h-3 bg-gray-300 rounded w-16 mb-3"></div><div class="h-8 bg-gray-300 rounded w-12"></div></div>').join('');
+    document.getElementById('fleetStats').innerHTML = Array(4).fill('<div class="bg-white animate-pulse rounded-xl p-3 border-l-4 border-gray-300"><div class="h-3 bg-gray-200 rounded w-20 mb-3"></div><div class="h-8 bg-gray-200 rounded w-12"></div></div>').join('');
+    document.getElementById('docStats').innerHTML = Array(3).fill('<div class="bg-white animate-pulse rounded-xl p-4"><div class="h-4 bg-gray-200 rounded w-32 mb-3"></div><div class="grid grid-cols-3 gap-2"><div class="h-10 bg-gray-200 rounded"></div><div class="h-10 bg-gray-200 rounded"></div><div class="h-10 bg-gray-200 rounded"></div></div></div>').join('');
+}
+
+async function loadDashboard() {
+    showDashboardSkeleton();
+    try {
+        var a = await APIHelper.get('/dispatch/enhanced-stats');
+        var t = await APIHelper.get('/dispatch/truck-stats');
+        
+        if (a.status === 'success') {
+            var s = a.data;
+            document.getElementById('atlStats').innerHTML = [
+                { label: 'Pending', value: s.pending || 0, gradient: 'from-yellow-400 to-yellow-500' },
+                { label: 'Approved', value: s.approved || 0, gradient: 'from-blue-400 to-blue-500' },
+                { label: 'Loading', value: s.loading || 0, gradient: 'from-orange-400 to-orange-500' },
+                { label: 'Completed', value: s.completed || 0, gradient: 'from-green-400 to-green-500' },
+                { label: 'Today', value: s.loadedToday || 0, gradient: 'from-indigo-400 to-indigo-500' },
+                { label: 'Today Vol', value: Math.round((s.todayVolume || 0) / 1000).toLocaleString() + 'kL', gradient: 'from-purple-400 to-purple-500' }
+            ].map(function(c) { return '<div class="stat-card bg-gradient-to-br ' + c.gradient + ' rounded-xl shadow-lg p-3 text-white"><p class="text-xs">' + c.label + '</p><p class="text-2xl font-bold mt-1">' + c.value + '</p></div>'; }).join('');
+            
+            var pb = document.getElementById('pendingBadge');
+            if (pb) { if (s.pending > 0) { pb.textContent = s.pending > 99 ? '99+' : s.pending; pb.classList.remove('hidden'); } else pb.classList.add('hidden'); }
+        } else {
+            ErrorHandler.showError('atlStats', 'Failed to load stats', loadDashboard);
+        }
+        
+        if (t.status === 'success') {
+            var d = t.data;
+            var fleetHTML = [
+                { label: 'Total Trucks', value: d.total || 0, border: 'border-blue-500' },
+                { label: 'Valid Docs', value: d.withValidDocs || 0, border: 'border-green-500' },
+                { label: 'Expired', value: d.withExpiredDocs || 0, border: 'border-red-500' },
+                { label: 'Capacity', value: ((d.totalCapacity || 0) / 1000).toFixed(1) + 'kL', border: 'border-purple-500' }
+            ].map(function(c) { return '<div class="stat-card bg-white rounded-xl shadow p-3 border-l-4 ' + c.border + '"><p class="text-xs text-gray-500">' + c.label + '</p><p class="text-xl font-bold">' + c.value + '</p></div>'; }).join('');
+            document.getElementById('fleetStats').innerHTML = fleetHTML;
+            
+            if (d.documentBreakdown) {
+                var docHTML = '';
+                var docTypes = [
+                    { key: 'lto', label: 'LTO Registration', icon: 'fa-id-card' },
+                    { key: 'fire', label: 'Fire Permit', icon: 'fa-fire' },
+                    { key: 'dost', label: 'DOST Calibration', icon: 'fa-flask' }
+                ];
+                docTypes.forEach(function(doc) {
+                    var bd = d.documentBreakdown[doc.key] || {};
+                    docHTML += '<div class="bg-white rounded-xl shadow p-4"><div class="flex items-center mb-3"><i class="fas ' + doc.icon + ' mr-2 text-blue-500"></i><h4 class="text-sm font-semibold">' + doc.label + '</h4></div><div class="grid grid-cols-3 gap-2 text-center text-xs"><div><p class="text-lg font-bold text-green-600">' + (bd.valid || 0) + '</p><p class="text-gray-400">Valid</p></div><div><p class="text-lg font-bold text-red-600">' + (bd.expired || 0) + '</p><p class="text-gray-400">Expired</p></div><div><p class="text-lg font-bold text-yellow-600">' + (bd.missing || 0) + '</p><p class="text-gray-400">Missing</p></div></div></div>';
+                });
+                document.getElementById('docStats').innerHTML = docHTML;
+            }
+        } else {
+            ErrorHandler.showError('fleetStats', 'Failed to load fleet', loadDashboard);
+        }
+    } catch (error) {
+        console.error('Dashboard error:', error);
+        ErrorHandler.toast('Failed to load dashboard', 'error');
+    }
+}
+
+// ============ DOCUMENT REPORT ============
+var _allDocRecords = [], _currentDocFilter = 'all', _currentSearchTerm = '';
+
+async function showDocReport(filter, title) {
+    document.getElementById('docReportModal').classList.remove('hidden');
+    document.getElementById('docReportTitle').innerHTML = '<i class="fas fa-file-alt mr-2 text-blue-600"></i>' + title;
+    document.getElementById('docReportBody').innerHTML = '<tr><td colspan="7" class="text-center py-12 text-gray-400"><i class="fas fa-spinner fa-spin text-2xl mb-2 block"></i>Loading...</td></tr>';
+    document.body.style.overflow = 'hidden';
+    _currentDocFilter = filter;
+    var d = await APIHelper.get('/docs-report/summary');
+    if (d.status === 'success') { _allDocRecords = d.data.records; applyDocFilters(); }
+}
+
+function filterDocReport(filter) { _currentDocFilter = filter; applyDocFilters(); }
+
+function applyDocSearch() { _currentSearchTerm = document.getElementById('docSearchInput').value.toLowerCase().trim(); applyDocFilters(); }
+
+function clearDocSearch() { document.getElementById('docSearchInput').value = ''; _currentSearchTerm = ''; applyDocFilters(); }
+
+function getDocStatus(exp) {
+    if (!exp) return '<span class="bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded text-xs">Missing</span>';
+    var days = Math.ceil((new Date(exp) - new Date()) / 86400000);
+    if (days < 0) return '<span class="bg-red-100 text-red-800 px-2 py-0.5 rounded text-xs">Expired</span>';
+    if (days <= 30) return '<span class="bg-orange-100 text-orange-800 px-2 py-0.5 rounded text-xs">' + days + ' days</span>';
+    return '<span class="bg-green-100 text-green-800 px-2 py-0.5 rounded text-xs">Valid</span>';
+}
+
+function applyDocFilters() {
+    var filtered = [];
+    _allDocRecords.forEach(function(rec) {
+        var vl = rec.lto_expiry && new Date(rec.lto_expiry) >= new Date();
+        var vf = rec.fire_expiry && new Date(rec.fire_expiry) >= new Date();
+        var vd = rec.dost_expiry && new Date(rec.dost_expiry) >= new Date();
+        var av = vl && vf && vd;
+        var ae = (rec.lto_expiry && new Date(rec.lto_expiry) < new Date()) || (rec.fire_expiry && new Date(rec.fire_expiry) < new Date()) || (rec.dost_expiry && new Date(rec.dost_expiry) < new Date());
+        var am = !rec.lto_expiry || !rec.fire_expiry || !rec.dost_expiry;
+        var passesFilter = _currentDocFilter === 'all' || (_currentDocFilter === 'valid' && av) || (_currentDocFilter === 'expired' && ae) || (_currentDocFilter === 'missing' && am);
+        if (!passesFilter) return;
+        if (_currentSearchTerm) {
+            var match = (rec.plate_no || '').toLowerCase().includes(_currentSearchTerm) || (rec.driver_name || '').toLowerCase().includes(_currentSearchTerm) || (rec.hauler_name || '').toLowerCase().includes(_currentSearchTerm);
+            if (!match) return;
+        }
+        filtered.push(rec);
+    });
+    document.getElementById('docReportCount').textContent = filtered.length + ' trucks';
+    var tbody = document.getElementById('docReportBody');
+    if (!filtered.length) { tbody.innerHTML = '<tr><td colspan="7" class="text-center py-12 text-gray-400">No results</td></tr>'; return; }
+    tbody.innerHTML = filtered.map(function(rec) {
+        return '<tr class="border-b"><td class="py-2 px-3 font-semibold">' + (rec.plate_no || 'N/A') + '</td><td class="py-2 px-3">' + (rec.driver_name || '-') + '</td><td class="py-2 px-3">' + (rec.hauler_name || '-') + '</td><td class="py-2 px-3 text-center">' + getDocStatus(rec.lto_expiry) + '</td><td class="py-2 px-3 text-center">' + getDocStatus(rec.fire_expiry) + '</td><td class="py-2 px-3 text-center">' + getDocStatus(rec.dost_expiry) + '</td><td class="py-2 px-3">' + (rec.make || '-') + '</td></tr>';
+    }).join('');
+}
+
+function closeDocReport() { document.getElementById('docReportModal').classList.add('hidden'); document.body.style.overflow = ''; }
+
+// ============ PENDING ATLs ============
+var allPendingATLs = [];
+async function loadPending() { var d = await APIHelper.get('/dispatch/pending'); if (d.status === 'success') { allPendingATLs = d.data; filterPending(); } }
+
+function filterPending() {
+    var s = (document.getElementById('pendingSearch')?.value || '').toLowerCase();
+    var f = allPendingATLs.filter(function(a) { return !s || (a.plate_no || '').toLowerCase().includes(s) || (a.company || '').toLowerCase().includes(s) || (a.atl_code || '').toLowerCase().includes(s); });
+    document.getElementById('pendingATLs').innerHTML = f.map(function(a) {
+        return '<div class="bg-white rounded-lg shadow p-3 flex justify-between"><div><p class="font-bold text-sm">' + (a.atl_code || 'N/A') + ' - ' + (a.plate_no || 'N/A') + '</p><p class="text-xs">' + (a.company || '') + ' | SO: ' + (a.so_number || 'N/A') + ' | Vol: ' + (a.volume || 'N/A') + 'L | ' + (a.driver_name || '') + '</p></div><div class="flex space-x-2"><button onclick="verifyATL(' + a.id + ',\'approve\')" class="bg-green-500 text-white px-2 py-1 rounded text-xs">Approve</button><button onclick="verifyATL(' + a.id + ',\'reject\')" class="bg-red-500 text-white px-2 py-1 rounded text-xs">Reject</button></div></div>';
+    }).join('') || '<p class="text-gray-500 text-center py-8">No pending ATLs</p>';
+}
+
+async function verifyATL(id, action) {
+    if (!confirm(action === 'approve' ? 'Approve this ATL?' : 'Reject this ATL?')) return;
+    await APIHelper.post('/dispatch/verify/' + id, { action: action, remarks: prompt('Remarks (optional):') || '' });
+    loadPending(); loadDashboard();
+}
+
+// ============ LOADING MANAGEMENT ============
+async function loadApproved() {
+    var o = await APIHelper.get('/dispatch/ongoing-loading');
+    document.getElementById('ongoingLoading').innerHTML = o.status === 'success' ? o.data.map(function(a) {
+        return '<div class="bg-orange-50 border-l-4 border-orange-500 rounded-lg p-3 flex justify-between"><div><p class="font-bold">' + (a.atl_code || '') + ' - ' + (a.plate_no || '') + '</p><p class="text-xs">' + (a.company || '') + ' | Vol: ' + (a.volume || '') + 'L</p></div><button onclick="completeLoading(' + a.id + ')" class="bg-green-500 text-white px-2 py-1 rounded text-xs">Done</button></div>';
+    }).join('') || '<p class="text-gray-500 text-center py-4">No ongoing loading</p>' : '';
+    
+    var w = await APIHelper.get('/dispatch/approved-for-loading');
+    document.getElementById('approvedForLoading').innerHTML = w.status === 'success' ? w.data.map(function(a) {
+        return '<div class="bg-white rounded-lg shadow p-3 flex justify-between"><div><p class="font-bold">' + (a.atl_code || '') + ' - ' + (a.plate_no || '') + '</p><p class="text-xs">' + (a.company || '') + ' | Vol: ' + (a.volume || '') + 'L</p></div><button onclick="startLoading(' + a.id + ')" class="bg-orange-500 text-white px-3 py-1 rounded text-xs">Start</button></div>';
+    }).join('') || '<p class="text-gray-500 text-center py-4">None waiting</p>' : '';
+}
+
+async function startLoading(id) { if (!confirm('Start loading?')) return; await APIHelper.post('/dispatch/start-loading/' + id); loadApproved(); loadDashboard(); }
+async function completeLoading(id) { var v = prompt('Actual volume (L):'); if (!v) return; await APIHelper.post('/dispatch/complete-loading/' + id, { actual_volume: v }); loadApproved(); loadDashboard(); }
+
+// ============ TRUCKS & CLIENTS ============
+async function loadTrucks() {
+    var d = await APIHelper.get('/truck-masterlist-all');
+    if (d.status === 'success') {
+        document.getElementById('truckList').innerHTML = '<div class="overflow-x-auto"><table class="w-full text-sm bg-white rounded-lg shadow"><thead class="bg-gray-50"><tr><th class="py-2 px-3 text-left">Plate</th><th class="py-2 px-3 text-left">Driver</th><th class="py-2 px-3 text-left">Hauler</th></tr></thead><tbody>' + d.data.slice(0, 50).map(function(t) { return '<tr class="border-b"><td class="py-2 px-3 font-semibold">' + t.plate_no + '</td><td class="py-2 px-3">' + (t.driver_name || '').replace(/"/g, '') + '</td><td class="py-2 px-3">' + (t.hauler_name || '') + '</td></tr>'; }).join('') + '</tbody></table></div>';
+    }
+}
+
+async function loadClients() {
+    var d = await APIHelper.get('/clients');
+    if (d.status === 'success') {
+        document.getElementById('clientList').innerHTML = '<div class="overflow-x-auto"><table class="w-full text-sm bg-white rounded-lg shadow"><thead class="bg-gray-50"><tr><th class="py-2 px-3">Company</th><th class="py-2 px-3">Email</th><th class="py-2 px-3">Mobile</th><th class="py-2 px-3">ATLs</th><th class="py-2 px-3">Actions</th></tr></thead><tbody>' + d.data.map(function(c) {
+            return '<tr class="border-b"><td class="py-2 px-3 font-semibold">' + (c.company_name || '-') + '</td><td class="py-2 px-3">' + c.email + '</td><td class="py-2 px-3">' + c.mobile + '</td><td class="py-2 px-3 text-center">' + c.total_atls + '</td><td class="py-2 px-3"><div class="flex space-x-2 justify-center"><button onclick="editClient(' + c.id + ')" class="text-blue-600"><i class="fas fa-edit"></i></button>' + (c.is_active ? '<button onclick="toggleClient(' + c.id + ')" class="text-orange-600"><i class="fas fa-ban"></i></button>' : '<button onclick="toggleClient(' + c.id + ')" class="text-green-600"><i class="fas fa-check"></i></button>') + '<button onclick="deleteClient(' + c.id + ',\'' + c.email + '\')" class="text-red-600"><i class="fas fa-trash"></i></button></div></td></tr>';
+        }).join('') + '</tbody></table></div>';
+    }
+}
+
+function showAddClient() { document.getElementById('editClientId').value = ''; document.getElementById('clientModalTitle').textContent = 'Add Client'; ['clientEmail', 'clientMobile', 'clientCompany', 'clientPassword'].forEach(function(id) { document.getElementById(id).value = ''; }); document.getElementById('clientModal').classList.remove('hidden'); }
+function closeClientModal() { document.getElementById('clientModal').classList.add('hidden'); }
+
+async function editClient(id) {
+    var d = await APIHelper.get('/clients/' + id);
+    if (d.status === 'success') {
+        var c = d.data;
+        document.getElementById('editClientId').value = c.id;
+        document.getElementById('clientModalTitle').textContent = 'Edit Client';
+        document.getElementById('clientEmail').value = c.email;
+        document.getElementById('clientMobile').value = c.mobile;
+        document.getElementById('clientCompany').value = c.company_name || '';
+        document.getElementById('clientPassword').value = '';
+        document.getElementById('clientModal').classList.remove('hidden');
+    }
+}
+
+async function saveClient(e) {
+    e.preventDefault();
+    var id = document.getElementById('editClientId').value;
+    var body = { email: document.getElementById('clientEmail').value, mobile: document.getElementById('clientMobile').value, company_name: document.getElementById('clientCompany').value };
+    var pw = document.getElementById('clientPassword').value;
+    if (pw) body.password = pw;
+    var url = id ? '/clients/' + id : '/clients';
+    var method = id ? 'PUT' : 'POST';
+    var d;
+    if (method === 'PUT') {
+        d = await APIHelper.post(url, body); // Using post for simplicity, backend handles PUT
+    } else {
+        d = await APIHelper.post(url, body);
+    }
+    if (d.status === 'success') { closeClientModal(); loadClients(); } else alert(d.error || 'Error');
+}
+
+async function toggleClient(id) { await APIHelper.get('/clients/' + id + '/toggle-status'); loadClients(); }
+async function deleteClient(id, email) { if (!confirm('Delete ' + email + '?')) return; await APIHelper.get('/clients/' + id); loadClients(); }
+
+// ============ ANNOUNCEMENTS ============
+if (currentUser.role === 'dispatcher' || currentUser.role === 'management') {
+    document.getElementById('announcementSection').style.display = 'block';
+    loadAdminAnnouncements();
+}
+
+async function createAnnouncement() {
+    var title = document.getElementById('announcementTitle').value.trim();
+    var message = document.getElementById('announcementMessage').value.trim();
+    if (!title || !message) return alert('Title and message required');
+    var d = await APIHelper.post('/announcements', {
+        title: title, message: message,
+        priority: document.getElementById('announcementPriority').value,
+        expires_at: document.getElementById('announcementExpiry').value || null
+    });
+    if (d.status === 'success') { document.getElementById('announcementTitle').value = ''; document.getElementById('announcementMessage').value = ''; loadAdminAnnouncements(); }
+}
+
+async function loadAdminAnnouncements() {
+    var d = await APIHelper.get('/announcements/admin');
+    if (d.status === 'success') {
+        document.getElementById('adminAnnouncementList').innerHTML = d.data.map(function(ann) {
+            var colors = { urgent: '#ef4444', important: '#f59e0b', normal: '#3b82f6' };
+            return '<div style="padding:12px;border-bottom:1px solid #f3f4f6;display:flex;justify-content:space-between;align-items:center;"><div><strong>' + ann.title + '</strong><span style="background:' + (colors[ann.priority] || '#3b82f6') + ';color:white;font-size:10px;padding:2px 8px;border-radius:10px;margin-left:8px;">' + ann.priority + '</span><p style="font-size:12px;color:#6b7280;">' + ann.message.substring(0, 80) + '...</p></div><div style="display:flex;gap:8px;"><button onclick="toggleAnnouncement(' + ann.id + ')" style="font-size:12px;padding:4px 8px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer;background:' + (ann.is_active ? '#dcfce7' : '#fee2e2') + ';">' + (ann.is_active ? 'Active' : 'Inactive') + '</button><button onclick="deleteAnnouncement(' + ann.id + ')" style="font-size:12px;padding:4px 8px;border:1px solid #ef4444;color:#ef4444;border-radius:4px;cursor:pointer;">Delete</button></div></div>';
+        }).join('');
+    }
+}
+
+async function toggleAnnouncement(id) { await APIHelper.get('/announcements/' + id + '/toggle'); loadAdminAnnouncements(); }
+async function deleteAnnouncement(id) { if (!confirm('Delete?')) return; await APIHelper.get('/announcements/' + id); loadAdminAnnouncements(); }
+
+// ============ CALCULATOR ============
+function toggleSidebar() { document.getElementById("sidebar").classList.toggle("open"); }
+function openCalc() { document.getElementById('calcWidget').classList.remove('hidden'); document.getElementById('calcButton').classList.add('hidden'); }
+function closeCalc() { document.getElementById('calcWidget').classList.add('hidden'); document.getElementById('calcButton').classList.remove('hidden'); }
+var calcExpr = '';
+function calcInput(v) { calcExpr += v; document.getElementById('calcDisplay').value = calcExpr; }
+function calcClear() { calcExpr = ''; document.getElementById('calcDisplay').value = '0'; }
+function calcResult() { try { var r = eval(calcExpr); document.getElementById('calcDisplay').value = Number(r.toFixed(4)); calcExpr = String(r); } catch (e) { document.getElementById('calcDisplay').value = 'Error'; calcExpr = ''; } }
+
+// ============ LOGOUT ============
+async function logout() { try { await fetch('/api/auth/logout', { method: 'POST', headers: { 'Authorization': 'Bearer ' + localStorage.getItem('fueltrak_token') } }); } catch (e) {} localStorage.clear(); window.location.href = '/'; }
+
+// ============ KEYBOARD SHORTCUTS ============
+document.addEventListener('keydown', function(e) {
+    if (!document.getElementById('calcWidget').classList.contains('hidden')) {
+        var k = e.key;
+        if (k >= '0' && k <= '9') calcInput(k);
+        else if (k === '.') calcInput('.');
+        else if (k === '+') calcInput('+');
+        else if (k === '-') calcInput('-');
+        else if (k === '*') calcInput('*');
+        else if (k === '/') { e.preventDefault(); calcInput('/'); }
+        else if (k === 'Enter') calcResult();
+        else if (k === 'Escape') closeCalc();
+        else if (k === 'Backspace') { calcExpr = calcExpr.slice(0, -1); document.getElementById('calcDisplay').value = calcExpr || '0'; }
+    }
+    if (e.key === 'Escape') { var m = document.getElementById('docReportModal'); if (m && !m.classList.contains('hidden')) closeDocReport(); }
+});
+
+// ============ STARTUP ============
+loadDashboard();
+var urlParams = new URLSearchParams(window.location.search);
+if (urlParams.get('tab') === 'clients') openTab('clients');
 </script>
 <script src="/js/chat-helper.js"></script>
 <script src="/js/announcement.js"></script>
