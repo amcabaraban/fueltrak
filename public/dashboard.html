@@ -237,7 +237,7 @@
 </div>
 <script>
 // Show announcement section for admins/dispatchers
-const user = JSON.parse(localStorage.getItem('fueltrak_user') || '{}');
+
 if (user.role === 'dispatcher' || user.role === 'management') {
     document.getElementById('announcementSection').style.display = 'block';
     loadAdminAnnouncements();
