@@ -27,25 +27,25 @@ function setupSecurity(app) {
         contentSecurityPolicy: {
             directives: {
                 defaultSrc: ["'self'"],
-                // Removed 'unsafe-inline' and added dynamic nonce support
                 scriptSrc: [
                     "'self'", 
-                    (req, res) => `'nonce-${res.locals.nonce}'`, 
-                    "https://cdn.tailwindcss.com", 
-                    "https://cdnjs.cloudflare.com"
+                    "https://tailwindcss.com", 
+                    "https://cloudflare.com",
+                    // This explicitly allows your exact inline script block without needing a nonce attribute
+                    "'sha256-spdIyr2fBBgUpCBeUhE+W74ONuyZiuK0T8YWBNj+/nk='"
                 ],
-                // Removed 'unsafe-inline' to protect event handlers
-                scriptSrcAttr: ["'self'"], 
-                // Using the nonce for inline <style> tags too
+                // Re-added 'unsafe-inline' strictly to scriptSrcAttr to make form triggers like onsubmit="" function normally
+                scriptSrcAttr: ["'self'", "'unsafe-inline'"], 
                 styleSrc: [
                     "'self'", 
-                    (req, res) => `'nonce-${res.locals.nonce}'`, 
-                    "https://cdnjs.cloudflare.com"
+                    "https://cloudflare.com",
+                    // This allows Tailwind CSS to inject its calculated classes at runtime dynamically
+                    "'unsafe-inline'"
                 ],
-                styleSrcAttr: ["'self'"],
+                styleSrcAttr: ["'self'", "'unsafe-inline'"],
                 imgSrc: ["'self'", "data:", "https:"],
-                connectSrc: ["'self'", "https://fueltraksystem.vercel.app", "https://fueltrak-seven.vercel.app"],
-                fontSrc: ["'self'", "https://cdnjs.cloudflare.com"],
+                connectSrc: ["'self'", "https://vercel.app", "https://vercel.app"],
+                fontSrc: ["'self'", "https://cloudflare.com"],
                 objectSrc: ["'none'"],
                 frameAncestors: ["'none'"],
                 formAction: ["'self'"],
@@ -65,6 +65,7 @@ function setupSecurity(app) {
         crossOriginOpenerPolicy: { policy: 'same-origin' },
         crossOriginResourcePolicy: { policy: 'same-origin' },
     }));
+
     
     app.use((req, res, next) => {
         res.removeHeader('X-Powered-By');
