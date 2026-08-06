@@ -582,9 +582,24 @@ function closeChat() {
 async function loadContactList() {
     try {
         const token = localStorage.getItem('token');
+        
+        // Check if token exists
+        if (!token) {
+            console.log('No token found, user not logged in');
+            return;
+        }
+        
         const response = await fetch('/api/chat-list', {
             headers: { 'Authorization': 'Bearer ' + token }
         });
+        
+        // If unauthorized, redirect to login
+        if (response.status === 401) {
+            localStorage.clear();
+            window.location.href = '/';
+            return;
+        }
+        
         const data = await response.json();
         
         if (data.status === 'success') {
@@ -723,8 +738,14 @@ async function updateUnreadBadge() {
         const response = await fetch('/api/chat/unread', {
             headers: { 'Authorization': 'Bearer ' + token }
         });
-        const data = await response.json();
         
+        if (response.status === 401) {
+            localStorage.clear();
+            window.location.href = '/';
+            return;
+        }
+        
+        const data = await response.json();
         const badge = document.getElementById('unreadBadge');
         if (data.unread > 0) {
             badge.textContent = data.unread > 99 ? '99+' : data.unread;
@@ -733,7 +754,7 @@ async function updateUnreadBadge() {
             badge.classList.add('hidden');
         }
     } catch (e) {}
-} // Changed from 15000 to 30000 (30 seconds)
+}
 
 // ============ CALCULATOR ============
 function toggleSidebar(){var s=document.getElementById("sidebar");s.classList.toggle("open");document.getElementById("sidebarOverlay").classList.toggle("hidden")}
