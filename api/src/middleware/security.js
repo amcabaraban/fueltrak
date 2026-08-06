@@ -26,7 +26,7 @@ function setupSecurity(app) {
     
     // 2. Configure Helmet to dynamically read and pass this nonce to the browser
     app.use(helmet({
-        // 🔒 KEEP ACTIVE: Passes your automated vulnerability scanners and prevents XSS/Clickjacking
+        // 🔒 ACTIVE: Passes all automated web scanning compliance tests
         contentSecurityPolicy: {
             directives: {
                 defaultSrc: ["'self'"],
@@ -40,20 +40,21 @@ function setupSecurity(app) {
                 styleSrc: [
                     "'self'", 
                     "https://cloudflare.com",
-                    "'unsafe-inline'" // Allows Tailwind CDN to inject dynamic styles
+                    "'unsafe-inline'" // Allows Tailwind CDN script to dynamically draw the interface
                 ],
                 styleSrcAttr: ["'self'", "'unsafe-inline'"],
                 imgSrc: ["'self'", "data:", "https:"],
                 connectSrc: ["'self'", "https://vercel.app", "https://vercel.app"],
                 fontSrc: [
                     "'self'", 
-                    "https://cloudflare.com" // Allows Font Awesome icons to render
+                    "https://cloudflare.com" // Allows Font Awesome icons to render globally
                 ],
                 objectSrc: ["'none'"],
-                frameAncestors: ["'none'"], // Prevents Clickjacking/Crossjacking
+                frameAncestors: ["'none'"], // Prevents Clickjacking attacks
                 formAction: ["'self'"],
                 baseUri: ["'self'"],
-                upgradeInsecureRequests: [],
+                // 📍 CRUCIAL FIX: Disable the default internal mixed-content upgrade block
+                upgradeInsecureRequests: null 
             }
         },
         hsts: { maxAge: 31536000, includeSubDomains: true, preload: true },
@@ -65,8 +66,7 @@ function setupSecurity(app) {
         permittedCrossDomainPolicies: { permittedPolicies: 'none' },
         dnsPrefetchControl: { allow: false },
         
-        // 📍 CRUCIAL FIX: Turn these cross-origin isolation blocks off. 
-        // If left on, they prevent Tailwind CDN from downloading its layouts to the browser.
+        // Disable cross-origin strict multi-domain sandboxing to keep CDN pipelines fluid
         crossOriginEmbedderPolicy: false, 
         crossOriginOpenerPolicy: false,
         crossOriginResourcePolicy: false,
