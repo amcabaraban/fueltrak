@@ -34,12 +34,4 @@ setInterval(() => { cleanupAuditLogs().catch(() => {}); }, 24 * 60 * 60 * 1000);
 process.on('uncaughtException', (error) => { console.error('UNCAUGHT EXCEPTION:', error.message); });
 process.on('unhandledRejection', (reason) => { console.error('UNHANDLED REJECTION:', reason); });
 
-// For local testing only - Vercel ignores this
-if (require.main === module) {
-    const PORT = process.env.PORT || 3000;
-    app.listen(PORT, () => {
-        console.log('FuelTrak server running on port ' + PORT);
-    });
-}
-
 module.exports = app;
