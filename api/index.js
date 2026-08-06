@@ -11,9 +11,9 @@ const { setupSalesRoutes } = require('./src/controllers/salesController');
 const { setupChatRoutes } = require('./src/controllers/chatController');
 const { setupReportRoutes } = require('./src/controllers/reportController');
 const { setupAdminRoutes } = require('./src/controllers/adminController');
+const { setupAnnouncementRoutes } = require('./src/controllers/announcementController'); // ← ADD THIS
 const { setupPageRoutes } = require('./src/routes/pageRoutes');
 const { cleanupRecycleBin, cleanupAuditLogs } = require('./src/services/recycleBin');
-const { setupAnnouncementRoutes } = require('./src/controllers/announcementController');
 
 const app = express();
 
@@ -28,8 +28,8 @@ setupSalesRoutes(app);
 setupChatRoutes(app);
 setupReportRoutes(app);
 setupAdminRoutes(app);
+setupAnnouncementRoutes(app); // ← ADD THIS
 setupPageRoutes(app);
-setupAnnouncementRoutes(app);
 
 setInterval(() => { cleanupRecycleBin().catch(() => {}); }, 60 * 60 * 1000);
 setInterval(() => { cleanupAuditLogs().catch(() => {}); }, 24 * 60 * 60 * 1000);
