@@ -1008,6 +1008,9 @@
       background-color: color-mix(in oklab, var(--color-red-500) 80%, transparent);
     }
   }
+  .bg-red-600 {
+    background-color: var(--color-red-600);
+  }
   .bg-white {
     background-color: var(--color-white);
   }

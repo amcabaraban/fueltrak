@@ -25,7 +25,8 @@ function setupPageRoutes(app) {
         '/audit-logs': 'audit-logs.html',
         '/first-login': 'first-login.html',
         '/terms': 'terms.html',
-        '/recycle-bin': 'recycle-bin.html'
+        '/settings': 'settings.html',
+        '/announcements': 'announcements.html',
     };
     
     Object.entries(pageRoutes).forEach(([route, file]) => {
