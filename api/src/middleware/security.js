@@ -30,11 +30,13 @@ function setupSecurity(app) {
                 scriptSrc: [
                     "'self'", 
                     "https://cdn.tailwindcss.com", 
-                    "https://cdnjs.cloudflare.com", // 📍 Fixed from cloudflare.com
+                    "https://cdnjs.cloudflare.com",
                     // 1. Your Login Page Inline Script Hash
                     "'sha256-spdIyr2fBBgUpCBeUhE+W74ONuyZiuK0T8YWBNj+/nk='",
-                    // 2. Your Client Page Inline Script Hash (Added from your latest log!)
-                    "'sha256-3uxURQM01xYoTRE/dqrF2aL+yvZPmiMKXEmyCFMXJHY='"
+                    // 2. Your Client Page Inline Script Hash
+                    "'sha256-3uxURQM01xYoTRE/dqrF2aL+yvZPmiMKXEmyCFMXJHY='",
+                    // 3. 📍 Added: Your Dashboard Page Inline Script Hash
+                    "'sha256-XJCVqS5gLbeAlNaYQ7In8rMiuS1QOPp8iMKOoWqrbys='"
                 ],
                 scriptSrcAttr: ["'self'", "'unsafe-inline'"], 
                 styleSrc: [
