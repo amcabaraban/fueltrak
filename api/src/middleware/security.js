@@ -29,17 +29,17 @@ function setupSecurity(app) {
                 defaultSrc: ["'self'"],
                 scriptSrc: [
                     "'self'", 
-                    "https://cdn.tailwindcss.com", // 📍 Use correct cdn. domain 
-                    "https://cdnjs.cloudflare.com", // 📍 Fixed to cdnjs.
-                    // This explicitly allows your exact inline script block without needing a nonce attribute
+                    "https://cdn.tailwindcss.com", 
+                    "https://cloudflare.com",
+                    // This securely validates your main inline script block without needing attributes
                     "'sha256-spdIyr2fBBgUpCBeUhE+W74ONuyZiuK0T8YWBNj+/nk='"
                 ],
-                // Re-added 'unsafe-inline' strictly to scriptSrcAttr to make form triggers like onsubmit="" function normally
+                // Keeps HTML attributes like onsubmit="login(event)" operational
                 scriptSrcAttr: ["'self'", "'unsafe-inline'"], 
                 styleSrc: [
                     "'self'", 
-                    "https://cdnjs.cloudflare.com", // 📍 Fixed to cdnjs.
-                    // This allows Tailwind CSS to inject its calculated classes at runtime dynamically
+                    "https://cloudflare.com",
+                    // 📍 Crucial: This grants Tailwind CDN permission to inject dynamic styles into the DOM
                     "'unsafe-inline'"
                 ],
                 styleSrcAttr: ["'self'", "'unsafe-inline'"],
@@ -47,7 +47,7 @@ function setupSecurity(app) {
                 connectSrc: ["'self'", "https://vercel.app", "https://vercel.app"],
                 fontSrc: [
                     "'self'", 
-                    "https://cdnjs.cloudflare.com" // 📍 Fixed to cdnjs. (Crucial for Font Awesome icons)
+                    "https://cloudflare.com" // Allows Font Awesome icons to render
                 ],
                 objectSrc: ["'none'"],
                 frameAncestors: ["'none'"],
