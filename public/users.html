@@ -241,6 +241,7 @@ function calcResult(){try{var r=eval(calcExpr.replace(/�/g,'*').replace(/�/g
 async function logout(){try{await fetch('/api/auth/logout',{method:'POST',headers:{'Authorization':'Bearer '+localStorage.getItem('fueltrak_token')}})}catch(e){}localStorage.clear();window.location.href='/'}
 loadUsers();
 </script>
+<script src="/js/chat-helper.js"></script>
 <!-- Chat Widget -->
 <div id="chatWidget" class="hidden fixed bottom-4 right-4 z-50 w-80 bg-white rounded-xl shadow-2xl border">
     <div class="bg-blue-900 text-white p-3 rounded-t-xl flex justify-between items-center"><span><i class="fas fa-comments mr-2"></i><span id="chatTitle">Chat</span></span><div><button onclick="showContactList()" class="text-white mr-2 text-sm"><i class="fas fa-users"></i></button><button onclick="closeChat()" class="text-white">&times;</button></div></div>
