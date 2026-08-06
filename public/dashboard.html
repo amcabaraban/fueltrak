@@ -631,6 +631,9 @@ async function loadMessages() {
     
     try {
         const token = localStorage.getItem('token');
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        const myId = user.id; // Get current user's ID
+        
         const response = await fetch('/api/chat/' + currentChatUserId, {
             headers: { 'Authorization': 'Bearer ' + token }
         });
@@ -641,14 +644,14 @@ async function loadMessages() {
             chatBody.innerHTML = '';
             
             data.data.forEach(msg => {
-                const isMe = msg.sender_id !== currentChatUserId;
+                const isMe = msg.sender_id === myId; // Compare with YOUR ID
                 const div = document.createElement('div');
                 div.className = 'flex ' + (isMe ? 'justify-end' : 'justify-start');
                 div.innerHTML = `
                     <div class="${isMe ? 'bg-blue-100' : 'bg-gray-100'} rounded-lg px-3 py-2 max-w-[80%]">
-                        <p class="text-xs text-gray-500">${msg.sender_email}</p>
+                        <p class="text-xs text-gray-500 font-bold">${isMe ? 'You' : msg.sender_email}</p>
                         <p class="text-sm">${msg.message}</p>
-                        <p class="text-xs text-gray-400 mt-1">${new Date(msg.created_at).toLocaleTimeString()}</p>
+                        <p class="text-xs text-gray-400 mt-1">${new Date(msg.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</p>
                     </div>
                 `;
                 chatBody.appendChild(div);
