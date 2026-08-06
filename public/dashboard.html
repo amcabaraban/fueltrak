@@ -559,76 +559,178 @@ async function toggleClient(id){await api('/clients/'+id+'/toggle-status','PATCH
 async function deleteClient(id,email){if(!confirm('Delete '+email+'?'))return;await api('/clients/'+id,'DELETE');loadClients()}
 
 // ============ CHAT WITH NOTIFICATIONS ============
-var currentChatUser=null,currentChatName='',chatInterval=null,contactList=[],lastMessageId=0;
-if('Notification' in window&&Notification.permission==='default'){Notification.requestPermission()}
-function showChatNotification(title,body,icon){if('Notification' in window&&Notification.permission==='granted'){var chatWidget=document.getElementById('chatWidget');if(chatWidget&&!chatWidget.classList.contains('hidden')&&document.hasFocus())return;var notification=new Notification(title,{body:body,icon:icon||'/favicon.svg',badge:'/favicon.svg',tag:'fueltrak-chat',requireInteraction:false,silent:false});notification.onclick=function(){window.focus();openChat();notification.close()};setTimeout(function(){notification.close()},5000)}}
-async function openChat(){document.getElementById('chatWidget').classList.remove('hidden');document.getElementById('chatButton').classList.add('hidden');document.getElementById('unreadBadge').classList.add('hidden');loadContactList()}
-function showContactList(){document.getElementById('contactList').classList.remove('hidden');document.getElementById('chatBody').classList.add('hidden');document.getElementById('chatInputArea').classList.add('hidden');document.getElementById('chatTitle').textContent='Chat';currentChatUser=null;loadContactList()}
+let currentChatUser = null;
+let currentChatUserId = null;
+let chatPollingInterval = null;
+
+// Open chat widget
+function openChat() {
+    document.getElementById('chatWidget').classList.remove('hidden');
+    document.getElementById('chatButton').classList.add('hidden');
+    loadContactList();
+    startChatPolling();
+}
+
+// Close chat widget
+function closeChat() {
+    document.getElementById('chatWidget').classList.add('hidden');
+    document.getElementById('chatButton').classList.remove('hidden');
+    stopChatPolling();
+}
+
+// Load contact list with unread badges per sender
 async function loadContactList() {
     try {
-        var r = await fetch('/api/chat-list', {
-            headers: {
-                'Authorization': 'Bearer ' + token
-            }
+        const token = localStorage.getItem('token');
+        const response = await fetch('/api/chat-list', {
+            headers: { 'Authorization': 'Bearer ' + token }
         });
-        var d = await r.json();
+        const data = await response.json();
         
-        if (d.status === 'success') {
-            contactList = d.data;
-            var h = '';
+        if (data.status === 'success') {
+            const contactList = document.getElementById('contactList');
+            contactList.innerHTML = '';
             
-            contactList.forEach(function(c) {
-                var name = c.company_name || c.email;
-                var unreadCount = c.unread_count || 0;
-                
-                // Show badge only if unread_count > 0
-                var badgeHtml = unreadCount > 0 
-                    ? '<span class="ml-2 px-2 py-0.5 text-xs font-bold text-white bg-red-500 rounded-full">' + (unreadCount > 99 ? '99+' : unreadCount) + '</span>'
-                    : '';
-
-                h += '<div onclick="startChat(' + c.id + ',\'' + (c.email || c.company_name) + '\')" class="flex items-center p-3 hover:bg-gray-50 cursor-pointer border-b relative">' +
-                        '<div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">' +
-                            '<i class="fas fa-user text-blue-600 text-sm"></i>' +
-                        '</div>' +
-                        '<div class="flex-1 min-w-0">' +
-                            '<div class="flex items-center justify-between">' +
-                                '<p class="text-sm font-semibold truncate">' + name + '</p>' +
-                                badgeHtml +
-                            '</div>' +
-                            '<p class="text-xs text-gray-400 truncate">' + (c.email || '') + '</p>' +
-                        '</div>' +
-                     '</div>';
+            if (data.data.length === 0) {
+                contactList.innerHTML = '<div class="p-3 text-center text-gray-400 text-sm">No contacts available</div>';
+                return;
+            }
+            
+            data.data.forEach(user => {
+                const div = document.createElement('div');
+                div.className = 'p-3 hover:bg-gray-100 cursor-pointer border-b flex justify-between items-center';
+                div.onclick = () => openChatWithUser(user.id, user.email);
+                div.innerHTML = `
+                    <span><i class="fas fa-user-circle mr-2 text-gray-400"></i>${user.email}</span>
+                    ${user.unread > 0 ? `<span class="bg-red-500 text-white text-xs rounded-full px-2 py-0.5 font-bold">${user.unread}</span>` : ''}
+                `;
+                contactList.appendChild(div);
             });
-            
-            document.getElementById('contactList').innerHTML = h || '<p class="p-3 text-center text-gray-400 text-sm">No contacts</p>';
         }
-    } catch (err) {
-        console.error('Failed to load contact list:', err);
+    } catch (e) {
+        console.error('Error loading contacts:', e);
     }
 }
-function startChat(id,name){currentChatUser=id;currentChatName=name;document.getElementById('chatTitle').textContent=name;document.getElementById('contactList').classList.add('hidden');document.getElementById('chatBody').classList.remove('hidden');document.getElementById('chatInputArea').classList.remove('hidden');loadChatMessages();if(chatInterval)clearInterval(chatInterval);chatInterval=setInterval(loadChatMessages,5000)}
-async function loadChatMessages(){if(!currentChatUser)return;var r=await fetch('/api/chat/'+currentChatUser,{headers:{'Authorization':'Bearer '+token}});var d=await r.json();if(d.status==='success'){var h='',newMessages=0;d.data.forEach(function(m){var isMe=m.sender_id==user.id;if(!isMe){newMessages++;if(m.id>lastMessageId)lastMessageId=m.id}h+='<div class="'+(isMe?'text-right':'text-left')+' mb-2"><div class="inline-block '+(isMe?'bg-blue-100':'bg-gray-100')+' rounded-lg px-3 py-1.5 text-sm max-w-[80%]"><p class="text-[10px] text-gray-500">'+(isMe?'You':currentChatName)+'</p><p>'+m.message+'</p><p class="text-[9px] text-gray-400 text-right">'+new Date(m.created_at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})+'</p></div></div>'});document.getElementById('chatBody').innerHTML=h||'<p class="text-center text-gray-400 text-sm pt-10">Start the conversation!</p>';document.getElementById('chatBody').scrollTop=document.getElementById('chatBody').scrollHeight;if(newMessages>0&&document.getElementById('chatWidget').classList.contains('hidden')){showChatNotification('New message from '+currentChatName,'You have '+newMessages+' new message'+(newMessages>1?'s':''),'/favicon.svg')}}}
-async function sendChat(){var i=document.getElementById('chatInput');var m=i.value.trim();if(!m||!currentChatUser)return;i.value='';await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({receiver_id:currentChatUser,message:m})});loadChatMessages()}
-function closeChat(){document.getElementById('chatWidget').classList.add('hidden');document.getElementById('chatButton').classList.remove('hidden');if(chatInterval)clearInterval(chatInterval)}
-// Background polling - check every 30 seconds (reduced from 15)
-setInterval(async function(){
-    if(document.getElementById('chatWidget').classList.contains('hidden')){
-        try {
-            var r = await fetch('/api/chat/unread', {
-                headers: {'Authorization': 'Bearer ' + token}
+
+// Open chat with specific user
+async function openChatWithUser(userId, userEmail) {
+    currentChatUserId = userId;
+    currentChatUser = userEmail;
+    
+    document.getElementById('chatTitle').textContent = userEmail;
+    document.getElementById('contactList').classList.add('hidden');
+    document.getElementById('chatBody').classList.remove('hidden');
+    document.getElementById('chatInputArea').classList.remove('hidden');
+    
+    await loadMessages();
+}
+
+// Load messages
+async function loadMessages() {
+    if (!currentChatUserId) return;
+    
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('/api/chat/' + currentChatUserId, {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            const chatBody = document.getElementById('chatBody');
+            chatBody.innerHTML = '';
+            
+            data.data.forEach(msg => {
+                const isMe = msg.sender_id !== currentChatUserId;
+                const div = document.createElement('div');
+                div.className = 'flex ' + (isMe ? 'justify-end' : 'justify-start');
+                div.innerHTML = `
+                    <div class="${isMe ? 'bg-blue-100' : 'bg-gray-100'} rounded-lg px-3 py-2 max-w-[80%]">
+                        <p class="text-xs text-gray-500">${msg.sender_email}</p>
+                        <p class="text-sm">${msg.message}</p>
+                        <p class="text-xs text-gray-400 mt-1">${new Date(msg.created_at).toLocaleTimeString()}</p>
+                    </div>
+                `;
+                chatBody.appendChild(div);
             });
-            var d = await r.json();
-            var badge = document.getElementById('unreadBadge');
-            // Check for unread property (not data)
-            if(d.status === 'success' && d.unread > 0){
-                badge.textContent = d.unread > 9 ? '9+' : d.unread;
-                badge.classList.remove('hidden');
-            } else {
-                badge.classList.add('hidden');
-            }
-        } catch(e) {}
+            
+            chatBody.scrollTop = chatBody.scrollHeight;
+        }
+    } catch (e) {
+        console.error('Error loading messages:', e);
     }
-}, 30000); // Changed from 15000 to 30000 (30 seconds)
+}
+
+// Send message
+async function sendChat() {
+    const input = document.getElementById('chatInput');
+    const message = input.value.trim();
+    
+    if (!message || !currentChatUserId) return;
+    
+    try {
+        const token = localStorage.getItem('token');
+        await fetch('/api/chat', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token
+            },
+            body: JSON.stringify({
+                receiver_id: currentChatUserId,
+                message: message
+            })
+        });
+        
+        input.value = '';
+        await loadMessages();
+    } catch (e) {
+        console.error('Error sending message:', e);
+    }
+}
+
+// Show contact list (back button)
+function showContactList() {
+    document.getElementById('contactList').classList.remove('hidden');
+    document.getElementById('chatBody').classList.add('hidden');
+    document.getElementById('chatInputArea').classList.add('hidden');
+    document.getElementById('chatTitle').textContent = 'Chat';
+    currentChatUserId = null;
+    loadContactList();
+}
+
+// Poll for unread messages
+function startChatPolling() {
+    updateUnreadBadge();
+    chatPollingInterval = setInterval(updateUnreadBadge, 10000); // Every 10 seconds
+}
+
+function stopChatPolling() {
+    if (chatPollingInterval) {
+        clearInterval(chatPollingInterval);
+        chatPollingInterval = null;
+    }
+}
+
+async function updateUnreadBadge() {
+    try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+        
+        const response = await fetch('/api/chat/unread', {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        const data = await response.json();
+        
+        const badge = document.getElementById('unreadBadge');
+        if (data.unread > 0) {
+            badge.textContent = data.unread > 99 ? '99+' : data.unread;
+            badge.classList.remove('hidden');
+        } else {
+            badge.classList.add('hidden');
+        }
+    } catch (e) {}
+} // Changed from 15000 to 30000 (30 seconds)
 
 // ============ CALCULATOR ============
 function toggleSidebar(){var s=document.getElementById("sidebar");s.classList.toggle("open");document.getElementById("sidebarOverlay").classList.toggle("hidden")}
