@@ -608,6 +608,9 @@
   .max-w-7xl {
     max-width: var(--container-7xl);
   }
+  .max-w-\[70px\] {
+    max-width: 70px;
+  }
   .max-w-\[80\%\] {
     max-width: 80%;
   }
@@ -1330,6 +1333,9 @@
     font-size: var(--text-xs);
     line-height: var(--tw-leading, var(--text-xs--line-height));
   }
+  .text-\[8px\] {
+    font-size: 8px;
+  }
   .text-\[9px\] {
     font-size: 9px;
   }
@@ -1338,6 +1344,9 @@
   }
   .text-\[11px\] {
     font-size: 11px;
+  }
+  .text-\[13px\] {
+    font-size: 13px;
   }
   .leading-relaxed {
     --tw-leading: var(--leading-relaxed);
