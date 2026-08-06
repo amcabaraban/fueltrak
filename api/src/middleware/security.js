@@ -41,7 +41,6 @@ function setupSecurity(app) {
         crossOriginOpenerPolicy: false,
         crossOriginResourcePolicy: false,
     }));
-
     
     app.use((req, res, next) => {
         res.removeHeader('X-Powered-By');
@@ -63,10 +62,24 @@ function setupSecurity(app) {
     
     app.use(cors({
         origin: (origin, callback) => {
-            const allowedOrigins = ['https://vercel.app', 'https://vercel.app', 'http://localhost:3000', 'http://localhost:8080'];
-            if (!origin) return callback(null, true);
-            if (allowedOrigins.includes(origin)) { callback(null, true); }
-            else { console.warn('CORS blocked origin: ' + origin); callback(new Error('Not allowed by CORS')); }
+            const allowedOrigins = [
+                'https://vercel.app', 
+                'https://vercel.app', 
+                'http://localhost:3000', 
+                'http://localhost:8080'
+            ];
+            
+            // 📍 FIX: Allow requests if origin is missing, empty, or matching your own system domain
+            if (!origin || origin === 'null' || origin === '') { 
+                return callback(null, true); 
+            }
+            
+            if (allowedOrigins.includes(origin)) { 
+                callback(null, true); 
+            } else { 
+                console.warn('CORS blocked origin: ' + origin); 
+                callback(new Error('Not allowed by CORS')); 
+            }
         },
         credentials: true,
         methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
