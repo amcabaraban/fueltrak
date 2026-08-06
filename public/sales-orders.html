@@ -326,8 +326,7 @@
 
         // Load clients list with fallback
         async function loadClientsList() {
-            console.log('Loading clients list...');
-            
+           
             // Try the dedicated endpoint first
             try {
                 var d = await api('/sales-orders/clients-list');
