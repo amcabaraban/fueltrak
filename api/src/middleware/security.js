@@ -26,7 +26,7 @@ function setupSecurity(app) {
     
     // 2. Configure Helmet to dynamically read and pass this nonce to the browser
     app.use(helmet({
-        // 📍 FIX: Re-enables the global CSP header to pass security scanning audits
+        // 🔒 KEEP ACTIVE: Passes your automated vulnerability scanners and prevents XSS/Clickjacking
         contentSecurityPolicy: {
             directives: {
                 defaultSrc: ["'self'"],
@@ -34,33 +34,29 @@ function setupSecurity(app) {
                     "'self'", 
                     "https://tailwindcss.com", 
                     "https://cloudflare.com",
-                    // Allows your native index, client, and dashboard internal scripts to execute
                     "'unsafe-inline'" 
                 ],
                 scriptSrcAttr: ["'self'", "'unsafe-inline'"], 
                 styleSrc: [
                     "'self'", 
                     "https://cloudflare.com",
-                    // Crucial: Allows Tailwind CDN engine to generate utility CSS classes dynamically
-                    "'unsafe-inline'"
+                    "'unsafe-inline'" // Allows Tailwind CDN to inject dynamic styles
                 ],
                 styleSrcAttr: ["'self'", "'unsafe-inline'"],
                 imgSrc: ["'self'", "data:", "https:"],
                 connectSrc: ["'self'", "https://vercel.app", "https://vercel.app"],
                 fontSrc: [
                     "'self'", 
-                    "https://cloudflare.com" // Allows Font Awesome web fonts to resolve cleanly
+                    "https://cloudflare.com" // Allows Font Awesome icons to render
                 ],
                 objectSrc: ["'none'"],
-                // 🔒 Protects against Clickjacking/Crossjacking by stopping foreign iframes from hijacking your pages
-                frameAncestors: ["'none'"], 
+                frameAncestors: ["'none'"], // Prevents Clickjacking/Crossjacking
                 formAction: ["'self'"],
                 baseUri: ["'self'"],
                 upgradeInsecureRequests: [],
             }
         },
         hsts: { maxAge: 31536000, includeSubDomains: true, preload: true },
-        // 🔒 Explicit clickjacking defense layer
         frameguard: { action: 'deny' }, 
         hidePoweredBy: true,
         noSniff: true,
@@ -68,10 +64,12 @@ function setupSecurity(app) {
         referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
         permittedCrossDomainPolicies: { permittedPolicies: 'none' },
         dnsPrefetchControl: { allow: false },
-        // 📍 Set to false to prevent cross-origin media isolation from breaking Tailwind CDN asset channels
+        
+        // 📍 CRUCIAL FIX: Turn these cross-origin isolation blocks off. 
+        // If left on, they prevent Tailwind CDN from downloading its layouts to the browser.
         crossOriginEmbedderPolicy: false, 
-        crossOriginOpenerPolicy: { policy: 'same-origin' },
-        crossOriginResourcePolicy: { policy: 'same-origin' },
+        crossOriginOpenerPolicy: false,
+        crossOriginResourcePolicy: false,
     }));
     
     app.use((req, res, next) => {
