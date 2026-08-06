@@ -54,36 +54,6 @@
         </div>
     </nav>
 
-    <!-- Announcement Creation (Admin Only) -->
-    <div id="announcementSection" style="display:none;">
-        <div style="background:white;border-radius:8px;padding:20px;margin-bottom:20px;box-shadow:0 1px 3px rgba(0,0,0,0.1);">
-            <h3 style="font-size:18px;font-weight:bold;margin-bottom:16px;">
-                <i class="fas fa-bullhorn mr-2" style="color:#1e3a5f;"></i>Create Announcement
-            </h3>
-            <div style="display:flex;flex-direction:column;gap:12px;">
-                <input type="text" id="announcementTitle" placeholder="Title" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:6px;">
-                <textarea id="announcementMessage" placeholder="Message..." rows="4" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:6px;"></textarea>
-                <div style="display:flex;gap:12px;">
-                    <select id="announcementPriority" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:6px;">
-                        <option value="normal">Normal</option>
-                        <option value="important">Important</option>
-                        <option value="urgent">Urgent</option>
-                    </select>
-                    <input type="date" id="announcementExpiry" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:6px;">
-                    <button onclick="createAnnouncement()" style="background:#1e3a5f;color:white;padding:8px 20px;border:none;border-radius:6px;cursor:pointer;">
-                        <i class="fas fa-paper-plane mr-2"></i>Send
-                    </button>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Existing Announcements List -->
-        <div id="existingAnnouncements" style="background:white;border-radius:8px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.1);">
-            <h3 style="font-size:18px;font-weight:bold;margin-bottom:16px;">Existing Announcements</h3>
-            <div id="adminAnnouncementList">Loading...</div>
-        </div>
-    </div>
-
     <!-- Desktop Sidebar -->
     <div class="fixed left-0 top-0 h-full w-14 md:w-48 bg-blue-900 text-white z-40 pt-16 overflow-y-auto no-print" id="sidebar" style="box-shadow:inset -2px 0 5px rgba(0,0,0,0.3),2px 0 10px rgba(0,0,0,0.2)">
         
@@ -204,6 +174,37 @@
         <div id="tabClients" class="hidden"><div class="flex items-center justify-between mb-4"><div class="flex items-center"><button onclick="showDashboard()" class="text-gray-500 hover:text-gray-700 mr-3"><i class="fas fa-arrow-left text-xl"></i></button><h2 class="text-xl font-bold">Client Management</h2></div><button onclick="showAddClient()" class="bg-green-600 text-white px-4 py-2 rounded text-sm">+ Add Client</button></div><div id="clientList"></div></div>
     </div>
 </div>
+
+
+    <!-- Announcement Creation (Admin Only) -->
+    <div id="announcementSection" style="display:none;">
+        <div style="background:white;border-radius:8px;padding:20px;margin-bottom:20px;box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+            <h3 style="font-size:18px;font-weight:bold;margin-bottom:16px;">
+                <i class="fas fa-bullhorn mr-2" style="color:#1e3a5f;"></i>Create Announcement
+            </h3>
+            <div style="display:flex;flex-direction:column;gap:12px;">
+                <input type="text" id="announcementTitle" placeholder="Title" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:6px;">
+                <textarea id="announcementMessage" placeholder="Message..." rows="4" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:6px;"></textarea>
+                <div style="display:flex;gap:12px;">
+                    <select id="announcementPriority" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:6px;">
+                        <option value="normal">Normal</option>
+                        <option value="important">Important</option>
+                        <option value="urgent">Urgent</option>
+                    </select>
+                    <input type="date" id="announcementExpiry" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:6px;">
+                    <button onclick="createAnnouncement()" style="background:#1e3a5f;color:white;padding:8px 20px;border:none;border-radius:6px;cursor:pointer;">
+                        <i class="fas fa-paper-plane mr-2"></i>Send
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Existing Announcements List -->
+        <div id="existingAnnouncements" style="background:white;border-radius:8px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+            <h3 style="font-size:18px;font-weight:bold;margin-bottom:16px;">Existing Announcements</h3>
+            <div id="adminAnnouncementList">Loading...</div>
+        </div>
+    </div>
 
 <!-- Chat Widget -->
 <div id="chatWidget" class="hidden fixed bottom-4 right-4 z-50 w-80 bg-white rounded-xl shadow-2xl border">
