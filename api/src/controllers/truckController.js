@@ -13,7 +13,21 @@ function setupTruckRoutes(app) {
     });
 
     app.get('/api/truck-masterlist-all', authenticate, async (req, res) => {
-        try { const [r]=await pool.execute('SELECT * FROM truck_masterlist ORDER BY plate_no ASC'); res.json({status:'success',data:r}); } catch(e) { res.status(500).json({error:e.message}); }
+        try {
+            if (req.user.role === 'client') {
+                // Clients only see trucks they've used
+                const [r] = await pool.execute(
+                    'SELECT DISTINCT tm.* FROM truck_masterlist tm INNER JOIN authority_to_load atl ON tm.plate_no = atl.plate_no WHERE atl.client_id=? ORDER BY tm.plate_no ASC',
+                    [req.user.id]
+                );
+                return res.json({ status: 'success', data: r });
+            }
+            // Dispatchers/management see all
+            const [r] = await pool.execute('SELECT * FROM truck_masterlist ORDER BY plate_no ASC');
+            res.json({ status: 'success', data: r });
+        } catch (e) {
+            res.status(500).json({ error: e.message });
+        }
     });
 
     app.put('/api/update-truck-masterlist/:id', authenticate, authorize('dispatcher','management'), async (req, res) => {

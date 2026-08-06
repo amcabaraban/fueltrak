@@ -30,4 +30,16 @@ function setupClientRoutes(app) {
     });
 }
 
+// Add this middleware at the top of clientController.js
+async function verifyClientOwnership(req, res, next) {
+    // Clients can only access their own data
+    if (req.user.role === 'client') {
+        const requestedClientId = req.params.id || req.body.client_id || req.query.client_id;
+        if (requestedClientId && requestedClientId != req.user.id) {
+            return res.status(403).json({ error: 'Access denied' });
+        }
+    }
+    next();
+}
+
 module.exports = { setupClientRoutes };
