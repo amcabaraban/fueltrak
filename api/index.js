@@ -13,6 +13,7 @@ const { setupReportRoutes } = require('./src/controllers/reportController');
 const { setupAdminRoutes } = require('./src/controllers/adminController');
 const { setupPageRoutes } = require('./src/routes/pageRoutes');
 const { cleanupRecycleBin, cleanupAuditLogs } = require('./src/services/recycleBin');
+const { setupAnnouncementRoutes } = require('./src/controllers/announcementController');
 
 const app = express();
 
@@ -28,6 +29,7 @@ setupChatRoutes(app);
 setupReportRoutes(app);
 setupAdminRoutes(app);
 setupPageRoutes(app);
+setupAnnouncementRoutes(app);
 
 setInterval(() => { cleanupRecycleBin().catch(() => {}); }, 60 * 60 * 1000);
 setInterval(() => { cleanupAuditLogs().catch(() => {}); }, 24 * 60 * 60 * 1000);
