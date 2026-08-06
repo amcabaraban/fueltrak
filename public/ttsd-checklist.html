@@ -204,7 +204,7 @@
     <button onclick="logout()"><i class="fas fa-sign-out-alt"></i><span>Logout</span></button>
 </div>
 
-<script nonce="<%= nonce %>">
+<script>
 document.querySelector('#sidebar a[href="/ttsd-checklist"]').style.background = '#1e40af';    
 const token=localStorage.getItem('fueltrak_token');if(!token)window.location.href='/';
 const user=JSON.parse(localStorage.getItem('fueltrak_user')||'{}');

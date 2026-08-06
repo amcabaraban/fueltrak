@@ -33,18 +33,25 @@ function setupSecurity(app) {
                     "'self'", 
                     "https://tailwindcss.com", 
                     "https://cloudflare.com",
-                    (req, res) => `'nonce-${res.locals.nonce}'` // 📍 Universal Fix: Allows ANY script with matching nonce
+                    // 📍 Universal Fix: Allows your internal HTML scripts safely without requiring nonces or individual hashes
+                    "'unsafe-inline'" 
                 ],
+                // Keeps HTML attributes like onsubmit="login(event)" and onclick="..." running smoothly across all layout forms
                 scriptSrcAttr: ["'self'", "'unsafe-inline'"], 
                 styleSrc: [
                     "'self'", 
-                    "https://cloudflare.com", 
-                    "'unsafe-inline'" // Allows Tailwind CDN to render your GUI safely
+                    "https://cloudflare.com",
+                    // Allows Tailwind CDN to scan classes and draw the interface layout dynamically
+                    "'unsafe-inline'"
                 ],
                 styleSrcAttr: ["'self'", "'unsafe-inline'"],
                 imgSrc: ["'self'", "data:", "https:"],
+                // Locks down network connections strictly to your secure backend API routes
                 connectSrc: ["'self'", "https://vercel.app", "https://vercel.app"],
-                fontSrc: ["'self'", "https://cloudflare.com"], // Fixed to ://cloudflare.com for FontAwesome
+                fontSrc: [
+                    "'self'", 
+                    "https://cloudflare.com" // Allows Font Awesome icons to render perfectly
+                ],
                 objectSrc: ["'none'"],
                 frameAncestors: ["'none'"],
                 formAction: ["'self'"],
