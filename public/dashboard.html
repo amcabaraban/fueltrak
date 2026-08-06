@@ -236,167 +236,6 @@
     </div>
 </div>
 <script>
-// Show announcement section for admins/dispatchers
-const currentUser = JSON.parse(localStorage.getItem('fueltrak_user') || '{}');
-if (user.role === 'dispatcher' || user.role === 'management') {
-    document.getElementById('announcementSection').style.display = 'block';
-    loadAdminAnnouncements();
-}
-
-async function createAnnouncement() {
-    const title = document.getElementById('announcementTitle').value.trim();
-    const message = document.getElementById('announcementMessage').value.trim();
-    const priority = document.getElementById('announcementPriority').value;
-    const expires_at = document.getElementById('announcementExpiry').value || null;
-    
-    if (!title || !message) return alert('Title and message required');
-    
-    const token = localStorage.getItem('fueltrak_token');
-    const response = await fetch('/api/announcements', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + token
-        },
-        body: JSON.stringify({ title, message, priority, expires_at })
-    });
-    
-    if (response.ok) {
-        document.getElementById('announcementTitle').value = '';
-        document.getElementById('announcementMessage').value = '';
-        alert('Announcement sent!');
-        loadAdminAnnouncements();
-    }
-}
-
-async function loadAdminAnnouncements() {
-    const token = localStorage.getItem('fueltrak_token');
-    const response = await fetch('/api/announcements/admin', {
-        headers: { 'Authorization': 'Bearer ' + token }
-    });
-    const data = await response.json();
-    
-    const list = document.getElementById('adminAnnouncementList');
-    list.innerHTML = data.data.map(ann => `
-        <div style="padding:12px;border-bottom:1px solid #f3f4f6;display:flex;justify-content:space-between;align-items:center;">
-            <div>
-                <strong>${ann.title}</strong>
-                <span style="background:${ann.priority==='urgent'?'#ef4444':ann.priority==='important'?'#f59e0b':'#3b82f6'};color:white;font-size:10px;padding:2px 8px;border-radius:10px;margin-left:8px;">${ann.priority}</span>
-                <p style="font-size:12px;color:#6b7280;margin:2px 0;">${ann.message.substring(0, 80)}...</p>
-            </div>
-            <div style="display:flex;gap:8px;">
-                <button onclick="toggleAnnouncement(${ann.id})" style="font-size:12px;padding:4px 8px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer;background:${ann.is_active?'#dcfce7':'#fee2e2'};">${ann.is_active?'Active':'Inactive'}</button>
-                <button onclick="deleteAnnouncement(${ann.id})" style="font-size:12px;padding:4px 8px;border:1px solid #ef4444;color:#ef4444;border-radius:4px;cursor:pointer;background:white;">Delete</button>
-            </div>
-        </div>
-    `).join('');
-}
-
-async function toggleAnnouncement(id) {
-    const token = localStorage.getItem('fueltrak_token');
-    await fetch('/api/announcements/' + id + '/toggle', {
-        method: 'PATCH',
-        headers: { 'Authorization': 'Bearer ' + token }
-    });
-    loadAdminAnnouncements();
-}
-
-async function deleteAnnouncement(id) {
-    if (!confirm('Delete this announcement?')) return;
-    const token = localStorage.getItem('fueltrak_token');
-    await fetch('/api/announcements/' + id, {
-        method: 'DELETE',
-        headers: { 'Authorization': 'Bearer ' + token }
-    });
-    loadAdminAnnouncements();
-}
-
-// ============ ERROR HANDLER (INLINE) ============
-var ErrorHandler = {
-    toastContainer: null,
-    init: function() {
-        if (!this.toastContainer) {
-            this.toastContainer = document.createElement('div');
-            this.toastContainer.id = 'errorToastContainer';
-            this.toastContainer.className = 'fixed top-4 right-4 z-[9999] space-y-2 max-w-sm';
-            document.body.appendChild(this.toastContainer);
-        }
-    },
-    toast: function(message, type, duration) {
-        type = type || 'error';
-        duration = duration || 5000;
-        this.init();
-        var colors = { error: 'bg-red-500', warning: 'bg-orange-500', success: 'bg-green-500', info: 'bg-blue-500' };
-        var icons = { error: 'fa-exclamation-circle', warning: 'fa-exclamation-triangle', success: 'fa-check-circle', info: 'fa-info-circle' };
-        var toast = document.createElement('div');
-        toast.className = (colors[type] || colors.error) + ' text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-3 animate-slide-down';
-        toast.innerHTML = '<i class="fas ' + (icons[type] || icons.error) + ' text-lg"></i><span class="text-sm flex-1">' + message + '</span><button onclick="this.parentElement.remove()" class="text-white/80 hover:text-white"><i class="fas fa-times"></i></button>';
-        this.toastContainer.appendChild(toast);
-        setTimeout(function() { toast.remove(); }, duration);
-    },
-    handleAPIError: function(error, customMessage) {
-        console.error('API Error:', error);
-        if (error.name === 'AbortError') { this.toast('Request timed out. Please try again.', 'warning'); return; }
-        if (error.message && error.message.includes('Failed to fetch')) { this.toast('Connection lost. Please check your internet.', 'error'); return; }
-        this.toast(customMessage || 'An unexpected error occurred.', 'error');
-    },
-    showError: function(containerId, message, retryFn) {
-        var container = document.getElementById(containerId);
-        if (!container) return;
-        container.innerHTML = '<div class="text-center py-8 text-red-400"><i class="fas fa-exclamation-circle text-3xl mb-2 block"></i><p>' + message + '</p>' + (retryFn ? '<button onclick="(' + retryFn.toString() + ')()" class="mt-2 text-blue-600 hover:underline text-sm">Retry</button>' : '') + '</div>';
-    },
-    showSkeleton: function(containerId, count) {
-        var container = document.getElementById(containerId);
-        if (!container) return;
-        count = count || 3;
-        container.innerHTML = Array(count).fill(0).map(function() {
-            return '<div class="bg-gray-200 animate-pulse rounded-xl p-4"><div class="h-4 bg-gray-300 rounded w-3/4 mb-3"></div><div class="h-6 bg-gray-300 rounded w-1/2"></div></div>';
-        }).join('');
-    }
-};
-
-// ============ API HELPER (INLINE) ============
-var APIHelper = {
-    token: localStorage.getItem('fueltrak_token'),
-    user: JSON.parse(localStorage.getItem('fueltrak_user') || '{}'),
-    getHeaders: function() {
-        return { 'Authorization': 'Bearer ' + this.token, 'Content-Type': 'application/json' };
-    },
-    get: async function(url, options) {
-        options = options || {};
-        try {
-            var controller = new AbortController();
-            var timeoutId = setTimeout(function() { controller.abort(); }, options.timeout || 15000);
-            var response = await fetch('/api' + url, { headers: this.getHeaders(), signal: controller.signal });
-            clearTimeout(timeoutId);
-            if (response.status === 401) { ErrorHandler.toast('Session expired. Redirecting...', 'warning'); localStorage.clear(); setTimeout(function() { window.location.href = '/'; }, 1500); return { _error: true, error: 'Unauthorized' }; }
-            if (response.status === 429) { ErrorHandler.toast('Too many requests. Please wait.', 'warning'); return { _error: true, error: 'Rate limited' }; }
-            if (response.status >= 500) { ErrorHandler.toast('Server error. Please try again.', 'error'); return { _error: true, error: 'Server error' }; }
-            var data = await response.json();
-            if (data.error) { if (!options.silent) ErrorHandler.toast(data.error, 'error'); return { _error: true, error: data.error }; }
-            return data;
-        } catch (error) {
-            if (!options.silent) ErrorHandler.handleAPIError(error);
-            return { _error: true, error: error.message };
-        }
-    },
-    post: async function(url, body, options) {
-        options = options || {};
-        try {
-            var controller = new AbortController();
-            var timeoutId = setTimeout(function() { controller.abort(); }, options.timeout || 15000);
-            var response = await fetch('/api' + url, { method: 'POST', headers: this.getHeaders(), body: JSON.stringify(body), signal: controller.signal });
-            clearTimeout(timeoutId);
-            if (response.status === 401) { ErrorHandler.toast('Session expired.', 'warning'); localStorage.clear(); setTimeout(function() { window.location.href = '/'; }, 1500); return { _error: true }; }
-            var data = await response.json();
-            if (data.error) { if (!options.silent) ErrorHandler.toast(data.error, 'error'); return { _error: true, error: data.error }; }
-            return data;
-        } catch (error) {
-            if (!options.silent) ErrorHandler.handleAPIError(error);
-            return { _error: true, error: error.message };
-        }
-    }
-};
 
 // ============ INITIALIZATION ============
 const API='/api';
@@ -675,6 +514,169 @@ async function logout(){try{await fetch('/api/auth/logout',{method:'POST',header
 loadDashboard();
 var urlParams=new URLSearchParams(window.location.search);var tab=urlParams.get('tab');if(tab==='clients'){openTab('clients')}
 document.addEventListener('keydown',function(e){if(document.getElementById('calcWidget').classList.contains('hidden'))return;var k=e.key;if(k>='0'&&k<='9')calcInput(k);else if(k==='.')calcInput('.');else if(k==='+')calcInput('+');else if(k==='-')calcInput('-');else if(k==='*')calcInput('*');else if(k==='/'){e.preventDefault();calcInput('/')}else if(k==='Enter')calcResult();else if(k==='Escape')closeCalc();else if(k==='Backspace'){calcExpr=calcExpr.slice(0,-1);document.getElementById('calcDisplay').value=calcExpr||'0'}});
+
+// Show announcement section for admins/dispatchers
+const currentUser = JSON.parse(localStorage.getItem('fueltrak_user') || '{}');
+if (user.role === 'dispatcher' || user.role === 'management') {
+    document.getElementById('announcementSection').style.display = 'block';
+    loadAdminAnnouncements();
+}
+
+async function createAnnouncement() {
+    const title = document.getElementById('announcementTitle').value.trim();
+    const message = document.getElementById('announcementMessage').value.trim();
+    const priority = document.getElementById('announcementPriority').value;
+    const expires_at = document.getElementById('announcementExpiry').value || null;
+    
+    if (!title || !message) return alert('Title and message required');
+    
+    const token = localStorage.getItem('fueltrak_token');
+    const response = await fetch('/api/announcements', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token
+        },
+        body: JSON.stringify({ title, message, priority, expires_at })
+    });
+    
+    if (response.ok) {
+        document.getElementById('announcementTitle').value = '';
+        document.getElementById('announcementMessage').value = '';
+        alert('Announcement sent!');
+        loadAdminAnnouncements();
+    }
+}
+
+async function loadAdminAnnouncements() {
+    const token = localStorage.getItem('fueltrak_token');
+    const response = await fetch('/api/announcements/admin', {
+        headers: { 'Authorization': 'Bearer ' + token }
+    });
+    const data = await response.json();
+    
+    const list = document.getElementById('adminAnnouncementList');
+    list.innerHTML = data.data.map(ann => `
+        <div style="padding:12px;border-bottom:1px solid #f3f4f6;display:flex;justify-content:space-between;align-items:center;">
+            <div>
+                <strong>${ann.title}</strong>
+                <span style="background:${ann.priority==='urgent'?'#ef4444':ann.priority==='important'?'#f59e0b':'#3b82f6'};color:white;font-size:10px;padding:2px 8px;border-radius:10px;margin-left:8px;">${ann.priority}</span>
+                <p style="font-size:12px;color:#6b7280;margin:2px 0;">${ann.message.substring(0, 80)}...</p>
+            </div>
+            <div style="display:flex;gap:8px;">
+                <button onclick="toggleAnnouncement(${ann.id})" style="font-size:12px;padding:4px 8px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer;background:${ann.is_active?'#dcfce7':'#fee2e2'};">${ann.is_active?'Active':'Inactive'}</button>
+                <button onclick="deleteAnnouncement(${ann.id})" style="font-size:12px;padding:4px 8px;border:1px solid #ef4444;color:#ef4444;border-radius:4px;cursor:pointer;background:white;">Delete</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+async function toggleAnnouncement(id) {
+    const token = localStorage.getItem('fueltrak_token');
+    await fetch('/api/announcements/' + id + '/toggle', {
+        method: 'PATCH',
+        headers: { 'Authorization': 'Bearer ' + token }
+    });
+    loadAdminAnnouncements();
+}
+
+async function deleteAnnouncement(id) {
+    if (!confirm('Delete this announcement?')) return;
+    const token = localStorage.getItem('fueltrak_token');
+    await fetch('/api/announcements/' + id, {
+        method: 'DELETE',
+        headers: { 'Authorization': 'Bearer ' + token }
+    });
+    loadAdminAnnouncements();
+}
+
+// ============ ERROR HANDLER (INLINE) ============
+var ErrorHandler = {
+    toastContainer: null,
+    init: function() {
+        if (!this.toastContainer) {
+            this.toastContainer = document.createElement('div');
+            this.toastContainer.id = 'errorToastContainer';
+            this.toastContainer.className = 'fixed top-4 right-4 z-[9999] space-y-2 max-w-sm';
+            document.body.appendChild(this.toastContainer);
+        }
+    },
+    toast: function(message, type, duration) {
+        type = type || 'error';
+        duration = duration || 5000;
+        this.init();
+        var colors = { error: 'bg-red-500', warning: 'bg-orange-500', success: 'bg-green-500', info: 'bg-blue-500' };
+        var icons = { error: 'fa-exclamation-circle', warning: 'fa-exclamation-triangle', success: 'fa-check-circle', info: 'fa-info-circle' };
+        var toast = document.createElement('div');
+        toast.className = (colors[type] || colors.error) + ' text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-3 animate-slide-down';
+        toast.innerHTML = '<i class="fas ' + (icons[type] || icons.error) + ' text-lg"></i><span class="text-sm flex-1">' + message + '</span><button onclick="this.parentElement.remove()" class="text-white/80 hover:text-white"><i class="fas fa-times"></i></button>';
+        this.toastContainer.appendChild(toast);
+        setTimeout(function() { toast.remove(); }, duration);
+    },
+    handleAPIError: function(error, customMessage) {
+        console.error('API Error:', error);
+        if (error.name === 'AbortError') { this.toast('Request timed out. Please try again.', 'warning'); return; }
+        if (error.message && error.message.includes('Failed to fetch')) { this.toast('Connection lost. Please check your internet.', 'error'); return; }
+        this.toast(customMessage || 'An unexpected error occurred.', 'error');
+    },
+    showError: function(containerId, message, retryFn) {
+        var container = document.getElementById(containerId);
+        if (!container) return;
+        container.innerHTML = '<div class="text-center py-8 text-red-400"><i class="fas fa-exclamation-circle text-3xl mb-2 block"></i><p>' + message + '</p>' + (retryFn ? '<button onclick="(' + retryFn.toString() + ')()" class="mt-2 text-blue-600 hover:underline text-sm">Retry</button>' : '') + '</div>';
+    },
+    showSkeleton: function(containerId, count) {
+        var container = document.getElementById(containerId);
+        if (!container) return;
+        count = count || 3;
+        container.innerHTML = Array(count).fill(0).map(function() {
+            return '<div class="bg-gray-200 animate-pulse rounded-xl p-4"><div class="h-4 bg-gray-300 rounded w-3/4 mb-3"></div><div class="h-6 bg-gray-300 rounded w-1/2"></div></div>';
+        }).join('');
+    }
+};
+
+// ============ API HELPER (INLINE) ============
+var APIHelper = {
+    token: localStorage.getItem('fueltrak_token'),
+    user: JSON.parse(localStorage.getItem('fueltrak_user') || '{}'),
+    getHeaders: function() {
+        return { 'Authorization': 'Bearer ' + this.token, 'Content-Type': 'application/json' };
+    },
+    get: async function(url, options) {
+        options = options || {};
+        try {
+            var controller = new AbortController();
+            var timeoutId = setTimeout(function() { controller.abort(); }, options.timeout || 15000);
+            var response = await fetch('/api' + url, { headers: this.getHeaders(), signal: controller.signal });
+            clearTimeout(timeoutId);
+            if (response.status === 401) { ErrorHandler.toast('Session expired. Redirecting...', 'warning'); localStorage.clear(); setTimeout(function() { window.location.href = '/'; }, 1500); return { _error: true, error: 'Unauthorized' }; }
+            if (response.status === 429) { ErrorHandler.toast('Too many requests. Please wait.', 'warning'); return { _error: true, error: 'Rate limited' }; }
+            if (response.status >= 500) { ErrorHandler.toast('Server error. Please try again.', 'error'); return { _error: true, error: 'Server error' }; }
+            var data = await response.json();
+            if (data.error) { if (!options.silent) ErrorHandler.toast(data.error, 'error'); return { _error: true, error: data.error }; }
+            return data;
+        } catch (error) {
+            if (!options.silent) ErrorHandler.handleAPIError(error);
+            return { _error: true, error: error.message };
+        }
+    },
+    post: async function(url, body, options) {
+        options = options || {};
+        try {
+            var controller = new AbortController();
+            var timeoutId = setTimeout(function() { controller.abort(); }, options.timeout || 15000);
+            var response = await fetch('/api' + url, { method: 'POST', headers: this.getHeaders(), body: JSON.stringify(body), signal: controller.signal });
+            clearTimeout(timeoutId);
+            if (response.status === 401) { ErrorHandler.toast('Session expired.', 'warning'); localStorage.clear(); setTimeout(function() { window.location.href = '/'; }, 1500); return { _error: true }; }
+            var data = await response.json();
+            if (data.error) { if (!options.silent) ErrorHandler.toast(data.error, 'error'); return { _error: true, error: data.error }; }
+            return data;
+        } catch (error) {
+            if (!options.silent) ErrorHandler.handleAPIError(error);
+            return { _error: true, error: error.message };
+        }
+    }
+};
+
 </script>
 <script src="/js/chat-helper.js"></script>
 <script src="/js/announcement.js"></script>
