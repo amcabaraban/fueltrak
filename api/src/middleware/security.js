@@ -39,6 +39,7 @@ function setupSecurity(app) {
                 styleSrc: [
                     "'self'", 
                     "https://cloudflare.com",
+                    "https://cdnjs.cloudflare.com",
                     // This allows Tailwind CSS to inject its calculated classes at runtime dynamically
                     "'unsafe-inline'"
                 ],
@@ -65,7 +66,6 @@ function setupSecurity(app) {
         crossOriginOpenerPolicy: { policy: 'same-origin' },
         crossOriginResourcePolicy: { policy: 'same-origin' },
     }));
-
     
     app.use((req, res, next) => {
         res.removeHeader('X-Powered-By');
