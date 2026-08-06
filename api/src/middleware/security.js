@@ -29,8 +29,8 @@ function setupSecurity(app) {
                 defaultSrc: ["'self'"],
                 scriptSrc: [
                     "'self'", 
-                    "https://tailwindcss.com", 
-                    "https://cloudflare.com",
+                    "https://cdn.tailwindcss.com", // 📍 Use correct cdn. domain 
+                    "https://cdnjs.cloudflare.com", // 📍 Fixed to cdnjs.
                     // This explicitly allows your exact inline script block without needing a nonce attribute
                     "'sha256-spdIyr2fBBgUpCBeUhE+W74ONuyZiuK0T8YWBNj+/nk='"
                 ],
@@ -38,15 +38,17 @@ function setupSecurity(app) {
                 scriptSrcAttr: ["'self'", "'unsafe-inline'"], 
                 styleSrc: [
                     "'self'", 
-                    "https://cloudflare.com",
-                    "https://cdnjs.cloudflare.com",
+                    "https://cdnjs.cloudflare.com", // 📍 Fixed to cdnjs.
                     // This allows Tailwind CSS to inject its calculated classes at runtime dynamically
                     "'unsafe-inline'"
                 ],
                 styleSrcAttr: ["'self'", "'unsafe-inline'"],
                 imgSrc: ["'self'", "data:", "https:"],
                 connectSrc: ["'self'", "https://vercel.app", "https://vercel.app"],
-                fontSrc: ["'self'", "https://cloudflare.com"],
+                fontSrc: [
+                    "'self'", 
+                    "https://cdnjs.cloudflare.com" // 📍 Fixed to cdnjs. (Crucial for Font Awesome icons)
+                ],
                 objectSrc: ["'none'"],
                 frameAncestors: ["'none'"],
                 formAction: ["'self'"],
