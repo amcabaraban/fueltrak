@@ -501,8 +501,9 @@ async function toggleClient(id) { await APIHelper.get('/clients/' + id + '/toggl
 async function deleteClient(id, email) { if (!confirm('Delete ' + email + '?')) return; await APIHelper.get('/clients/' + id); loadClients(); }
 
 // ============ ANNOUNCEMENTS ============
-if (currentUser.role === 'dispatcher' || currentUser.role === 'management') {
-    document.getElementById('announcementSection').style.display = 'block';
+var as = document.getElementById('announcementSection');
+if (as && (currentUser.role === 'dispatcher' || currentUser.role === 'management')) {
+    as.style.display = 'block';
     loadAdminAnnouncements();
 }
 
