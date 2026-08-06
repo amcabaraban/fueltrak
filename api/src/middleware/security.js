@@ -62,23 +62,27 @@ function setupSecurity(app) {
     
     app.use(cors({
         origin: (origin, callback) => {
+            // 1. Instantly pass requests with no origin structure (direct form actions / mobile requests)
+            if (!origin || origin === 'null' || origin === 'undefined' || origin === '') {
+                return callback(null, true);
+            }
+
+            // 2. Clean the incoming origin string by stripping any trailing slashes or subpaths
+            const cleanOrigin = origin.replace(/\/$/, '');
+
             const allowedOrigins = [
-                'https://vercel.app', 
-                'https://vercel.app', 
-                'http://localhost:3000', 
+                'https://fueltraksystem.vercel.app',
+                'https://fueltrak-seven.vercel.app',
+                'http://localhost:3000',
                 'http://localhost:8080'
             ];
-            
-            // 📍 FIX: Allow requests if origin is missing, empty, or matching your own system domain
-            if (!origin || origin === 'null' || origin === '') { 
-                return callback(null, true); 
-            }
-            
-            if (allowedOrigins.includes(origin)) { 
-                callback(null, true); 
-            } else { 
-                console.warn('CORS blocked origin: ' + origin); 
-                callback(new Error('Not allowed by CORS')); 
+
+            // 3. Match against your exact allowed network origins or self-references
+            if (allowedOrigins.includes(cleanOrigin) || cleanOrigin.includes('vercel.app')) {
+                callback(null, true);
+            } else {
+                console.warn('CORS blocked origin request from: ' + origin);
+                callback(new Error('Not allowed by CORS'));
             }
         },
         credentials: true,
