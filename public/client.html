@@ -142,96 +142,55 @@
   </head>
   <body class="bg-gray-50 min-h-screen">
     <div class="main-content">
-      <nav
-        class="bg-gradient-to-r from-blue-900 to-blue-800 text-white shadow-[0_4px_6px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.1)] sticky top-0 z-50 no-print"
-      >
-        <div
-          class="hidden md:flex max-w-7xl mx-auto px-4 py-3 justify-between items-center"
-        >
-          <div class="flex items-center space-x-3">
-            <div class="bg-white/20 p-2 rounded-lg">
-              <i class="fas fa-gas-pump text-2xl text-yellow-400"></i>
+    <nav class="bg-gradient-to-r from-blue-900 to-blue-800 text-white shadow-[0_4px_6px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.1)] sticky top-0 z-50 no-print">
+        
+        <!-- DESKTOP NAV -->
+        <div class="hidden md:flex max-w-7xl mx-auto px-4 py-3 justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="bg-white/20 p-2 rounded-lg"><i class="fas fa-gas-pump text-2xl text-yellow-400"></i></div>
+                <div><span class="font-bold text-xl">FuelTrak</span><p class="text-xs text-blue-300">Client Portal</p></div>
             </div>
-            <div>
-              <span class="font-bold text-xl">FuelTrak</span>
-              <p class="text-xs text-blue-300">Client Portal</p>
+            
+            <div class="flex items-center space-x-3">
+                <span id="userInfo" class="text-sm bg-white/10 px-3 py-1 rounded-full"></span>
+                <button onclick="showView('dashboard')" class="bg-white/20 px-3 py-1 rounded text-sm hover:bg-white/30"><i class="fas fa-chart-pie mr-1"></i>Dashboard</button>
+                <button onclick="showView('submit')" class="bg-white/20 px-3 py-1 rounded text-sm hover:bg-white/30"><i class="fas fa-plus-circle mr-1"></i>New ATL</button>
+                <button onclick="showView('history')" class="bg-white/20 px-3 py-1 rounded text-sm hover:bg-white/30"><i class="fas fa-list mr-1"></i>My ATLs</button>
+                <button onclick="showView('reports')" class="bg-white/20 px-3 py-1 rounded text-sm hover:bg-white/30"><i class="fas fa-chart-bar mr-1"></i>Reports</button>
+                
+                <!-- Bell - Desktop -->
+                <div id="announcementBell" style="position:relative;cursor:pointer;display:inline-flex;align-items:center;flex-shrink:0;" onclick="window.location.href='/announcements'" title="Announcements">
+                    <i class="fas fa-bell" style="font-size:18px;color:#fbbf24;"></i>
+                    <span id="announcementBadge" class="hidden" style="position:absolute;top:-6px;right:-8px;background:#ef4444;color:white;font-size:10px;min-width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;">0</span>
+                </div>
+                
+                <button onclick="logout()" class="bg-red-500/80 hover:bg-red-500 px-4 py-2 rounded text-sm"><i class="fas fa-sign-out-alt mr-1"></i>Logout</button>
             </div>
-          </div>
-          
-          <!-- Announcement Bell -->
-          <div id="announcementBell" style="position:relative;cursor:pointer;display:inline-flex;align-items:center;" onclick="window.location.href='/announcements'">
-            <i class="fas fa-bell" style="font-size:18px;color:#fbbf24;"></i>
-            <span id="announcementBadge" class="hidden" style="position:absolute;top:-6px;right:-8px;background:#ef4444;color:white;font-size:10px;min-width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;">0</span>
-          </div>
-
-          <div class="flex items-center space-x-3">
-              <span id="userInfo" class="text-sm bg-white/10 px-3 py-1 rounded-full"></span>
-              
-              <button onclick="showView('dashboard')" class="bg-white/20 px-3 py-1 rounded text-sm hover:bg-white/30">
-                  <i class="fas fa-chart-pie mr-1"></i>Dashboard
-              </button>
-              
-              <button onclick="showView('submit')" class="bg-white/20 px-3 py-1 rounded text-sm hover:bg-white/30">
-                  <i class="fas fa-plus-circle mr-1"></i>New ATL
-              </button>
-              
-              <button onclick="showView('history')" class="bg-white/20 px-3 py-1 rounded text-sm hover:bg-white/30">
-                  <i class="fas fa-list mr-1"></i>My ATLs
-              </button>
-              
-              <button onclick="showView('reports')" class="bg-white/20 px-3 py-1 rounded text-sm hover:bg-white/30">
-                  <i class="fas fa-chart-bar mr-1"></i>Reports
-              </button>
-                        
-              <button onclick="logout()" class="bg-red-500/80 hover:bg-red-500 px-4 py-2 rounded text-sm">
-                  <i class="fas fa-sign-out-alt mr-1"></i>Logout
-              </button>
-          </div>
         </div>
+        
+        <!-- MOBILE NAV -->
         <div class="flex md:hidden px-2 py-2 items-center space-x-1">
-          <div class="flex items-center space-x-1">
-            <div class="bg-white/20 p-1 rounded">
-              <i class="fas fa-gas-pump text-sm text-yellow-400"></i>
+            <div class="flex items-center space-x-1 flex-shrink-0">
+                <div class="bg-white/20 p-1 rounded"><i class="fas fa-gas-pump text-sm text-yellow-400"></i></div>
+                <span class="font-bold text-xs whitespace-nowrap">FuelTrak</span>
             </div>
-            <span class="font-bold text-xs whitespace-nowrap">FuelTrak</span>
-          </div>
-          <div
-            class="flex-1 overflow-x-auto flex items-center space-x-1"
-            style="scrollbar-width: none"
-          >
-            <span
-              id="userInfoMob"
-              class="text-[9px] bg-white/10 px-1.5 py-0.5 rounded-full max-w-[80px] truncate"
-            ></span
-            ><button
-              onclick="showView('dashboard')"
-              class="bg-white/20 px-2 py-1 rounded text-xs hover:bg-white/30"
-            >
-              <i class="fas fa-chart-pie mr-1"></i>Dashboard</button
-            ><button
-              onclick="showView('submit')"
-              class="bg-white/20 px-2 py-1 rounded text-xs hover:bg-white/30"
-            >
-              <i class="fas fa-plus-circle mr-1"></i>New ATL</button
-            ><button
-              onclick="showView('history')"
-              class="bg-white/20 px-2 py-1 rounded text-xs hover:bg-white/30"
-            >
-              <i class="fas fa-list mr-1"></i>My ATLs</button
-            ><button
-              onclick="showView('reports')"
-              class="bg-white/20 px-2 py-1 rounded text-xs hover:bg-white/30"
-            >
-              <i class="fas fa-chart-bar mr-1"></i>Reports</button
-            ><button
-              onclick="logout()"
-              class="bg-red-500/80 hover:bg-red-500 px-2 py-1 rounded text-xs"
-            >
-              <i class="fas fa-sign-out-alt mr-1"></i>Logout
-            </button>
-          </div>
+            <div class="flex-1 overflow-x-auto flex items-center space-x-1" style="scrollbar-width:none">
+                <span id="userInfoMob" class="text-[9px] bg-white/10 px-1.5 py-0.5 rounded-full max-w-[80px] truncate flex-shrink-0"></span>
+                <button onclick="showView('dashboard')" class="bg-white/20 px-2 py-1 rounded text-xs hover:bg-white/30 flex-shrink-0"><i class="fas fa-chart-pie mr-1"></i>Dashboard</button>
+                <button onclick="showView('submit')" class="bg-white/20 px-2 py-1 rounded text-xs hover:bg-white/30 flex-shrink-0"><i class="fas fa-plus-circle mr-1"></i>New</button>
+                <button onclick="showView('history')" class="bg-white/20 px-2 py-1 rounded text-xs hover:bg-white/30 flex-shrink-0"><i class="fas fa-list mr-1"></i>ATLs</button>
+                <button onclick="showView('reports')" class="bg-white/20 px-2 py-1 rounded text-xs hover:bg-white/30 flex-shrink-0"><i class="fas fa-chart-bar mr-1"></i>Reports</button>
+                
+                <!-- Bell - Mobile -->
+                <div id="announcementBellMob" style="position:relative;cursor:pointer;display:inline-flex!important;align-items:center;flex-shrink:0;" onclick="window.location.href='/announcements'" title="Announcements">
+                    <i class="fas fa-bell" style="font-size:15px;color:#fbbf24;"></i>
+                    <span id="announcementBadgeMob" class="hidden" style="position:absolute;top:-5px;right:-6px;background:#ef4444;color:white;font-size:8px;min-width:14px;height:14px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;">0</span>
+                </div>
+                
+                <button onclick="logout()" class="bg-red-500/80 hover:bg-red-500 px-2 py-1 rounded text-xs flex-shrink-0"><i class="fas fa-sign-out-alt mr-1"></i>Logout</button>
+            </div>
         </div>
-      </nav>
+    </nav>
       <div class="max-w-7xl mx-auto px-4 py-8 w-full">
         <div id="dashboardView">
           <div
