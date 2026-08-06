@@ -122,6 +122,22 @@
             to { opacity: 1; transform: translateY(0); }
         }
         .animate-slide-down { animation: slideDown 0.3s ease-out; }
+        /* Show bell on mobile */
+        #announcementBell {
+            display: inline-flex !important;
+        }
+
+        /* Hide dashboard/reports buttons on mobile, keep bell visible */
+        @media (max-width: 767px) {
+            #announcementBell {
+                display: inline-flex !important;
+            }
+            
+            /* Optional: Hide other buttons but keep bell */
+            .hide-on-mobile {
+                display: none !important;
+            }
+        }
     </style>
   </head>
   <body class="bg-gray-50 min-h-screen">
