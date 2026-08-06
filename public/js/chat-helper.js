@@ -2,9 +2,9 @@
 // FuelTrak - Chat Helper Functions
 // ============================================
 
-let currentChatUser = null;
-let currentChatUserId = null;
-let chatPollingInterval = null;
+var currentChatUser = null;
+var currentChatUserId = null;
+var chatPollingInterval = null;
 
 // Get token from localStorage
 function getToken() {
