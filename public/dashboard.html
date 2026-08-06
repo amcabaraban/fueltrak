@@ -567,13 +567,15 @@ document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') { var m = document.getElementById('docReportModal'); if (m && !m.classList.contains('hidden')) closeDocReport(); }
 });
 
-// Update announcement badge
+// Update announcement badge (both desktop and mobile)
 async function updateAnnouncementBadge() {
     try {
         var token = localStorage.getItem('fueltrak_token');
         if (!token) return;
         var r = await fetch('/api/announcements/unread', { headers: { 'Authorization': 'Bearer ' + token } });
         var d = await r.json();
+        
+        // Update desktop badge
         var badge = document.getElementById('announcementBadge');
         if (badge) {
             if (d.unread > 0) {
@@ -583,12 +585,21 @@ async function updateAnnouncementBadge() {
                 badge.classList.add('hidden');
             }
         }
+        
+        // Update mobile badge
+        var badgeMob = document.getElementById('announcementBadgeMob');
+        if (badgeMob) {
+            if (d.unread > 0) {
+                badgeMob.textContent = d.unread > 99 ? '99+' : d.unread;
+                badgeMob.classList.remove('hidden');
+            } else {
+                badgeMob.classList.add('hidden');
+            }
+        }
     } catch(e) {}
 }
 
-// Call on page load
 updateAnnouncementBadge();
-// Refresh every 30 seconds
 setInterval(updateAnnouncementBadge, 30000);
 
 // ============ STARTUP ============
