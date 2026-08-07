@@ -5,6 +5,27 @@ function setupPageRoutes(app) {
     
     app.get('/api/health', (req, res) => res.json({ status: 'OK', db: process.env.DB_NAME }));
     
+    // Protected paths
+    const protectedPaths = [
+        '/dashboard', '/client', '/trucks', '/reports', '/sales-orders',
+        '/adminclient', '/users', '/audit-logs', '/recycle-bin', '/settings',
+        '/ttsd-checklist', '/docs-report', '/announcements', '/announcements-manage'
+    ];
+    
+    // Auth guard - runs BEFORE page routes (only once)
+    app.use(function(req, res, next) {
+        if (protectedPaths.some(function(p) { return req.path.startsWith(p); })) {
+            if (!req.path.startsWith('/api/')) {
+                var hasToken = req.headers.cookie && req.headers.cookie.includes('fueltrak_token');
+                if (!hasToken) {
+                    return res.redirect('/');
+                }
+            }
+        }
+        next();
+    });
+    
+    // Page routes
     const pageRoutes = {
         '/': 'index.html',
         '/privacy': 'privacy.html',
@@ -30,11 +51,14 @@ function setupPageRoutes(app) {
         '/announcements-manage': 'announcements-manage.html',
     };
     
-    Object.entries(pageRoutes).forEach(([route, file]) => {
-        app.get(route, (req, res) => res.sendFile(path.join(publicPath, file)));
+    Object.entries(pageRoutes).forEach(function(entry) {
+        app.get(entry[0], function(req, res) {
+            res.sendFile(path.join(publicPath, entry[1]));
+        });
     });
     
-    app.use((req, res) => {
+    // 404 handler
+    app.use(function(req, res) {
         if (req.path.startsWith('/api/')) {
             return res.status(404).json({ error: 'Endpoint not found' });
         }

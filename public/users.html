@@ -4,12 +4,51 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FuelTrak - User Management</title>
+    <!-- Auth Guard - Single Script -->
+    <script>
+        (function() {
+            // Hide body immediately
+            document.documentElement.style.visibility = 'hidden';
+            
+            var token = localStorage.getItem('fueltrak_token');
+            var user = JSON.parse(localStorage.getItem('fueltrak_user') || '{}');
+            var role = user.role || '';
+            var path = window.location.pathname;
+            
+            var isAdminPage = ['/dashboard','/trucks','/reports','/sales-orders','/adminclient','/users','/audit-logs','/settings','/ttsd-checklist','/docs-report','/announcements-manage'].some(function(p) { 
+                return path.startsWith(p); 
+            });
+            var isClientPage = path.startsWith('/client') || path === '/client.html';
+            
+            // Not authenticated
+            if (!token || !role) {
+                window.location.replace('/');
+                return;
+            }
+            
+            // Role mismatch
+            if (role === 'client' && isAdminPage) {
+                window.location.replace('/client');
+                return;
+            }
+            if ((role === 'dispatcher' || role === 'management') && isClientPage && !isAdminPage) {
+                window.location.replace('/dashboard');
+                return;
+            }
+            
+            // Show page
+            document.documentElement.style.visibility = 'visible';
+        })();
+    </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="/js/session.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="/css/global.css">
 <style>
+         /* Hide body until auth is verified */
+        body.auth-checking { visibility: hidden; }
+        body.auth-verified { visibility: visible; }
         .stat-card { transition: all 0.3s ease; }
         .stat-card:hover { transform: translateY(-3px); box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
         .progress-bar { transition: width 0.5s ease; }
