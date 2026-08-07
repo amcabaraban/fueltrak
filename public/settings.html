@@ -356,7 +356,8 @@ async function api(url, method, body) {
     var r = await fetch(API + url, o);
     return await r.json();
 }
-document.querySelector('#sidebar a[href="/recycle-bin"]').style.background = '#1e40af';
+var el = document.querySelector('#sidebar a[href="/settings"]');
+if (el) el.style.background = '#1e40af';
 
 // ============ TAB SWITCHING ============
 function switchTab(tab) {
