@@ -32,7 +32,7 @@ app.post('/api/auth/login', async (req, res) => {
     const match = await bcrypt.compare(password, user.password);
     if (!match) return res.status(401).json({ error: 'Invalid credentials' });
     
-    const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET || 'secret', { expiresIn: '24h' });
+    const token = jwt.sign({ id: user.id, role: user.role }, getJwtSecret(), { expiresIn: '24h' });
     
     res.json({ status: 'success', token, user: { id: user.id, email: user.email, role: user.role } });
   } catch (e) {

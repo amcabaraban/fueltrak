@@ -1,5 +1,6 @@
 const { User } = require('../models'); 
 const jwt = require('jsonwebtoken'); 
+const { getJwtSecret } = require('../config/securityHelpers');
  
 class AuthService { 
   async register(userData) { 
@@ -13,7 +14,7 @@ class AuthService {
     if (!user || !(await user.comparePassword(password))) throw new Error('Invalid credentials'); 
     if (!user.is_active) throw new Error('Account deactivated'); 
     await user.update({ last_login: new Date() }); 
-    const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET || 'secret', { expiresIn: '24h' }); 
+    const token = jwt.sign({ id: user.id, role: user.role }, getJwtSecret(), { expiresIn: '24h' }); 
     return { token, user: { id: user.id, email: user.email, role: user.role, mobile: user.mobile, company_name: user.company_name } }; 
   } 
 } 

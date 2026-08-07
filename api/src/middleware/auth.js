@@ -1,15 +1,16 @@
 const jwt = require('jsonwebtoken');
 const pool = require('../config/database');
+const { getJwtSecret } = require('../config/securityHelpers');
 
 const tokenBlacklist = new Set();
-setInterval(() => { tokenBlacklist.forEach(t => { try { jwt.verify(t, process.env.JWT_SECRET); } catch(e) { tokenBlacklist.delete(t); } }); }, 3600000);
+setInterval(() => { tokenBlacklist.forEach(t => { try { jwt.verify(t, getJwtSecret()); } catch(e) { tokenBlacklist.delete(t); } }); }, 3600000);
 
 const authenticate = async (req, res, next) => {
     try {
         const t = req.header('Authorization')?.replace('Bearer ', '');
         if (!t) return res.status(401).json({ error: 'Please authenticate' });
         if (tokenBlacklist.has(t)) return res.status(401).json({ error: 'Token revoked' });
-        const d = jwt.verify(t, process.env.JWT_SECRET);
+        const d = jwt.verify(t, getJwtSecret());
         if (d.type === 'refresh') return res.status(401).json({ error: 'Use access token' });
         const [u] = await pool.execute('SELECT id,email,role,mobile,company_name,is_active FROM users WHERE id=?', [d.id]);
         if (!u.length || !u[0].is_active) return res.status(401).json({ error: 'Invalid token' });

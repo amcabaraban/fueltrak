@@ -6,6 +6,7 @@ const { testConnection, sequelize } = require('./src/config/database');
 const { User, Truck, TruckDocument, AuthorityToLoad } = require('./src/models');
 const jwt = require('jsonwebtoken');
 const NodeCache = require('node-cache');
+const { getJwtSecret } = require('./api/src/config/securityHelpers');
 
 const app = express();
 const otpCache = new NodeCache({ stdTTL: 600 });
@@ -24,7 +25,7 @@ const authenticate = async (req, res, next) => {
   try {
     const token = req.header('Authorization')?.replace('Bearer ', '');
     if (!token) return res.status(401).json({ error: 'Please authenticate' });
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret');
+    const decoded = jwt.verify(token, getJwtSecret());
     req.user = await User.findByPk(decoded.id);
     if (!req.user || !req.user.is_active) return res.status(401).json({ error: 'Invalid token' });
     next();
@@ -53,9 +54,7 @@ app.post('/api/auth/register', async (req, res) => {
     const user = await User.create({ email, password, mobile, company_name, role: 'client', is_verified: false });
     const otp = generateOTP();
     otpCache.set(email, otp);
-    console.log(`📧 OTP for ${email}: ${otp}`);
-
-    res.status(201).json({ status: 'success', message: 'Registration successful. Check console for OTP.', email, otp });
+    res.status(201).json({ status: 'success', message: 'Registration successful. Check your email for the verification code.' });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
@@ -87,8 +86,7 @@ app.post('/api/auth/resend-otp', async (req, res) => {
 
   const otp = generateOTP();
   otpCache.set(email, otp);
-  console.log(`📧 OTP for ${email}: ${otp}`);
-  res.json({ message: 'OTP resent', otp });
+  res.json({ message: 'OTP resent' });
 });
 
 app.post('/api/auth/login', async (req, res) => {
@@ -103,7 +101,7 @@ app.post('/api/auth/login', async (req, res) => {
     if (!isMatch) return res.status(401).json({ error: 'Invalid credentials' });
 
     await user.update({ last_login: new Date() });
-    const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET || 'secret', { expiresIn: '24h' });
+    const token = jwt.sign({ id: user.id, role: user.role }, getJwtSecret(), { expiresIn: '24h' });
 
     res.json({
       status: 'success',
@@ -134,12 +132,9 @@ app.post('/api/auth/forgot-password', async (req, res) => {
     // Generate OTP
     const otp = generateOTP();
     otpCache.set(`reset_${email}`, otp);
-    console.log(`📧 Password reset OTP for ${email}: ${otp}`);
-
     res.json({ 
       status: 'success', 
-      message: 'OTP sent to your email. Check console for OTP.',
-      otp // Remove in production
+      message: 'If the account exists, a password reset email has been sent.'
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -159,7 +154,7 @@ app.post('/api/auth/verify-reset-otp', async (req, res) => {
     otpCache.del(`reset_${email}`);
     
     // Generate a reset token
-    const resetToken = jwt.sign({ email, purpose: 'reset' }, process.env.JWT_SECRET || 'secret', { expiresIn: '15m' });
+    const resetToken = jwt.sign({ email, purpose: 'reset' }, getJwtSecret(), { expiresIn: '15m' });
     
     res.json({ 
       status: 'success', 
@@ -180,7 +175,7 @@ app.post('/api/auth/reset-password', async (req, res) => {
       return res.status(400).json({ error: 'Password must be at least 8 characters' });
     }
 
-    const decoded = jwt.verify(resetToken, process.env.JWT_SECRET || 'secret');
+    const decoded = jwt.verify(resetToken, getJwtSecret());
     if (decoded.purpose !== 'reset') {
       return res.status(400).json({ error: 'Invalid reset token' });
     }

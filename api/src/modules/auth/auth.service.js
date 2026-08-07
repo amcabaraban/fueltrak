@@ -1,5 +1,6 @@
 const { User } = require('../../models');
 const jwt = require('jsonwebtoken');
+const { getJwtSecret } = require('../../config/securityHelpers');
 
 class AuthService {
   async findUserByEmail(email) {
@@ -24,7 +25,7 @@ class AuthService {
 
     const token = jwt.sign(
       { id: user.id, role: user.role },
-      process.env.JWT_SECRET || 'secret',
+      getJwtSecret(),
       { expiresIn: '24h' }
     );
 
