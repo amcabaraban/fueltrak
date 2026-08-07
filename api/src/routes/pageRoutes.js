@@ -27,6 +27,7 @@ function setupPageRoutes(app) {
         '/terms': 'terms.html',
         '/settings': 'settings.html',
         '/announcements': 'announcements.html',
+        '/announcements-manage': 'announcements-manage.html',
     };
     
     Object.entries(pageRoutes).forEach(([route, file]) => {
