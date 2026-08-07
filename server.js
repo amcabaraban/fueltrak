@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const helmet = require('helmet');
 const { testConnection, sequelize } = require('./src/config/database');
 const { User, Truck, TruckDocument, AuthorityToLoad } = require('./src/models');
 const jwt = require('jsonwebtoken');
@@ -11,6 +12,16 @@ const { getJwtSecret } = require('./api/src/config/securityHelpers');
 const app = express();
 const otpCache = new NodeCache({ stdTTL: 600 });
 
+app.use(helmet({
+  xssFilter: true,
+  noSniff: true,
+  frameguard: { action: 'deny' },
+  referrerPolicy: { policy: 'strict-origin-when-cross-origin' }
+}));
+app.use((req, res, next) => {
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  next();
+});
 app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
