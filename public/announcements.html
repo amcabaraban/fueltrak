@@ -24,7 +24,7 @@
             </div>
             <div class="flex items-center space-x-3">
                 <span id="userInfo" class="text-sm bg-white/10 px-3 py-1 rounded-full"></span>
-                <a href="/dashboard" class="text-sm bg-white/20 px-3 py-1 rounded hover:bg-white/30">Dashboard</a>
+                <a id="dashboardLink" href="/client" class="text-sm bg-white/20 px-3 py-1 rounded hover:bg-white/30" onclick="event.preventDefault(); goToDashboard()">Dashboard</a>
                 <a href="/client" class="text-sm bg-white/20 px-3 py-1 rounded hover:bg-white/30">Portal</a>
                 <button onclick="logout()" class="bg-red-500/80 hover:bg-red-500 px-4 py-2 rounded text-sm"><i class="fas fa-sign-out-alt mr-1"></i>Logout</button>
             </div>
@@ -65,6 +65,12 @@
         const user = JSON.parse(localStorage.getItem('fueltrak_user') || '{}');
         if (!token) window.location.replace('/');
         document.getElementById('userInfo').textContent = user.email || '';
+
+        function goToDashboard() {
+            const role = (user.role || '').toLowerCase();
+            const target = role === 'client' ? '/client' : '/dashboard';
+            window.location.href = target;
+        }
 
         let allAnnouncements = [];
         let currentFilter = 'all';
