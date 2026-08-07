@@ -36,40 +36,41 @@
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
+    <!-- ============ NAVIGATION ============ -->
     <nav class="bg-gradient-to-r from-blue-900 to-blue-800 text-white shadow-lg sticky top-0 z-50">
-        <div class="max-w-4xl mx-auto px-4 py-3 flex justify-between items-center">
-            <div class="flex items-center space-x-3 ml-auto">
+        <!-- DESKTOP NAV -->
+        <div class="hidden md:flex max-w-7xl mx-auto px-4 py-3 justify-between items-center">
+            <div class="flex items-center space-x-3">
                 <div class="bg-white/20 p-2 rounded-lg"><i class="fas fa-gas-pump text-2xl text-yellow-400"></i></div>
                 <div><span class="font-bold text-lg">FuelTrak</span><p class="text-xs text-blue-300">Announcements</p></div>
             </div>
-            <div class="flex items-center space-x-3 ml-auto">
+            <div class="flex items-center space-x-3">
                 <span id="userInfo" class="text-sm bg-white/10 px-3 py-1 rounded-full"></span>
                 <a id="dashboardLink" href="/client" class="text-sm bg-white/20 px-3 py-1 rounded hover:bg-white/30" onclick="event.preventDefault(); goToDashboard()">Dashboard</a>
                 <button onclick="logout()" class="bg-red-500/80 hover:bg-red-500 px-4 py-2 rounded text-sm"><i class="fas fa-sign-out-alt mr-1"></i>Logout</button>
             </div>
         </div>
-    </nav>
-
-    <div class="flex md:hidden px-1.5 py-1.5 items-center gap-1">
-        <div class="flex-shrink-0 flex items-center gap-1">
-            <div class="bg-white/20 p-1 rounded"><i class="fas fa-gas-pump text-xs text-yellow-400"></i></div>
-            <span class="font-bold text-[10px] whitespace-nowrap">FuelTrak</span>
-        </div>
-
-        <div class="flex-1 overflow-x-auto flex items-center gap-1 justify-end" style="scrollbar-width:none;-webkit-overflow-scrolling:touch;">
-            <span id="userInfoMob" class="text-[8px] bg-white/10 px-1.5 py-0.5 rounded-full max-w-[70px] truncate flex-shrink-0"></span>
-
-            <div id="announcementBellMob" style="position:relative;cursor:pointer;flex-shrink:0;flex-direction:column;align-items:center;display:inline-flex!important;padding:2px 4px;" onclick="window.location.href='/announcements'">
-                <i class="fas fa-bell" style="font-size:14px;color:#fbbf24;"></i>
-                <span style="font-size:8px;color:#fbbf24;">News</span>
-                <span id="announcementBadgeMob" class="hidden" style="position:absolute;top:-2px;right:-2px;background:#ef4444;color:white;font-size:7px;min-width:12px;height:12px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;">0</span>
+        
+        <!-- MOBILE NAV -->
+        <div class="flex md:hidden px-2 py-2 items-center gap-2">
+            <div class="flex-shrink-0 flex items-center gap-1">
+                <div class="bg-white/20 p-1 rounded"><i class="fas fa-gas-pump text-sm text-yellow-400"></i></div>
+                <span class="font-bold text-xs whitespace-nowrap">FuelTrak</span>
             </div>
-
-            <button onclick="logout()" class="bg-red-500/80 hover:bg-red-500 px-2 py-1 rounded text-[9px] flex-shrink-0 flex flex-col items-center leading-tight">
-                <i class="fas fa-sign-out-alt text-[13px]"></i><span>Logout</span>
-            </button>
-        </div>            
-    </div>   
+            <div class="flex-1 flex items-center gap-1 justify-end">
+                <span id="userInfoMob" class="text-[9px] bg-white/10 px-1.5 py-0.5 rounded-full max-w-[80px] truncate flex-shrink-0"></span>
+                
+                <a id="dashboardLinkMob" href="/client" class="text-[10px] bg-white/20 px-2 py-1 rounded hover:bg-white/30 flex-shrink-0" onclick="event.preventDefault(); goToDashboard()">Home</a>
+                
+                <div id="announcementBellMob" style="position:relative;cursor:pointer;flex-shrink:0;display:inline-flex!important;align-items:center;padding:2px 4px;" onclick="window.location.href='/announcements'">
+                    <i class="fas fa-bell" style="font-size:15px;color:#fbbf24;"></i>
+                    <span id="announcementBadgeMob" class="hidden" style="position:absolute;top:-5px;right:-6px;background:#ef4444;color:white;font-size:8px;min-width:14px;height:14px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;">0</span>
+                </div>
+                
+                <button onclick="logout()" class="bg-red-500/80 hover:bg-red-500 px-2 py-1 rounded text-[10px] flex-shrink-0 whitespace-nowrap"><i class="fas fa-sign-out-alt mr-1"></i>Out</button>
+            </div>
+        </div>
+    </nav>
     <div class="max-w-4xl mx-auto px-4 py-8">
         <div class="bg-gradient-to-r from-blue-900 to-blue-700 rounded-2xl shadow-2xl p-6 mb-6 text-white">
             <h1 class="text-2xl font-bold"><i class="fas fa-bullhorn mr-2"></i>Company Announcements</h1>
@@ -105,6 +106,10 @@
         if (!token) window.location.replace('/');
         document.getElementById('userInfo').textContent = user.email || '';
 
+        // Update mobile user info
+        var userInfoMob = document.getElementById('userInfoMob');
+        if (userInfoMob) userInfoMob.textContent = (user.email || '').split('@')[0];
+        
         function goToDashboard() {
             const role = (user.role || '').toLowerCase();
             const target = role === 'client' ? '/client' : '/dashboard';
