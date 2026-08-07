@@ -19,56 +19,42 @@ function setupSecurity(app) {
         next();
     });
     
-    // 1. Core Helmet configuration with the correct, explicit subdomains
     app.use(helmet({
         contentSecurityPolicy: {
             directives: {
                 defaultSrc: ["'self'"],
-                scriptSrc: [
-                    "'self'", 
-                    "https://cdn.tailwindcss.com",       // 📍 Explicitly allowed
-                    "https://cdnjs.cloudflare.com",      // 📍 Explicitly allowed
-                    "'unsafe-inline'" 
-                ],
-                scriptSrcAttr: ["'self'", "'unsafe-inline'"], 
-                styleSrc: [
-                    "'self'", 
-                    "https://cdnjs.cloudflare.com",     // 📍 Explicitly allowed
-                    "'unsafe-inline'"
-                ],
+                scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.tailwindcss.com", "https://cdnjs.cloudflare.com"],
+                scriptSrcAttr: ["'self'", "'unsafe-inline'", "'unsafe-hashes'"],
+                styleSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com"],
                 styleSrcAttr: ["'self'", "'unsafe-inline'"],
                 imgSrc: ["'self'", "data:", "https:"],
-                connectSrc: ["'self'", "https://vercel.app", "https://vercel.app"],
-                fontSrc: [
-                    "'self'", 
-                    "https://cdnjs.cloudflare.com"     // 📍 Explicitly allowed for icons
-                ],
+                connectSrc: ["'self'", "https://fueltraksystem.vercel.app", "https://fueltrak-seven.vercel.app"],
+                fontSrc: ["'self'", "https://cdnjs.cloudflare.com"],
                 objectSrc: ["'none'"],
-                frameAncestors: ["'none'"], 
+                frameAncestors: ["'none'"],
                 formAction: ["'self'"],
                 baseUri: ["'self'"],
-                upgradeInsecureRequests: null 
             }
         },
         hsts: { maxAge: 31536000, includeSubDomains: true, preload: true },
-        frameguard: { action: 'deny' }, 
+        frameguard: { action: 'deny' },
         hidePoweredBy: true,
         noSniff: true,
         xssFilter: true,
         referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
         permittedCrossDomainPolicies: { permittedPolicies: 'none' },
         dnsPrefetchControl: { allow: false },
-        crossOriginEmbedderPolicy: false, 
-        crossOriginOpenerPolicy: false,
-        crossOriginResourcePolicy: false,
+        crossOriginEmbedderPolicy: { policy: 'credentialless' },
+        crossOriginOpenerPolicy: { policy: 'same-origin' },
+        crossOriginResourcePolicy: { policy: 'same-origin' },
     }));
     
-    // 2. Modified Response Header Cleanup Middleware (Overwriting bug removed from here!)
     app.use((req, res, next) => {
         res.removeHeader('X-Powered-By');
-        res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), interest-cohort=(), payment=(), usb=(), accelerometer=(), autoplay=(), clipboard-read=(), clipboard-write=(self), display-capture=(), fullscreen=(self), gyroscope=(), magnetometer=(), midi=(), picture-in-picture=(), sync-xhr=()');
+        res.setHeader('X-XSS-Protection', '1; mode=block');
+        res.setHeader('X-Content-Type-Options', 'nosniff');
         res.setHeader('X-Download-Options', 'noopen');
-        
+        res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), interest-cohort=(), payment=(), usb=(), accelerometer=(), autoplay=(), clipboard-read=(), clipboard-write=(self), display-capture=(), fullscreen=(self), gyroscope=(), magnetometer=(), midi=(), picture-in-picture=(), sync-xhr=()');
         if (req.path.startsWith('/api/')) {
             res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
         }
@@ -77,23 +63,19 @@ function setupSecurity(app) {
     
     app.use(compression());
     
-    // 3. CORS Configuration
     app.use(cors({
         origin: (origin, callback) => {
-            if (!origin || origin === 'null' || origin === 'undefined' || origin === '') {
-                return callback(null, true);
-            }
-            const cleanOrigin = origin.replace(/\/$/, '');
+            if (!origin) return callback(null, true);
             const allowedOrigins = [
-                'https://vercel.app',
-                'https://vercel.app',
+                'https://fueltraksystem.vercel.app',
+                'https://fueltrak-seven.vercel.app',
                 'http://localhost:3000',
                 'http://localhost:8080'
             ];
-            if (allowedOrigins.includes(cleanOrigin) || cleanOrigin.includes('vercel.app')) {
+            if (allowedOrigins.includes(origin.replace(/\/$/, ''))) {
                 callback(null, true);
             } else {
-                console.warn('CORS blocked origin request from: ' + origin);
+                console.warn('CORS blocked: ' + origin);
                 callback(new Error('Not allowed by CORS'));
             }
         },
