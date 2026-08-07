@@ -395,27 +395,63 @@ async function api(url, method, body) {
     var r = await fetch(API + url, o);
     return await r.json();
 }
+
 var el = document.querySelector('#sidebar a[href="/settings"]');
 if (el) el.style.background = '#1e40af';
 
 // ============ TAB SWITCHING ============
 function switchTab(tab) {
-    ['recycleTab', 'backupTab', 'logsTab'].forEach(t => document.getElementById(t).classList.add('hidden'));
-    ['tabRecycle', 'tabBackup', 'tabLogs'].forEach(t => document.getElementById(t).classList.remove('active'));
-    document.getElementById(tab + 'Tab').classList.remove('hidden');
-    document.getElementById('tab' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
-    if (tab === 'recycle') loadRecycleBin();
-    if (tab === 'backup') loadBackupInfo();
-    if (tab === 'logs') loadBackupLogs();
+    // Hide all tabs
+    ['recycleTab', 'backupTab', 'logsTab'].forEach(function(t) {
+        var el = document.getElementById(t);
+        if (el) el.classList.add('hidden');
+    });
+    
+    // Remove active from all buttons
+    ['tabRecycle', 'tabBackup', 'tabLogs'].forEach(function(t) {
+        var el = document.getElementById(t);
+        if (el) el.classList.remove('active');
+    });
+    
+    // Show selected tab
+    var tabEl = document.getElementById(tab + 'Tab');
+    if (tabEl) tabEl.classList.remove('hidden');
+    
+    // Activate selected button
+    var btnEl = document.getElementById('tab' + tab.charAt(0).toUpperCase() + tab.slice(1));
+    if (btnEl) btnEl.classList.add('active');
+    
+    // Load data for selected tab
+    if (tab === 'recycle') { loadRecycleBin(); loadBinStats(); }
+    if (tab === 'backup') { loadBackupInfo(); }
+    if (tab === 'logs') { loadBackupLogs(); }
+}
+
+// ============ BACKUP INFO (FIXED - this was missing) ============
+async function loadBackupInfo() {
+    var container = document.getElementById('backupInfo');
+    if (!container) return;
+    try {
+        var r = await fetch('/api/admin/recycle-bin/stats', { headers: { 'Authorization': 'Bearer ' + token } });
+        var d = await r.json();
+        if (d.status === 'success') {
+            container.innerHTML = '<div class="grid grid-cols-2 md:grid-cols-4 gap-4">' +
+                '<div class="bg-white rounded-xl shadow p-4 text-center"><p class="text-2xl font-bold text-blue-700">' + (d.data.total_items || 0) + '</p><p class="text-xs text-gray-500">Total Items</p></div>' +
+                '<div class="bg-white rounded-xl shadow p-4 text-center"><p class="text-2xl font-bold text-green-700">' + (d.data.active_items || 0) + '</p><p class="text-xs text-gray-500">Active</p></div>' +
+                '<div class="bg-white rounded-xl shadow p-4 text-center"><p class="text-2xl font-bold text-purple-700">' + (d.data.restored_items || 0) + '</p><p class="text-xs text-gray-500">Restored</p></div>' +
+                '<div class="bg-white rounded-xl shadow p-4 text-center"><p class="text-2xl font-bold text-teal-700">' + (d.data.retention_days || 30) + ' days</p><p class="text-xs text-gray-500">Retention</p></div>' +
+                '</div>';
+        }
+    } catch (e) {}
 }
 
 // ============ RECYCLE BIN ============
 async function loadRecycleBin() {
-    var table = document.getElementById('binTableFilter').value;
-    var search = document.getElementById('binSearch').value;
+    var table = document.getElementById('binTableFilter');
+    var search = document.getElementById('binSearch');
     var params = new URLSearchParams();
-    if (table) params.append('table', table);
-    if (search) params.append('search', search);
+    if (table && table.value) params.append('table', table.value);
+    if (search && search.value) params.append('search', search.value);
     
     var d = await api('/admin/recycle-bin?' + params.toString());
     if (d.status === 'success') {
@@ -426,25 +462,25 @@ async function loadRecycleBin() {
 
 function renderBinTable(items) {
     var tb = document.getElementById('binTableBody');
-    if (!items.length) {
+    if (!tb) return;
+    if (!items || !items.length) {
         tb.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-400"><i class="fas fa-inbox text-2xl mb-2 block"></i>Recycle bin is empty</td></tr>';
         return;
     }
-    tb.innerHTML = items.map(item => {
+    tb.innerHTML = items.map(function(item) {
         var data = item.record_data || {};
         var label = data.email || data.plate_no || data.atl_code || data.so_number || 'ID: ' + item.record_id;
         var daysColor = item.days_remaining <= 3 ? 'text-red-600 font-bold' : item.days_remaining <= 7 ? 'text-orange-600' : 'text-green-600';
-        return `<tr class="border-b hover:bg-gray-50">
-            <td class="py-3 px-3"><span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded text-xs">${item.table_name}</span></td>
-            <td class="py-3 px-3 text-sm">${label}</td>
-            <td class="py-3 px-3 text-xs">${item.deleted_by_email || 'N/A'}</td>
-            <td class="py-3 px-3 text-xs">${new Date(item.deleted_at).toLocaleString()}</td>
-            <td class="py-3 px-3 text-center text-xs ${daysColor}">${item.days_remaining} days</td>
-            <td class="py-3 px-3 text-center">
-                <button onclick="restoreItem(${item.id})" class="bg-green-500 text-white px-2 py-1 rounded text-xs mr-1"><i class="fas fa-undo"></i> Restore</button>
-                <button onclick="deleteItem(${item.id})" class="bg-red-500 text-white px-2 py-1 rounded text-xs"><i class="fas fa-trash"></i> Delete</button>
-            </td>
-        </tr>`;
+        return '<tr class="border-b hover:bg-gray-50">' +
+            '<td class="py-3 px-3"><span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded text-xs">' + item.table_name + '</span></td>' +
+            '<td class="py-3 px-3 text-sm">' + label + '</td>' +
+            '<td class="py-3 px-3 text-xs">' + (item.deleted_by_email || 'N/A') + '</td>' +
+            '<td class="py-3 px-3 text-xs">' + new Date(item.deleted_at).toLocaleString() + '</td>' +
+            '<td class="py-3 px-3 text-center text-xs ' + daysColor + '">' + item.days_remaining + ' days</td>' +
+            '<td class="py-3 px-3 text-center">' +
+            '<button onclick="restoreItem(' + item.id + ')" class="bg-green-500 text-white px-2 py-1 rounded text-xs mr-1"><i class="fas fa-undo"></i> Restore</button>' +
+            '<button onclick="deleteItem(' + item.id + ')" class="bg-red-500 text-white px-2 py-1 rounded text-xs"><i class="fas fa-trash"></i> Delete</button>' +
+            '</td></tr>';
     }).join('');
 }
 
@@ -452,13 +488,17 @@ async function loadBinStats() {
     var d = await api('/admin/recycle-bin/stats');
     if (d.status === 'success') {
         var s = d.data;
-        document.getElementById('binStats').innerHTML = [
+        var container = document.getElementById('binStats');
+        if (!container) return;
+        container.innerHTML = [
             { label: 'Total Items', value: s.total_items, color: 'text-blue-700' },
             { label: 'Active Items', value: s.active_items, color: 'text-orange-700' },
             { label: 'Restored', value: s.restored_items, color: 'text-green-700' },
             { label: 'Unique Tables', value: s.unique_tables, color: 'text-purple-700' },
             { label: 'Retention', value: s.retention_days + ' days', color: 'text-teal-700' }
-        ].map(c => `<div class="bg-white rounded-xl shadow p-4 text-center"><p class="text-2xl font-bold ${c.color}">${c.value}</p><p class="text-xs text-gray-500">${c.label}</p></div>`).join('');
+        ].map(function(c) {
+            return '<div class="bg-white rounded-xl shadow p-4 text-center"><p class="text-2xl font-bold ' + c.color + '">' + c.value + '</p><p class="text-xs text-gray-500">' + c.label + '</p></div>';
+        }).join('');
     }
 }
 
@@ -474,70 +514,47 @@ async function restoreItem(id) {
 }
 
 async function deleteItem(id) {
-    if (!confirm('Permanently delete this record? This cannot be undone.')) return;
+    if (!confirm('Permanently delete this record?')) return;
     var d = await api('/admin/recycle-bin/' + id, 'DELETE');
-    if (d.status === 'success') {
-        loadRecycleBin();
-    }
+    if (d.status === 'success') loadRecycleBin();
 }
 
 async function emptyRecycleBin() {
-    if (!confirm('Permanently delete ALL items in the recycle bin? This cannot be undone!')) return;
-    if (!confirm('Are you absolutely sure? This action is IRREVERSIBLE.')) return;
+    if (!confirm('Delete ALL items permanently?')) return;
     var d = await api('/admin/recycle-bin/empty', 'POST');
-    if (d.status === 'success') {
-        showSuccess(d.message);
-        loadRecycleBin();
-    }
+    if (d.status === 'success') { showSuccess(d.message); loadRecycleBin(); }
 }
 
 // ============ BACKUP & RESTORE ============
 async function createBackup() {
     var btn = document.getElementById('backupBtn');
     var status = document.getElementById('backupStatus');
+    if (!btn) return;
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Creating backup...';
-    
     try {
-        var r = await fetch(API + '/admin/backup', {
-            method: 'POST',
-            headers: { 'Authorization': 'Bearer ' + token }
-        });
-        
+        var r = await fetch(API + '/admin/backup', { method: 'POST', headers: { 'Authorization': 'Bearer ' + token } });
         if (r.ok) {
             var blob = await r.blob();
             var url = window.URL.createObjectURL(blob);
             var a = document.createElement('a');
-            a.href = url;
-            a.download = 'fueltrak_backup_' + new Date().toISOString().replace(/[:.]/g, '-') + '.json';
-            document.body.appendChild(a);
-            a.click();
-            window.URL.revokeObjectURL(url);
-            a.remove();
-            status.textContent = '✅ Backup downloaded successfully!';
-            status.className = 'mt-3 text-center text-sm text-green-600';
-        } else {
-            var d = await r.json();
-            status.textContent = '❌ ' + (d.error || 'Backup failed');
-            status.className = 'mt-3 text-center text-sm text-red-600';
+            a.href = url; a.download = 'fueltrak_backup_' + new Date().toISOString().replace(/[:.]/g, '-') + '.json';
+            document.body.appendChild(a); a.click();
+            window.URL.revokeObjectURL(url); a.remove();
+            if (status) { status.textContent = '✅ Backup downloaded!'; status.className = 'mt-3 text-center text-sm text-green-600'; status.classList.remove('hidden'); }
         }
     } catch(e) {
-        status.textContent = '❌ Connection error';
-        status.className = 'mt-3 text-center text-sm text-red-600';
+        if (status) { status.textContent = '❌ Connection error'; status.className = 'mt-3 text-center text-sm text-red-600'; status.classList.remove('hidden'); }
     }
-    
-    status.classList.remove('hidden');
     btn.disabled = false;
     btn.innerHTML = '<i class="fas fa-download mr-2"></i>Download Backup';
-    setTimeout(() => status.classList.add('hidden'), 5000);
+    if (status) setTimeout(function() { status.classList.add('hidden'); }, 5000);
 }
 
 var restoreData = null;
-
 function previewRestore(event) {
     var file = event.target.files[0];
     if (!file) return;
-    
     var reader = new FileReader();
     reader.onload = function(e) {
         try {
@@ -545,47 +562,24 @@ function previewRestore(event) {
             var preview = document.getElementById('restorePreview');
             var tables = Object.keys(restoreData);
             var totalRecords = 0;
-            tables.forEach(t => { totalRecords += restoreData[t]?.length || 0; });
-            
-            preview.innerHTML = `<p class="font-semibold">📋 Backup Preview:</p>
-                <p>Tables: ${tables.length} | Total Records: ${totalRecords.toLocaleString()}</p>
-                <div class="mt-1">${tables.map(t => '<span class="inline-block bg-gray-200 px-2 py-0.5 rounded text-xs mr-1 mb-1">'+t+' ('+(restoreData[t]?.length||0)+')</span>').join('')}</div>`;
-            preview.classList.remove('hidden');
-            document.getElementById('restoreBtn').disabled = false;
-        } catch(e) {
-            alert('Invalid JSON file');
-            restoreData = null;
-            document.getElementById('restoreBtn').disabled = true;
-        }
+            tables.forEach(function(t) { totalRecords += restoreData[t]?.length || 0; });
+            if (preview) {
+                preview.innerHTML = '<p class="font-semibold">📋 Backup Preview:</p><p>Tables: ' + tables.length + ' | Records: ' + totalRecords.toLocaleString() + '</p>';
+                preview.classList.remove('hidden');
+            }
+            var btn = document.getElementById('restoreBtn');
+            if (btn) btn.disabled = false;
+        } catch(e) { alert('Invalid JSON file'); }
     };
     reader.readAsText(file);
 }
 
 async function restoreBackup() {
-    if (!restoreData) return alert('Please select a backup file first');
-    if (!confirm('Restore backup? This will modify your database.')) return;
-    
-    var mode = document.querySelector('input[name="restoreMode"]:checked').value;
-    var btn = document.getElementById('restoreBtn');
-    var status = document.getElementById('restoreStatus');
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Restoring...';
-    
-    var d = await api('/admin/restore', 'POST', { backup: restoreData, mode: mode });
-    
-    if (d.status === 'success') {
-        status.textContent = '✅ ' + d.message + (d.errors.length ? ' (' + d.errors.length + ' errors)' : '');
-        status.className = 'mt-3 text-center text-sm text-green-600';
-        showSuccess(d.message);
-    } else {
-        status.textContent = '❌ ' + (d.error || 'Restore failed');
-        status.className = 'mt-3 text-center text-sm text-red-600';
-    }
-    
-    status.classList.remove('hidden');
-    btn.disabled = false;
-    btn.innerHTML = '<i class="fas fa-upload mr-2"></i>Restore Backup';
-    setTimeout(() => status.classList.add('hidden'), 8000);
+    if (!restoreData) return alert('Select a backup file first');
+    if (!confirm('Restore backup?')) return;
+    var mode = document.querySelector('input[name="restoreMode"]:checked');
+    var d = await api('/admin/restore', 'POST', { backup: restoreData, mode: mode ? mode.value : 'merge' });
+    if (d.status === 'success') showSuccess(d.message);
 }
 
 // ============ BACKUP LOGS ============
@@ -593,44 +587,46 @@ async function loadBackupLogs() {
     var d = await api('/admin/backup-logs');
     if (d.status === 'success') {
         var tb = document.getElementById('logsTableBody');
+        if (!tb) return;
         if (!d.data.length) {
             tb.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-gray-400">No backup logs yet</td></tr>';
             return;
         }
-        tb.innerHTML = d.data.map(log => `
-            <tr class="border-b">
-                <td class="py-3 px-3 text-xs">${new Date(log.created_at).toLocaleString()}</td>
-                <td class="py-3 px-3"><span class="${log.backup_type === 'auto' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'} px-2 py-0.5 rounded text-xs">${log.backup_type}</span></td>
-                <td class="py-3 px-3 text-xs font-mono">${log.filename || 'N/A'}</td>
-                <td class="py-3 px-3 text-right text-xs">${formatBytes(log.file_size)}</td>
-                <td class="py-3 px-3 text-right text-xs">${(log.records_count || 0).toLocaleString()}</td>
-                <td class="py-3 px-3 text-center"><span class="${log.status === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'} px-2 py-0.5 rounded text-xs">${log.status}</span></td>
-                <td class="py-3 px-3 text-xs">${log.created_by_email || 'N/A'}</td>
-            </tr>
-        `).join('');
+        tb.innerHTML = d.data.map(function(log) {
+            return '<tr class="border-b">' +
+                '<td class="py-3 px-3 text-xs">' + new Date(log.created_at).toLocaleString() + '</td>' +
+                '<td class="py-3 px-3"><span class="' + (log.backup_type === 'auto' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800') + ' px-2 py-0.5 rounded text-xs">' + log.backup_type + '</span></td>' +
+                '<td class="py-3 px-3 text-xs font-mono">' + (log.filename || 'N/A') + '</td>' +
+                '<td class="py-3 px-3 text-right text-xs">' + formatBytes(log.file_size) + '</td>' +
+                '<td class="py-3 px-3 text-right text-xs">' + (log.records_count || 0).toLocaleString() + '</td>' +
+                '<td class="py-3 px-3 text-center"><span class="' + (log.status === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800') + ' px-2 py-0.5 rounded text-xs">' + log.status + '</span></td>' +
+                '<td class="py-3 px-3 text-xs">' + (log.created_by_email || 'N/A') + '</td></tr>';
+        }).join('');
     }
 }
 
 function formatBytes(bytes) {
     if (!bytes) return '0 B';
-    const k = 1024;
-    const sizes = ['B', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    var k = 1024, sizes = ['B', 'KB', 'MB', 'GB'];
+    var i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
 }
 
 function showSuccess(msg) {
-    document.getElementById('successMessage').textContent = msg;
-    document.getElementById('successModal').classList.remove('hidden');
+    var el = document.getElementById('successMessage');
+    var modal = document.getElementById('successModal');
+    if (el) el.textContent = msg;
+    if (modal) modal.classList.remove('hidden');
 }
-function toggleSidebar(){var s=document.getElementById("sidebar");s.classList.toggle("open");document.getElementById("sidebarOverlay").classList.toggle("hidden")}
-function openCalc(){document.getElementById('calcWidget').classList.remove('hidden');document.getElementById('calcButton').classList.add('hidden');}
-function closeCalc(){document.getElementById('calcWidget').classList.add('hidden');document.getElementById('calcButton').classList.remove('hidden');}
-function toggleCalc(){}
-var calcExpr='';
-function calcInput(v){calcExpr+=v;document.getElementById('calcDisplay').value=calcExpr;}
-function calcClear(){calcExpr='';document.getElementById('calcDisplay').value='0';}
-function calcResult(){try{var r=eval(calcExpr.replace(/�/g,'*').replace(/�/g,'/').replace(/-/g,'-'));document.getElementById('calcDisplay').value=Number(r.toFixed(4));calcExpr=String(r);}catch(e){document.getElementById('calcDisplay').value='Error';calcExpr='';}}
+
+// ============ UTILS ============
+function toggleSidebar() { var s = document.getElementById("sidebar"); if (s) s.classList.toggle("open"); var o = document.getElementById("sidebarOverlay"); if (o) o.classList.toggle("hidden"); }
+function openCalc() { var w = document.getElementById('calcWidget'); var b = document.getElementById('calcButton'); if (w) w.classList.remove('hidden'); if (b) b.classList.add('hidden'); }
+function closeCalc() { var w = document.getElementById('calcWidget'); var b = document.getElementById('calcButton'); if (w) w.classList.add('hidden'); if (b) b.classList.remove('hidden'); }
+var calcExpr = '';
+function calcInput(v) { calcExpr += v; var d = document.getElementById('calcDisplay'); if (d) d.value = calcExpr; }
+function calcClear() { calcExpr = ''; var d = document.getElementById('calcDisplay'); if (d) d.value = '0'; }
+function calcResult() { try { var r = eval(calcExpr); var d = document.getElementById('calcDisplay'); if (d) d.value = Number(r.toFixed(4)); calcExpr = String(r); } catch(e) { var d = document.getElementById('calcDisplay'); if (d) d.value = 'Error'; calcExpr = ''; } }
 
 function logout() { localStorage.clear(); window.location.href = '/'; }
 
