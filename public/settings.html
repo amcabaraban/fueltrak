@@ -399,35 +399,14 @@ var el = document.querySelector('#sidebar a[href="/settings"]');
 if (el) el.style.background = '#1e40af';
 
 // ============ TAB SWITCHING ============
-function switchTab(tabName) {
-    // Hide all tab contents
-    document.querySelectorAll('.tab-content').forEach(function(el) {
-        el.classList.add('hidden');
-    });
-    
-    // Show selected tab content
-    var tabContent = document.getElementById('tab-' + tabName);
-    if (tabContent) tabContent.classList.remove('hidden');
-    
-    // Update active tab button styles
-    document.querySelectorAll('.tab-btn').forEach(function(btn) {
-        btn.classList.remove('bg-blue-900', 'text-white');
-        btn.classList.add('bg-gray-100', 'text-gray-600');
-    });
-    
-    var activeBtn = document.getElementById('tab' + tabName.charAt(0).toUpperCase() + tabName.slice(1));
-    if (activeBtn) {
-        activeBtn.classList.remove('bg-gray-100', 'text-gray-600');
-        activeBtn.classList.add('bg-blue-900', 'text-white');
-    }
-    
-    // Load data based on tab
-    if (tabName === 'backup') {
-        loadBackupInfo();
-        loadBackupLogs();
-    } else if (tabName === 'recycle') {
-        loadRecycleBin();
-    }
+function switchTab(tab) {
+    ['recycleTab', 'backupTab', 'logsTab'].forEach(t => document.getElementById(t).classList.add('hidden'));
+    ['tabRecycle', 'tabBackup', 'tabLogs'].forEach(t => document.getElementById(t).classList.remove('active'));
+    document.getElementById(tab + 'Tab').classList.remove('hidden');
+    document.getElementById('tab' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
+    if (tab === 'recycle') loadRecycleBin();
+    if (tab === 'backup') loadBackupInfo();
+    if (tab === 'logs') loadBackupLogs();
 }
 
 // ============ RECYCLE BIN ============
