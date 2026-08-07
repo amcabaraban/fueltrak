@@ -8,112 +8,196 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <script src="/js/session.js"></script>
     <style>
-        body { font-family: Arial, sans-serif; }
+        @keyframes fadeIn { from { opacity:0; transform:translateY(-10px); } to { opacity:1; transform:translateY(0); } }
+        .animate-fade-in { animation: fadeIn 0.3s ease-out; }
+        .priority-urgent { border-left: 4px solid #ef4444; }
+        .priority-important { border-left: 4px solid #f59e0b; }
+        .priority-normal { border-left: 4px solid #3b82f6; }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
-    <nav class="bg-gradient-to-r from-blue-900 to-blue-800 text-white shadow-lg sticky top-0 z-20">
-        <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+    <nav class="bg-gradient-to-r from-blue-900 to-blue-800 text-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-4xl mx-auto px-4 py-3 flex justify-between items-center">
             <div class="flex items-center space-x-3">
                 <div class="bg-white/20 p-2 rounded-lg"><i class="fas fa-gas-pump text-2xl text-yellow-400"></i></div>
-                <div><span class="font-bold text-lg">FuelTrak</span><p class="text-xs text-blue-300 hidden sm:block">Announcements</p></div>
+                <div><span class="font-bold text-lg">FuelTrak</span><p class="text-xs text-blue-300">Announcements</p></div>
             </div>
             <div class="flex items-center space-x-3">
                 <span id="userInfo" class="text-sm bg-white/10 px-3 py-1 rounded-full"></span>
-                <button onclick="logout()" class="text-sm bg-red-600 hover:bg-red-700 px-3 py-1 rounded">Logout</button>
+                <a href="/dashboard" class="text-sm bg-white/20 px-3 py-1 rounded hover:bg-white/30">Dashboard</a>
+                <a href="/client" class="text-sm bg-white/20 px-3 py-1 rounded hover:bg-white/30">Portal</a>
+                <button onclick="logout()" class="bg-red-500/80 hover:bg-red-500 px-4 py-2 rounded text-sm"><i class="fas fa-sign-out-alt mr-1"></i>Logout</button>
             </div>
         </div>
     </nav>
 
     <div class="max-w-4xl mx-auto px-4 py-8">
-        <div id="announcementSection">
-            <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
-                <h2 class="text-xl font-bold mb-4"><i class="fas fa-bullhorn mr-2 text-blue-900"></i>Create Announcement</h2>
-                <div class="space-y-4">
-                    <input type="text" id="announcementTitle" placeholder="Title" class="w-full px-4 py-2 border rounded-lg">
-                    <textarea id="announcementMessage" placeholder="Message..." rows="4" class="w-full px-4 py-2 border rounded-lg"></textarea>
-                    <div class="flex gap-4">
-                        <select id="announcementPriority" class="px-4 py-2 border rounded-lg">
-                            <option value="normal">Normal</option>
-                            <option value="important">Important</option>
-                            <option value="urgent">Urgent</option>
-                        </select>
-                        <input type="date" id="announcementExpiry" class="px-4 py-2 border rounded-lg">
-                        <button onclick="createAnnouncement()" class="bg-blue-900 text-white px-6 py-2 rounded-lg hover:bg-blue-800">
-                            <i class="fas fa-paper-plane mr-2"></i>Send
-                        </button>
-                    </div>
-                </div>
-            </div>
+        <div class="bg-gradient-to-r from-blue-900 to-blue-700 rounded-2xl shadow-2xl p-6 mb-6 text-white">
+            <h1 class="text-2xl font-bold"><i class="fas fa-bullhorn mr-2"></i>Company Announcements</h1>
+            <p class="text-blue-200 text-sm mt-1">Stay updated with the latest news and notices</p>
+        </div>
 
-            <div class="bg-white rounded-xl shadow-lg p-6">
-                <h2 class="text-xl font-bold mb-4"><i class="fas fa-list mr-2 text-blue-900"></i>All Announcements</h2>
-                <div id="adminAnnouncementList" class="space-y-2">Loading...</div>
-            </div>
+        <!-- Filter Buttons -->
+        <div class="flex flex-wrap gap-2 mb-6">
+            <button onclick="filterAnnouncements('all')" class="announcement-filter px-4 py-2 rounded-full text-sm bg-blue-100 text-blue-700 font-semibold hover:bg-blue-200" data-filter="all">All</button>
+            <button onclick="filterAnnouncements('urgent')" class="announcement-filter px-4 py-2 rounded-full text-sm bg-gray-100 text-gray-600 hover:bg-red-100 hover:text-red-700" data-filter="urgent"><i class="fas fa-exclamation-circle mr-1"></i>Urgent</button>
+            <button onclick="filterAnnouncements('important')" class="announcement-filter px-4 py-2 rounded-full text-sm bg-gray-100 text-gray-600 hover:bg-orange-100 hover:text-orange-700" data-filter="important"><i class="fas fa-flag mr-1"></i>Important</button>
+            <button onclick="filterAnnouncements('normal')" class="announcement-filter px-4 py-2 rounded-full text-sm bg-gray-100 text-gray-600 hover:bg-blue-100 hover:text-blue-700" data-filter="normal"><i class="fas fa-info-circle mr-1"></i>Normal</button>
+            <button onclick="filterAnnouncements('unread')" class="announcement-filter px-4 py-2 rounded-full text-sm bg-gray-100 text-gray-600 hover:bg-green-100 hover:text-green-700" data-filter="unread"><i class="fas fa-circle mr-1"></i>Unread</button>
+            <button onclick="markAllRead()" class="px-4 py-2 rounded-full text-sm bg-green-100 text-green-700 hover:bg-green-200 ml-auto"><i class="fas fa-check-double mr-1"></i>Mark All Read</button>
+        </div>
+
+        <!-- Announcements List -->
+        <div id="announcementList" class="space-y-4">
+            <div class="text-center py-12 text-gray-400"><i class="fas fa-spinner fa-spin text-2xl mb-2 block"></i>Loading announcements...</div>
+        </div>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="hidden text-center py-12">
+            <i class="fas fa-bullhorn text-5xl text-gray-300 mb-4 block"></i>
+            <p class="text-gray-500 text-lg">No announcements</p>
+            <p class="text-gray-400 text-sm">Check back later for updates</p>
         </div>
     </div>
 
     <script>
         const token = localStorage.getItem('fueltrak_token');
-        const currentUser = JSON.parse(localStorage.getItem('fueltrak_user') || '{}');
-        if (!token || !['dispatcher', 'management'].includes(currentUser.role)) window.location.replace('/');
-        document.getElementById('userInfo').textContent = currentUser.email || '';
+        const user = JSON.parse(localStorage.getItem('fueltrak_user') || '{}');
+        if (!token) window.location.replace('/');
+        document.getElementById('userInfo').textContent = user.email || '';
 
-        async function createAnnouncement() {
-            var title = document.getElementById('announcementTitle').value.trim();
-            var message = document.getElementById('announcementMessage').value.trim();
-            if (!title || !message) return alert('Title and message required');
-            var response = await fetch('/api/announcements', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-                body: JSON.stringify({
-                    title: title, message: message,
-                    priority: document.getElementById('announcementPriority').value,
-                    expires_at: document.getElementById('announcementExpiry').value || null
-                })
-            });
-            if (response.ok) {
-                document.getElementById('announcementTitle').value = '';
-                document.getElementById('announcementMessage').value = '';
-                loadAnnouncements();
+        let allAnnouncements = [];
+        let currentFilter = 'all';
+
+        async function loadAnnouncements() {
+            try {
+                const response = await fetch('/api/announcements', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    allAnnouncements = data.data;
+                    renderAnnouncements();
+                }
+            } catch (e) {
+                document.getElementById('announcementList').innerHTML = 
+                    '<div class="text-center py-12 text-red-400"><i class="fas fa-exclamation-circle text-2xl mb-2 block"></i>Error loading announcements</div>';
             }
         }
 
-        async function loadAnnouncements() {
-            var response = await fetch('/api/announcements/admin', { headers: { 'Authorization': 'Bearer ' + token } });
-            var data = await response.json();
-            var list = document.getElementById('adminAnnouncementList');
-            var colors = { urgent: '#ef4444', important: '#f59e0b', normal: '#3b82f6' };
-            list.innerHTML = data.data.map(function(ann) {
-                return '<div style="padding:16px;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">' +
-                    '<div><strong>' + ann.title + '</strong> ' +
-                    '<span style="background:' + (colors[ann.priority] || '#3b82f6') + ';color:white;font-size:10px;padding:2px 8px;border-radius:10px;margin-left:8px;">' + ann.priority + '</span>' +
-                    '<p style="color:#6b7280;font-size:14px;margin-top:4px;">' + ann.message + '</p>' +
-                    '<p style="color:#9ca3af;font-size:12px;">By ' + ann.created_by_email + ' on ' + new Date(ann.created_at).toLocaleDateString() + '</p></div>' +
-                    '<div style="display:flex;gap:8px;">' +
-                    '<button onclick="toggleAnnouncement(' + ann.id + ')" style="padding:4px 8px;border:1px solid #d1d5db;border-radius:4px;cursor:pointer;background:' + (ann.is_active ? '#dcfce7' : '#fee2e2') + ';font-size:12px;">' + (ann.is_active ? 'Active' : 'Inactive') + '</button>' +
-                    '<button onclick="deleteAnnouncement(' + ann.id + ')" style="padding:4px 8px;border:1px solid #ef4444;color:#ef4444;border-radius:4px;cursor:pointer;font-size:12px;">Delete</button>' +
-                    '</div></div>';
-            }).join('');
+        function renderAnnouncements() {
+            let filtered = allAnnouncements;
+            
+            if (currentFilter === 'unread') {
+                filtered = allAnnouncements.filter(a => !a.is_read);
+            } else if (currentFilter !== 'all') {
+                filtered = allAnnouncements.filter(a => a.priority === currentFilter);
+            }
+
+            const list = document.getElementById('announcementList');
+            const empty = document.getElementById('emptyState');
+
+            if (filtered.length === 0) {
+                list.innerHTML = '';
+                empty.classList.remove('hidden');
+                return;
+            }
+
+            empty.classList.add('hidden');
+
+            const priorityIcons = {
+                urgent: '<i class="fas fa-exclamation-circle text-red-500"></i>',
+                important: '<i class="fas fa-flag text-orange-500"></i>',
+                normal: '<i class="fas fa-info-circle text-blue-500"></i>'
+            };
+
+            const priorityColors = {
+                urgent: 'bg-red-100 text-red-800',
+                important: 'bg-orange-100 text-orange-800',
+                normal: 'bg-blue-100 text-blue-800'
+            };
+
+            list.innerHTML = filtered.map(ann => `
+                <div class="bg-white rounded-xl shadow-lg p-5 priority-${ann.priority} animate-fade-in cursor-pointer hover:shadow-xl transition ${!ann.is_read ? 'bg-blue-50' : ''}" 
+                     onclick="markAsRead(${ann.id})">
+                    <div class="flex justify-between items-start mb-3">
+                        <div class="flex items-center gap-2">
+                            ${priorityIcons[ann.priority]}
+                            <h3 class="font-bold text-lg ${!ann.is_read ? 'text-blue-900' : 'text-gray-800'}">${escapeHtml(ann.title)}</h3>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            ${!ann.is_read ? '<span class="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>' : ''}
+                            <span class="text-xs px-2 py-1 rounded-full font-semibold ${priorityColors[ann.priority]}">${ann.priority.toUpperCase()}</span>
+                        </div>
+                    </div>
+                    <p class="text-gray-600 text-sm mb-3 leading-relaxed">${escapeHtml(ann.message)}</p>
+                    <div class="flex justify-between items-center text-xs text-gray-400">
+                        <span><i class="fas fa-user-circle mr-1"></i>${escapeHtml(ann.created_by_email || 'Admin')}</span>
+                        <span><i class="fas fa-clock mr-1"></i>${new Date(ann.created_at).toLocaleDateString('en-US', { weekday:'short', year:'numeric', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' })}</span>
+                    </div>
+                    ${ann.expires_at ? `<p class="text-xs text-gray-400 mt-2"><i class="fas fa-calendar-times mr-1"></i>Expires: ${new Date(ann.expires_at).toLocaleDateString()}</p>` : ''}
+                </div>
+            `).join('');
         }
 
-        async function toggleAnnouncement(id) {
-            await fetch('/api/announcements/' + id + '/toggle', { method: 'PATCH', headers: { 'Authorization': 'Bearer ' + token } });
-            loadAnnouncements();
+        function filterAnnouncements(filter) {
+            currentFilter = filter;
+            
+            // Update active button
+            document.querySelectorAll('.announcement-filter').forEach(btn => {
+                btn.classList.remove('bg-blue-100', 'text-blue-700', 'font-semibold');
+                btn.classList.add('bg-gray-100', 'text-gray-600');
+            });
+            const activeBtn = document.querySelector(`[data-filter="${filter}"]`);
+            if (activeBtn) {
+                activeBtn.classList.remove('bg-gray-100', 'text-gray-600');
+                activeBtn.classList.add('bg-blue-100', 'text-blue-700', 'font-semibold');
+            }
+            
+            renderAnnouncements();
         }
 
-        async function deleteAnnouncement(id) {
-            if (!confirm('Delete?')) return;
-            await fetch('/api/announcements/' + id, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + token } });
-            loadAnnouncements();
+        async function markAsRead(id) {
+            try {
+                await fetch('/api/announcements/' + id + '/read', {
+                    method: 'POST',
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                // Update local state
+                const ann = allAnnouncements.find(a => a.id === id);
+                if (ann) ann.is_read = 1;
+                renderAnnouncements();
+            } catch (e) {}
         }
 
-        async function logout() {
-            try { await fetch('/api/auth/logout', { method: 'POST', headers: { 'Authorization': 'Bearer ' + token } }); } catch(e) {}
-            localStorage.clear(); window.location.href = '/';
+        async function markAllRead() {
+            try {
+                await fetch('/api/announcements/read-all', {
+                    method: 'POST',
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                allAnnouncements.forEach(a => a.is_read = 1);
+                renderAnnouncements();
+            } catch (e) {}
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function logout() {
+            try { fetch('/api/auth/logout', { method: 'POST', headers: { 'Authorization': 'Bearer ' + token } }); } catch(e) {}
+            localStorage.clear();
+            window.location.href = '/';
         }
 
         loadAnnouncements();
+        // Refresh every 60 seconds
+        setInterval(loadAnnouncements, 60000);
     </script>
 </body>
 </html>
