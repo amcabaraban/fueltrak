@@ -399,14 +399,50 @@ var el = document.querySelector('#sidebar a[href="/settings"]');
 if (el) el.style.background = '#1e40af';
 
 // ============ TAB SWITCHING ============
-function switchTab(tab) {
-    ['recycleTab', 'backupTab', 'logsTab'].forEach(t => document.getElementById(t).classList.add('hidden'));
-    ['tabRecycle', 'tabBackup', 'tabLogs'].forEach(t => document.getElementById(t).classList.remove('active'));
-    document.getElementById(tab + 'Tab').classList.remove('hidden');
-    document.getElementById('tab' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
-    if (tab === 'recycle') loadRecycleBin();
-    if (tab === 'backup') loadBackupInfo();
-    if (tab === 'logs') loadBackupLogs();
+function switchTab(tabName) {
+    // Hide all tab contents
+    document.querySelectorAll('.tab-content').forEach(function(el) {
+        el.classList.add('hidden');
+    });
+    
+    // Show selected tab content
+    var tabContent = document.getElementById('tab-' + tabName);
+    if (tabContent) tabContent.classList.remove('hidden');
+    
+    // Update active tab button styles
+    document.querySelectorAll('.tab-btn').forEach(function(btn) {
+        btn.classList.remove('bg-blue-900', 'text-white');
+        btn.classList.add('bg-gray-100', 'text-gray-600');
+    });
+    
+    var activeBtn = document.getElementById('tab' + tabName.charAt(0).toUpperCase() + tabName.slice(1));
+    if (activeBtn) {
+        activeBtn.classList.remove('bg-gray-100', 'text-gray-600');
+        activeBtn.classList.add('bg-blue-900', 'text-white');
+    }
+    
+    // Load data based on tab
+    if (tabName === 'backup') {
+        loadBackupInfo();
+        loadBackupLogs();
+    } else if (tabName === 'recycle') {
+        loadRecycleBin();
+    }
+}
+
+// ============ RECYCLE BIN ============
+async function loadRecycleBin() {
+    var table = document.getElementById('binTableFilter').value;
+    var search = document.getElementById('binSearch').value;
+    var params = new URLSearchParams();
+    if (table) params.append('table', table);
+    if (search) params.append('search', search);
+    
+    var d = await api('/admin/recycle-bin?' + params.toString());
+    if (d.status === 'success') {
+        renderBinTable(d.data);
+        loadBinStats();
+    }
 }
 
 function renderBinTable(items) {
@@ -447,6 +483,17 @@ async function loadBinStats() {
     }
 }
 
+async function restoreItem(id) {
+    if (!confirm('Restore this record?')) return;
+    var d = await api('/admin/recycle-bin/' + id + '/restore', 'POST');
+    if (d.status === 'success') {
+        showSuccess('Record restored successfully!');
+        loadRecycleBin();
+    } else {
+        alert(d.error || 'Error restoring');
+    }
+}
+
 async function deleteItem(id) {
     if (!confirm('Permanently delete this record? This cannot be undone.')) return;
     var d = await api('/admin/recycle-bin/' + id, 'DELETE');
@@ -463,6 +510,47 @@ async function emptyRecycleBin() {
         showSuccess(d.message);
         loadRecycleBin();
     }
+}
+
+// ============ BACKUP & RESTORE ============
+async function createBackup() {
+    var btn = document.getElementById('backupBtn');
+    var status = document.getElementById('backupStatus');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Creating backup...';
+    
+    try {
+        var r = await fetch(API + '/admin/backup', {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        
+        if (r.ok) {
+            var blob = await r.blob();
+            var url = window.URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = 'fueltrak_backup_' + new Date().toISOString().replace(/[:.]/g, '-') + '.json';
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            a.remove();
+            status.textContent = '✅ Backup downloaded successfully!';
+            status.className = 'mt-3 text-center text-sm text-green-600';
+        } else {
+            var d = await r.json();
+            status.textContent = '❌ ' + (d.error || 'Backup failed');
+            status.className = 'mt-3 text-center text-sm text-red-600';
+        }
+    } catch(e) {
+        status.textContent = '❌ Connection error';
+        status.className = 'mt-3 text-center text-sm text-red-600';
+    }
+    
+    status.classList.remove('hidden');
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-download mr-2"></i>Download Backup';
+    setTimeout(() => status.classList.add('hidden'), 5000);
 }
 
 var restoreData = null;
@@ -556,158 +644,6 @@ function showSuccess(msg) {
     document.getElementById('successMessage').textContent = msg;
     document.getElementById('successModal').classList.remove('hidden');
 }
-
-// Tab switching for Settings page
-function switchTab(tabName) {
-    // Hide all tab contents
-    document.querySelectorAll('.tab-content').forEach(function(el) {
-        el.classList.add('hidden');
-    });
-    
-    // Show selected tab content
-    var tabContent = document.getElementById('tab-' + tabName);
-    if (tabContent) tabContent.classList.remove('hidden');
-    
-    // Update active tab button styles
-    document.querySelectorAll('.tab-btn').forEach(function(btn) {
-        btn.classList.remove('bg-blue-900', 'text-white');
-        btn.classList.add('bg-gray-100', 'text-gray-600');
-    });
-    
-    var activeBtn = document.getElementById('tab' + tabName.charAt(0).toUpperCase() + tabName.slice(1));
-    if (activeBtn) {
-        activeBtn.classList.remove('bg-gray-100', 'text-gray-600');
-        activeBtn.classList.add('bg-blue-900', 'text-white');
-    }
-    
-    // Load data based on tab
-    if (tabName === 'backup') {
-        loadBackupInfo();
-        loadBackupLogs();
-    } else if (tabName === 'recycle') {
-        loadRecycleBin();
-    }
-}
-
-// Load backup info
-async function loadBackupInfo() {
-    var container = document.getElementById('backupInfo');
-    if (!container) return;
-    
-    try {
-        var r = await fetch('/api/admin/recycle-bin/stats', {
-            headers: { 'Authorization': 'Bearer ' + token }
-        });
-        var d = await r.json();
-        
-        if (d.status === 'success') {
-            container.innerHTML = `
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                    <div class="bg-white rounded-xl shadow p-4 text-center">
-                        <p class="text-3xl font-bold text-blue-600">${d.data.total_items || 0}</p>
-                        <p class="text-xs text-gray-500">Total Items</p>
-                    </div>
-                    <div class="bg-white rounded-xl shadow p-4 text-center">
-                        <p class="text-3xl font-bold text-green-600">${d.data.active_items || 0}</p>
-                        <p class="text-xs text-gray-500">Active</p>
-                    </div>
-                    <div class="bg-white rounded-xl shadow p-4 text-center">
-                        <p class="text-3xl font-bold text-purple-600">${d.data.restored_items || 0}</p>
-                        <p class="text-xs text-gray-500">Restored</p>
-                    </div>
-                    <div class="bg-white rounded-xl shadow p-4 text-center">
-                        <p class="text-3xl font-bold text-red-600">${d.data.expired_items || 0}</p>
-                        <p class="text-xs text-gray-500">Expired</p>
-                    </div>
-                </div>
-            `;
-        }
-    } catch (e) {}
-}
-
-// Load backup logs
-async function loadBackupLogs() {
-    var container = document.getElementById('backupLogs');
-    if (!container) return;
-    
-    try {
-        var r = await fetch('/api/admin/backup-logs', {
-            headers: { 'Authorization': 'Bearer ' + token }
-        });
-        var d = await r.json();
-        
-        if (d.status === 'success' && d.data.length > 0) {
-            container.innerHTML = d.data.map(function(log) {
-                return '<div class="bg-white rounded-lg shadow p-3 mb-2 flex justify-between items-center">' +
-                    '<div><p class="font-semibold text-sm">' + log.filename + '</p>' +
-                    '<p class="text-xs text-gray-500">' + new Date(log.created_at).toLocaleString() + ' by ' + (log.created_by_email || 'System') + '</p></div>' +
-                    '<span class="text-xs px-2 py-1 rounded ' + (log.status === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800') + '">' + log.status + '</span></div>';
-            }).join('');
-        } else {
-            container.innerHTML = '<p class="text-gray-400 text-center py-4">No backup logs</p>';
-        }
-    } catch (e) {}
-}
-
-// Load recycle bin
-async function loadRecycleBin() {
-    var container = document.getElementById('recycleBinList');
-    if (!container) return;
-    
-    try {
-        var r = await fetch('/api/admin/recycle-bin?', {
-            headers: { 'Authorization': 'Bearer ' + token }
-        });
-        var d = await r.json();
-        
-        if (d.status === 'success' && d.data.length > 0) {
-            container.innerHTML = d.data.map(function(item) {
-                return '<div class="bg-white rounded-lg shadow p-3 mb-2 flex justify-between items-center">' +
-                    '<div><p class="font-semibold text-sm">' + item.table_name + ' #' + item.record_id + '</p>' +
-                    '<p class="text-xs text-gray-500">Deleted by ' + (item.deleted_by_email || 'Unknown') + ' on ' + new Date(item.deleted_at).toLocaleString() + '</p>' +
-                    '<p class="text-xs text-gray-400">Expires in ' + item.days_remaining + ' days</p></div>' +
-                    '<button onclick="restoreItem(' + item.id + ')" class="bg-green-500 text-white px-3 py-1 rounded text-xs">Restore</button></div>';
-            }).join('');
-        } else {
-            container.innerHTML = '<p class="text-gray-400 text-center py-4">Recycle bin is empty</p>';
-        }
-    } catch (e) {}
-}
-
-// Restore item from recycle bin
-async function restoreItem(id) {
-    try {
-        var r = await fetch('/api/admin/recycle-bin/' + id + '/restore', {
-            method: 'POST',
-            headers: { 'Authorization': 'Bearer ' + token }
-        });
-        var d = await r.json();
-        if (d.status === 'success') {
-            alert('Item restored!');
-            loadRecycleBin();
-        }
-    } catch (e) {}
-}
-
-// Create backup
-async function createBackup() {
-    try {
-        var r = await fetch('/api/admin/backup', {
-            method: 'POST',
-            headers: { 'Authorization': 'Bearer ' + token }
-        });
-        if (r.ok) {
-            var blob = await r.blob();
-            var url = window.URL.createObjectURL(blob);
-            var a = document.createElement('a');
-            a.href = url;
-            a.download = 'fueltrak_backup_' + new Date().toISOString().split('T')[0] + '.json';
-            a.click();
-            loadBackupLogs();
-        }
-    } catch (e) {}
-}
-
 function toggleSidebar(){var s=document.getElementById("sidebar");s.classList.toggle("open");document.getElementById("sidebarOverlay").classList.toggle("hidden")}
 function openCalc(){document.getElementById('calcWidget').classList.remove('hidden');document.getElementById('calcButton').classList.add('hidden');}
 function closeCalc(){document.getElementById('calcWidget').classList.add('hidden');document.getElementById('calcButton').classList.remove('hidden');}
