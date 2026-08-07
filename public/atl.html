@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -11,8 +11,8 @@
 <body class="bg-gray-100 min-h-screen pb-16 sm:pb-0">
     <nav class="bg-blue-900 text-white shadow-lg">
         <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
-            <span class="font-bold text-sm sm:text-lg md:text-xl">ðŸ“‹ Authority to Load</span>
-            <div class="flex items-center space-x-3">
+            <span class="font-bold text-sm sm:text-lg md:text-xl">📋 Authority to Load</span>
+            <div class="flex items-center space-x-3 ml-auto">
                 <a href="/dashboard" class="bg-blue-700 px-2 sm:px-3 py-1 rounded text-[10px] sm:text-sm">Dashboard</a>
                 <a href="/trucks" class="bg-blue-700 px-3 py-1 rounded text-sm">Trucks</a>
                 <button onclick="logout()" class="bg-red-500 px-2 sm:px-4 py-1 sm:py-2 rounded text-[10px] sm:text-sm">Logout</button>
@@ -64,7 +64,7 @@
                 })
             });
             const data = await res.json();
-            msg.textContent = data.status === 'success' ? 'âœ… ATL Submitted!' : data.error;
+            msg.textContent = data.status === 'success' ? '✅ ATL Submitted!' : data.error;
             msg.className = 'mt-3 text-sm ' + (data.status === 'success' ? 'text-green-600' : 'text-red-600');
             msg.classList.remove('hidden');
             if (data.status === 'success') loadHistory();
