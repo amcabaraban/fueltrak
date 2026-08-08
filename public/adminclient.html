@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -46,29 +46,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="/css/global.css">
-    <style>
-        /* Hide body until auth is verified */
-        body.auth-checking { visibility: hidden; }
-        body.auth-verified { visibility: visible; }           
-        #sidebar{transition:transform 0.3s}
-        @media(max-width:767px){#sidebar{display:none!important}#sidebarOverlay{display:none!important}body{padding-left:0!important;padding-bottom:70px}.mobile-bottom-nav{display:flex!important}}
-        @media(min-width:768px){body{padding-left:176px}.mobile-bottom-nav{display:none!important}}
-        .mobile-bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:#1e3a5f;color:white;z-index:50;justify-content:space-around;padding:6px 0;box-shadow:0 -2px 10px rgba(0,0,0,0.3)}
-        .mobile-bottom-nav a,.mobile-bottom-nav button{display:flex;flex-direction:column;align-items:center;color:#93a3bc;font-size:10px;text-decoration:none;padding:4px;background:none;border:none;cursor:pointer}
-        .mobile-bottom-nav a i,.mobile-bottom-nav button i{font-size:18px;margin-bottom:2px}
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
-            20%, 40%, 60%, 80% { transform: translateX(4px); }
-        }
-        .animate-shake { animation: shake 0.5s ease-out; }
-
-        @keyframes slideDown {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-slide-down { animation: slideDown 0.3s ease-out; }
-    </style>
+    
 </head>
 <body class="bg-gray-50 min-h-screen">
 <div class="main-content">
@@ -238,11 +216,11 @@
             <button onclick="calcInput('7')" class="bg-gray-100 hover:bg-gray-200 py-2 rounded font-semibold">7</button>
             <button onclick="calcInput('8')" class="bg-gray-100 hover:bg-gray-200 py-2 rounded font-semibold">8</button>
             <button onclick="calcInput('9')" class="bg-gray-100 hover:bg-gray-200 py-2 rounded font-semibold">9</button>
-            <button onclick="calcInput('/')" class="bg-orange-100 hover:bg-orange-200 py-2 rounded font-semibold text-orange-700">�</button>
+            <button onclick="calcInput('/')" class="bg-orange-100 hover:bg-orange-200 py-2 rounded font-semibold text-orange-700">ï¿½</button>
             <button onclick="calcInput('4')" class="bg-gray-100 hover:bg-gray-200 py-2 rounded font-semibold">4</button>
             <button onclick="calcInput('5')" class="bg-gray-100 hover:bg-gray-200 py-2 rounded font-semibold">5</button>
             <button onclick="calcInput('6')" class="bg-gray-100 hover:bg-gray-200 py-2 rounded font-semibold">6</button>
-            <button onclick="calcInput('*')" class="bg-orange-100 hover:bg-orange-200 py-2 rounded font-semibold text-orange-700">�</button>
+            <button onclick="calcInput('*')" class="bg-orange-100 hover:bg-orange-200 py-2 rounded font-semibold text-orange-700">ï¿½</button>
             <button onclick="calcInput('1')" class="bg-gray-100 hover:bg-gray-200 py-2 rounded font-semibold">1</button>
             <button onclick="calcInput('2')" class="bg-gray-100 hover:bg-gray-200 py-2 rounded font-semibold">2</button>
             <button onclick="calcInput('3')" class="bg-gray-100 hover:bg-gray-200 py-2 rounded font-semibold">3</button>
@@ -296,7 +274,7 @@ function toggleCalc(){}
 var calcExpr='';
 function calcInput(v){calcExpr+=v;document.getElementById('calcDisplay').value=calcExpr;}
 function calcClear(){calcExpr='';document.getElementById('calcDisplay').value='0';}
-function calcResult(){try{var r=eval(calcExpr.replace(/�/g,'*').replace(/�/g,'/').replace(/-/g,'-'));document.getElementById('calcDisplay').value=Number(r.toFixed(4));calcExpr=String(r);}catch(e){document.getElementById('calcDisplay').value='Error';calcExpr='';}}
+function calcResult(){try{var r=eval(calcExpr.replace(/ï¿½/g,'*').replace(/ï¿½/g,'/').replace(/-/g,'-'));document.getElementById('calcDisplay').value=Number(r.toFixed(4));calcExpr=String(r);}catch(e){document.getElementById('calcDisplay').value='Error';calcExpr='';}}
 async function logout(){try{await fetch('/api/auth/logout',{method:'POST',headers:{'Authorization':'Bearer '+localStorage.getItem('fueltrak_token')}})}catch(e){}localStorage.clear();window.location.href='/'}
 loadClients();
 
@@ -305,6 +283,7 @@ loadClients();
 
 </body>
 </html>
+
 
 
 
