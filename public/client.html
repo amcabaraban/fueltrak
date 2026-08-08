@@ -543,7 +543,7 @@ async function submitATL(e) {
         return;
     }
     
-    // ============ SALES ORDER VALIDATION ============
+    // ============ SALES ORDER VALIDATION (UPDATED) ============
     if (soNumber) {
         msg.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Validating Sales Order...';
         msg.className = 'mt-3 text-sm text-blue-600 text-center';
@@ -554,21 +554,10 @@ async function submitATL(e) {
             
             // Check if SO exists
             if (soValidation.status === 'error' || !soValidation.valid) {
-                var errorMsg = soValidation.message || 'Invalid Sales Order';
-                
-                msg.innerHTML = '<span class="text-red-600">❌ ' + errorMsg + '</span>';
-                
-                // Show SO owner if different
-                if (soValidation.so_owner) {
-                    msg.innerHTML += '<br><span class="text-xs text-gray-500">This SO belongs to: <b>' + soValidation.so_owner + '</b>. Contact your administrator.</span>';
-                }
-                
-                // Show suggestion to create new SO
-                msg.innerHTML += '<br><span class="text-xs text-blue-500">Need a new SO? <a href="/sales-orders" class="underline">Request one here</a></span>';
-                
+                msg.innerHTML = '<span class="text-red-600">❌ Invalid SO Number or not assigned to your account.</span>';
                 msg.className = 'mt-3 text-sm text-red-600 text-center';
                 msg.classList.remove('hidden');
-                setTimeout(function() { msg.classList.add('hidden'); }, 10000);
+                setTimeout(function() { msg.classList.add('hidden'); }, 5000);
                 return;
             }
             
@@ -583,11 +572,10 @@ async function submitATL(e) {
                     msg.innerHTML = '<span class="text-red-600">❌ Volume exceeds SO balance!</span><br>' +
                         '<span class="text-xs">SO Total: <b>' + Number(totalSO).toLocaleString() + ' L</b> | ' +
                         'Used: <b>' + Number(usedSO).toLocaleString() + ' L</b> | ' +
-                        'Remaining: <b>' + Number(remaining).toLocaleString() + ' L</b></span><br>' +
-                        '<span class="text-xs text-blue-500">Need more volume? <a href="/sales-orders" class="underline">Request SO adjustment</a></span>';
+                        'Remaining: <b>' + Number(remaining).toLocaleString() + ' L</b></span>';
                     msg.className = 'mt-3 text-sm text-red-600 text-center';
                     msg.classList.remove('hidden');
-                    setTimeout(function() { msg.classList.add('hidden'); }, 10000);
+                    setTimeout(function() { msg.classList.add('hidden'); }, 8000);
                     return;
                 }
                 
@@ -599,14 +587,14 @@ async function submitATL(e) {
             }
             
         } catch (ex) {
-            msg.innerHTML = '<span class="text-orange-600">⚠️ Could not validate SO. Please check your connection and try again.</span>';
+            msg.innerHTML = '<span class="text-orange-600">⚠️ Could not validate SO. Please try again.</span>';
             msg.className = 'mt-3 text-sm text-orange-600 text-center';
             msg.classList.remove('hidden');
             setTimeout(function() { msg.classList.add('hidden'); }, 5000);
             return;
         }
-    }
-    
+    }    
+
     // ============ CONFIRMATION PROMPT ============
     var summary = '📋 Please verify all details:\n\n' +
         'Company: ' + company + '\n' +
