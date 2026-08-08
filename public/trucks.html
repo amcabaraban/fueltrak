@@ -49,24 +49,6 @@
 </head>
 <body class="bg-gray-50 min-h-screen">
 <div class="main-content">
-    <nav class="bg-gradient-to-r from-blue-900 to-blue-800 text-white shadow-[0_4px_6px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.1)] sticky top-0 z-20 no-print">
-        <div class="hidden md:flex max-w-7xl mx-auto px-4 py-3 justify-between items-center">
-            <div class="flex items-center space-x-3 ml-auto">
-                <div class="bg-white/20 p-2 rounded-lg"><i class="fas fa-truck text-2xl text-yellow-400"></i></div>
-                <div><span class="font-bold text-xl">Truck Masterlist</span></div>
-            </div>
-            <div class="flex items-center space-x-3 ml-auto">
-                <span id="userInfo" class="text-sm bg-white/10 px-3 py-1 rounded-full truncate max-w-[150px]"></span>
-                    
-                <!-- Announcement Bell -->
-                <div id="announcementBell" style="position:relative;cursor:pointer;display:inline-flex;align-items:center;" onclick="window.location.href='/announcements'">
-                    <i class="fas fa-bell" style="font-size:18px;color:#fbbf24;"></i>
-                    <span id="announcementBadge" class="hidden" style="position:absolute;top:-6px;right:-8px;background:#ef4444;color:white;font-size:10px;min-width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;">0</span>
-                </div>
-            </div>
-        </div>
-    </nav>
-
     <!-- Desktop Sidebar -->
     <div class="fixed left-0 top-0 h-full w-14 md:w-48 bg-blue-900 text-white z-40 pt-16 overflow-y-auto no-print" id="sidebar" style="box-shadow:inset -2px 0 5px rgba(0,0,0,0.3),2px 0 10px rgba(0,0,0,0.2)">
         
@@ -142,6 +124,24 @@
             </button>
         </div>
     </div>
+
+    <nav class="bg-gradient-to-r from-blue-900 to-blue-800 text-white shadow-[0_4px_6px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.1)] sticky top-0 z-20 no-print">
+        <div class="hidden md:flex max-w-7xl mx-auto px-4 py-3 justify-between items-center">
+            <div class="flex items-center space-x-3 ml-auto">
+                <div class="bg-white/20 p-2 rounded-lg"><i class="fas fa-truck text-2xl text-yellow-400"></i></div>
+                <div><span class="font-bold text-xl">Truck Masterlist</span></div>
+            </div>
+            <div class="flex items-center space-x-3 ml-auto">
+                <span id="userInfo" class="text-sm bg-white/10 px-3 py-1 rounded-full truncate max-w-[150px]"></span>
+                    
+                <!-- Announcement Bell -->
+                <div id="announcementBell" style="position:relative;cursor:pointer;display:inline-flex;align-items:center;" onclick="window.location.href='/announcements'">
+                    <i class="fas fa-bell" style="font-size:18px;color:#fbbf24;"></i>
+                    <span id="announcementBadge" class="hidden" style="position:absolute;top:-6px;right:-8px;background:#ef4444;color:white;font-size:10px;min-width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;">0</span>
+                </div>
+            </div>
+        </div>
+    </nav>
 
     <div class="max-w-7xl mx-auto px-4 py-8 w-full">
         <div class="flex flex-wrap justify-between items-center mb-6 gap-2">
