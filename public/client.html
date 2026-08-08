@@ -292,6 +292,9 @@ var clientReportAllRecords = [];
 var soCurrentPage = 1;
 var soPerPage = 5;
 var allSalesOrders = [];
+var atlCurrentPage = 1;
+var atlPerPage = 10;
+var allMyATLs = [];
 
 var ErrorHandler={toastContainer:null,init:function(){if(!this.toastContainer){this.toastContainer=document.createElement('div');this.toastContainer.id='errorToastContainer';this.toastContainer.className='fixed top-4 right-4 z-[9999] space-y-2 max-w-sm';document.body.appendChild(this.toastContainer)}},toast:function(m,t,d){t=t||'error';d=d||5000;this.init();var c={error:'bg-red-500',warning:'bg-orange-500',success:'bg-green-500',info:'bg-blue-500'},i={error:'fa-exclamation-circle',warning:'fa-exclamation-triangle',success:'fa-check-circle',info:'fa-info-circle'},e=document.createElement('div');e.className=(c[t]||c.error)+' text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-3 animate-slide-down';e.innerHTML='<i class="fas '+(i[t]||i.error)+' text-lg"></i><span class="text-sm flex-1">'+m+'</span><button onclick="this.parentElement.remove()" class="text-white/80 hover:text-white"><i class="fas fa-times"></i></button>';this.toastContainer.appendChild(e);setTimeout(function(){e.remove()},d)},showLoading:function(b,t){var e=document.getElementById(b);if(!e)return;e.disabled=true;e.dataset.originalText=e.innerHTML;e.innerHTML='<i class="fas fa-spinner fa-spin mr-2"></i>'+(t||'Processing...')},hideLoading:function(b){var e=document.getElementById(b);if(!e||!e.dataset.originalText)return;e.disabled=false;e.innerHTML=e.dataset.originalText;delete e.dataset.originalText},clearFieldErrors:function(f){if(!f)return;f.querySelectorAll('.border-red-500').forEach(function(e){e.classList.remove('border-red-500','bg-red-50')});f.querySelectorAll('.field-error').forEach(function(e){e.remove()})},showFieldError:function(f,m){var e=document.getElementById(f);if(!e)return;e.classList.add('border-red-500','bg-red-50');var x=e.parentElement.querySelector('.field-error');if(x)x.remove();if(m){var s=document.createElement('span');s.className='field-error text-red-500 text-xs mt-1 block';s.textContent=m;e.parentElement.appendChild(s)}}};
 
@@ -797,8 +800,129 @@ async function submitATL(e) {
 }
 
 // ============ HISTORY ============
-async function loadHistory() { var d = await api("/atl/summary"); if (d.status === "success") { allMyATLs = d.data.recent || []; filterMyATLs(); } }
-function filterMyATLs() { var s = (document.getElementById("atlSearch")?.value || "").toLowerCase(), st = document.getElementById("atlStatusFilter")?.value || "all", f = allMyATLs; if (s) f = f.filter(function(a) { return (a.plate_no || "").toLowerCase().includes(s) || (a.atl_code || "").toLowerCase().includes(s) || (a.driver_name || "").toLowerCase().includes(s); }); if (st !== "all") f = f.filter(function(a) { return a.status === st; }); document.getElementById("atlHistory").innerHTML = f.map(function(a) { var sc = a.status === "completed" ? "bg-green-100 text-green-800" : a.status === "dispatched" ? "bg-orange-100 text-orange-800" : a.status === "cancelled" ? "bg-gray-200 text-gray-700" : a.status === "approved" ? "bg-blue-100 text-blue-800" : "bg-yellow-100 text-yellow-800"; return '<div class="bg-white rounded-lg shadow p-4"><div class="flex justify-between"><div><span class="font-mono font-bold text-blue-900 bg-blue-50 px-2 py-1 rounded text-xs">' + (a.atl_code || "N/A") + '</span><p class="font-bold text-lg mt-1">' + a.plate_no + '</p><p class="text-sm">' + (a.company || "") + " | Vol: " + (a.volume ? Number(a.volume).toLocaleString() + "L" : "N/A") + " | " + a.driver_name + '</p></div><div class="text-right"><span class="px-3 py-1 rounded-full text-xs font-semibold ' + sc + '">' + a.status.toUpperCase() + '</span><div class="mt-2"><button onclick="viewATL(' + a.id + ')" class="text-blue-600 text-xs">View</button>' + (a.status === "pending" || a.status === "approved" ? ' <button onclick="cancelATL(' + a.id + ')" class="text-red-600 text-xs">Cancel</button>' : "") + "</div></div></div></div>"; }).join("") || '<p class="text-center py-8 text-gray-500">No records</p>'; }
+async function loadHistory() {
+    var d = await api("/atl/summary");
+    if (d.status === "success") {
+        allMyATLs = d.data.recent || [];
+        atlCurrentPage = 1;
+        filterMyATLs();
+    }
+}
+
+function filterMyATLs() {
+    var s = (document.getElementById("atlSearch")?.value || "").toLowerCase(),
+        st = document.getElementById("atlStatusFilter")?.value || "all",
+        f = allMyATLs;
+    
+    if (s) f = f.filter(function(a) {
+        return (a.plate_no || "").toLowerCase().includes(s) ||
+               (a.atl_code || "").toLowerCase().includes(s) ||
+               (a.driver_name || "").toLowerCase().includes(s);
+    });
+    if (st !== "all") f = f.filter(function(a) { return a.status === st; });
+    
+    // Store filtered results and reset to page 1
+    window._filteredATLs = f;
+    atlCurrentPage = 1;
+    renderATLPage();
+}
+
+function renderATLPage() {
+    var f = window._filteredATLs || allMyATLs;
+    var totalPages = Math.ceil(f.length / atlPerPage);
+    if (atlCurrentPage > totalPages) atlCurrentPage = totalPages || 1;
+    
+    var start = (atlCurrentPage - 1) * atlPerPage;
+    var pageData = f.slice(start, start + atlPerPage);
+    
+    var container = document.getElementById("atlHistory");
+    
+    if (pageData.length === 0) {
+        container.innerHTML = '<p class="text-center py-8 text-gray-500">No records found</p>';
+        // Hide pagination
+        var pagDiv = document.getElementById('atlPagination');
+        if (pagDiv) pagDiv.innerHTML = '';
+        return;
+    }
+    
+    container.innerHTML = pageData.map(function(a) {
+        var sc = a.status === "completed" ? "bg-green-100 text-green-800" :
+                 a.status === "dispatched" ? "bg-orange-100 text-orange-800" :
+                 a.status === "cancelled" ? "bg-gray-200 text-gray-700" :
+                 a.status === "approved" ? "bg-blue-100 text-blue-800" :
+                 "bg-yellow-100 text-yellow-800";
+        
+        return `<div class="bg-white rounded-lg shadow p-4">
+            <div class="flex justify-between">
+                <div>
+                    <span class="font-mono font-bold text-blue-900 bg-blue-50 px-2 py-1 rounded text-xs">${a.atl_code || "N/A"}</span>
+                    <p class="font-bold text-lg mt-1">${a.plate_no || "N/A"}</p>
+                    <p class="text-sm text-gray-600">${a.company || ""} | Vol: ${a.volume ? Number(a.volume).toLocaleString() + "L" : "N/A"} | ${a.driver_name || ""}</p>
+                    <p class="text-xs text-gray-400 mt-1">Date: ${a.scheduled_date ? new Date(a.scheduled_date).toLocaleDateString() : "N/A"}</p>
+                    ${a.status === 'cancelled' || a.status === 'rejected' ? 
+                        '<p class="text-xs text-red-500 mt-1"><i class="fas fa-info-circle mr-1"></i>' + (a.remarks || 'No reason provided') + '</p>' : ''}
+                </div>
+                <div class="text-right">
+                    <span class="px-3 py-1 rounded-full text-xs font-semibold ${sc}">${a.status.toUpperCase()}</span>
+                    <div class="mt-2">
+                        <button onclick="viewATL(${a.id})" class="text-blue-600 text-xs hover:underline">View</button>
+                        ${a.status === "pending" || a.status === "approved" ? 
+                            ' <button onclick="cancelATL(' + a.id + ')" class="text-red-600 text-xs hover:underline">Cancel</button>' : ""}
+                    </div>
+                </div>
+            </div>
+        </div>`;
+    }).join("");
+    
+    // Render pagination
+    renderATLPagination(totalPages, start, pageData.length, f.length);
+}
+
+function renderATLPagination(totalPages, start, pageLength, totalRecords) {
+    var paginationDiv = document.getElementById('atlPagination');
+    if (!paginationDiv) {
+        var historyDiv = document.getElementById('atlHistory');
+        if (historyDiv) {
+            paginationDiv = document.createElement('div');
+            paginationDiv.id = 'atlPagination';
+            paginationDiv.className = 'flex justify-between items-center text-xs mt-4 px-2';
+            historyDiv.parentNode.insertBefore(paginationDiv, historyDiv.nextSibling);
+        } else {
+            return;
+        }
+    }
+    
+    var html = '<span class="text-gray-500">Showing ' + (start + 1) + '-' + Math.min(start + atlPerPage, totalRecords) + ' of ' + totalRecords + ' ATLs</span>';
+    
+    if (totalPages > 1) {
+        html += '<div class="flex items-center gap-1">';
+        
+        html += '<button onclick="changeATLPage(' + (atlCurrentPage - 1) + ')" class="px-2 py-1 border rounded ' + (atlCurrentPage === 1 ? 'text-gray-300 cursor-not-allowed' : 'hover:bg-gray-100') + '" ' + (atlCurrentPage === 1 ? 'disabled' : '') + '><i class="fas fa-chevron-left text-[10px]"></i></button>';
+        
+        for (var i = 1; i <= totalPages; i++) {
+            if (i === 1 || i === totalPages || (i >= atlCurrentPage - 1 && i <= atlCurrentPage + 1)) {
+                html += '<button onclick="changeATLPage(' + i + ')" class="px-2 py-1 border rounded ' + (i === atlCurrentPage ? 'bg-blue-900 text-white' : 'hover:bg-gray-100') + '">' + i + '</button>';
+            } else if (i === atlCurrentPage - 2 || i === atlCurrentPage + 2) {
+                html += '<span class="px-1 text-gray-400">...</span>';
+            }
+        }
+        
+        html += '<button onclick="changeATLPage(' + (atlCurrentPage + 1) + ')" class="px-2 py-1 border rounded ' + (atlCurrentPage === totalPages ? 'text-gray-300 cursor-not-allowed' : 'hover:bg-gray-100') + '" ' + (atlCurrentPage === totalPages ? 'disabled' : '') + '><i class="fas fa-chevron-right text-[10px]"></i></button>';
+        
+        html += '</div>';
+    }
+    
+    paginationDiv.innerHTML = html;
+}
+
+function changeATLPage(page) {
+    var f = window._filteredATLs || allMyATLs;
+    var totalPages = Math.ceil(f.length / atlPerPage);
+    if (page < 1 || page > totalPages) return;
+    atlCurrentPage = page;
+    renderATLPage();
+}
+
 async function viewATL(id) {
     var d = await api("/client/atl/" + id);
     if (d.status === "success") {
