@@ -346,3 +346,127 @@ body::after {
     display: inline-flex !important;
     flex-shrink: 0;
 }
+/* ============ REPORTS TABLE ============ */
+#reportTableBody td {
+    padding: 0.5rem 0.5rem;
+    font-size: 0.75rem;
+    white-space: nowrap;
+}
+
+#reportTableBody td:first-child {
+    min-width: 90px;
+}
+
+#reportTableBody td:nth-child(2) {
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+    color: #1e3a5f;
+}
+
+.reports-table {
+    width: 100%;
+    min-width: 1400px;
+    border-collapse: collapse;
+}
+
+.reports-table th {
+    padding: 0.75rem 0.5rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: #4b5563;
+    background: #f9fafb;
+    cursor: pointer;
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.reports-table th:hover {
+    background: #f3f4f6;
+}
+
+.reports-table th.sort-asc::after {
+    content: ' ▲';
+}
+.reports-table th.sort-desc::after {
+    content: ' ▼';
+}
+
+/* Status badges in reports */
+.status-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 9999px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+.status-completed { background: #d1fae5; color: #065f46; }
+.status-cancelled { background: #fee2e2; color: #991b1b; }
+.status-rejected { background: #fee2e2; color: #991b1b; }
+.status-dispatched { background: #fed7aa; color: #9a3412; }
+.status-pending { background: #fef3c7; color: #92400e; }
+.status-approved { background: #dbeafe; color: #1e40af; }
+
+/* TPS input fields */
+.tps-input {
+    width: 4rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.25rem;
+    padding: 0.125rem 0.25rem;
+    font-size: 0.7rem;
+    font-family: 'Courier New', monospace;
+    text-align: center;
+}
+.tps-input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+/* Summary cards */
+.summary-card {
+    background: white;
+    border-radius: 0.75rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    padding: 0.75rem;
+    text-align: center;
+}
+.summary-card .value {
+    font-size: 1.25rem;
+    font-weight: bold;
+}
+.summary-card .label {
+    font-size: 0.7rem;
+    color: #6b7280;
+}
+
+/* Pagination */
+.pagination-btn {
+    padding: 0.25rem 0.5rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    cursor: pointer;
+}
+.pagination-btn:hover {
+    background: #f3f4f6;
+}
+.pagination-btn.active {
+    background: #1e3a5f;
+    color: white;
+    border-color: #1e3a5f;
+}
+.pagination-btn:disabled {
+    color: #d1d5db;
+    cursor: not-allowed;
+}
+
+/* Fix table overflow on mobile */
+@media (max-width: 768px) {
+    .reports-table {
+        min-width: 1000px;
+    }
+}
