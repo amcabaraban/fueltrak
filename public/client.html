@@ -320,14 +320,18 @@ function debouncedVerifyTruck() {
     var pe = document.getElementById("plateNo");
     var p = pe.value.toUpperCase().trim();
     pe.value = p;
+    
+    // Remove ALL spaces for search
     var pns = p.replace(/\s+/g, "");
     
-    // Only show suggestions for partial input
+    // Show suggestions while typing (from 1 char, no spaces)
     if (pns.length >= 1) {
-        filterPlateSuggestions(p);
+        filterPlateSuggestions(pns);
+    } else {
+        document.getElementById("plateSuggestions").classList.add("hidden");
     }
     
-    // Only verify with API when 3+ characters (avoid 404 on partial input)
+    // Only verify when 3+ characters (without spaces)
     if (!pns || pns.length < 3) {
         document.getElementById("truckStatus").classList.add("hidden");
         document.getElementById("submitBtn").disabled = true;
@@ -337,26 +341,34 @@ function debouncedVerifyTruck() {
     }
     
     var sd = document.getElementById("truckStatus");
-    sd.innerHTML = '<span class="text-blue-600"><i class="fas fa-spinner fa-spin mr-1"></i>Searching...</span>';
+    sd.innerHTML = '<span class="text-blue-600"><i class="fas fa-spinner fa-spin mr-1"></i>Verifying...</span>';
     sd.classList.remove("hidden");
     
-    // Wait 500ms after user stops typing before calling API
+    // Wait 600ms after user stops typing
     verifyTimeout = setTimeout(function() {
         verifyTruck();
-    }, 500);
+    }, 600);
 }
 
 async function verifyTruck() {
     var pi = document.getElementById("plateNo");
-    var p = pi.value.trim().toUpperCase();
-    pi.value = p;
-    var sd = document.getElementById("truckStatus"), sb = document.getElementById("submitBtn"),
-        ch = document.getElementById("capacityHint"), vi = document.getElementById("volume");
+    var p = pi.value.toUpperCase().trim();
+    // Remove spaces for API call but keep original in input
+    var cleanPlate = p.replace(/\s+/g, "");
+    pi.value = p; // Keep original with spaces in input
+    
+    var sd = document.getElementById("truckStatus"), 
+        sb = document.getElementById("submitBtn"),
+        ch = document.getElementById("capacityHint"), 
+        vi = document.getElementById("volume");
+    
     document.getElementById("plateSuggestions").classList.add("hidden");
     
-    if (!p || p.length < 3) {
-        sd.classList.add("hidden"); sb.disabled = true;
-        currentTruckId = null; truckVerified = false;
+    if (!cleanPlate || cleanPlate.length < 3) {
+        sd.classList.add("hidden"); 
+        sb.disabled = true;
+        currentTruckId = null; 
+        truckVerified = false;
         return;
     }
     
@@ -364,36 +376,51 @@ async function verifyTruck() {
     sd.classList.remove("hidden");
     
     try {
-        var ep = encodeURIComponent(p);
-        var r = await fetch('/api/client/verify-truck/' + ep, { headers: { 'Authorization': 'Bearer ' + token } });
+        // Use clean plate (no spaces) for API call
+        var ep = encodeURIComponent(cleanPlate);
+        var r = await fetch('/api/client/verify-truck/' + ep, { 
+            headers: { 'Authorization': 'Bearer ' + token } 
+        });
         
-        // Handle 404 gracefully
+        // Handle 404 gracefully - don't show as error
         if (r.status === 404) {
-            truckVerified = false; currentTruckId = null; sb.disabled = true;
-            sd.innerHTML = '<span class="text-orange-600">🔍 Truck not in database. <a href="/trucks" class="underline">Add truck?</a></span>';
+            truckVerified = false; 
+            currentTruckId = null; 
+            sb.disabled = true;
+            sd.innerHTML = '<span class="text-orange-600">🔍 Truck not found in database</span>';
             return;
         }
         
         var data = await r.json();
+        
         if (data.status === "success" && data.data) {
-            var t = data.data.truck, cp = data.data.can_proceed;
-            if (!t.id && !t.plate_no) {
-                truckVerified = false; currentTruckId = null; sb.disabled = true;
-                sd.innerHTML = '<span class="text-red-600">❌ Truck not found</span>';
-                return;
+            var t = data.data.truck;
+            truckVerified = data.data.can_proceed !== false; 
+            currentTruckId = t.id; 
+            sb.disabled = !truckVerified;
+            
+            var cap = (t.total_capacity || 0) * 1000;
+            sd.innerHTML = '<span class="text-green-600">✅ Verified | ' + Math.round(cap).toLocaleString() + ' L</span>';
+            
+            if (t.driver_name && !document.getElementById("driverName").value) 
+                document.getElementById("driverName").value = t.driver_name;
+            if (t.hauler_name && !document.getElementById("hauler").value) 
+                document.getElementById("hauler").value = t.hauler_name || "";
+            if (t.total_capacity) { 
+                ch.textContent = "Max: " + Math.round(cap).toLocaleString() + " L"; 
+                vi.max = cap; 
             }
-            truckVerified = cp !== false; currentTruckId = t.id; sb.disabled = !truckVerified;
-            sd.innerHTML = '<span class="text-green-600">✅ Verified | ' + Math.round((t.total_capacity || 0) * 1000).toLocaleString() + ' L</span>';
-            if (t.driver_name && !document.getElementById("driverName").value) document.getElementById("driverName").value = t.driver_name;
-            if (t.hauler_name && !document.getElementById("hauler").value) document.getElementById("hauler").value = t.hauler_name || "";
-            if (t.total_capacity) { var cl = (parseFloat(t.total_capacity) || 0) * 1000; ch.textContent = "Max: " + Math.round(cl).toLocaleString() + " L"; vi.max = cl; }
         } else {
-            truckVerified = false; currentTruckId = null; sb.disabled = true;
-            sd.innerHTML = '<span class="text-red-600">❌ Not found</span>';
+            truckVerified = false; 
+            currentTruckId = null; 
+            sb.disabled = true;
+            sd.innerHTML = '<span class="text-red-600">❌ Truck not found</span>';
         }
     } catch (e) {
-        truckVerified = false; currentTruckId = null; sb.disabled = true;
-        sd.innerHTML = '<span class="text-red-600">❌ Error</span>';
+        truckVerified = false; 
+        currentTruckId = null; 
+        sb.disabled = true;
+        sd.innerHTML = '<span class="text-red-600">❌ Connection error</span>';
     }
 }
 
