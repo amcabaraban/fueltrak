@@ -321,21 +321,29 @@ function debouncedVerifyTruck() {
     var p = pe.value.toUpperCase().trim();
     pe.value = p;
     var pns = p.replace(/\s+/g, "");
-    if (!pns || pns.length < 2) {
+    
+    // Only show suggestions for partial input
+    if (pns.length >= 1) {
+        filterPlateSuggestions(p);
+    }
+    
+    // Only verify with API when 3+ characters (avoid 404 on partial input)
+    if (!pns || pns.length < 3) {
         document.getElementById("truckStatus").classList.add("hidden");
-        document.getElementById("plateSuggestions").classList.add("hidden");
         document.getElementById("submitBtn").disabled = true;
         currentTruckId = null;
         truckVerified = false;
         return;
     }
+    
     var sd = document.getElementById("truckStatus");
     sd.innerHTML = '<span class="text-blue-600"><i class="fas fa-spinner fa-spin mr-1"></i>Searching...</span>';
     sd.classList.remove("hidden");
+    
+    // Wait 500ms after user stops typing before calling API
     verifyTimeout = setTimeout(function() {
         verifyTruck();
-        filterPlateSuggestions(p);
-    }, 300);
+    }, 500);
 }
 
 async function verifyTruck() {
@@ -345,27 +353,37 @@ async function verifyTruck() {
     var sd = document.getElementById("truckStatus"), sb = document.getElementById("submitBtn"),
         ch = document.getElementById("capacityHint"), vi = document.getElementById("volume");
     document.getElementById("plateSuggestions").classList.add("hidden");
-    if (!p || p.length < 2) {
+    
+    if (!p || p.length < 3) {
         sd.classList.add("hidden"); sb.disabled = true;
         currentTruckId = null; truckVerified = false;
         return;
     }
+    
     sd.innerHTML = '<span class="text-blue-600"><i class="fas fa-spinner fa-spin mr-1"></i>Verifying...</span>';
     sd.classList.remove("hidden");
+    
     try {
         var ep = encodeURIComponent(p);
         var r = await fetch('/api/client/verify-truck/' + ep, { headers: { 'Authorization': 'Bearer ' + token } });
+        
+        // Handle 404 gracefully
+        if (r.status === 404) {
+            truckVerified = false; currentTruckId = null; sb.disabled = true;
+            sd.innerHTML = '<span class="text-orange-600">🔍 Truck not in database. <a href="/trucks" class="underline">Add truck?</a></span>';
+            return;
+        }
+        
         var data = await r.json();
         if (data.status === "success" && data.data) {
-            var t = data.data.truck, cp = data.data.can_proceed, dc = data.data.documents || {};
-            if (!t.id) {
+            var t = data.data.truck, cp = data.data.can_proceed;
+            if (!t.id && !t.plate_no) {
                 truckVerified = false; currentTruckId = null; sb.disabled = true;
                 sd.innerHTML = '<span class="text-red-600">❌ Truck not found</span>';
                 return;
             }
             truckVerified = cp !== false; currentTruckId = t.id; sb.disabled = !truckVerified;
-            sd.innerHTML = '<span class="text-green-600">✅ Verified | ' + Math.round(t.total_capacity * 1000).toLocaleString() + ' L</span>';
-            sd.classList.remove("hidden");
+            sd.innerHTML = '<span class="text-green-600">✅ Verified | ' + Math.round((t.total_capacity || 0) * 1000).toLocaleString() + ' L</span>';
             if (t.driver_name && !document.getElementById("driverName").value) document.getElementById("driverName").value = t.driver_name;
             if (t.hauler_name && !document.getElementById("hauler").value) document.getElementById("hauler").value = t.hauler_name || "";
             if (t.total_capacity) { var cl = (parseFloat(t.total_capacity) || 0) * 1000; ch.textContent = "Max: " + Math.round(cl).toLocaleString() + " L"; vi.max = cl; }
