@@ -453,52 +453,258 @@ async function filterPlateSuggestions(st) {
 }
 
 // ============ SUBMIT ATL ============
+// ============ SUBMIT ATL (COMPLETE WITH VALIDATION) ============
 async function submitATL(e) {
     e.preventDefault();
     var msg = document.getElementById('atlMessage');
-    if (ErrorHandler && ErrorHandler.clearFieldErrors) ErrorHandler.clearFieldErrors(e.target);
-    var company = document.getElementById('company').value.trim(),
-        soNumber = document.getElementById('soNumber').value.trim(),
-        plate = document.getElementById('plateNo').value.trim().toUpperCase(),
-        volume = parseFloat(document.getElementById('volume').value),
-        driver = document.getElementById('driverName').value.trim(),
-        hauler = document.getElementById('hauler').value.trim(),
-        contact = document.getElementById('contactNumber').value.trim(),
-        date = document.getElementById('scheduledDate').value,
-        specialInstructions = document.getElementById('specialInstructions') ? document.getElementById('specialInstructions').value.trim() : '',
-        hasSI = document.querySelector('input[name="siOption"]:checked')?.value === 'yes';
-    if (!company) { ErrorHandler.toast('Please enter the company name.', 'warning'); document.getElementById('company').focus(); return; }
-    if (!soNumber) { ErrorHandler.toast('Please enter the SO Number.', 'warning'); document.getElementById('soNumber').focus(); return; }
-    if (!plate || plate.length < 2) { ErrorHandler.toast('Please enter a valid plate number.', 'warning'); document.getElementById('plateNo').focus(); return; }
-    if (!volume || isNaN(volume) || volume <= 0) { ErrorHandler.toast('Please enter a valid volume.', 'warning'); document.getElementById('volume').focus(); return; }
-    if (!driver) { ErrorHandler.toast('Please enter the driver name.', 'warning'); document.getElementById('driverName').focus(); return; }
-    if (!hauler) { ErrorHandler.toast('Please enter the hauler name.', 'warning'); document.getElementById('hauler').focus(); return; }
-    if (!contact || contact.length < 10) { ErrorHandler.toast('Please enter a valid contact number.', 'warning'); document.getElementById('contactNumber').focus(); return; }
-    if (!truckVerified) { ErrorHandler.toast('Please verify the truck plate number first.', 'warning'); document.getElementById('plateNo').focus(); return; }
+    
+    // Clear previous errors
+    if (ErrorHandler && ErrorHandler.clearFieldErrors) {
+        ErrorHandler.clearFieldErrors(e.target);
+    }
+    
+    // Get form values
+    var company = document.getElementById('company').value.trim();
+    var soNumber = document.getElementById('soNumber').value.trim();
+    var plate = document.getElementById('plateNo').value.trim().toUpperCase().replace(/\s+/g, '');
+    var volume = parseFloat(document.getElementById('volume').value);
+    var driver = document.getElementById('driverName').value.trim();
+    var hauler = document.getElementById('hauler').value.trim();
+    var contact = document.getElementById('contactNumber').value.trim();
+    var date = document.getElementById('scheduledDate').value;
+    var specialInstructions = document.getElementById('specialInstructions') ? document.getElementById('specialInstructions').value.trim() : '';
+    var hasSI = document.querySelector('input[name="siOption"]:checked')?.value === 'yes';
+    
+    // ============ REQUIRED FIELD VALIDATION ============
+    if (!company) {
+        ErrorHandler.toast('Please enter the company name.', 'warning');
+        document.getElementById('company').focus();
+        return;
+    }
+    
+    if (!soNumber) {
+        ErrorHandler.toast('Please enter the SO Number.', 'warning');
+        document.getElementById('soNumber').focus();
+        return;
+    }
+    
+    if (!plate || plate === 'N/A' || plate.length < 3) {
+        ErrorHandler.toast('Please enter a valid plate number (at least 3 characters).', 'warning');
+        document.getElementById('plateNo').focus();
+        return;
+    }
+    
+    if (!volume || isNaN(volume) || volume <= 0) {
+        ErrorHandler.toast('Please enter a valid volume (must be greater than 0).', 'warning');
+        document.getElementById('volume').focus();
+        return;
+    }
+    
+    if (volume > 100000) {
+        ErrorHandler.toast('Volume cannot exceed 100,000 liters.', 'warning');
+        return;
+    }
+    
+    if (!driver || driver === 'N/A') {
+        ErrorHandler.toast('Please enter the driver name.', 'warning');
+        document.getElementById('driverName').focus();
+        return;
+    }
+    
+    if (!hauler || hauler === 'N/A') {
+        ErrorHandler.toast('Please enter the hauler name.', 'warning');
+        document.getElementById('hauler').focus();
+        return;
+    }
+    
+    if (!contact || contact.length < 10) {
+        ErrorHandler.toast('Please enter a valid contact number (at least 10 digits).', 'warning');
+        document.getElementById('contactNumber').focus();
+        return;
+    }
+    
+    if (!date) {
+        ErrorHandler.toast('Please select a scheduled date.', 'warning');
+        document.getElementById('scheduledDate').focus();
+        return;
+    }
+    
+    // ============ TRUCK VERIFICATION CHECK ============
+    if (!truckVerified || !currentTruckId) {
+        ErrorHandler.toast('Please verify the truck plate number. Type a plate and click/tab away to verify.', 'warning');
+        document.getElementById('plateNo').focus();
+        return;
+    }
+    
+    // ============ VOLUME VS CAPACITY CHECK ============
     var maxCapacity = parseFloat(document.getElementById('volume').max);
-    if (maxCapacity && volume > maxCapacity) { ErrorHandler.toast('Volume exceeds truck capacity.', 'warning'); return; }
+    if (maxCapacity && volume > maxCapacity) {
+        ErrorHandler.toast('Volume exceeds truck capacity of ' + Math.round(maxCapacity).toLocaleString() + ' L.', 'warning');
+        return;
+    }
+    
+    // ============ SALES ORDER VALIDATION ============
+    if (soNumber) {
+        msg.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Validating Sales Order...';
+        msg.className = 'mt-3 text-sm text-blue-600 text-center';
+        msg.classList.remove('hidden');
+        
+        try {
+            var soValidation = await APIHelper.get('/sales-orders/validate?so_number=' + encodeURIComponent(soNumber) + '&client_id=' + user.id);
+            
+            // Check if SO exists
+            if (soValidation.status === 'error' || !soValidation.valid) {
+                var errorMsg = soValidation.message || 'Invalid Sales Order';
+                
+                msg.innerHTML = '<span class="text-red-600">❌ ' + errorMsg + '</span>';
+                
+                // Show SO owner if different
+                if (soValidation.so_owner) {
+                    msg.innerHTML += '<br><span class="text-xs text-gray-500">This SO belongs to: <b>' + soValidation.so_owner + '</b>. Contact your administrator.</span>';
+                }
+                
+                // Show suggestion to create new SO
+                msg.innerHTML += '<br><span class="text-xs text-blue-500">Need a new SO? <a href="/sales-orders" class="underline">Request one here</a></span>';
+                
+                msg.className = 'mt-3 text-sm text-red-600 text-center';
+                msg.classList.remove('hidden');
+                setTimeout(function() { msg.classList.add('hidden'); }, 10000);
+                return;
+            }
+            
+            // SO exists and belongs to client - check remaining volume
+            if (soValidation.data) {
+                var remaining = parseFloat(soValidation.data.remaining_volume) || 0;
+                var totalSO = parseFloat(soValidation.data.total_volume) || 0;
+                var usedSO = parseFloat(soValidation.data.used_volume) || 0;
+                
+                // Check if SO has enough remaining volume
+                if (volume > remaining) {
+                    msg.innerHTML = '<span class="text-red-600">❌ Volume exceeds SO balance!</span><br>' +
+                        '<span class="text-xs">SO Total: <b>' + Number(totalSO).toLocaleString() + ' L</b> | ' +
+                        'Used: <b>' + Number(usedSO).toLocaleString() + ' L</b> | ' +
+                        'Remaining: <b>' + Number(remaining).toLocaleString() + ' L</b></span><br>' +
+                        '<span class="text-xs text-blue-500">Need more volume? <a href="/sales-orders" class="underline">Request SO adjustment</a></span>';
+                    msg.className = 'mt-3 text-sm text-red-600 text-center';
+                    msg.classList.remove('hidden');
+                    setTimeout(function() { msg.classList.add('hidden'); }, 10000);
+                    return;
+                }
+                
+                // SO is valid with sufficient volume
+                msg.innerHTML = '<span class="text-green-600">✅ SO Validated! Remaining: <b>' + Number(remaining).toLocaleString() + ' L</b></span>';
+                msg.className = 'mt-3 text-sm text-green-600 text-center';
+                msg.classList.remove('hidden');
+                setTimeout(function() { msg.classList.add('hidden'); }, 3000);
+            }
+            
+        } catch (ex) {
+            msg.innerHTML = '<span class="text-orange-600">⚠️ Could not validate SO. Please check your connection and try again.</span>';
+            msg.className = 'mt-3 text-sm text-orange-600 text-center';
+            msg.classList.remove('hidden');
+            setTimeout(function() { msg.classList.add('hidden'); }, 5000);
+            return;
+        }
+    }
+    
+    // ============ CONFIRMATION PROMPT ============
+    var summary = '📋 Please verify all details:\n\n' +
+        'Company: ' + company + '\n' +
+        'SO Number: ' + (soNumber || 'N/A') + '\n' +
+        'Plate No: ' + plate + '\n' +
+        'Volume: ' + Number(volume).toLocaleString() + ' L\n' +
+        'Driver: ' + driver + '\n' +
+        'Hauler: ' + hauler + '\n' +
+        'Contact: ' + contact + '\n' +
+        'Date: ' + new Date(date).toLocaleDateString() + '\n' +
+        'SI: ' + (hasSI ? 'With SI' : 'No SI') + '\n' +
+        'Special Instructions: ' + (specialInstructions || 'None');
+    
+    if (!confirm(summary + '\n\n✅ Submit this ATL?')) return;
+    
+    // ============ SUBMIT TO API ============
     ErrorHandler.showLoading('submitBtn', 'Submitting...');
+    
     try {
-        var res = await api('/client/submit-atl', 'POST', { truck_id: currentTruckId, plate_no: plate, hauler_name: hauler, driver_name: driver, volume: volume, remarks: hasSI ? 'With SI' : 'No SI', company: company, so_number: soNumber, scheduled_date: date, contact_number: contact, has_si: hasSI, special_instructions: specialInstructions });
+        var res = await APIHelper.post('/client/submit-atl', {
+            truck_id: currentTruckId,
+            plate_no: plate,
+            hauler_name: hauler,
+            driver_name: driver,
+            volume: volume,
+            remarks: hasSI ? 'With SI' : 'No SI',
+            company: company,
+            so_number: soNumber,
+            scheduled_date: date,
+            contact_number: contact,
+            has_si: hasSI,
+            special_instructions: specialInstructions
+        });
+        
         if (res.status === 'success') {
-            ErrorHandler.toast('ATL submitted! Code: ' + (res.data ? res.data.atl_code : ''), 'success');
-            ['company', 'soNumber', 'volume', 'hauler', 'plateNo', 'driverName', 'contactNumber'].forEach(function(id) { document.getElementById(id).value = ''; });
-            if (document.getElementById('specialInstructions')) document.getElementById('specialInstructions').value = '';
+            var atlCode = res.data ? res.data.atl_code : '';
+            ErrorHandler.toast('✅ ATL ' + atlCode + ' submitted successfully!', 'success');
+            
+            // Reset form
+            ['company', 'soNumber', 'volume', 'hauler', 'plateNo', 'driverName', 'contactNumber'].forEach(function(id) {
+                document.getElementById(id).value = '';
+            });
+            if (document.getElementById('specialInstructions')) {
+                document.getElementById('specialInstructions').value = '';
+            }
             document.querySelector('input[name="siOption"][value="no"]').checked = true;
             document.getElementById('submitBtn').disabled = true;
             document.getElementById('capacityHint').textContent = '';
             document.getElementById('truckStatus').classList.add('hidden');
-            truckVerified = false; currentTruckId = null;
-            setTimeout(function() { loadDashboard(); }, 1000);
-        } else { ErrorHandler.toast(res.error || 'Error submitting ATL.', 'error'); }
-    } catch (ex) { ErrorHandler.toast('Connection error.', 'error'); }
-    finally { ErrorHandler.hideLoading('submitBtn'); }
+            
+            // Reset verification state
+            truckVerified = false;
+            currentTruckId = null;
+            
+            // Refresh dashboard
+            setTimeout(function() { 
+                showView('dashboard');
+                loadDashboard(); 
+            }, 1500);
+            
+        } else {
+            ErrorHandler.toast('❌ ' + (res.error || 'Error submitting ATL. Please try again.'), 'error');
+        }
+    } catch (ex) {
+        ErrorHandler.toast('❌ Connection error. Please check your internet and try again.', 'error');
+    } finally {
+        ErrorHandler.hideLoading('submitBtn');
+    }
 }
 
 // ============ HISTORY ============
 async function loadHistory() { var d = await api("/atl/summary"); if (d.status === "success") { allMyATLs = d.data.recent || []; filterMyATLs(); } }
 function filterMyATLs() { var s = (document.getElementById("atlSearch")?.value || "").toLowerCase(), st = document.getElementById("atlStatusFilter")?.value || "all", f = allMyATLs; if (s) f = f.filter(function(a) { return (a.plate_no || "").toLowerCase().includes(s) || (a.atl_code || "").toLowerCase().includes(s) || (a.driver_name || "").toLowerCase().includes(s); }); if (st !== "all") f = f.filter(function(a) { return a.status === st; }); document.getElementById("atlHistory").innerHTML = f.map(function(a) { var sc = a.status === "completed" ? "bg-green-100 text-green-800" : a.status === "dispatched" ? "bg-orange-100 text-orange-800" : a.status === "cancelled" ? "bg-gray-200 text-gray-700" : a.status === "approved" ? "bg-blue-100 text-blue-800" : "bg-yellow-100 text-yellow-800"; return '<div class="bg-white rounded-lg shadow p-4"><div class="flex justify-between"><div><span class="font-mono font-bold text-blue-900 bg-blue-50 px-2 py-1 rounded text-xs">' + (a.atl_code || "N/A") + '</span><p class="font-bold text-lg mt-1">' + a.plate_no + '</p><p class="text-sm">' + (a.company || "") + " | Vol: " + (a.volume ? Number(a.volume).toLocaleString() + "L" : "N/A") + " | " + a.driver_name + '</p></div><div class="text-right"><span class="px-3 py-1 rounded-full text-xs font-semibold ' + sc + '">' + a.status.toUpperCase() + '</span><div class="mt-2"><button onclick="viewATL(' + a.id + ')" class="text-blue-600 text-xs">View</button>' + (a.status === "pending" || a.status === "approved" ? ' <button onclick="cancelATL(' + a.id + ')" class="text-red-600 text-xs">Cancel</button>' : "") + "</div></div></div></div>"; }).join("") || '<p class="text-center py-8 text-gray-500">No records</p>'; }
-async function viewATL(id) { var d = await api("/client/atl/" + id); if (d.status === "success") { var a = d.data; document.getElementById("atlDetail").innerHTML = '<div class="text-center mb-4"><p class="text-2xl font-mono font-bold text-blue-900">' + (a.atl_code || "N/A") + '</p></div><div class="grid grid-cols-2 gap-3 text-sm">' + ['Company','SO','Status','Volume','Plate','Driver','Hauler','Date','Remarks'].map(function(k) { var v = a[k.toLowerCase()] || a[k] || "N/A"; return '<div><p class="text-xs text-gray-500">' + k + '</p><p class="font-semibold">' + v + '</p></div>'; }).join('') + "</div>"; document.getElementById("atlModal").classList.remove("hidden"); } }
+async function viewATL(id) {
+    var d = await api("/client/atl/" + id);
+    if (d.status === "success") {
+        var a = d.data;
+        document.getElementById("atlDetail").innerHTML = `
+            <div class="text-center mb-4">
+                <p class="text-2xl font-mono font-bold text-blue-900">${a.atl_code || 'N/A'}</p>
+                <span class="px-3 py-1 rounded-full text-xs font-semibold ${a.status === 'completed' ? 'bg-green-100 text-green-800' : a.status === 'cancelled' ? 'bg-red-100 text-red-800' : a.status === 'approved' ? 'bg-blue-100 text-blue-800' : 'bg-yellow-100 text-yellow-800'}">${a.status || 'N/A'}</span>
+            </div>
+            <div class="grid grid-cols-2 gap-3 text-sm">
+                <div><p class="text-xs text-gray-500">Company</p><p class="font-semibold">${a.company || 'N/A'}</p></div>
+                <div><p class="text-xs text-gray-500">SO Number</p><p>${a.so_number || 'N/A'}</p></div>
+                <div><p class="text-xs text-gray-500">Volume</p><p class="font-semibold">${a.volume ? Number(a.volume).toLocaleString() + ' L' : 'N/A'}</p></div>
+                <div><p class="text-xs text-gray-500">Plate Number</p><p class="font-semibold">${a.plate_no && a.plate_no !== 'N/A' ? a.plate_no : '<span class="text-red-500">Not provided</span>'}</p></div>
+                <div><p class="text-xs text-gray-500">Driver</p><p>${a.driver_name && a.driver_name !== 'N/A' ? a.driver_name : '<span class="text-red-500">Not provided</span>'}</p></div>
+                <div><p class="text-xs text-gray-500">Hauler</p><p>${a.hauler || 'N/A'}</p></div>
+                <div><p class="text-xs text-gray-500">Scheduled Date</p><p>${a.scheduled_date ? new Date(a.scheduled_date).toLocaleDateString() : 'N/A'}</p></div>
+                <div><p class="text-xs text-gray-500">Contact</p><p>${a.contact_number || 'N/A'}</p></div>
+                <div><p class="text-xs text-gray-500">SI</p><p>${a.has_si == 1 ? 'With SI' : 'No SI'}</p></div>
+                <div class="col-span-2"><p class="text-xs text-gray-500">Remarks</p><p>${a.remarks || 'None'}</p></div>
+                ${a.special_instructions ? '<div class="col-span-2"><p class="text-xs text-gray-500">Special Instructions</p><p class="text-orange-600">' + a.special_instructions + '</p></div>' : ''}
+            </div>`;
+        document.getElementById("atlModal").classList.remove("hidden");
+    }
+}
 async function cancelATL(id) { if (!confirm("Cancel?")) return; var r = prompt("Reason:"); if (!r) return; await api("/client/cancel-atl/" + id, "POST", { reason: r }); loadHistory(); loadDashboard(); }
 
 // ============ REPORTS ============
