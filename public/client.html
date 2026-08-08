@@ -314,6 +314,126 @@ async function loadClientSalesOrders() {
     }
 }
 
+// ============ TRUCK VERIFICATION ============
+function debouncedVerifyTruck() {
+    if (verifyTimeout) clearTimeout(verifyTimeout);
+    var pe = document.getElementById("plateNo");
+    var p = pe.value.toUpperCase().trim();
+    pe.value = p;
+    var pns = p.replace(/\s+/g, "");
+    if (!pns || pns.length < 2) {
+        document.getElementById("truckStatus").classList.add("hidden");
+        document.getElementById("plateSuggestions").classList.add("hidden");
+        document.getElementById("submitBtn").disabled = true;
+        currentTruckId = null;
+        truckVerified = false;
+        return;
+    }
+    var sd = document.getElementById("truckStatus");
+    sd.innerHTML = '<span class="text-blue-600"><i class="fas fa-spinner fa-spin mr-1"></i>Searching...</span>';
+    sd.classList.remove("hidden");
+    verifyTimeout = setTimeout(function() {
+        verifyTruck();
+        filterPlateSuggestions(p);
+    }, 300);
+}
+
+async function verifyTruck() {
+    var pi = document.getElementById("plateNo");
+    var p = pi.value.trim().toUpperCase();
+    pi.value = p;
+    var sd = document.getElementById("truckStatus"), sb = document.getElementById("submitBtn"),
+        ch = document.getElementById("capacityHint"), vi = document.getElementById("volume");
+    document.getElementById("plateSuggestions").classList.add("hidden");
+    if (!p || p.length < 2) {
+        sd.classList.add("hidden"); sb.disabled = true;
+        currentTruckId = null; truckVerified = false;
+        return;
+    }
+    sd.innerHTML = '<span class="text-blue-600"><i class="fas fa-spinner fa-spin mr-1"></i>Verifying...</span>';
+    sd.classList.remove("hidden");
+    try {
+        var ep = encodeURIComponent(p);
+        var r = await fetch('/api/client/verify-truck/' + ep, { headers: { 'Authorization': 'Bearer ' + token } });
+        var data = await r.json();
+        if (data.status === "success" && data.data) {
+            var t = data.data.truck, cp = data.data.can_proceed, dc = data.data.documents || {};
+            if (!t.id) {
+                truckVerified = false; currentTruckId = null; sb.disabled = true;
+                sd.innerHTML = '<span class="text-red-600">❌ Truck not found</span>';
+                return;
+            }
+            truckVerified = cp !== false; currentTruckId = t.id; sb.disabled = !truckVerified;
+            sd.innerHTML = '<span class="text-green-600">✅ Verified | ' + Math.round(t.total_capacity * 1000).toLocaleString() + ' L</span>';
+            sd.classList.remove("hidden");
+            if (t.driver_name && !document.getElementById("driverName").value) document.getElementById("driverName").value = t.driver_name;
+            if (t.hauler_name && !document.getElementById("hauler").value) document.getElementById("hauler").value = t.hauler_name || "";
+            if (t.total_capacity) { var cl = (parseFloat(t.total_capacity) || 0) * 1000; ch.textContent = "Max: " + Math.round(cl).toLocaleString() + " L"; vi.max = cl; }
+        } else {
+            truckVerified = false; currentTruckId = null; sb.disabled = true;
+            sd.innerHTML = '<span class="text-red-600">❌ Not found</span>';
+        }
+    } catch (e) {
+        truckVerified = false; currentTruckId = null; sb.disabled = true;
+        sd.innerHTML = '<span class="text-red-600">❌ Error</span>';
+    }
+}
+
+function showPlateSuggestions() {
+    var p = document.getElementById("plateNo").value.toUpperCase();
+    if (p && p.length >= 1) filterPlateSuggestions(p);
+}
+
+function hidePlateSuggestions() {
+    setTimeout(function() { document.getElementById("plateSuggestions").classList.add("hidden"); }, 200);
+}
+
+function handlePlateKeydown(e) {
+    var s = document.getElementById("plateSuggestions").querySelectorAll(".plate-suggestion-item");
+    if (!s.length) return;
+    if (e.key === "ArrowDown") { e.preventDefault(); selectedSuggestionIndex = Math.min(selectedSuggestionIndex + 1, s.length - 1); highlightSuggestion(s); }
+    else if (e.key === "ArrowUp") { e.preventDefault(); selectedSuggestionIndex = Math.max(selectedSuggestionIndex - 1, 0); highlightSuggestion(s); }
+    else if (e.key === "Enter") { if (selectedSuggestionIndex >= 0 && selectedSuggestionIndex < s.length) { e.preventDefault(); s[selectedSuggestionIndex].click(); } }
+    else if (e.key === "Escape") { document.getElementById("plateSuggestions").classList.add("hidden"); selectedSuggestionIndex = -1; }
+}
+
+function highlightSuggestion(s) {
+    s.forEach(function(i, idx) {
+        if (idx === selectedSuggestionIndex) { i.classList.add("bg-blue-100"); i.scrollIntoView({ block: "nearest" }); }
+        else { i.classList.remove("bg-blue-100"); }
+    });
+}
+
+function selectPlateSuggestion(p, d, h) {
+    document.getElementById("plateNo").value = p;
+    document.getElementById("plateSuggestions").classList.add("hidden");
+    selectedSuggestionIndex = -1;
+    if (d) document.getElementById("driverName").value = d;
+    if (h) document.getElementById("hauler").value = h;
+    verifyTruck();
+}
+
+async function filterPlateSuggestions(st) {
+    if (!st || st.length < 1) { document.getElementById("plateSuggestions").classList.add("hidden"); return; }
+    if (allPlateNumbers.length === 0) {
+        try {
+            var r = await fetch('/api/truck-masterlist', { headers: { 'Authorization': 'Bearer ' + token } });
+            var d = await r.json();
+            if (d.status === "success") allPlateNumbers = d.data.map(function(i) { return i.plate_no || ""; }).filter(function(p) { return p.length > 0; });
+        } catch (e) { return; }
+    }
+    var s = st.toUpperCase();
+    var m = allPlateNumbers.filter(function(p) { return p.includes(s); }).slice(0, 10);
+    var dv = document.getElementById("plateSuggestions");
+    if (!m.length) { dv.classList.add("hidden"); return; }
+    dv.innerHTML = m.map(function(p) {
+        var hl = p.replace(new RegExp("(" + s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + ")", "gi"), '<mark class="bg-yellow-200 rounded px-0.5">$1</mark>');
+        return '<div class="plate-suggestion-item px-3 py-2 cursor-pointer hover:bg-blue-50 border-b flex items-center justify-between" onmousedown="selectPlateSuggestion(\'' + p + "','','')\"><span class=\"font-semibold text-sm\">" + hl + '</span><i class="fas fa-truck text-gray-400 text-xs"></i></div>';
+    }).join("");
+    dv.classList.remove("hidden");
+    selectedSuggestionIndex = -1;
+}
+
 // ============ SUBMIT ATL ============
 async function submitATL(e) {
     e.preventDefault();
