@@ -319,7 +319,81 @@ function showDashboardSkeleton(){document.getElementById("atlStats").innerHTML=A
 var loadDashboard=async function(){await loadDashboardOptimized();loadClientSalesOrders()};
 async function loadDashboardOptimized(){try{var c=new AbortController(),t=setTimeout(function(){c.abort()},10000),r=await fetch("/api/client/dashboard",{headers:{Authorization:"Bearer "+token},signal:c.signal});clearTimeout(t);var d=await r.json();if(d.status==="success")renderDashboard(d)}catch(e){if(e.name==="AbortError")document.getElementById("atlStats").innerHTML='<div class="col-span-full text-center py-4 text-red-500">Request timed out. <button onclick="loadDashboard()" class="text-blue-600 underline">Retry</button></div>'}}
 
-function renderDashboard(d){var a=d.data.recent||[],s={total:a.length,dispatched:a.filter(function(x){return x.status==="dispatched"}).length,completed:a.filter(function(x){return x.status==="completed"}).length,pending:a.filter(function(x){return x.status==="pending"}).length,approved:a.filter(function(x){return x.status==="approved"}).length,cancelled:a.filter(function(x){return x.status==="cancelled"||x.status==="rejected"}).length};
+function renderDashboard(data) {
+    var atls = data.data.recent || [];
+    
+    // Filter ATLs for TODAY only
+    var today = new Date().toISOString().split('T')[0]; // "2026-08-08"
+    var todayATLs = atls.filter(function(a) {
+        var atlDate = a.createdAt || a.scheduled_date || '';
+        return atlDate.startsWith(today);
+    });
+    
+    // Stats - use ALL atls for counts
+    var stats = {
+        total: atls.length,
+        today: todayATLs.length,
+        dispatched: atls.filter(function(a) { return a.status === "dispatched"; }).length,
+        completed: atls.filter(function(a) { return a.status === "completed"; }).length,
+        pending: atls.filter(function(a) { return a.status === "pending"; }).length,
+        approved: atls.filter(function(a) { return a.status === "approved"; }).length,
+        cancelled: atls.filter(function(a) { return a.status === "cancelled" || a.status === "rejected"; }).length,
+    };
+    
+    document.getElementById("atlStats").innerHTML = [
+        { label: "Total", value: stats.total, gradient: "from-blue-400 to-blue-500" },
+        { label: "Today", value: stats.today, gradient: "from-green-400 to-green-500" },
+        { label: "Pending", value: stats.pending, gradient: "from-yellow-400 to-yellow-500" },
+        { label: "Approved", value: stats.approved, gradient: "from-indigo-400 to-indigo-500" },
+        { label: "Cancelled", value: stats.cancelled, gradient: "from-red-400 to-red-500" },
+    ].map(function(c) {
+        return '<div class="stat-card bg-gradient-to-br ' + c.gradient +
+            ' text-white rounded-xl shadow-lg p-3 sm:p-5 text-center w-full">' +
+            '<p class="text-xs sm:text-sm opacity-90">' + c.label + '</p>' +
+            '<p class="text-xl sm:text-3xl font-bold mt-1">' + c.value + '</p></div>';
+    }).join("");
+    
+    // Recent ATL Codes - TODAY ONLY, show up to 10
+    var recentCodes = todayATLs.slice(0, 10);
+    
+    if (recentCodes.length > 0) {
+        document.getElementById("recentATLCodes").innerHTML = 
+            '<div class="bg-white rounded-xl shadow p-4 sm:p-6">' +
+            '<div class="flex justify-between items-center mb-3">' +
+            '<h3 class="font-semibold text-gray-800"><i class="fas fa-clock mr-2 text-blue-600"></i>Today\'s ATLs</h3>' +
+            '<span class="text-xs text-gray-400">' + new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' }) + '</span>' +
+            '</div>' +
+            '<div class="space-y-2">' +
+            recentCodes.map(function(a) {
+                var sc = a.status === "completed" ? "bg-green-100 text-green-800" :
+                         a.status === "dispatched" ? "bg-orange-100 text-orange-800" :
+                         a.status === "approved" ? "bg-blue-100 text-blue-800" :
+                         "bg-gray-100 text-gray-700";
+                return '<div class="flex justify-between items-center text-sm py-2 border-b last:border-b-0">' +
+                    '<div>' +
+                    '<span class="font-mono font-bold text-blue-900">' + (a.atl_code || "N/A") + '</span>' +
+                    '<span class="text-xs text-gray-500 ml-2">' + (a.plate_no || '') + '</span>' +
+                    '</div>' +
+                    '<div class="flex items-center gap-2">' +
+                    '<span class="text-xs text-gray-400">' + (a.volume ? Number(a.volume).toLocaleString() + 'L' : '') + '</span>' +
+                    '<span class="text-xs px-2 py-1 rounded ' + sc + '">' + a.status + '</span>' +
+                    '</div>' +
+                    '</div>';
+            }).join("") +
+            (todayATLs.length > 10 ? '<p class="text-xs text-gray-400 text-center pt-2">+ ' + (todayATLs.length - 10) + ' more today. <a href="#" onclick="showView(\'history\')" class="text-blue-600 underline">View all</a></p>' : '') +
+            '</div></div>';
+    } else {
+        document.getElementById("recentATLCodes").innerHTML = 
+            '<div class="bg-white rounded-xl shadow p-6 text-center">' +
+            '<i class="fas fa-calendar-day text-3xl text-gray-300 mb-3 block"></i>' +
+            '<h3 class="font-semibold text-gray-600">No ATLs Today</h3>' +
+            '<p class="text-xs text-gray-400 mt-1">Submit a new ATL to get started</p>' +
+            '<button onclick="showView(\'submit\')" class="mt-3 bg-blue-900 text-white px-4 py-2 rounded text-sm hover:bg-blue-800">' +
+            '<i class="fas fa-plus-circle mr-1"></i>Submit New ATL</button>' +
+            '</div>';
+    }
+}
+
 document.getElementById("atlStats").innerHTML=[{label:"Total",value:s.total,gradient:"from-blue-400 to-blue-500"},{label:"Dispatched",value:s.dispatched,gradient:"from-green-400 to-green-500"},{label:"Pending",value:s.pending,gradient:"from-yellow-400 to-yellow-500"},{label:"Approved",value:s.approved,gradient:"from-indigo-400 to-indigo-500"},{label:"Cancelled",value:s.cancelled,gradient:"from-red-400 to-red-500"}].map(function(c){return'<div class="stat-card bg-gradient-to-br '+c.gradient+' text-white rounded-xl shadow-lg p-3 sm:p-5 text-center w-full"><p class="text-xs sm:text-sm opacity-90">'+c.label+'</p><p class="text-xl sm:text-3xl font-bold mt-1">'+c.value+'</p></div>'}).join("");
 var codes=a.slice(0,5);if(codes.length>0){document.getElementById("recentATLCodes").innerHTML='<div class="bg-white rounded-xl shadow p-4 sm:p-6"><h3 class="font-semibold mb-3">Recent ATL Codes</h3><div class="space-y-2">'+codes.map(function(x){var sc=x.status==="completed"?"bg-green-100 text-green-800":x.status==="dispatched"?"bg-orange-100 text-orange-800":"bg-gray-100";return'<div class="flex justify-between items-center text-sm"><span class="font-mono font-bold text-blue-900">'+(x.atl_code||"N/A")+'</span><span class="text-xs px-2 py-1 rounded '+sc+'">'+x.status+'</span></div>'}).join("")+"</div></div>"}}
 
