@@ -45,49 +45,327 @@
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 
 <style>
-    /* Hide body until auth is verified */
+    /* ============ AUTH GUARD ============ */
     body.auth-checking { visibility: hidden; }
     body.auth-verified { visibility: visible; }    
-    .checklist-form{font-family:Arial,sans-serif;font-size:11px;line-height:1.4;color:#333}
-    .checklist-form h1{text-align:center;font-size:16px;text-transform:uppercase;border-block-end:2px solid #000;padding-block-end:5px;margin:0 0 5px 0}
-    .depot{text-align:end;font-weight:bold;margin-block-end:15px}
-    .flex-row{display:flex;justify-content:space-between;margin-block-end:15px;gap:15px}
-    .col-half{flex:1;border:1px solid #000;padding:10px}
-    .section-title{font-weight:bold;text-align:center;margin-block-end:5px;text-decoration:underline;font-size:14px;margin-block-start:10px}
-    .field-row{display:flex;margin-block-end:5px;align-items:center}
-    .field-label{inline-size:140px;font-weight:bold;font-size:12px}
-    .field-value{flex:1;border-block-end:1px solid #000}
-    .field-value input,.field-value select{inline-size:100%;border:none;outline:none;font-size:13px;padding:4px 0;background:transparent}
-    table{inline-size:100%;border-collapse:collapse;margin-block-start:10px;margin-block-end:15px}
-    th,td{border:1px solid #000;padding:5px;text-align:start;vertical-align:top}
-    th{background-color:#f0f0f0;text-align:center}
-    .center{text-align:center}
-    .comp-table th,.comp-table td{padding:5px 6px;text-align:center;vertical-align:middle;font-size:12px}
-    .comp-table td:first-child{text-align:end;font-weight:bold;inline-size:12%}
-    .comp-table input[type="text"]{inline-size:100%;border:none;background:#fcfcfc;border-block-end:1px dashed #ccc;font-size:12px;text-align:center;padding:6px 4px;box-sizing:border-box}
-    .comp-table select{inline-size:100%;border:none;background:#fcfcfc;border-block-end:1px dashed #ccc;font-size:11px;text-align:center;padding:5px 3px}
-    .comp-table input[type="checkbox"]{inline-size:18px;block-size:18px}
-    .capacity{font-size:14px!important;font-weight:bold!important}
-    .vol-highlight{font-size:16px!important;font-weight:bold}
-    .signature-row{display:flex;justify-content:space-around;margin-block-start:30px;margin-block-end:20px}
-    .signature-box{text-align:center;inline-size:200px}
-    .sig-line{border-block-end:1px solid #000;block-size:25px;margin-block-end:2px}
-    .checklist-input{inline-size:100%;border:none;text-align:center;background:transparent;font-size:11px;font-weight:bold}
-    #sidebar{transition:transform 0.3s}
-    @media(max-width:767px){#sidebar{display:none!important}#sidebarOverlay{display:none!important}body{padding-left:0!important;padding-bottom:70px}.mobile-bottom-nav{display:flex!important}}
-    @media(min-width:768px){body{padding-left:176px}.mobile-bottom-nav{display:none!important}}
-    .mobile-bottom-nav{display:none;position:fixed;inset-block-end:0;inset-inline-start:0;inset-inline-end:0;background:#1e3a5f;color:white;z-index:50;justify-content:space-around;padding:6px 0;box-shadow:0 -2px 10px rgba(0,0,0,0.3)}
-    .mobile-bottom-nav a,.mobile-bottom-nav button{display:flex;flex-direction:column;align-items:center;color:#93a3bc;font-size:10px;text-decoration:none;padding:4px;background:none;border:none;cursor:pointer}
-    .mobile-bottom-nav a i,.mobile-bottom-nav button i{font-size:18px;margin-block-end:2px}
-    .mobile-bottom-nav a.active,.mobile-bottom-nav button.active{color:#fbbf24}
-    @media print{.no-print{display:none!important}body{padding:0!important;margin:0!important}@page{size:A4;margin:5mm}}
+    
+    /* ============ PRINT LAYOUT (A4) ============ */
+    .checklist-form {
+        font-family: Arial, sans-serif;
+        font-size: 11px;
+        line-height: 1.4;
+        color: #333;
+    }
+    .checklist-form h1 {
+        text-align: center;
+        font-size: 16px;
+        text-transform: uppercase;
+        border-bottom: 2px solid #000;
+        padding-bottom: 5px;
+        margin: 0 0 5px 0;
+    }
+    .depot {
+        text-align: right;
+        font-weight: bold;
+        margin-bottom: 15px;
+    }
+    .flex-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 15px;
+        gap: 15px;
+    }
+    .col-half {
+        flex: 1;
+        border: 1px solid #000;
+        padding: 10px;
+    }
+    .section-title {
+        font-weight: bold;
+        text-align: center;
+        margin-bottom: 5px;
+        text-decoration: underline;
+        font-size: 14px;
+        margin-top: 10px;
+    }
+    .field-row {
+        display: flex;
+        margin-bottom: 5px;
+        align-items: center;
+    }
+    .field-label {
+        width: 140px;
+        font-weight: bold;
+        font-size: 12px;
+        flex-shrink: 0;
+    }
+    .field-value {
+        flex: 1;
+        border-bottom: 1px solid #000;
+    }
+    .field-value input,
+    .field-value select {
+        width: 100%;
+        border: none;
+        outline: none;
+        font-size: 13px;
+        padding: 4px 0;
+        background: transparent;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+        margin-bottom: 15px;
+    }
+    th, td {
+        border: 1px solid #000;
+        padding: 5px;
+        text-align: left;
+        vertical-align: top;
+    }
+    th {
+        background-color: #f0f0f0;
+        text-align: center;
+    }
+    .center { text-align: center; }
+    
+    /* Compartment table */
+    .comp-table th, .comp-table td {
+        padding: 5px 6px;
+        text-align: center;
+        vertical-align: middle;
+        font-size: 12px;
+    }
+    .comp-table td:first-child {
+        text-align: right;
+        font-weight: bold;
+        width: 12%;
+    }
+    .comp-table input[type="text"] {
+        width: 100%;
+        border: none;
+        background: #fcfcfc;
+        border-bottom: 1px dashed #ccc;
+        font-size: 12px;
+        text-align: center;
+        padding: 6px 4px;
+        box-sizing: border-box;
+    }
+    .comp-table select {
+        width: 100%;
+        border: none;
+        background: #fcfcfc;
+        border-bottom: 1px dashed #ccc;
+        font-size: 11px;
+        text-align: center;
+        padding: 5px 3px;
+    }
+    .comp-table input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+    }
+    .capacity {
+        font-size: 14px !important;
+        font-weight: bold !important;
+    }
+    .vol-highlight {
+        font-size: 16px !important;
+        font-weight: bold;
+    }
+    
+    /* Signature area */
+    .signature-row {
+        display: flex;
+        justify-content: space-around;
+        margin-top: 30px;
+        margin-bottom: 20px;
+    }
+    .signature-box {
+        text-align: center;
+        width: 200px;
+    }
+    .sig-line {
+        border-bottom: 1px solid #000;
+        height: 25px;
+        margin-bottom: 2px;
+    }
+    
+    /* Checklist inputs */
+    .checklist-input {
+        width: 100%;
+        border: none;
+        text-align: center;
+        background: transparent;
+        font-size: 11px;
+        font-weight: bold;
+    }
+    
+    /* ============ SIDEBAR ============ */
+    #sidebar { transition: transform 0.3s; }
+    
+    /* ============ MOBILE RESPONSIVE ============ */
+    @media (max-width: 767px) {
+        #sidebar { display: none !important; }
+        #sidebarOverlay { display: none !important; }
+        body { 
+            padding-left: 0 !important; 
+            padding-bottom: 70px;
+        }
+        .mobile-bottom-nav { display: flex !important; }
+        
+        /* Stack form on mobile */
+        .flex-row {
+            flex-direction: column;
+            gap: 10px;
+        }
+        .col-half {
+            width: 100%;
+            padding: 8px;
+        }
+        
+        /* Smaller field labels */
+        .field-label {
+            width: 110px;
+            font-size: 10px;
+        }
+        .field-value input,
+        .field-value select {
+            font-size: 11px;
+        }
+        
+        /* Scrollable compartment table */
+        .comp-table {
+            display: block;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            white-space: nowrap;
+        }
+        .comp-table th, 
+        .comp-table td {
+            font-size: 10px;
+            padding: 3px 4px;
+            min-width: 50px;
+        }
+        .comp-table input[type="text"] {
+            font-size: 10px;
+            padding: 4px 2px;
+            min-width: 50px;
+        }
+        .comp-table select {
+            font-size: 9px;
+        }
+        
+        /* Mobile form inputs */
+        #plateNoTop {
+            width: 100% !important;
+        }
+        #tpsStartTop, #customerTop {
+            width: 100% !important;
+        }
+        
+        /* Print section padding */
+        #printable {
+            padding: 8px !important;
+        }
+        .checklist-form {
+            font-size: 10px;
+        }
+        .checklist-form h1 {
+            font-size: 14px;
+        }
+        
+        /* Signature boxes */
+        .signature-row {
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+        .signature-box {
+            width: 180px;
+        }
+        
+        /* Smaller checklist table */
+        .checklist-form table:not(.comp-table) th,
+        .checklist-form table:not(.comp-table) td {
+            font-size: 9px;
+            padding: 3px;
+        }
+        .checklist-input {
+            font-size: 9px;
+        }
+    }
+    
+    /* ============ DESKTOP ============ */
+    @media (min-width: 768px) {
+        body { padding-left: 176px; }
+        .mobile-bottom-nav { display: none !important; }
+    }
+    
+    /* ============ MOBILE BOTTOM NAV ============ */
+    .mobile-bottom-nav {
+        display: none;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: #1e3a5f;
+        color: white;
+        z-index: 50;
+        justify-content: space-around;
+        padding: 6px 0;
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.3);
+    }
+    .mobile-bottom-nav a,
+    .mobile-bottom-nav button {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        color: #93a3bc;
+        font-size: 10px;
+        text-decoration: none;
+        padding: 4px;
+        background: none;
+        border: none;
+        cursor: pointer;
+    }
+    .mobile-bottom-nav a i,
+    .mobile-bottom-nav button i {
+        font-size: 18px;
+        margin-bottom: 2px;
+    }
+    .mobile-bottom-nav a.active,
+    .mobile-bottom-nav button.active {
+        color: #fbbf24;
+    }
+    
+    /* ============ PRINT ============ */
+    @media print {
+        .no-print { display: none !important; }
+        body { 
+            padding: 0 !important; 
+            margin: 0 !important;
+        }
+        @page { 
+            size: A4; 
+            margin: 5mm;
+        }
+        .checklist-form {
+            font-size: 10px;
+        }
+        #printable {
+            padding: 0 !important;
+        }
+    }
+    
+    /* ============ ANIMATIONS ============ */
     @keyframes shake {
         0%, 100% { transform: translateX(0); }
         10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
         20%, 40%, 60%, 80% { transform: translateX(4px); }
     }
     .animate-shake { animation: shake 0.5s ease-out; }
-
+    
     @keyframes slideDown {
         from { opacity: 0; transform: translateY(-10px); }
         to { opacity: 1; transform: translateY(0); }
