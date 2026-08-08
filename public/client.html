@@ -223,7 +223,32 @@
             </div>
         </div>
         <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 sm:gap-4 mb-6" id="reportSummaryCards"></div>
-        <div class="bg-white rounded-xl shadow overflow-hidden"><div class="overflow-x-auto w-full"><table class="w-full text-xs sm:text-sm" style="min-width:700px"><thead class="bg-gray-50 border-b"><tr><th class="py-2 sm:py-3 px-2 sm:px-3 text-left">ATL Code</th><th class="py-2 sm:py-3 px-2 sm:px-3 text-left">SO#</th><th class="py-2 sm:py-3 px-2 sm:px-3 text-left">Company</th><th class="py-2 sm:py-3 px-2 sm:px-3 text-left">Plate</th><th class="py-2 sm:py-3 px-2 sm:px-3 text-left">Driver</th><th class="py-2 sm:py-3 px-2 sm:px-3 text-right">Vol</th><th class="py-2 sm:py-3 px-2 sm:px-3 text-center">SI</th><th class="py-2 sm:py-3 px-2 sm:px-3 text-center">Status</th><th class="py-2 sm:py-3 px-2 sm:px-3 text-left">Date</th><th class="py-2 sm:py-3 px-2 sm:px-3 text-center">WC</th></tr></thead><tbody id="reportTableBody"><tr><td colspan="10" class="text-center py-8 text-gray-500">Loading...</td></tr></tbody></table></div></div>
+        <div class="bg-white rounded-xl shadow overflow-hidden">
+    <div class="overflow-x-auto w-full">
+        <table class="w-full text-sm" style="min-width: 800px">
+            <thead class="bg-gray-50 border-b">
+                <tr>
+                    <th class="py-3 px-3 text-left text-xs">Date</th>
+                    <th class="py-3 px-3 text-left text-xs">ATL Code</th>
+                    <th class="py-3 px-3 text-left text-xs">SO #</th>
+                    <th class="py-3 px-3 text-left text-xs">Company</th>
+                    <th class="py-3 px-3 text-left text-xs">Plate</th>
+                    <th class="py-3 px-3 text-left text-xs">Driver</th>
+                    <th class="py-3 px-3 text-right text-xs">Volume</th>
+                    <th class="py-3 px-3 text-center text-xs">SI</th>
+                    <th class="py-3 px-3 text-center text-xs">Status</th>
+                    <th class="py-3 px-3 text-left text-xs">Reason</th>
+                    <th class="py-3 px-3 text-center text-xs">By</th>
+                    <th class="py-3 px-3 text-center text-xs">WC</th>
+                </tr>
+            </thead>
+            <tbody id="reportTableBody">
+                <tr><td colspan="12" class="text-center py-8 text-gray-500">Loading...</td></tr>
+            </tbody>
+        </table>
+    </div>
+    <!-- Pagination will be inserted here -->
+</div>
     </div>
 
     <!-- PRINT AREA -->
@@ -261,6 +286,10 @@
 <script src="/js/session.js"></script>
 <script>
 // ============ ERROR HANDLER ============
+var clientReportPage = 1;
+var clientReportPerPage = 10;
+var clientReportAllRecords = [];
+
 var ErrorHandler={toastContainer:null,init:function(){if(!this.toastContainer){this.toastContainer=document.createElement('div');this.toastContainer.id='errorToastContainer';this.toastContainer.className='fixed top-4 right-4 z-[9999] space-y-2 max-w-sm';document.body.appendChild(this.toastContainer)}},toast:function(m,t,d){t=t||'error';d=d||5000;this.init();var c={error:'bg-red-500',warning:'bg-orange-500',success:'bg-green-500',info:'bg-blue-500'},i={error:'fa-exclamation-circle',warning:'fa-exclamation-triangle',success:'fa-check-circle',info:'fa-info-circle'},e=document.createElement('div');e.className=(c[t]||c.error)+' text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-3 animate-slide-down';e.innerHTML='<i class="fas '+(i[t]||i.error)+' text-lg"></i><span class="text-sm flex-1">'+m+'</span><button onclick="this.parentElement.remove()" class="text-white/80 hover:text-white"><i class="fas fa-times"></i></button>';this.toastContainer.appendChild(e);setTimeout(function(){e.remove()},d)},showLoading:function(b,t){var e=document.getElementById(b);if(!e)return;e.disabled=true;e.dataset.originalText=e.innerHTML;e.innerHTML='<i class="fas fa-spinner fa-spin mr-2"></i>'+(t||'Processing...')},hideLoading:function(b){var e=document.getElementById(b);if(!e||!e.dataset.originalText)return;e.disabled=false;e.innerHTML=e.dataset.originalText;delete e.dataset.originalText},clearFieldErrors:function(f){if(!f)return;f.querySelectorAll('.border-red-500').forEach(function(e){e.classList.remove('border-red-500','bg-red-50')});f.querySelectorAll('.field-error').forEach(function(e){e.remove()})},showFieldError:function(f,m){var e=document.getElementById(f);if(!e)return;e.classList.add('border-red-500','bg-red-50');var x=e.parentElement.querySelector('.field-error');if(x)x.remove();if(m){var s=document.createElement('span');s.className='field-error text-red-500 text-xs mt-1 block';s.textContent=m;e.parentElement.appendChild(s)}}};
 
 // ============ API HELPER ============
@@ -718,6 +747,9 @@ async function loadClientReports() {
         if (s) f = f.filter(function(x) { return new Date(x.scheduled_date) >= new Date(s); });
         if (e) f = f.filter(function(x) { return new Date(x.scheduled_date) <= new Date(e); });
         
+        clientReportAllRecords = f;
+        clientReportPage = 1;
+        
         var tv = f.reduce(function(s, x) { return s + (Number(x.volume) || 0); }, 0);
         
         // Summary cards
@@ -729,50 +761,106 @@ async function loadClientReports() {
             <div class="bg-blue-50 rounded-xl shadow p-4 text-center"><p class="text-2xl font-bold text-blue-700">${tv.toLocaleString()}L</p><p class="text-xs">Total Volume</p></div>
         `;
         
-        // Table with rejection/cancellation info
-        document.getElementById("reportTableBody").innerHTML = f.map(function(x) {
-            var sc = x.status === "completed" ? "bg-green-100 text-green-800" :
-                     x.status === "dispatched" ? "bg-orange-100 text-orange-800" :
-                     x.status === "cancelled" ? "bg-red-100 text-red-800" :
-                     x.status === "rejected" ? "bg-red-100 text-red-800" :
-                     "bg-yellow-100 text-yellow-800";
-            
-            // Determine cancellation/rejection info
-            var cancelReason = '-';
-            var cancelledBy = '-';
-            
-            if (x.status === 'cancelled' || x.status === 'rejected') {
-                // Get reason from remarks
-                cancelReason = x.remarks || 'No reason provided';
-                if (cancelReason.length > 50) cancelReason = cancelReason.substring(0, 50) + '...';
-                
-                // Determine who cancelled/rejected
-                if (x.remarks && x.remarks.includes('Cancellation:')) {
-                    cancelledBy = '<span class="text-blue-600 font-semibold">You (Client)</span>';
-                } else if (x.verified_by) {
-                    cancelledBy = '<span class="text-purple-600 font-semibold">Dispatcher</span>';
-                } else {
-                    cancelledBy = '<span class="text-gray-600">System</span>';
-                }
-            }
-            
-            return `<tr class="border-b hover:bg-gray-50">
-                <td class="py-2 px-3 font-mono text-xs font-bold text-blue-900">${x.atl_code || "-"}</td>
-                <td class="py-2 px-3 text-xs">${x.so_number || "-"}</td>
-                <td class="py-2 px-3">${x.company || "-"}</td>
-                <td class="py-2 px-3 font-semibold">${x.plate_no || "-"}</td>
-                <td class="py-2 px-3">${x.driver_name || "-"}</td>
-                <td class="py-2 px-3 text-right">${x.volume ? Number(x.volume).toLocaleString() : "-"}</td>
-                <td class="py-2 px-3 text-center">${x.has_si == 1 ? "With SI" : "No SI"}</td>
-                <td class="py-2 px-3 text-center"><span class="px-2 py-1 rounded text-xs ${sc}">${x.status}</span></td>
-                <td class="py-2 px-3 text-xs max-w-[200px]">${cancelReason}</td>
-                <td class="py-2 px-3 text-center text-xs">${cancelledBy}</td>
-                <td class="py-2 px-3 text-xs">${x.scheduled_date ? new Date(x.scheduled_date).toLocaleDateString() : "-"}</td>
-                <td class="py-2 px-3 text-center font-mono text-xs">${x.printed_wc || "-"}</td>
-            </tr>`;
-        }).join("") || '<tr><td colspan="12" class="text-center py-8 text-gray-500">No records found</td></tr>';
+        renderClientReportPage();
     }
 }
+
+function renderClientReportPage() {
+    var totalPages = Math.ceil(clientReportAllRecords.length / clientReportPerPage);
+    if (clientReportPage > totalPages) clientReportPage = totalPages || 1;
+    
+    var start = (clientReportPage - 1) * clientReportPerPage;
+    var pageData = clientReportAllRecords.slice(start, start + clientReportPerPage);
+    
+    // Render table
+    document.getElementById("reportTableBody").innerHTML = pageData.map(function(x) {
+        var sc = x.status === "completed" ? "bg-green-100 text-green-800" :
+                 x.status === "dispatched" ? "bg-orange-100 text-orange-800" :
+                 x.status === "cancelled" ? "bg-red-100 text-red-800" :
+                 x.status === "rejected" ? "bg-red-100 text-red-800" :
+                 "bg-yellow-100 text-yellow-800";
+        
+        var cancelReason = '-';
+        var cancelledBy = '-';
+        
+        if (x.status === 'cancelled' || x.status === 'rejected') {
+            cancelReason = x.remarks || 'No reason provided';
+            if (cancelReason.length > 50) cancelReason = cancelReason.substring(0, 50) + '...';
+            
+            if (x.remarks && x.remarks.includes('Cancellation:')) {
+                cancelledBy = '<span class="text-blue-600 font-semibold text-xs">You (Client)</span>';
+            } else if (x.verified_by) {
+                cancelledBy = '<span class="text-purple-600 font-semibold text-xs">Dispatcher</span>';
+            } else {
+                cancelledBy = '<span class="text-gray-600 text-xs">System</span>';
+            }
+        }
+        
+        return `<tr class="border-b hover:bg-gray-50">
+            <td class="py-2 px-2 text-xs">${x.scheduled_date ? new Date(x.scheduled_date).toLocaleDateString() : "-"}</td>
+            <td class="py-2 px-2 font-mono text-xs font-bold text-blue-900">${x.atl_code || "-"}</td>
+            <td class="py-2 px-2 text-xs">${x.so_number || "-"}</td>
+            <td class="py-2 px-2 text-xs">${x.company || "-"}</td>
+            <td class="py-2 px-2 text-xs font-semibold">${x.plate_no || "-"}</td>
+            <td class="py-2 px-2 text-xs">${x.driver_name || "-"}</td>
+            <td class="py-2 px-2 text-xs text-right">${x.volume ? Number(x.volume).toLocaleString() : "-"}</td>
+            <td class="py-2 px-2 text-xs text-center">${x.has_si == 1 ? "With SI" : "No SI"}</td>
+            <td class="py-2 px-2 text-center"><span class="px-2 py-0.5 rounded text-xs ${sc}">${x.status}</span></td>
+            <td class="py-2 px-2 text-xs max-w-[150px] truncate" title="${cancelReason.replace(/"/g, '&quot;')}">${cancelReason}</td>
+            <td class="py-2 px-2 text-center">${cancelledBy}</td>
+            <td class="py-2 px-2 text-center font-mono text-xs">${x.printed_wc || "-"}</td>
+        </tr>`;
+    }).join("") || '<tr><td colspan="12" class="text-center py-8 text-gray-500">No records found</td></tr>';
+    
+    // Render pagination
+    renderClientPagination(totalPages, start, pageData.length);
+}
+
+function renderClientPagination(totalPages, start, pageLength) {
+    var paginationDiv = document.getElementById('clientPagination');
+    if (!paginationDiv) {
+        // Create pagination div if it doesn't exist
+        var tableDiv = document.querySelector('#reportsView .bg-white.rounded-xl.shadow.overflow-hidden');
+        if (tableDiv) {
+            paginationDiv = document.createElement('div');
+            paginationDiv.id = 'clientPagination';
+            paginationDiv.className = 'px-4 py-3 border-t bg-gray-50 flex justify-between items-center text-xs';
+            tableDiv.appendChild(paginationDiv);
+        } else {
+            return;
+        }
+    }
+    
+    var html = '<span>Showing ' + (start + 1) + '-' + Math.min(start + clientReportPerPage, clientReportAllRecords.length) + ' of ' + clientReportAllRecords.length + '</span>';
+    html += '<div class="flex items-center gap-1">';
+    
+    // Previous button
+    html += '<button onclick="changeClientReportPage(' + (clientReportPage - 1) + ')" class="px-2 py-1 border rounded ' + (clientReportPage === 1 ? 'text-gray-300 cursor-not-allowed' : 'hover:bg-gray-100') + '" ' + (clientReportPage === 1 ? 'disabled' : '') + '><i class="fas fa-chevron-left"></i></button>';
+    
+    // Page numbers
+    for (var i = 1; i <= totalPages; i++) {
+        if (i === 1 || i === totalPages || (i >= clientReportPage - 1 && i <= clientReportPage + 1)) {
+            html += '<button onclick="changeClientReportPage(' + i + ')" class="px-2 py-1 border rounded ' + (i === clientReportPage ? 'bg-blue-900 text-white' : 'hover:bg-gray-100') + '">' + i + '</button>';
+        } else if (i === clientReportPage - 2 || i === clientReportPage + 2) {
+            html += '<span class="px-1">...</span>';
+        }
+    }
+    
+    // Next button
+    html += '<button onclick="changeClientReportPage(' + (clientReportPage + 1) + ')" class="px-2 py-1 border rounded ' + (clientReportPage === totalPages ? 'text-gray-300 cursor-not-allowed' : 'hover:bg-gray-100') + '" ' + (clientReportPage === totalPages ? 'disabled' : '') + '><i class="fas fa-chevron-right"></i></button>';
+    
+    html += '</div>';
+    
+    paginationDiv.innerHTML = html;
+}
+
+function changeClientReportPage(page) {
+    var totalPages = Math.ceil(clientReportAllRecords.length / clientReportPerPage);
+    if (page < 1 || page > totalPages) return;
+    clientReportPage = page;
+    renderClientReportPage();
+}
+
 function clearClientFilters() { ["startDate", "endDate", "statusFilter"].forEach(function(id) { document.getElementById(id).value = ""; }); loadClientReports(); }
 function printClientReport() { document.getElementById("printDate").textContent = "Period: " + (document.getElementById("startDate").value || "All") + " - " + (document.getElementById("endDate").value || "Today"); document.getElementById("printTableBody").innerHTML = document.getElementById("reportTableBody").innerHTML; window.print(); }
 function exportClientCSV() { var csv = "ATL Code,SO#,Plate,Driver,Volume,SI,Status,Date\n"; document.querySelectorAll("#reportTableBody tr").forEach(function(r) { if (r.cells.length > 1) { var c = r.cells; csv += '"' + c[0].textContent + '","' + c[1].textContent + '","' + c[3].textContent + '","' + c[4].textContent + '","' + c[5].textContent + '","' + c[6].textContent + '","' + c[7].textContent + '","' + c[8].textContent + '"\n'; } }); var b = new Blob([csv], { type: "text/csv" }); var a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = "client-report-" + new Date().toISOString().split("T")[0] + ".csv"; a.click(); }
